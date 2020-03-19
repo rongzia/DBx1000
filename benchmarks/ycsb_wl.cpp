@@ -35,7 +35,7 @@ RC ycsb_wl::init_schema(string schema_file) {
 	the_index = indexes["MAIN_INDEX"];
 	return RCOK;
 }
-	
+//! 数据是分区的，每个区间的 key 都是 0-g_synth_table_size / g_part_cnt，单调增，返回 key 在哪个区间
 int 
 ycsb_wl::key_to_part(uint64_t key) {
 	uint64_t rows_per_part = g_synth_table_size / g_part_cnt;
@@ -87,9 +87,9 @@ ins_done:
 // init table in parallel
 void ycsb_wl::init_table_parallel() {
 	enable_thread_mem_pool = true;
-	pthread_t p_thds[g_init_parallelism - 1];
+	pthread_t p_thds[g_init_parallelism - 1]; //! p_thds[39]
 	for (UInt32 i = 0; i < g_init_parallelism - 1; i++) 
-		pthread_create(&p_thds[i], NULL, threadInitTable, this);
+		pthread_create(&p_thds[i], NULL, threadInitTable, this);    //! 创建线程
 	threadInitTable(this);
 
 	for (uint32_t i = 0; i < g_init_parallelism - 1; i++) {
@@ -102,7 +102,7 @@ void ycsb_wl::init_table_parallel() {
 	enable_thread_mem_pool = false;
 	mem_allocator.unregister();
 }
-
+//! 初始化单个区间
 void * ycsb_wl::init_table_slice() {
 	UInt32 tid = ATOM_FETCH_ADD(next_tid, 1);
 	// set cpu affinity
@@ -121,12 +121,12 @@ void * ycsb_wl::init_table_slice() {
 	) {
 		row_t * new_row = NULL;
 		uint64_t row_id;
-		int part_id = key_to_part(key);
-		rc = the_table->get_new_row(new_row, part_id, row_id); 
+		int part_id = key_to_part(key);     //! 区间内 index
+		rc = the_table->get_new_row(new_row, part_id, row_id);  //! TODO, row_id 到底返回的啥？
 		assert(rc == RCOK);
 		uint64_t primary_key = key;
 		new_row->set_primary_key(primary_key);
-		new_row->set_value(0, &primary_key);
+		new_row->set_value(0, &primary_key);    //! 第 0 列是主键
 		Catalog * schema = the_table->get_schema();
 		
 		for (UInt32 fid = 0; fid < schema->get_field_cnt(); fid ++) {

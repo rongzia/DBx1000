@@ -82,6 +82,7 @@
 /************************************************/
 // STATS helper
 /************************************************/
+//! 把某个变量 name 加上 value 的值
 #define INC_STATS(tid, name, value) \
 	if (STATS_ENABLE) \
 		stats._stats[tid]->name += value;

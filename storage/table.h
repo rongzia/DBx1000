@@ -7,6 +7,7 @@
 class Catalog;
 class row_t;
 
+//! 表，设计行的增加/删除，记录行的个数
 class table_t
 {
 public:
@@ -26,6 +27,6 @@ public:
 	Catalog * 		schema;
 private:
 	const char * 	table_name;
-	uint64_t  		cur_tab_size;
+	uint64_t  		cur_tab_size;       //! 行数
 	char 			pad[CL_SIZE - sizeof(void *)*3];
 };

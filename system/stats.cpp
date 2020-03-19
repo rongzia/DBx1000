@@ -8,7 +8,7 @@
 void Stats_thd::init(uint64_t thd_id) {
 	clear();
 	all_debug1 = (uint64_t *)
-		_mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);
+		_mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);    //! MAX_TXN_PER_PART == 100000
 	all_debug2 = (uint64_t *)
 		_mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);
 }
@@ -54,7 +54,7 @@ void Stats::init() {
 	deadlock = 0;
 	cycle_detect = 0;
 }
-
+//! 为成员变量分配空间
 void Stats::init(uint64_t thread_id) {
 	if (!STATS_ENABLE) 
 		return;

@@ -14,6 +14,10 @@ class index_base;
 class Timestamp;
 class Mvcc;
 
+//! workload 基类，tables (表名和table指针集各)，indexes（表名对应的索引）
+//! 操作包括初始化 表空间、初始化表（包括填充表格里的数据）
+//! 插入行等
+//! get_txn_man
 // this is the base class for all workload
 class workload
 {

@@ -7,8 +7,8 @@ class base_query;
 
 class thread_t {
 public:
-	uint64_t _thd_id;
-	workload * _wl;
+	uint64_t _thd_id;   //! from 0 to g_thread_cnt
+	workload * _wl;     //!
 
 	uint64_t 	get_thd_id();
 
@@ -26,13 +26,15 @@ public:
 private:
 	uint64_t 	_host_cid;
 	uint64_t 	_cur_cid;
-	ts_t 		_curr_ts;
+	ts_t 		_curr_ts;      //! 当前时间戳
+    //! 获取下一个时间戳
 	ts_t 		get_next_ts();
 
 	RC	 		runTest(txn_man * txn);
 	drand48_data buffer;
 
 	// A restart buffer for aborted txns.
+	//! 用于事务回滚
 	struct AbortBufferEntry	{
 		ts_t ready_time;
 		base_query * query;

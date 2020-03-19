@@ -25,9 +25,10 @@ void Manager::init() {
 		pthread_mutex_init( &mutexes[i], NULL );
 }
 
+//! 获取时间戳
 uint64_t 
 Manager::get_ts(uint64_t thread_id) {
-	if (g_ts_batch_alloc)
+	if (g_ts_batch_alloc)   //! false
 		assert(g_ts_alloc == TS_CAS);
 	uint64_t time;
 	uint64_t starttime = get_sys_clock();
@@ -56,6 +57,7 @@ Manager::get_ts(uint64_t thread_id) {
 	default :
 		assert(false);
 	}
+	//! 此次分配时间的函数，花了多少时间
 	INC_STATS(thread_id, time_ts_alloc, get_sys_clock() - starttime);
 	return time;
 }

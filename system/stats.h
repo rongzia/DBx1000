@@ -42,7 +42,7 @@ public:
 class Stats {
 public:
 	// PER THREAD statistics
-	Stats_thd ** _stats;
+	Stats_thd ** _stats;    //! 数组大小等于线程数
 	// stats are first written to tmp_stats, if the txn successfully commits, 
 	// copy the values in tmp_stats to _stats
 	Stats_tmp ** tmp_stats;

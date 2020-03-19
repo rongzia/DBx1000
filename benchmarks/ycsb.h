@@ -14,11 +14,13 @@ public :
 	RC init_table();
 	RC init_schema(string schema_file);
 	RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd);
+    //! 数据是分区的，每个区间的 key 都是 0-g_synth_table_size / g_part_cnt，单调增，返回 key 在哪个区间
 	int key_to_part(uint64_t key);
 	INDEX * the_index;
 	table_t * the_table;
 private:
 	void init_table_parallel();
+    //! 初始化单个区间
 	void * init_table_slice();
 	static void * threadInitTable(void * This) {
 		((ycsb_wl *)This)->init_table_slice(); 

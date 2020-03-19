@@ -13,11 +13,12 @@
 #include "mem_alloc.h"
 #include "test.h"
 
+//! thd_id = 0...3
 void thread_t::init(uint64_t thd_id, workload * workload) {
 	_thd_id = thd_id;
 	_wl = workload;
 	srand48_r((_thd_id + 1) * get_sys_clock(), &buffer);
-	_abort_buffer_size = ABORT_BUFFER_SIZE;
+	_abort_buffer_size = ABORT_BUFFER_SIZE;                         //! 10
 	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64); 
 	for (int i = 0; i < _abort_buffer_size; i++)
 		_abort_buffer[i].query = NULL;
@@ -201,11 +202,11 @@ RC thread_t::run() {
 	assert(false);
 }
 
-
+//! 获取下一个时间戳
 ts_t
 thread_t::get_next_ts() {
-	if (g_ts_batch_alloc) {
-		if (_curr_ts % g_ts_batch_num == 0) {
+	if (g_ts_batch_alloc) {     //! false
+		if (_curr_ts % g_ts_batch_num == 0) {   //! g_ts_batch_num = 1
 			_curr_ts = glob_manager->get_ts(get_thd_id());
 			_curr_ts ++;
 		} else {

@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
 
 	for (uint32_t i = 0; i < thd_cnt; i++) 
 		m_thds[i]->init(i, m_wl);
+	//! 至此，应该有 g_thread_cnt 个线程调用了 pthread_barrier_wait()
 
 	if (WARMUP > 0){
 		printf("WARMUP start!\n");

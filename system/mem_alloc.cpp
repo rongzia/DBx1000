@@ -19,6 +19,7 @@ void mem_alloc::init(uint64_t part_cnt, uint64_t bytes_per_part) {
 	}
 }
 
+//! size = 32, 64, 256, 1024... 同一线程内，这几种 size 的链表共享一个 arena_id。
 void 
 Arena::init(int arena_id, int size) {
 	_buffer = NULL;
@@ -28,6 +29,10 @@ Arena::init(int arena_id, int size) {
 	_block_size = size;
 }
 
+//! TODO，还是有点疑问，分配时并没有用到 _head, f但是 free 用到了，不会错乱吗
+//! 从 _arenas[i][j] 中分配一个块
+//! _arenas[i][j] 先申请 40960 * _block_size 的大空间，然后分配给需要的 block
+//! _head 这里并没有用到，只是每次判断空间够不够，够的话直接从 _buffer 头分配给block, 相应的 _buffer 指针后移，_block_size 减小
 void *
 Arena::alloc() {
 	FreeBlock * block;
@@ -49,6 +54,7 @@ Arena::alloc() {
 	return (void *) ((char *)block + sizeof(FreeBlock));
 }
 
+
 void
 Arena::free(void * ptr) {
 	FreeBlock * block = (FreeBlock *)((UInt64)ptr - sizeof(FreeBlock));
@@ -56,6 +62,7 @@ Arena::free(void * ptr) {
 	_head = block;
 }
 
+//! 初始化 _arenas, 并行数由 g_init_parallelism、g_thread_cnt 中大的那个决定
 void mem_alloc::init_thread_arena() {
 	UInt32 buf_cnt = g_thread_cnt;
 	if (buf_cnt < g_init_parallelism)

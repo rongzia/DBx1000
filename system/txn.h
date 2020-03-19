@@ -35,13 +35,14 @@ public:
 
 };
 
+//! 在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
 class txn_man
 {
 public:
 	virtual void init(thread_t * h_thd, workload * h_wl, uint64_t part_id);
 	void release();
-	thread_t * h_thd;
-	workload * h_wl;
+	thread_t * h_thd;       //! 线程 id, 0...3
+	workload * h_wl;        //! 属于哪个 wl
 	myrand * mrand;
 	uint64_t abort_cnt;
 
