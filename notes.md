@@ -52,10 +52,11 @@ init_table_slice() 首先会调用 mem_allocator.register_thread(i) 去注册该
 既然是根据线程来并行，可是 mem_alloc 桶的数量 _bucket_cnt 设置成了 g_init_parallelism * 4 + 1，且和 init_thread_arena初始化的 _arenas 数量又不对应，这就很奇怪。
 
 ## query
+ycsb_request 单个请求，记录查询的主键、类型、value(char)
+ycsb_query : base_query	一个 query 包含多个请求：ycsb_request requests[16]。主要生成请求 gen_requests()，还有提供zipf分布的随机数。  
+Query_thd	各线程，线程总数为全局 g_thread_cnt，包含一个查询数组: ycsb_query * queries;（该数组很大，约为100004）  
 Query_queue	查询主线程，包含一个 Query_thd 队列：Query_thd ** all_queries，除了初始化和 get 下一个 query，没什么特别的。  
-Query_thd 各线程，线程总数为全局 g_thread_cnt，包含一个查询数组: ycsb_query * queries;  
-ycsb_query : base_query	一个 query 包含多个请求：ycsb_request * requests。主要生成请求 gen_requests，还有提供zipf分布的随机数。  
-> TODO：gen_requests()  
+
 
 ## wl, workload
 该模块主要就是根据 txt里的表信息，来构建 schema（catalog），同时加载数据。  

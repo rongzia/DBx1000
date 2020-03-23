@@ -97,7 +97,7 @@ protected:
 private:
 	// insert rows
 	uint64_t 		insert_cnt;
-	row_t * 		insert_rows[MAX_ROW_PER_TXN];
+	row_t * 		insert_rows[MAX_ROW_PER_TXN];   //! 64
 	txnid_t 		txn_id;
 	ts_t 			timestamp;
 

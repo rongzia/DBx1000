@@ -60,7 +60,8 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 	if (uz < 1 + pow(0.5, theta)) return 2;
 	return 1 + (uint64_t)(n * pow(eta*u -eta + 1, alpha));
 }
-
+//! thd_id = 1, 2, 3...
+//! 为某个线程的 queries[i] 生成请求（16 个 requests），保证每个 request 的 primary 没有冲突，若 primary 有冲突，则 queries[i][16] 可能没有完全设置
 void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 #if CC_ALG == HSTORE
 	assert(g_virtual_part_cnt == g_part_cnt);
@@ -70,9 +71,13 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 	part_num = 0;
 	double r = 0;
 	int64_t rint64 = 0;
-	drand48_r(&_query_thd->buffer, &r);
-	lrand48_r(&_query_thd->buffer, &rint64);
+	drand48_r(&_query_thd->buffer, &r);         //! 产生 [0.0, 1.0) 之间的随机数
+	lrand48_r(&_query_thd->buffer, &rint64);    //! [0, 2^31)
 	if (r < g_perc_multi_part) { //! g_perc_multi_part == 1
+	    //! 该 for 语句应该是填充 part_to_access，该数组长度为 g_part_per_txn
+	    //! part_to_access[0] = thd_id % g_virtual_part_cnt
+	    //! part_to_access[i](i > 0) 随机，且不超过 g_virtual_part_cnt
+	    //! 并且各 part_to_access[i] 互不相等
 		for (UInt32 i = 0; i < g_part_per_txn; i++) {                       //! g_part_per_txn == 1
 			if (i == 0 && FIRST_PART_LOCAL)
 				part_to_access[part_num] = thd_id % g_virtual_part_cnt;     //! g_virtual_part_cnt == 1
@@ -94,22 +99,26 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			part_to_access[0] = rint64 % g_part_cnt;
 	}
 
+	//! now, part_num == g_part_per_txn == 1
+	//! part_to_access[0] == 0 or 1
+
 	int rid = 0;
 	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		       //! g_req_per_query == 16
 		double r;
 		drand48_r(&_query_thd->buffer, &r);
 		ycsb_request * req = &requests[rid];
+		//! 设置 读、写、查询 比例，读 0.9， 写 0.1，剩下的为查询（0.0）
 		if (r < g_read_perc) {  //! g_read_perc == 0.9
 			req->rtype = RD;
 		} else if (r >= g_read_perc && r <= g_write_perc + g_read_perc) {
 			req->rtype = WR;
 		} else {
 			req->rtype = SCAN;
-			req->scan_len = SCAN_LEN;
+			req->scan_len = SCAN_LEN;   //! SCAN_LEN == 20
 		}
 
 		// the request will access part_id.
-		uint64_t ith = tmp * part_num / g_req_per_query;
+		uint64_t ith = tmp * part_num / g_req_per_query;    //! 0
 		uint64_t part_id = 
 			part_to_access[ ith ];
 		uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
@@ -121,6 +130,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 		lrand48_r(&_query_thd->buffer, &rint64);
 		req->value = rint64 % (1<<8);
 		// Make sure a single row is not accessed twice
+		//! 任何操作的主键都不能一样，scan 查询的范围里，primary 也不能有任何重叠，access_cnt 记录去重后的 all_keys.size()
 		if (req->rtype == RD || req->rtype == WR) {
 			if (all_keys.find(req->key) == all_keys.end()) {
 				all_keys.insert(req->key);
