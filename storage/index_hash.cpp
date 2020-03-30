@@ -37,7 +37,9 @@ IndexHash::release_latch(BucketHeader * bucket) {
 	assert(ok);
 }
 
-	
+
+//! 应该是每个 BucketHeader 存放多个 BucketNode，每添加一个 item 进 BucketHeader，就放到 BucketNode 链表的末端
+//! 但是由于 BucketHeader 太大，每次进来的 key 只能映射到空的 BucketHeader里（即该 BucketHeader 里的 BucketNode 节点数为零）
 RC IndexHash::index_insert(idx_key_t key, itemid_t * item, int part_id) {
 	RC rc = RCOK;
 	uint64_t bkt_idx = hash(key);
@@ -90,6 +92,8 @@ void BucketHeader::init() {
 	locked = false;
 }
 
+//! 当 key 不存在重复时，每次都放到链表的末端
+//! key 重叠时，对 item_t->next 做处理
 void BucketHeader::insert_item(idx_key_t key, 
 		itemid_t * item, 
 		int part_id) 

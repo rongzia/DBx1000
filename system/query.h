@@ -33,6 +33,11 @@ public:
 // TODO we assume a separate task queue for each thread in order to avoid 
 // contention in a centralized query queue. In reality, more sofisticated 
 // queue model might be implemented.
+//! 查询队列，all_queries[g_thread_cnt] 为每个线程都提供了一个查询队列，
+//! 每个队列里有 MAX_TXN_PER_PART(100000) 个左右的 query, 每个 query 有 小于等于 16 个 request
+//! request 是最小操作单位，有类型(读、写、查询，读写请求单个 row, 查询会请求多个主键连续的 row）、primary、value等
+//! 每个 query 里的 requests 是按抓紧排序的
+//! 每个线程的 all_queries[thd_id] 里的query 是乱序的，因为 query 里的 requests's primary 是 zipf 随机生成的
 class Query_queue {
 public:
 	void init(workload * h_wl);

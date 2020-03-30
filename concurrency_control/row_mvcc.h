@@ -19,9 +19,10 @@ struct WriteHisEntry {
 struct ReqEntry {
 	bool valid;
 	TsType type; // P_REQ or R_REQ
-	ts_t ts;
-	txn_man * txn;
-	ts_t time;
+	ts_t ts;        //! 当前事务开始时间
+	txn_man * txn;  //! 当前事务
+	ts_t time;      //! 分配出该 ReqEntry 的时间戳
+	//! 两个时间戳并不一样，ts 是全局从 0 递增的，time 是 get_sys_clock()
 };
 
 

@@ -61,6 +61,7 @@ extern OptCC occ_man;
 extern VLLMan vll_man;
 #endif
 
+//! wl 加载完成，所有数据都加载到内存里了
 extern bool volatile warmup_finish;
 extern bool volatile enable_thread_mem_pool;
 extern pthread_barrier_t warmup_bar;

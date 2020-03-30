@@ -19,7 +19,9 @@ enum TxnType {VLL_Blocked, VLL_Free};
 class Access {
 public:
 	access_t 	type;
-	row_t * 	orig_row;
+	row_t * 	orig_row;   //! 事务开始前，从索引里读出来的 row_t
+	//! 事务开始后，txn_man::get_row() -> row_t::get_row() -> Row_mvcc::access() 读出来的 row_t。
+	//! 可能是指向当前 row_t，也可能指向新分配的 row_t(待写入)，也可能是指向的一个旧版本
 	row_t * 	data;
 	row_t * 	orig_data;
 	void cleanup();
@@ -35,7 +37,7 @@ public:
 
 };
 
-//! 在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
+//! 每个线程持有一个，在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
 class txn_man
 {
 public:
@@ -44,7 +46,7 @@ public:
 	thread_t * h_thd;       //! 线程 id, 0...3
 	workload * h_wl;        //! 属于哪个 wl
 	myrand * mrand;
-	uint64_t abort_cnt;
+	uint64_t abort_cnt;     //! 事务失败的次数，thread::run() 中用到
 
 	virtual RC 		run_txn(base_query * m_query) = 0;
 	uint64_t 		get_thd_id();
@@ -52,6 +54,7 @@ public:
 	void 			set_txn_id(txnid_t txn_id);
 	txnid_t 		get_txn_id();
 
+	//! 设置事务开始时间戳
 	void 			set_ts(ts_t timestamp);
 	ts_t 			get_ts();
 
@@ -99,7 +102,7 @@ private:
 	uint64_t 		insert_cnt;
 	row_t * 		insert_rows[MAX_ROW_PER_TXN];   //! 64
 	txnid_t 		txn_id;
-	ts_t 			timestamp;
+	ts_t 			timestamp;                      //! 事务开始时间戳
 
 	bool _write_copy_ptr;
 #if CC_ALG == TICTOC || CC_ALG == SILO

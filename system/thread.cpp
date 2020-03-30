@@ -18,12 +18,12 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 	_thd_id = thd_id;
 	_wl = workload;
 	srand48_r((_thd_id + 1) * get_sys_clock(), &buffer);
-	_abort_buffer_size = ABORT_BUFFER_SIZE;                         //! 10
+	_abort_buffer_size = ABORT_BUFFER_SIZE;                                 //! 10
 	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64); 
 	for (int i = 0; i < _abort_buffer_size; i++)
 		_abort_buffer[i].query = NULL;
-	_abort_buffer_empty_slots = _abort_buffer_size;
-	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");
+	_abort_buffer_empty_slots = _abort_buffer_size;                         //! 10
+	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     //! true
 }
 
 uint64_t thread_t::get_thd_id() { return _thd_id; }
@@ -32,6 +32,17 @@ void thread_t::set_host_cid(uint64_t cid) { _host_cid = cid; }
 uint64_t thread_t::get_cur_cid() { return _cur_cid; }
 void thread_t::set_cur_cid(uint64_t cid) {_cur_cid = cid; }
 
+//! 这是每个线程的主要工作，执行事务操作，里面包含了一个无限循环，除非到达种植条件，否则事务一直执行。
+//! 循环之前给每个线程分配一个事务空间（在后面循环里重复使用）
+//! 一个循环流程如下：
+//! 1. 给这个事务附上一个 m_query，分配事务 id(thd_id, thd_id+4, thd_id+8, ...)，rc = RCOK, m_txn->abort_cnt = 0;
+//! 2. 执行 query, rc = m_txn->run_txn(m_query);
+//! 3.1 若 rc = ABORT，根据 _abort_buffer_enable == false，睡眠一段时间，下次仍然执行这个 m_query;
+//!                        _abort_buffer_enable == true，m_query 放到 buffer 里，并设置下次的执行时间，
+//! 3.2 rc = RCOK, txn_cnt
+
+//! 3.1 后，进入下次循环，m_txn->abort_cnt = 0; 事务的 abort 计数永远置为 0 ,rc 同时也置为 RCOK。
+//! 且
 RC thread_t::run() {
 #if !NOGRAPHITE
 	_thd_id = CarbonGetTileId();
@@ -59,21 +70,26 @@ RC thread_t::run() {
 
 	while (true) {
 		ts_t starttime = get_sys_clock();
+		//! 该 if 选出一个 m_query
 		if (WORKLOAD != TEST) {
-			int trial = 0;
+			int trial = 0;  //! 从下面的代码来看，trial 并没有用，永远为 0
 			if (_abort_buffer_enable) {
 				m_query = NULL;
 				while (trial < 2) {
 					ts_t curr_time = get_sys_clock();
 					ts_t min_ready_time = UINT64_MAX;
+					//! 有上次 abort 的 query
 					if (_abort_buffer_empty_slots < _abort_buffer_size) {
+					    //! 从 _abort_buffer 挑出合适的 query，但并不一定成功
 						for (int i = 0; i < _abort_buffer_size; i++) {
 							if (_abort_buffer[i].query != NULL && curr_time > _abort_buffer[i].ready_time) {
 								m_query = _abort_buffer[i].query;
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
 								break;
-							} else if (_abort_buffer_empty_slots == 0 
+							}
+							//! 当_abort_buffer 满时，提升 query 被选中的几率
+							else if (_abort_buffer_empty_slots == 0
 									  && _abort_buffer[i].ready_time < min_ready_time) 
 								min_ready_time = _abort_buffer[i].ready_time;
 						}
@@ -92,7 +108,10 @@ RC thread_t::run() {
 					if (m_query != NULL)
 						break;
 				}
-			} else {
+			}
+			//! _abort_buffer_enable  == false
+			else {
+			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
 				if (rc == RCOK)
 					m_query = query_queue->get_next_query( _thd_id );
 			}
@@ -102,13 +121,15 @@ RC thread_t::run() {
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);
 //#endif
+        //! 事务 id 按线程划分，假设当前线程为 1 、总线程数为4，则事务 id 为 1, 5, 9...
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
 				|| CC_ALG == MVCC 
 				|| CC_ALG == HEKATON
-				|| CC_ALG == TIMESTAMP) 
+				|| CC_ALG == TIMESTAMP)
+		    //! 记录事务开始时间
 			m_txn->set_ts(get_next_ts());
 
 		rc = RCOK;
@@ -121,6 +142,7 @@ RC thread_t::run() {
 #elif CC_ALG == VLL
 		vll_man.vllMainLoop(m_txn, m_query);
 #elif CC_ALG == MVCC || CC_ALG == HEKATON
+		//! 全局数组 all_ts 记录该事务的开始时间
 		glob_manager->add_ts(get_thd_id(), m_txn->get_ts());
 #elif CC_ALG == OCC
 		// In the original OCC paper, start_ts only reads the current ts without advancing it.
@@ -146,7 +168,7 @@ RC thread_t::run() {
 		}
 		if (rc == Abort) {
 			uint64_t penalty = 0;
-			if (ABORT_PENALTY != 0)  {
+			if (ABORT_PENALTY != 0)  {  //! ABORT_PENALTY == 100000
 				double r;
 				drand48_r(&buffer, &r);
 				penalty = r * ABORT_PENALTY;
@@ -182,6 +204,7 @@ RC thread_t::run() {
 			m_txn->abort_cnt ++;
 		}
 
+		//! warmup_finish == true, 在 m_wl->init() 后，该值就为 true
 		if (rc == FINISH)
 			return rc;
 		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) 
@@ -190,11 +213,14 @@ RC thread_t::run() {
 			return FINISH;
 		}
 
+		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程
 		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
 	    }
+
+		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 	    if (_wl->sim_done) {
    		    return FINISH;
    		}

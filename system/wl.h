@@ -32,7 +32,10 @@ public:
 	virtual RC init_schema(string schema_file);
 	virtual RC init_table()=0;
 	virtual RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd)=0;
-	
+
+	//! 标志模拟是否完成，即事务是否执行完指定的数量。
+	//! 存在的疑问：在 thread_t::run() 最后，sim_done 为所有线程共享数据，
+	//! 是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 	bool sim_done;
 protected:
 	void index_insert(string index_name, uint64_t key, row_t * row);

@@ -60,8 +60,10 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 	if (uz < 1 + pow(0.5, theta)) return 2;
 	return 1 + (uint64_t)(n * pow(eta*u -eta + 1, alpha));
 }
-//! thd_id = 1, 2, 3...
-//! 为某个线程的 queries[i] 生成请求（16 个 requests），保证每个 request 的 primary 没有冲突，若 primary 有冲突，则 queries[i][16] 可能没有完全设置
+//! thd_id = 0, 1, 2, 3...
+//! 为某个线程的 queries[i] 生成请求（16 个 requests），保证每个 request 的 primary 没有冲突
+//! ，若 primary 有冲突，则 queries[i][16] 可能没有完全设置，即该 query 内 request 可能不足 16，数量由 ycsb_query::request_cnt 记录。
+//! 最后返回的 queries[thd_id][request_cnt] 是按 row_t 里主键排好序的，scan 类型的只按第一个row_t 主键排序
 void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 #if CC_ALG == HSTORE
 	assert(g_virtual_part_cnt == g_part_cnt);
@@ -74,7 +76,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 	drand48_r(&_query_thd->buffer, &r);         //! 产生 [0.0, 1.0) 之间的随机数
 	lrand48_r(&_query_thd->buffer, &rint64);    //! [0, 2^31)
 	if (r < g_perc_multi_part) { //! g_perc_multi_part == 1
-	    //! 该 for 语句应该是填充 part_to_access，该数组长度为 g_part_per_txn
+	    //! 该 for 语句应该是填充 part_to_access，该数组长度为 g_part_per_txn(1)
 	    //! part_to_access[0] = thd_id % g_virtual_part_cnt
 	    //! part_to_access[i](i > 0) 随机，且不超过 g_virtual_part_cnt
 	    //! 并且各 part_to_access[i] 互不相等

@@ -147,7 +147,7 @@ void * ycsb_wl::init_table_slice() {
 	}
 	return NULL;
 }
-
+//! h_thd = 0, 1, 2, 3
 RC ycsb_wl::get_txn_man(txn_man *& txn_manager, thread_t * h_thd){
 	txn_manager = (ycsb_txn_man *)
 		_mm_malloc( sizeof(ycsb_txn_man), 64 );

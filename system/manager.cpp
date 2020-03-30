@@ -32,7 +32,7 @@ Manager::get_ts(uint64_t thread_id) {
 		assert(g_ts_alloc == TS_CAS);
 	uint64_t time;
 	uint64_t starttime = get_sys_clock();
-	switch(g_ts_alloc) {
+	switch(g_ts_alloc) {        //! TS_ALLOC == TS_CAS
 	case TS_MUTEX :
 		pthread_mutex_lock( &ts_mutex );
 		time = ++(*timestamp);
@@ -62,6 +62,8 @@ Manager::get_ts(uint64_t thread_id) {
 	return time;
 }
 
+//! all_ts 数组记录了每个线程里当前事务的开始时间，
+//! 该函数选出所有线程中，最先开始的事务的开始时间
 ts_t Manager::get_min_ts(uint64_t tid) {
 	uint64_t now = get_sys_clock();
 	uint64_t last_time = _last_min_ts_time; 

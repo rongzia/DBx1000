@@ -34,10 +34,12 @@ void Row_mvcc::init(row_t * row) {
 	pthread_mutex_init(latch, NULL);
 }
 
+//! 从 _requests 中选出一个空的 ReqEntry，并给该 ReqEntry 赋上相应的数据
 void Row_mvcc::buffer_req(TsType type, txn_man * txn, bool served)
 {
 	uint32_t access_num = 1;
 	while (true) {
+	    //! for 语句从 _requests 中选出一个空的，若有空的则返回，没有则将 _requests 链表扩展长度
 		for (uint32_t i = 0; i < _req_len; i++) {
 			// TODO No need to keep all read history.
 			// in some sense, only need to keep the served read request with the max ts.
@@ -53,11 +55,14 @@ void Row_mvcc::buffer_req(TsType type, txn_man * txn, bool served)
 		}
 		assert(access_num == 1);
 		double_list(1);
-		access_num ++;
+		access_num ++;      //! access_num 控制 _requests 链表长度不会无限增长，目前只能增长一次（assert(access_num == 1)）
 	}
 }
 
-
+//! 将原来的 _write_history 或 _requests 链表扩展成双倍的长度，
+//! 扩展后原来的部分不变，后面一半为空
+//! 即在原来的链表基础上，在后面增加相同长度的空链表
+//! list == 0 or 1，0 表示对 _write_history 扩展，1 表示对 _requests 扩展
 void 
 Row_mvcc::double_list(uint32_t list)
 {
@@ -99,9 +104,10 @@ RC Row_mvcc::access(txn_man * txn, TsType type, row_t * row) {
 	RC rc = RCOK;
 	ts_t ts = txn->get_ts();
 uint64_t t1 = get_sys_clock();
-	if (g_central_man)
+	if (g_central_man)      //! g_central_man == false
 		glob_manager->lock_row(_row);
 	else
+	    //! 等待获取 row 上的锁，即其他涉及该 row 的事务结束
 		while (!ATOM_CAS(blatch, false, true))
 			PAUSE
 		//pthread_mutex_lock( latch );
@@ -120,25 +126,32 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		if (ts < _oldest_wts)
 			// the version was already recycled... This should be very rare
 			rc = Abort;
+		//! 时间戳大于最近写时间戳
 		else if (ts > _latest_wts) {
 			if (_exists_prewrite && _prewrite_ts < ts)
 			{
+			    //! 之前的写没有完成
 				// exists a pending prewrite request before the current read. should wait.
 				rc = WAIT;
 				buffer_req(R_REQ, txn, false);
 				txn->ts_ready = false;
-			} else { 
+			} else {
+			    //! 读最新的 row
 				// should just read
 				rc = RCOK;
 				txn->cur_row = _latest_row;
 				if (ts > _max_served_rts)
 					_max_served_rts = ts;
 			}
-		} else {
+		}
+		//! 时间戳大于最老写时间戳，小于最近写时间戳
+		else {
 			rc = RCOK;
 			// ts is between _oldest_wts and _latest_wts, should find the correct version
 			uint32_t the_ts = 0;
 		   	uint32_t the_i = _his_len;
+		   	//! 这个 for 找出 _write_history 中 (valid && max(_write_history[i].ts ) 的 WriteHisEntry
+		   	//! 且这个 WriteHisEntry 满足：_oldest_wts < WriteHisEntry.ts < 当前事务 ts < _latest_wts
 	   		for (uint32_t i = 0; i < _his_len; i++) {
 		   		if (_write_history[i].valid 
 					&& _write_history[i].ts < ts 
@@ -196,12 +209,18 @@ INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 	return rc;
 }
 
+
+//! 从 _write_history 中分配一个 WriteHisEntry，
+//! 该 WriteHisEntry 满足 valid == false && reserved == false，且尽可能 WriteHisEntry.row != NULL(为了避免额外申请内存的操作)
+//! in : ts 为当前事务的开始时间
+//! out : WriteHisEntry.row，预留给后面的写操作。（该 WriteHisEntry's valid == false && reserved == true ）
 row_t *
 Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 {
 	assert(!_exists_prewrite);
 	
 	// Garbage Collection
+	//! 所有已经开始事务的最先开始的时间
 	ts_t min_ts = glob_manager->get_min_ts(txn->get_thd_id());
 	if (_oldest_wts < min_ts && 
 		_num_versions == _his_len)
@@ -252,6 +271,8 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	uint32_t idx = _his_len;
 	// _write_history is not full, find an unused entry for P_REQ.
 	if (_num_versions < _his_len) {
+	    //! 尽量挑 valid == true && reserved == true && row != NULL
+	    //! 实在不行就挑最后一个 valid == true && reserved == true
 		for (uint32_t i = 0; i < _his_len; i++) {
 			if (!_write_history[i].valid 
 				&& !_write_history[i].reserved 
@@ -317,6 +338,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 	ts_t ts = txn->get_ts();
 	// figure out the ts for the next pending P_REQ
 	ts_t next_pre_ts = UINT64_MAX ;
+	//! 找出时间最老的 非读请求，记录到 next_pre_ts 里
 	for (uint32_t i = 0; i < _req_len; i++)	
 		if (_requests[i].valid && _requests[i].type == P_REQ
 			&& _requests[i].ts > ts

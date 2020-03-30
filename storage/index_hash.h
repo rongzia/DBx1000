@@ -53,7 +53,7 @@ private:
 	// TODO implement more complex hash function
 	uint64_t hash(idx_key_t key) {	return key % _bucket_cnt_per_part; }
 	
-	BucketHeader ** 	_buckets;
-	uint64_t	 		_bucket_cnt;
-	uint64_t 			_bucket_cnt_per_part;
+	BucketHeader ** 	_buckets;               //! part_cnt 个桶，每个桶内 _bucket_cnt_per_part 个节点
+	uint64_t	 		_bucket_cnt;            //! table size * 2, 见 workload::init_schema()
+	uint64_t 			_bucket_cnt_per_part;   //! _bucket_cnt / part_cnt, 由于 part_cnt==1, 所以  _bucket_cnt_per_part == _bucket_cnt
 };

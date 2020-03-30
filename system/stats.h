@@ -1,5 +1,6 @@
 #pragma once 
 
+//! 每个线程持有
 class Stats_thd {
 public:
 	void init(uint64_t thd_id);
@@ -14,8 +15,8 @@ public:
 	double time_wait;
 	double time_abort;
 	double time_cleanup;
-	uint64_t time_ts_alloc;
-	double time_query;
+	uint64_t time_ts_alloc;     //! 获取时间戳的耗时
+	double time_query;          //! 为每个 txn 生成 m_query 的时间
 	uint64_t wait_cnt;
 	uint64_t debug1;
 	uint64_t debug2;

@@ -19,6 +19,7 @@ OptCC occ_man;
 VLLMan vll_man;
 #endif 
 
+//! wl 加载完成，所有数据都加载到内存里了
 bool volatile warmup_finish = false;
 bool volatile enable_thread_mem_pool = false;
 pthread_barrier_t warmup_bar;
