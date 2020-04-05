@@ -21,14 +21,15 @@ int main(int argc, char* argv[])
 {
 	parser(argc, argv);
 	
-	mem_allocator.init(g_part_cnt, MEM_SIZE / g_part_cnt); 
+//	mem_allocator.init(g_part_cnt, MEM_SIZE / g_part_cnt);
 	stats.init();
-	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);
+//	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);
+	glob_manager = new Manager();
 	glob_manager->init();
-	if (g_cc_alg == DL_DETECT) {
+//	if (g_cc_alg == DL_DETECT) {
 //		dl_detector.init();
-    }
-	printf("mem_allocator initialized!\n");
+//    }
+//	printf("mem_allocator initialized!\n");
 	workload * m_wl;
 	switch (WORKLOAD) {
 		case YCSB :

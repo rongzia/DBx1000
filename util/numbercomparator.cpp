@@ -5,7 +5,7 @@
 #include "no_destructor.h"
 #include "leveldb/slice.h"
 
-namespace leveldb {
+namespace dbx1000 {
     NumberComparatorImpl::NumberComparatorImpl() {}
 
     const char *NumberComparatorImpl::Name() const {
@@ -25,7 +25,7 @@ namespace leveldb {
     void NumberComparatorImpl::FindShortSuccessor(std::string *key) const {}
 
     const leveldb::Comparator *NumberComparator() {
-        static leveldb::NoDestructor<NumberComparatorImpl> singleton;
+        static dbx1000::NoDestructor<NumberComparatorImpl> singleton;
         return singleton.get();
     }
 

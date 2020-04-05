@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <map>
-//#include "stdint.h"
 #include <unistd.h>
 #include <cstddef>
 #include <cstdlib>
@@ -11,11 +10,9 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-//#include <string.h>
 #include <typeinfo>
 #include <list>
 #include <mm_malloc.h>
-//#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -52,7 +49,7 @@ typedef uint64_t ts_t; // time stamp type
 /******************************************/
 // Global Data Structure 
 /******************************************/
-extern mem_alloc mem_allocator;
+//extern mem_alloc mem_allocator;
 extern Stats stats;
 //extern DL_detect dl_detector;
 extern Manager * glob_manager;

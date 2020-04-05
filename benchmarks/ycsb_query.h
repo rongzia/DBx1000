@@ -1,9 +1,10 @@
 #ifndef _YCSB_QUERY_H_
 #define _YCSB_QUERY_H_
 
+#include "query.h"
+
 #include "global.h"
 #include "helper.h"
-#include "query.h"
 
 class workload;
 class Query_thd;

@@ -8,7 +8,7 @@
 #include "ycsb.h"
 #include "table.h"
 #include "catalog.h"
-#include "numbercomparator.h"
+#include "util/numbercomparator.h"
 
 void Test_wl() {
     leveldb::DB *db;
@@ -21,7 +21,7 @@ void Test_wl() {
     } else {
         leveldb::Options options;
         options.create_if_missing = true;
-        options.comparator = leveldb::NumberComparator();
+        options.comparator = dbx1000::NumberComparator();
         leveldb::Status status = leveldb::DB::Open(options, "/home/zhangrongrong/leveldb", &db);
         assert(status.ok());
     }

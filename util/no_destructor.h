@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace leveldb {
+namespace dbx1000 {
 
 // Wraps an instance whose destructor is never called.
 //
@@ -43,6 +43,6 @@ namespace leveldb {
                 instance_storage_;
     };
 
-}  // namespace leveldb
+}  // namespace dbx1000
 
 #endif  // STORAGE_LEVELDB_UTIL_NO_DESTRUCTOR_H_

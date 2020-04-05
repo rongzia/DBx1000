@@ -5,13 +5,13 @@
 #include "row.h"
 #include "table.h"
 #include "index_hash.h"
-#include "index_btree.h"
+//#include "index_btree.h"
 #include "catalog.h"
 #include "mem_alloc.h"
 
 #include "arena.h"
 #include "leveldb/db.h"
-#include "numbercomparator.h"
+#include "util/numbercomparator.h"
 
 workload::workload(){
     cout << "workload::workload()" << endl;
@@ -36,7 +36,7 @@ RC workload::init() {
     leveldb::DB *db;
     leveldb::Options options;
     options.create_if_missing = true;
-    options.comparator = leveldb::NumberComparator();
+    options.comparator = dbx1000::NumberComparator();
     leveldb::Status status = leveldb::DB::Open(options, "/home/zhangrongrong/leveldb", &db);
     assert(status.ok());
     db_.reset(db);
@@ -153,7 +153,7 @@ void workload::index_insert(INDEX *index, uint64_t key, row_t *row, int64_t part
         pid = get_part_id(row);
 //    itemid_t *m_item =
 //            (itemid_t *) mem_allocator.alloc(sizeof(itemid_t), pid);
-    itemid_t *m_item = new (arenas_[key / (g_synth_table_size / g_init_parallelism)]->Allocate(sizeof(itemid_t))) itemid_t;
+    itemid_t *m_item = new (arenas_[key / (g_synth_table_size / g_init_parallelism)]->Allocate(sizeof(itemid_t))) itemid_t();
     m_item->init();
     m_item->type = DT_row;
     m_item->location = row;

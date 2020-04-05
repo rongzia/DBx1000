@@ -2,8 +2,6 @@
 
 #include <map>
 #include <vector>
-#include "global.h"
-#include "helper.h"
 
 //! 对列的描述，除了初始化，没有其他操作
 class Column {

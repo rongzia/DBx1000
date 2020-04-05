@@ -4,16 +4,15 @@
 #include "wl.h"
 #include "ycsb.h"
 #include "table.h"
+#include "arena.h"
 
 uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;
 
 void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	_query_thd = query_thd;
-	requests = (ycsb_request *) 
-		mem_allocator.alloc(sizeof(ycsb_request) * g_req_per_query, thd_id);    //! g_req_per_query == 16
-	part_to_access = (uint64_t *) 
-		mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thd_id);         //! g_part_per_txn == 1
+	requests = new (query_thd->GetArena()->Allocate(sizeof(ycsb_request) * g_req_per_query)) ycsb_request();
+	part_to_access = (uint64_t *) query_thd->GetArena()->Allocate(sizeof(uint64_t) * g_part_per_txn);        //! g_part_per_txn == 1
 	zeta_2_theta = zeta(2, g_zipf_theta);   //! 1.65975
 	assert(the_n != 0);
 	assert(denom != 0);

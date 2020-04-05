@@ -1,6 +1,5 @@
 #pragma once 
 
-#include "global.h"
 #include "helper.h"
 #include "index_base.h"
 

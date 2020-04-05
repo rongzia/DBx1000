@@ -105,10 +105,12 @@ void txn_man::cleanup(RC rc) {
 			row_t * row = insert_rows[i];
 			assert(g_part_alloc == false);
 #if CC_ALG != HSTORE && CC_ALG != OCC
-			mem_allocator.free(row->manager, 0);
+//			mem_allocator.free(row->manager, 0);
+			std::free(row->manager);
 #endif
 			row->free_row();
-			mem_allocator.free(row, sizeof(row));
+//			mem_allocator.free(row, sizeof(row));
+			std::free(row);
 		}
 	}
 	row_cnt = 0;
@@ -234,7 +236,10 @@ RC txn_man::finish(RC rc) {
 
 void
 txn_man::release() {
-	for (int i = 0; i < num_accesses_alloc; i++)
-		mem_allocator.free(accesses[i], 0);
-	mem_allocator.free(accesses, 0);
+	for (int i = 0; i < num_accesses_alloc; i++) {
+//        mem_allocator.free(accesses[i], 0);
+        std::free(accesses[i]);
+    }
+//	mem_allocator.free(accesses, 0);
+	std::free(accesses);
 }

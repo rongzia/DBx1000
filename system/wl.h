@@ -2,8 +2,6 @@
 
 #include <memory>
 #include "global.h"
-//#include "arena.h"
-//#include "leveldb/db.h"
 
 class row_t;
 class table_t;

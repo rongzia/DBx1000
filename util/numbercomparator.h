@@ -6,10 +6,8 @@
 #define DBX1000_NUMBERCOMPARATOR_H
 
 #include "leveldb/comparator.h"
-//#include "leveldb/slice.h"
-//#include "no_destructor.h"
 
-namespace leveldb {
+namespace dbx1000 {
     class Slice;
 
     class NumberComparatorImpl : public leveldb::Comparator {

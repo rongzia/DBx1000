@@ -2,10 +2,11 @@
 #define _SYNTH_BM_H_
 
 #include <atomic>
-#include "wl.h"
-#include "txn.h"
 #include "global.h"
 #include "helper.h"
+
+#include "wl.h"
+#include "txn.h"
 
 class ycsb_query;
 

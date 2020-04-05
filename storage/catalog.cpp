@@ -1,6 +1,5 @@
+#include <cassert>
 #include "catalog.h"
-#include "global.h"
-#include "helper.h"
 
 void 
 Catalog::init(std::string table_name, int field_cnt) {

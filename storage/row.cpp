@@ -27,13 +27,15 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
 	this->table = host_table;
 	Catalog * schema = host_table->get_schema();
 	int tuple_size = schema->get_tuple_size();
-	data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
+//	data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
+	data = new char[tuple_size];
 	return RCOK;
 }
 void 
 row_t::init(int size) 
 {
-	data = (char *) _mm_malloc(size, 64);
+//	data = (char *) _mm_malloc(size, 64);
+	data = new char[size];
 }
 
 RC 
@@ -48,7 +50,7 @@ void row_t::init_manager(row_t * row) {
 #elif CC_ALG == TIMESTAMP
     manager = (Row_ts *) mem_allocator.alloc(sizeof(Row_ts), _part_id);
 #elif CC_ALG == MVCC
-    manager = (Row_mvcc *) _mm_malloc(sizeof(Row_mvcc), 64);
+    manager = new Row_mvcc();
 #elif CC_ALG == HEKATON
     manager = (Row_hekaton *) _mm_malloc(sizeof(Row_hekaton), 64);
 #elif CC_ALG == OCC
@@ -96,7 +98,7 @@ void row_t::set_value(int id, void * ptr, int size) {
 	memcpy( &data[pos], ptr, size);
 }
 
-void row_t::set_value(const char * col_name, void * ptr) {
+void row_t::set_value(std::string col_name, void * ptr) {
 	uint64_t id = get_schema()->get_field_id(col_name);
 	set_value(id, ptr);
 }
@@ -118,7 +120,7 @@ char * row_t::get_value(int id) {
 	return &data[pos];
 }
 
-char * row_t::get_value(char * col_name) {
+char * row_t::get_value(std::string col_name) {
 	uint64_t pos = get_schema()->get_field_index(col_name);
 	return &data[pos];
 }
@@ -134,7 +136,7 @@ void row_t::copy(row_t * src) {
 }
 
 void row_t::free_row() {
-	free(data);
+	std::free(data);
 }
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {

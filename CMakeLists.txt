@@ -11,12 +11,13 @@ add_definitions(-DNOGRAPHITE=1)
 
 # include header files
 include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${PROJECT_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/benchmarks/ ${PROJECT_SOURCE_DIR}/concurrency_control/ ${PROJECT_SOURCE_DIR}/storage/ ${PROJECT_SOURCE_DIR}/system/)
 # lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 #file(GLOB_RECURSE SRC_FILES benchmarks/*.cpp concurrency_control/*.cpp storage/*.cpp system/*.cpp config.cpp)
 set(SRC_FILES
-        ${PROJECT_SOURCE_DIR}/benchmarks/numbercomparator.cpp
+        util/numbercomparator.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_wl.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_query.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_txn.cpp
@@ -47,7 +48,7 @@ target_link_libraries(rundb  libleveldb.a libsnappy.a libjemalloc.so libpthread.
 add_definitions(-DCACHING_FACILITY)
 #add_definitions(-DCREATE_LEVELDB)
 set(WL_FILES
-        ${PROJECT_SOURCE_DIR}/benchmarks/numbercomparator.cpp
+        util/numbercomparator.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_txn.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_query.cpp
         ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_wl.cpp

@@ -8,7 +8,7 @@
 #include "table.h"
 #include "row.h"
 #include "index_hash.h"
-#include "index_btree.h"
+//#include "index_btree.h"
 #include "catalog.h"
 #include "manager.h"
 //#include "row_lock.h"
@@ -18,6 +18,7 @@
 #include "query.h"
 
 #include "leveldb/db.h"
+#include "../util/profiler.h"
 
 std::atomic<int> ycsb_wl::next_tid;
 
@@ -52,7 +53,12 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
+    std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
+    profiler->Start();
+
     init_table_parallel();
+    profiler->End();
+    std::cout << "workload Init Time : " << profiler->Millis() << " Millis" << std::endl;
     return RCOK;
 }
 

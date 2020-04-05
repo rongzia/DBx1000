@@ -23,14 +23,14 @@
 class table_t;
 class Catalog;
 class txn_man;
-class Row_lock;
 class Row_mvcc;
-class Row_hekaton;
-class Row_ts;
-class Row_occ;
-class Row_tictoc;
-class Row_silo;
-class Row_vll;
+//class Row_lock;
+//class Row_hekaton;
+//class Row_ts;
+//class Row_occ;
+//class Row_tictoc;
+//class Row_silo;
+//class Row_vll;
 
 class row_t
 {
@@ -57,9 +57,9 @@ public:
 
 	void set_value(int id, void * ptr);
 	void set_value(int id, void * ptr, int size);
-	void set_value(const char * col_name, void * ptr);
+	void set_value(std::string col_name, void * ptr);
 	char * get_value(int id);
-	char * get_value(char * col_name);
+	char * get_value(std::string col_name);
 	
 	DECL_SET_VALUE(uint64_t);
 	DECL_SET_VALUE(int64_t);

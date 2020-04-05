@@ -1,14 +1,14 @@
 #include "global.h"
 #include "mem_alloc.h"
 #include "stats.h"
-//#include "dl_detect.h"
 #include "manager.h"
 #include "query.h"
+//#include "dl_detect.h"
 //#include "plock.h"
 //#include "occ.h"
 //#include "vll.h"
 
-mem_alloc mem_allocator;
+//mem_alloc mem_allocator;
 Stats stats;
 //DL_detect dl_detector;
 Manager * glob_manager;
