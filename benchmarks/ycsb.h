@@ -1,6 +1,7 @@
 #ifndef _SYNTH_BM_H_
 #define _SYNTH_BM_H_
 
+#include <atomic>
 #include "wl.h"
 #include "txn.h"
 #include "global.h"
@@ -10,6 +11,8 @@ class ycsb_query;
 
 class ycsb_wl : public workload {
 public :
+    ycsb_wl();
+    virtual ~ycsb_wl();
 	RC init();
 	RC init_table();
 	RC init_schema(string schema_file);
@@ -28,7 +31,8 @@ private:
 	}
 	pthread_mutex_t insert_lock;
 	//  For parallel initialization
-	static int next_tid;
+//	static int next_tid;
+	static std::atomic<int> next_tid;
 };
 
 class ycsb_txn_man : public txn_man
@@ -39,6 +43,7 @@ public:
 private:
 	uint64_t row_cnt;
 	ycsb_wl * _wl;
+
 };
 
 #endif

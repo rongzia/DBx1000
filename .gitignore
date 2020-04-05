@@ -2,3 +2,4 @@
 *.d
 **/.idea/
 **/cmake-build-debug/
+**/build/
