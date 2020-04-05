@@ -80,13 +80,13 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 	    //! part_to_access[0] = thd_id % g_virtual_part_cnt
 	    //! part_to_access[i](i > 0) 随机，且不超过 g_virtual_part_cnt
 	    //! 并且各 part_to_access[i] 互不相等
-		for (UInt32 i = 0; i < g_part_per_txn; i++) {                       //! g_part_per_txn == 1
+		for (uint32_t i = 0; i < g_part_per_txn; i++) {                       //! g_part_per_txn == 1
 			if (i == 0 && FIRST_PART_LOCAL)
 				part_to_access[part_num] = thd_id % g_virtual_part_cnt;     //! g_virtual_part_cnt == 1
 			else {
 				part_to_access[part_num] = rint64 % g_virtual_part_cnt;
 			}
-			UInt32 j;
+			uint32_t j;
 			for (j = 0; j < part_num; j++) 
 				if ( part_to_access[part_num] == part_to_access[j] )
 					break;
@@ -105,7 +105,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 	//! part_to_access[0] == 0 or 1
 
 	int rid = 0;
-	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		       //! g_req_per_query == 16
+	for (uint32_t tmp = 0; tmp < g_req_per_query; tmp ++) {		       //! g_req_per_query == 16
 		double r;
 		drand48_r(&_query_thd->buffer, &r);
 		ycsb_request * req = &requests[rid];
@@ -140,7 +140,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			} else continue;
 		} else {
 			bool conflict = false;
-			for (UInt32 i = 0; i < req->scan_len; i++) {
+			for (uint32_t i = 0; i < req->scan_len; i++) {
 				primary_key = (row_id + i) * g_part_cnt + part_id;
 				if (all_keys.find( primary_key )
 					!= all_keys.end())
@@ -148,7 +148,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			}
 			if (conflict) continue;
 			else {
-				for (UInt32 i = 0; i < req->scan_len; i++)
+				for (uint32_t i = 0; i < req->scan_len; i++)
 					all_keys.insert( (row_id + i) * g_part_cnt + part_id);
 				access_cnt += SCAN_LEN;
 			}
@@ -166,7 +166,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 					requests[j] = requests[j + 1];
 					requests[j + 1] = tmp;
 				}
-		for (UInt32 i = 0; i < request_cnt - 1; i++)
+		for (uint32_t i = 0; i < request_cnt - 1; i++)
 			assert(requests[i].key < requests[i + 1].key);
 	}
 

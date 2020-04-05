@@ -124,7 +124,7 @@ void BucketHeader::insert_item(idx_key_t key,
 	}
 }
 
-void BucketHeader::read_item(idx_key_t key, itemid_t * &item, const char * tname) 
+void BucketHeader::read_item(idx_key_t key, itemid_t * &item, std::string tname)
 {
 	BucketNode * cur_node = first_node;
 	while (cur_node != NULL) {

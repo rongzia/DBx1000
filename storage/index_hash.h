@@ -26,7 +26,7 @@ class BucketHeader {
 public:
 	void init();
 	void insert_item(idx_key_t key, itemid_t * item, int part_id);
-	void read_item(idx_key_t key, itemid_t * &item, const char * tname);
+	void read_item(idx_key_t key, itemid_t * &item, std::string tname);
 	BucketNode * 	first_node;
 	uint64_t 		node_cnt;
 	bool 			locked;

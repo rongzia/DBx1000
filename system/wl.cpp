@@ -54,7 +54,6 @@ RC workload::init_schema(string schema_file) {
     while (getline(fin, line)) {
         if (line.compare(0, 6, "TABLE=") == 0) {
 			std::string tname = std::string(&line[6], line.size() - 6);
-//            tname = &line[6];
             getline(fin, line);
             int col_count = 0;
             // Read all fields for this table.
@@ -63,7 +62,7 @@ RC workload::init_schema(string schema_file) {
                 lines.push_back(line);
                 getline(fin, line);
             }
-            schema->init(tname.c_str(), lines.size());
+            schema->init(tname, lines.size());
             for (uint32_t i = 0; i < lines.size(); i++) {
                 string line = lines[i];
                 size_t pos = 0;
@@ -94,10 +93,11 @@ RC workload::init_schema(string schema_file) {
                     elem_num++;
                 }
                 assert(elem_num == 3);
-                schema->add_col((char *) name.c_str(), size, (char *) type.c_str());
+                schema->add_col(name, size, type);
                 col_count++;
             }
-            table_t *cur_tab = (table_t *) _mm_malloc(sizeof(table_t), CL_SIZE);
+//            table_t *cur_tab = (table_t *) _mm_malloc(sizeof(table_t), CL_SIZE);
+            table_t *cur_tab = new table_t();
             cur_tab->init(schema);
             tables[tname] = cur_tab;
         } else if (!line.compare(0, 6, "INDEX=")) {

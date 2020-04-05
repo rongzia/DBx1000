@@ -25,8 +25,8 @@ private:
 	void 		return_entry(LockEntry * entry);
 	row_t * _row;
     lock_t lock_type;
-    UInt32 owner_cnt;
-    UInt32 waiter_cnt;
+    uint32_t owner_cnt;
+    uint32_t waiter_cnt;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 

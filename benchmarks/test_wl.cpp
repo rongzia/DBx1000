@@ -61,7 +61,7 @@ void TestWorkload::summarize() {
 	if (g_test_case == CONFLICT) {
 		assert(curr_time - time > g_thread_cnt * 1e9);
 		int total_wait_cnt = 0;
-		for (UInt32 tid = 0; tid < g_thread_cnt; tid ++) {
+		for (uint32_t tid = 0; tid < g_thread_cnt; tid ++) {
 			total_wait_cnt += stats._stats[tid]->wait_cnt;
 		}
 		printf("CONFLICT TEST. PASSED.\n");

@@ -101,7 +101,7 @@ void txn_man::cleanup(RC rc) {
 	}
 
 	if (rc == Abort) {
-		for (UInt32 i = 0; i < insert_cnt; i ++) {
+		for (uint32_t i = 0; i < insert_cnt; i ++) {
 			row_t * row = insert_rows[i];
 			assert(g_part_alloc == false);
 #if CC_ALG != HSTORE && CC_ALG != OCC

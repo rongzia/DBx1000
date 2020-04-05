@@ -2,7 +2,8 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <stdint.h>
+#include <cstdint>
+
 #include "global.h"
 
 
@@ -105,16 +106,16 @@
 #define ARR_PTR_MULTI(type, name, size, scale) \
 	name = new type * [size]; \
 	if (g_part_alloc || THREAD_ALLOC) { \
-		for (UInt32 i = 0; i < size; i ++) {\
-			UInt32 padsize = sizeof(type) * (scale); \
+		for (uint32_t i = 0; i < size; i ++) {\
+			uint32_t padsize = sizeof(type) * (scale); \
 			if (g_mem_pad && padsize % CL_SIZE != 0) \
 				padsize += CL_SIZE - padsize % CL_SIZE; \
 			name[i] = (type *) mem_allocator.alloc(padsize, i); \
-			for (UInt32 j = 0; j < scale; j++) \
+			for (uint32_t j = 0; j < scale; j++) \
 				new (&name[i][j]) type(); \
 		}\
 	} else { \
-		for (UInt32 i = 0; i < size; i++) \
+		for (uint32_t i = 0; i < size; i++) \
 			name[i] = new type[scale]; \
 	}
 
@@ -124,7 +125,7 @@
 #define ARR_PTR_INIT(type, name, size, value) \
 	name = new type * [size]; \
 	if (g_part_alloc) { \
-		for (UInt32 i = 0; i < size; i ++) {\
+		for (uint32_t i = 0; i < size; i ++) {\
 			int padsize = sizeof(type); \
 			if (g_mem_pad && padsize % CL_SIZE != 0) \
 				padsize += CL_SIZE - padsize % CL_SIZE; \
@@ -132,9 +133,9 @@
 			new (name[i]) type(); \
 		}\
 	} else \
-		for (UInt32 i = 0; i < size; i++) \
+		for (uint32_t i = 0; i < size; i++) \
 			name[i] = new type; \
-	for (UInt32 i = 0; i < size; i++) \
+	for (uint32_t i = 0; i < size; i++) \
 		*name[i] = value; \
 
 enum Data_type {DT_table, DT_page, DT_row };

@@ -34,7 +34,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 		//! finish_req、iteration 是为 req->rtype==SCAN 准备的，扫描需要读 SCAN_LEN 个 item，
 		//! while 虽然为 SCAN 提供了 SCAN_LEN 次读，但是每次请求的 key 是一样的，并没有对操作 [key, key + SCAN_LEN]
 		bool finish_req = false;
-		UInt32 iteration = 0;
+		uint32_t iteration = 0;
 		while ( !finish_req ) {
 			if (iteration == 0) {
 				m_item = index_read(_wl->the_index, req->key, part_id);

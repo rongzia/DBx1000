@@ -25,8 +25,9 @@ int main(int argc, char* argv[])
 	stats.init();
 	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);
 	glob_manager->init();
-	if (g_cc_alg == DL_DETECT) 
-		dl_detector.init();
+	if (g_cc_alg == DL_DETECT) {
+//		dl_detector.init();
+    }
 	printf("mem_allocator initialized!\n");
 	workload * m_wl;
 	switch (WORKLOAD) {

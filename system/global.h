@@ -1,6 +1,9 @@
 #pragma once 
 
-#include "stdint.h"
+#include <cstdint>
+#include <string>
+#include <map>
+//#include "stdint.h"
 #include <unistd.h>
 #include <cstddef>
 #include <cstdlib>
@@ -8,16 +11,16 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include <string.h>
+//#include <string.h>
 #include <typeinfo>
 #include <list>
 #include <mm_malloc.h>
-#include <map>
+//#include <map>
 #include <set>
 #include <string>
 #include <vector>
 #include <sstream>
-#include <time.h> 
+#include <time.h>
 #include <sys/time.h>
 #include <math.h>
 
@@ -33,17 +36,17 @@ using namespace std;
 
 class mem_alloc;
 class Stats;
-class DL_detect;
+//class DL_detect;
 class Manager;
 class Query_queue;
 class Plock;
 class OptCC;
 class VLLMan;
 
-typedef uint32_t UInt32;
-typedef int32_t SInt32;
-typedef uint64_t UInt64;
-typedef int64_t SInt64;
+//typedef uint32_t UInt32;
+//typedef int32_t SInt32;
+//typedef uint64_t UInt64;
+//typedef int64_t SInt64;
 
 typedef uint64_t ts_t; // time stamp type
 
@@ -52,7 +55,7 @@ typedef uint64_t ts_t; // time stamp type
 /******************************************/
 extern mem_alloc mem_allocator;
 extern Stats stats;
-extern DL_detect dl_detector;
+//extern DL_detect dl_detector;
 extern Manager * glob_manager;
 extern Query_queue * query_queue;
 extern Plock part_lock_man;
@@ -75,41 +78,41 @@ extern carbon_barrier_t enable_barrier;
 extern bool g_part_alloc;
 extern bool g_mem_pad;
 extern bool g_prt_lat_distr;
-extern UInt32 g_part_cnt;
-extern UInt32 g_virtual_part_cnt;
-extern UInt32 g_thread_cnt;
+extern uint32_t g_part_cnt;
+extern uint32_t g_virtual_part_cnt;
+extern uint32_t g_thread_cnt;
 extern ts_t g_abort_penalty; 
 extern bool g_central_man;
-extern UInt32 g_ts_alloc;
+extern uint32_t g_ts_alloc;
 extern bool g_key_order;
 extern bool g_no_dl;
 extern ts_t g_timeout;
 extern ts_t g_dl_loop_detect;
 extern bool g_ts_batch_alloc;
-extern UInt32 g_ts_batch_num;
+extern uint32_t g_ts_batch_num;
 
 extern map<string, string> g_params;
 
 // YCSB
-extern UInt32 g_cc_alg;
+extern uint32_t g_cc_alg;
 extern ts_t g_query_intvl;
-extern UInt32 g_part_per_txn;
+extern uint32_t g_part_per_txn;
 extern double g_perc_multi_part;
 extern double g_read_perc;
 extern double g_write_perc;
 extern double g_zipf_theta;
-extern UInt64 g_synth_table_size;
-extern UInt32 g_req_per_query;
-extern UInt32 g_field_per_tuple;
-extern UInt32 g_init_parallelism;
+extern uint64_t g_synth_table_size;
+extern uint32_t g_req_per_query;
+extern uint32_t g_field_per_tuple;
+extern uint32_t g_init_parallelism;
 
 // TPCC
-extern UInt32 g_num_wh;
+extern uint32_t g_num_wh;
 extern double g_perc_payment;
 extern bool g_wh_update;
 extern char * output_file;
-extern UInt32 g_max_items;
-extern UInt32 g_cust_per_dist;
+extern uint32_t g_max_items;
+extern uint32_t g_cust_per_dist;
 
 enum RC { RCOK, Commit, Abort, WAIT, ERROR, FINISH};
 

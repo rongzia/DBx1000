@@ -66,7 +66,7 @@ RC thread_t::run() {
 
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
-	UInt64 txn_cnt = 0;
+	uint64_t txn_cnt = 0;
 
 	while (true) {
 		ts_t starttime = get_sys_clock();

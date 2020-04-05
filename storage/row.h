@@ -42,12 +42,12 @@ public:
 	// not every row has a manager
 	void init_manager(row_t * row);
 
-	table_t * get_table();
-	Catalog * get_schema();
-	const char * get_table_name();
-	uint64_t get_field_cnt();
-	uint64_t get_tuple_size();
-	uint64_t get_row_id() { return _row_id; };
+	table_t *   get_table();
+	Catalog *   get_schema();
+	std::string get_table_name();
+	uint64_t    get_field_cnt();
+	uint64_t    get_tuple_size();
+	uint64_t    get_row_id() { return _row_id; };
 
 	void copy(row_t * src);
 
@@ -64,14 +64,14 @@ public:
 	DECL_SET_VALUE(uint64_t);
 	DECL_SET_VALUE(int64_t);
 	DECL_SET_VALUE(double);
-	DECL_SET_VALUE(UInt32);
-	DECL_SET_VALUE(SInt32);
+	DECL_SET_VALUE(uint32_t);
+	DECL_SET_VALUE(int32_t);
 
 	DECL_GET_VALUE(uint64_t);
 	DECL_GET_VALUE(int64_t);
 	DECL_GET_VALUE(double);
-	DECL_GET_VALUE(UInt32);
-	DECL_GET_VALUE(SInt32);
+	DECL_GET_VALUE(uint32_t);
+	DECL_GET_VALUE(int32_t);
 
 
 	void set_data(char * data, uint64_t size);

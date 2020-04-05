@@ -42,7 +42,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	else 
 		assert(lock_type == LOCK_NONE);
 	LockEntry * en = owners;
-	UInt32 cnt = 0;
+	uint32_t cnt = 0;
 	while (en) {
 		assert(en->txn->get_thd_id() != txn->get_thd_id());
 		cnt ++;

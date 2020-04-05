@@ -333,7 +333,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 //	r_no->set_value(NO_D_ID, d_id);
 //	r_no->set_value(NO_W_ID, w_id);
 //	insert_row(r_no, _wl->t_neworder);
-	for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+	for (uint32_t ol_number = 0; ol_number < ol_cnt; ol_number++) {
 
 		uint64_t ol_i_id = query->items[ol_number].ol_i_id;
 		uint64_t ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
@@ -386,7 +386,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		}
 		
 		// XXX s_dist_xx are not retrieved.
-		UInt64 s_quantity;
+		uint64_t s_quantity;
 		int64_t s_remote_cnt;
 		s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
 #if !TPCC_SMALL
