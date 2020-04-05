@@ -4,8 +4,8 @@
 #include "wl.h"
 #include "table.h"
 #include "ycsb_query.h"
-#include "tpcc_query.h"
-#include "tpcc_helper.h"
+//#include "tpcc_query.h"
+//#include "tpcc_helper.h"
 
 /*************************************************/
 //     class Query_queue

@@ -1,20 +1,20 @@
 #include "global.h"
 #include "mem_alloc.h"
 #include "stats.h"
-#include "dl_detect.h"
+//#include "dl_detect.h"
 #include "manager.h"
 #include "query.h"
-#include "plock.h"
-#include "occ.h"
-#include "vll.h"
+//#include "plock.h"
+//#include "occ.h"
+//#include "vll.h"
 
 mem_alloc mem_allocator;
 Stats stats;
 //DL_detect dl_detector;
 Manager * glob_manager;
 Query_queue * query_queue;
-Plock part_lock_man;
-OptCC occ_man;
+//Plock part_lock_man;
+//OptCC occ_man;
 #if CC_ALG == VLL
 VLLMan vll_man;
 #endif 
