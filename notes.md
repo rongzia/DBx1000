@@ -1,16 +1,53 @@
-## main.cpp:
+几个主要模块：  
+wl、query、txn、index、schame、concurrency_control(row_mvcc)、mem_alloc
+
+wl 是负载模块，包含一个 index map、和一个 table map，ycsb_wl 是 wl 的一个派生类。  
+该模块从文件中读取数据库的表的描述，并初始化内存中的索引、数据，ycsb 数据是 kv 键值对，key 从 0 自增，value 初始化成相同的值。  
+
+query 负载生成查询队列，ycsb_request 结构体描述了查询类型（读、写、扫描）。
+
+txn 各线程事务的基类，通过 run_txn 从 query 中取出一个请求执行。
+
+row_mvcc 绑定到 row_t 结构体，每个row 都有一个 mvcc 对象管理当前 row 的并发访问。
+
+mem_alloc，用于系统里批量结构体的内存管理，像 wl 中的索引，每个 kv 都要分配一个 Node 来管理；query 中的 ycsb_request 等；这些结构体需要大量使用，频繁使用系统的 new(或者 malloc) 函数容易造成内存碎片等，通过mem_alloc 先分配一个大的内存块，在给调用者使用。  
+> 但是 dbx1000 里的这个 mem_alloc 有点问题，它默认最终还是使用的 malloc 来频繁向操作系统申请内存。后面我用 leveldb 里的 Arena 来替换了这个模块，但是使用时要注意并发访问的问题，因为 leveldb::Arena 并没有对多线程优化。
+
+各模块的耦合度：
+
 ```
-	// 内存管理器初始化，g_part_cnt 为数据的分区数
-	mem_allocator.init(g_part_cnt : 1, MEM_SIZE / g_part_cnt
-	// 初始化 glob_manager
-	glob_manager->init();
-	// 初始化 workload
-	m_wl->init();
-	// 为 thread_t *m_thds 分配空间。
-	// 初始化 query_queue
-		query_queue->init(m_wl
-```	
-	
+class wl{
+private:	map<string, index_hash *> 	indexes;
+			map<string, table_t *> 		tables;
+}
+table_t: 	Catalog 		*schema;
+
+Catalog：	Column * 		_columns;
+
+IndexHash:	
+```
+wl 包含一组 index 和 table_t 对象，table_t 通过 Catalog 来描述表的信息，Catalog 是一系列"列"的集合。  
+
+IndexHash 包含了一个二维数组：BucketHeader _buckets[part_cnt][_bucket_cnt_per_part];   
+part_cnt 是数据分区个数，_bucket_cnt_per_part 是每个分区内的数据量，满足 part_cnt * _bucket_cnt_per_part == 表的行数。  
+BucketHeader 管理一组链表，节点由 BucketNode 描述。  
+这么来说，假设行数为 1000，分区数 10，要存下这些数据，_buckets 完全够用，即 BucketHeader 链表长度始终为 1 即可，直接用 BucketNode _buckets[part_cnt][_bucket_cnt_per_part]; 不是更合适，为什么要用 链表？  
+看 BucketHeader::insert_item() 代码，同一个 key 可能被多次写入，并不是直接覆盖之前的值，而是把同一个 key 的不同 row 用链表串起来，所以才用 BucketHeader。  
+> 但是后面 txn 并没有多次写入同一个 key, 写动作只是记录在了 mvcc 里面，并没有更新索引。
+
+```
+Query_queue:	Query_thd ** all_queries;	// 
+
+Query_thd:		ycsb_query * queries;
+
+ycsb_query：	ycsb_request * requests;
+```
+Query_queue 是全局的查询队列，all_queries 数组大小和事务线程数量一致，每个事务有一个 Query_thd 队列。
+
+ycsb_query 是一组 yscb 请求，每组请求有至多 16 个 ycsb_request。
+
+
+wl、mvcc 放到远程，query、txn 放在各个计算机点。
 	
 	
 	
@@ -21,7 +58,7 @@
 全局的时间戳管理、锁管理等。
 
 ## storage
-column、catalog、row、table、、、之间的关系：  
+column、catalog、row、table之间的关系：  
 column 是一个列的抽象包括在一行的第几个位置(id)，从一行的第多少字节开始(index),这一列占多少字节(size)，类型(type),名称(name)  
 catalog 则是一个表的抽象，包括对所有列的描述(_columns),每行数据的长度(tuple_size),列数(field_cnt)  
 table 包含了一个 catalog 指针，cur_tab_size表示该table内有所少行，还提供了 get_new_row(),来获取一个新的行。  

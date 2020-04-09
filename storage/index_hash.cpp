@@ -2,21 +2,28 @@
 #include "index_hash.h"
 #include "mem_alloc.h"
 #include "table.h"
+#include "arena.h"
+
+std::atomic_flag IndexHash::arena_lock_ = ATOMIC_FLAG_INIT;
 
 RC IndexHash::init(uint64_t bucket_cnt, int part_cnt) {
 	_bucket_cnt = bucket_cnt;
 	_bucket_cnt_per_part = bucket_cnt / part_cnt;
 	_buckets = new BucketHeader * [part_cnt];
 	for (int i = 0; i < part_cnt; i++) {
-		_buckets[i] = (BucketHeader *) _mm_malloc(sizeof(BucketHeader) * _bucket_cnt_per_part, 64);
+//		_buckets[i] = (BucketHeader *) _mm_malloc(sizeof(BucketHeader) * _bucket_cnt_per_part, 64);
+		_buckets[i] = new (arena_->Allocate(sizeof(BucketHeader)*_bucket_cnt_per_part))BucketHeader[_bucket_cnt_per_part]();
 		for (uint32_t n = 0; n < _bucket_cnt_per_part; n ++)
-			_buckets[i][n].init();
+			_buckets[i][n].init(this);
 	}
+//	cout << "addr of arena : " << std::addressof(arena_) << endl;
 	return RCOK;
 }
 
 RC 
 IndexHash::init(int part_cnt, table_t * table, uint64_t bucket_cnt) {
+    arena_ = new dbx1000::Arena();
+
 	init(bucket_cnt, part_cnt);
 	this->table = table;
 	return RCOK;
@@ -86,7 +93,9 @@ RC IndexHash::index_read(idx_key_t key, itemid_t * &item,
 
 /************** BucketHeader Operations ******************/
 
-void BucketHeader::init() {
+void BucketHeader::init(IndexHash *indexHash) {
+//	cout << "addr of arena : " << std::addressof(arena_) << endl;
+    indexHash_ = indexHash;
 	node_cnt = 0;
 	first_node = NULL;
 	locked = false;
@@ -106,10 +115,14 @@ void BucketHeader::insert_item(idx_key_t key,
 		prev_node = cur_node;
 		cur_node = cur_node->next;
 	}
-	if (cur_node == NULL) {		
-		BucketNode * new_node = (BucketNode *) 
-			mem_allocator.alloc(sizeof(BucketNode), part_id );
-		new_node->init(key);
+	if (cur_node == NULL) {
+//		BucketNode * new_node = (BucketNode *)
+//			mem_allocator.alloc(sizeof(BucketNode), part_id );
+//		new_node->init(key);
+        //! index 是多线程并发访问的，需要对 arena_ 并发控制
+		while (indexHash_->arena_lock_.test_and_set(std::memory_order_acquire));
+		BucketNode * new_node = new (indexHash_->arena_->Allocate(sizeof(BucketNode)))BucketNode(key);
+		indexHash_->arena_lock_.clear(std::memory_order_release);
 		new_node->items = item;
 		if (prev_node != NULL) {
 			new_node->next = prev_node->next;

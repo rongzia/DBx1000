@@ -118,8 +118,9 @@ RC workload::init_schema(string schema_file) {
             }
 
             string tname(items[0]);
-            INDEX *index = (INDEX *) _mm_malloc(sizeof(INDEX), 64);
-            new(index) INDEX();
+//            INDEX *index = (INDEX *) _mm_malloc(sizeof(INDEX), 64);
+//            new(index) INDEX();
+            INDEX *index = new INDEX();
             int part_cnt = (CENTRAL_INDEX) ? 1 : g_part_cnt;
             if (tname == "ITEM")
                 part_cnt = 1;

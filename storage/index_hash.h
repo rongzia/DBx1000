@@ -1,5 +1,6 @@
 #pragma once 
 
+#include <atomic>
 #include "helper.h"
 #include "index_base.h"
 
@@ -20,20 +21,28 @@ public:
 	itemid_t * 		items;
 };
 
+
+namespace dbx1000 {
+    class Arena;
+}
+class IndexHash;
 // BucketHeader does concurrency control of Hash
 class BucketHeader {
 public:
-	void init();
+//	void init();
+	void init(IndexHash *);
 	void insert_item(idx_key_t key, itemid_t * item, int part_id);
 	void read_item(idx_key_t key, itemid_t * &item, std::string tname);
 	BucketNode * 	first_node;
 	uint64_t 		node_cnt;
 	bool 			locked;
+	IndexHash       *indexHash_;
 };
 
 // TODO Hash index does not support partition yet.
 class IndexHash  : public index_base
 {
+
 public:
 	RC 			init(uint64_t bucket_cnt, int part_cnt);
 	RC 			init(int part_cnt, 
@@ -45,6 +54,7 @@ public:
 	RC	 		index_read(idx_key_t key, itemid_t * &item, int part_id=-1);	
 	RC	 		index_read(idx_key_t key, itemid_t * &item,
 							int part_id=-1, int thd_id=0);
+
 private:
 	void get_latch(BucketHeader * bucket);
 	void release_latch(BucketHeader * bucket);
@@ -55,4 +65,8 @@ private:
 	BucketHeader ** 	_buckets;               //! part_cnt 个桶，每个桶内 _bucket_cnt_per_part 个节点
 	uint64_t	 		_bucket_cnt;            //! table size * 2, 见 workload::init_schema()
 	uint64_t 			_bucket_cnt_per_part;   //! _bucket_cnt / part_cnt, 由于 part_cnt==1, 所以  _bucket_cnt_per_part == _bucket_cnt
+
+    dbx1000::Arena *    arena_;
+    static std::atomic_flag    arena_lock_;
+	friend class BucketHeader;
 };
