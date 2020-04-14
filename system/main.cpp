@@ -1,11 +1,12 @@
 #include "global.h"
-#include "ycsb.h"
+//#include "ycsb.h"
+#include "ycsb_query.h"
+#include "workload/ycsb_wl.h"
 //#include "tpcc.h"
 //#include "test.h"
 #include "thread.h"
 #include "manager.h"
-#include "mem_alloc.h"
-#include "query.h"
+//#include "query.h"
 //#include "plock.h"
 //#include "occ.h"
 //#include "vll.h"
@@ -23,7 +24,6 @@ int main(int argc, char* argv[])
 	
 //	mem_allocator.init(g_part_cnt, MEM_SIZE / g_part_cnt);
 	stats.init();
-//	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);
 	glob_manager = new Manager();
 	glob_manager->init();
 //	if (g_cc_alg == DL_DETECT) {
@@ -53,9 +53,9 @@ int main(int argc, char* argv[])
 		m_thds[i] = (thread_t *) _mm_malloc(sizeof(thread_t), 64);
 	// query_queue should be the last one to be initialized!!!
 	// because it collects txn latency
-	query_queue = (Query_queue *) _mm_malloc(sizeof(Query_queue), 64);
+	query_queue = new Query_queue();
 	if (WORKLOAD != TEST)
-		query_queue->init(m_wl);
+		query_queue->init();
 	pthread_barrier_init( &warmup_bar, NULL, g_thread_cnt );
 	printf("query_queue initialized!\n");
 #if CC_ALG == HSTORE
@@ -106,6 +106,10 @@ int main(int argc, char* argv[])
 	} else {
 //		((TestWorkload *)m_wl)->summarize();
 	}
+
+
+	delete m_wl;
+	delete query_queue;
 	return 0;
 }
 

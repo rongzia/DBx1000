@@ -1,5 +1,4 @@
 #include "global.h"
-#include "mem_alloc.h"
 #include "stats.h"
 #include "manager.h"
 #include "query.h"
@@ -8,6 +7,13 @@
 //#include "occ.h"
 //#include "vll.h"
 
+namespace dbx1000_cf {
+
+}
+
+namespace dbx1000_instance {
+
+}
 //mem_alloc mem_allocator;
 Stats stats;
 //DL_detect dl_detector;

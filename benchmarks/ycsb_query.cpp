@@ -1,26 +1,26 @@
-#include "query.h"
 #include "ycsb_query.h"
-#include "mem_alloc.h"
-#include "wl.h"
-#include "ycsb.h"
-#include "table.h"
-#include "arena.h"
+
+#include "util/arena.h"
+#include "util/make_unique.h"
 
 uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;
 
-void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
+void ycsb_query::init(int thread_id, Query_thd * query_thd) {
+    request_cnt = 0;
 	_query_thd = query_thd;
-	requests = new (query_thd->GetArena()->Allocate(sizeof(ycsb_request) * g_req_per_query)) ycsb_request();
-	part_to_access = (uint64_t *) query_thd->GetArena()->Allocate(sizeof(uint64_t) * g_part_per_txn);        //! g_part_per_txn == 1
+    requests = new (_query_thd->queryQueue_->arenas_[_query_thd->thread_id_]->Allocate(sizeof(ycsb_request) * g_req_per_query))
+            ycsb_request[g_req_per_query]();
+//	requests = new (query_thd->GetArena()->Allocate(sizeof(ycsb_request) * g_req_per_query)) ycsb_request();
+    part_to_access = new (_query_thd->queryQueue_->arenas_[_query_thd->thread_id_]->Allocate(sizeof(uint64_t) * g_req_per_query)) uint64_t;
+//	part_to_access = (uint64_t *) query_thd->GetArena()->Allocate(sizeof(uint64_t) * g_part_per_txn);        //! g_part_per_txn == 1
 	zeta_2_theta = zeta(2, g_zipf_theta);   //! 1.65975
 	assert(the_n != 0);
 	assert(denom != 0);
-	gen_requests(thd_id, h_wl);
+	gen_requests(_query_thd->thread_id_);
 }
 
-void 
-ycsb_query::calculateDenom()
+void ycsb_query::calculateDenom()
 {
 	assert(the_n == 0);
 	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
@@ -63,7 +63,7 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 //! 为某个线程的 queries[i] 生成请求（16 个 requests），保证每个 request 的 primary 没有冲突
 //! ，若 primary 有冲突，则 queries[i][16] 可能没有完全设置，即该 query 内 request 可能不足 16，数量由 ycsb_query::request_cnt 记录。
 //! 最后返回的 queries[thd_id][request_cnt] 是按 row_t 里主键排好序的，scan 类型的只按第一个row_t 主键排序
-void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
+void ycsb_query::gen_requests(int thd_id) {
 #if CC_ALG == HSTORE
 	assert(g_virtual_part_cnt == g_part_cnt);
 #endif

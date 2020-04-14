@@ -1,10 +1,11 @@
 #include "query.h"
-#include "ycsb.h"
+#include "ycsb_txn.h"
 #include "ycsb_query.h"
-
+//#include "workload/wl"
+#include "workload/ycsb_wl.h"
 #include "global.h"
 #include "helper.h"
-#include "wl.h"
+#include "workload/wl.h"
 #include "thread.h"
 
 #include "table.h"
@@ -12,11 +13,10 @@
 #include "index_hash.h"
 //#include "index_btree.h"
 #include "catalog.h"
-#include "manager.h"
+#include "system/manager.h"
 //#include "row_lock.h"
 //#include "row_ts.h"
 #include "row_mvcc.h"
-#include "mem_alloc.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -49,7 +49,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			}
 #endif
 			row_t * row = ((row_t *)m_item->location);
-			row_t * row_local; 
+			row_t * row_local;
 			access_t type = req->rtype;
 			
 			row_local = get_row(row, type);

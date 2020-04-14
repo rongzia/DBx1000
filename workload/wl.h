@@ -46,9 +46,7 @@ public:
 	//! 是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 	bool sim_done;
 	std::vector<std::unique_ptr<dbx1000::Arena>> arenas_;
-//	vector<dbx1000::Arena *> arenas_;
 	std::unique_ptr<leveldb::DB> db_;
-//	leveldb::DB *db;
 protected:
 	void index_insert(string index_name, uint64_t key, row_t * row);
 	void index_insert(INDEX * index, uint64_t key, row_t * row, int64_t part_id = -1);

@@ -1,5 +1,6 @@
 #include "wl.h"
 
+#include "make_unique.h"
 #include "global.h"
 #include "helper.h"
 #include "row.h"
@@ -7,7 +8,6 @@
 #include "index_hash.h"
 //#include "index_btree.h"
 #include "catalog.h"
-#include "mem_alloc.h"
 
 #include "arena.h"
 #include "leveldb/db.h"
@@ -18,16 +18,13 @@ workload::workload(){
 }
 workload::~workload(){
     cout << "workload::~workload()" << endl;
-//    for (int i = 0; i < g_init_parallelism; i++) {
-//        cout << "delete arenas[" << i << "]" << endl;
-//        delete arenas_[i];
-//    }
 }
 
 RC workload::init() {
     for (int i = 0; i < g_init_parallelism; i++) {
-        std::unique_ptr<dbx1000::Arena> arena(new dbx1000::Arena(i));
-        arenas_.emplace_back(std::move(arena));
+//        std::unique_ptr<dbx1000::Arena> arena(new dbx1000::Arena(i));
+//        arenas_.emplace_back(std::move(arena));
+        arenas_.emplace_back(dbx1000::make_unique<dbx1000::Arena>(i));
     }
 //    for (int i = 0; i < g_init_parallelism; i++) {
 //        arenas_.emplace_back(new dbx1000::Arena(i));
@@ -96,7 +93,6 @@ RC workload::init_schema(string schema_file) {
                 schema->add_col(name, size, type);
                 col_count++;
             }
-//            table_t *cur_tab = (table_t *) _mm_malloc(sizeof(table_t), CL_SIZE);
             table_t *cur_tab = new table_t();
             cur_tab->init(schema);
             tables[tname] = cur_tab;
@@ -118,8 +114,6 @@ RC workload::init_schema(string schema_file) {
             }
 
             string tname(items[0]);
-//            INDEX *index = (INDEX *) _mm_malloc(sizeof(INDEX), 64);
-//            new(index) INDEX();
             INDEX *index = new INDEX();
             int part_cnt = (CENTRAL_INDEX) ? 1 : g_part_cnt;
             if (tname == "ITEM")

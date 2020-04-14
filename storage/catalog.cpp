@@ -1,8 +1,7 @@
 #include <cassert>
 #include "catalog.h"
 
-void 
-Catalog::init(std::string table_name, int field_cnt) {
+void Catalog::init(std::string table_name, int field_cnt) {
 	this->table_name = table_name;
 	this->field_cnt = 0;
 	this->_columns = new Column [field_cnt];

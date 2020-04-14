@@ -1,8 +1,14 @@
 #pragma once 
 
 #include <atomic>
-#include "helper.h"
+#include <memory>
 #include "index_base.h"
+
+#include "helper.h"
+
+namespace dbx1000 {
+    class Arena;
+}
 
 //TODO make proper variables private
 // each BucketNode contains items sharing the same key
@@ -22,10 +28,8 @@ public:
 };
 
 
-namespace dbx1000 {
-    class Arena;
-}
 class IndexHash;
+
 // BucketHeader does concurrency control of Hash
 class BucketHeader {
 public:
@@ -66,7 +70,7 @@ private:
 	uint64_t	 		_bucket_cnt;            //! table size * 2, 见 workload::init_schema()
 	uint64_t 			_bucket_cnt_per_part;   //! _bucket_cnt / part_cnt, 由于 part_cnt==1, 所以  _bucket_cnt_per_part == _bucket_cnt
 
-    dbx1000::Arena *    arena_;
+    std::unique_ptr<dbx1000::Arena>    arena_;
     static std::atomic_flag    arena_lock_;
 	friend class BucketHeader;
 };

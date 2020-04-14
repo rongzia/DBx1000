@@ -1,12 +1,13 @@
-#include <mm_malloc.h>
-#include <string.h>
-#include "global.h"
+//#include <mm_malloc.h>
 
-#include "table.h"
-#include "catalog.h"
+#include <string.h>
 #include "row.h"
 
-#include "txn.h"
+#include "global.h"
+#include "table.h"
+#include "catalog.h"
+
+#include "txn/txn.h"
 
 #include "row_mvcc.h"
 //#include "row_lock.h"
@@ -17,8 +18,7 @@
 //#include "row_silo.h"
 //#include "row_vll.h"
 
-#include "mem_alloc.h"
-#include "manager.h"
+//#include "manager.h"
 
 RC 
 row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
@@ -27,14 +27,12 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
 	this->table = host_table;
 	Catalog * schema = host_table->get_schema();
 	int tuple_size = schema->get_tuple_size();
-//	data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
 	data = new char[tuple_size];
 	return RCOK;
 }
 void 
 row_t::init(int size) 
 {
-//	data = (char *) _mm_malloc(size, 64);
 	data = new char[size];
 }
 

@@ -1,24 +1,26 @@
+#include "ycsb_wl.h"
+
 #include <sched.h>
 #include <thread>
+
+#include "txn/ycsb_txn.h"
 #include "global.h"
 #include "helper.h"
-#include "ycsb.h"
-#include "wl.h"
+//#include "ycsb.h"
 #include "thread.h"
 #include "table.h"
 #include "row.h"
 #include "index_hash.h"
 //#include "index_btree.h"
 #include "catalog.h"
-#include "manager.h"
+#include "system/manager.h"
 //#include "row_lock.h"
 //#include "row_ts.h"
 #include "row_mvcc.h"
-#include "mem_alloc.h"
 #include "query.h"
 
 #include "leveldb/db.h"
-#include "../util/profiler.h"
+#include "profiler.h"
 
 std::atomic<int> ycsb_wl::next_tid;
 
@@ -33,7 +35,7 @@ ycsb_wl::~ycsb_wl(){
 RC ycsb_wl::init() {
 	workload::init();
 	next_tid = 0;
-    init_schema(std::string("/home/zhangrongrong/CLionProjects/DBx1000/benchmarks/YCSB_schema.txt"));
+    init_schema(std::string("/home/zhangrongrong/CLionProjects/DBx1000/workload/YCSB_schema.txt"));
 
 	init_table();
 	return RCOK;
@@ -66,7 +68,7 @@ RC ycsb_wl::init_table() {
 void ycsb_wl::init_table_parallel() {
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_init_parallelism; i++) {
-        v_thread.push_back(thread(threadInitTable, this));
+        v_thread.emplace_back(thread(threadInitTable, this));
     }
     for(int i = 0; i < g_init_parallelism; i++){
         v_thread[i].join();

@@ -1,6 +1,5 @@
 #include "global.h"
 #include "helper.h"
-#include "mem_alloc.h"
 #include "time.h"
 
 bool itemid_t::operator==(const itemid_t &other) const {

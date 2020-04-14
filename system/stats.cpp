@@ -1,7 +1,6 @@
 #include "global.h"
 #include "helper.h"
 #include "stats.h"
-#include "mem_alloc.h"
 
 #define BILLION 1000000000UL
 

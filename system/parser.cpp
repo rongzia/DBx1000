@@ -1,4 +1,5 @@
 #include "global.h"
+#include "config.h"
 #include "helper.h"
 
 void print_usage() {

@@ -1,9 +1,8 @@
 //#include "mvcc.h"
-#include "txn.h"
+#include "txn/txn.h"
 #include "row.h"
-#include "manager.h"
+#include "system/manager.h"
 #include "row_mvcc.h"
-#include "mem_alloc.h"
 #include <mm_malloc.h>
 
 #if CC_ALG == MVCC
@@ -66,6 +65,7 @@ void Row_mvcc::buffer_req(TsType type, txn_man * txn, bool served)
 void 
 Row_mvcc::double_list(uint32_t list)
 {
+    cout << "double_list" << endl;
 	if (list == 0) {
 		WriteHisEntry * temp = (WriteHisEntry *) _mm_malloc(sizeof(WriteHisEntry) * _his_len * 2, 64);
 		for (uint32_t i = 0; i < _his_len; i++) {
@@ -225,6 +225,7 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	if (_oldest_wts < min_ts && 
 		_num_versions == _his_len)
 	{
+//	    cout << "reserveRow()::debug1" << endl;
 		ts_t max_recycle_ts = 0;
 		ts_t idx = _his_len;
 		for (uint32_t i = 0; i < _his_len; i++) {

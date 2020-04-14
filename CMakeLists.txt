@@ -17,30 +17,28 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/benchmarks/ ${PR
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 #file(GLOB_RECURSE SRC_FILES benchmarks/*.cpp concurrency_control/*.cpp storage/*.cpp system/*.cpp config.cpp)
 set(SRC_FILES
+        benchmarks/query.cpp
+        benchmarks/ycsb_query.cpp
+        concurrency_control/row_mvcc.cpp
+        storage/catalog.cpp
+        storage/index_hash.cpp
+        storage/row.cpp
+        storage/table.cpp
+        system/global.cpp
+        system/helper.cpp
+        system/manager.cpp
+        system/parser.cpp
+        system/stats.cpp
+        system/thread.cpp
+        txn/txn.cpp
+        txn/ycsb_txn.cpp
+        util/arena.cpp
         util/numbercomparator.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_wl.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_query.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_txn.cpp
-        ${PROJECT_SOURCE_DIR}/concurrency_control/row_mvcc.cpp
-        ${PROJECT_SOURCE_DIR}/storage/catalog.cpp
-        ${PROJECT_SOURCE_DIR}/storage/index_hash.cpp
-        ${PROJECT_SOURCE_DIR}/storage/row.cpp
-        ${PROJECT_SOURCE_DIR}/storage/table.cpp
-        ${PROJECT_SOURCE_DIR}/system/arena.cpp
-        ${PROJECT_SOURCE_DIR}/system/global.cpp
-        ${PROJECT_SOURCE_DIR}/system/helper.cpp
-        ${PROJECT_SOURCE_DIR}/system/manager.cpp
-        ${PROJECT_SOURCE_DIR}/system/parser.cpp
-        ${PROJECT_SOURCE_DIR}/system/query.cpp
-        ${PROJECT_SOURCE_DIR}/system/stats.cpp
-        ${PROJECT_SOURCE_DIR}/system/thread.cpp
-        ${PROJECT_SOURCE_DIR}/system/txn.cpp
-        ${PROJECT_SOURCE_DIR}/system/wl.cpp
-        ${PROJECT_SOURCE_DIR}/config.cpp
-        ${PROJECT_SOURCE_DIR}/system/mem_alloc.cpp
-        ${PROJECT_SOURCE_DIR}/system/main.cpp
+        workload/wl.cpp
+        workload/ycsb_wl.cpp
+        config.cpp
         )
-add_executable(rundb ${SRC_FILES})
+add_executable(rundb system/main.cpp ${SRC_FILES})
 target_link_libraries(rundb  libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
 
 
@@ -48,27 +46,26 @@ target_link_libraries(rundb  libleveldb.a libsnappy.a libjemalloc.so libpthread.
 add_definitions(-DCACHING_FACILITY)
 #add_definitions(-DCREATE_LEVELDB)
 set(WL_FILES
+        benchmarks/query.cpp
+        benchmarks/ycsb_query.cpp
+        concurrency_control/row_mvcc.cpp
+        storage/catalog.cpp
+        storage/index_hash.cpp
+        storage/row.cpp
+        storage/table.cpp
+        system/global.cpp
+        system/helper.cpp
+        system/manager.cpp
+        system/parser.cpp
+        system/stats.cpp
+        system/thread.cpp
+        txn/txn.cpp
+        txn/ycsb_txn.cpp
+        util/arena.cpp
         util/numbercomparator.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_txn.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_query.cpp
-        ${PROJECT_SOURCE_DIR}/benchmarks/ycsb_wl.cpp
-        ${PROJECT_SOURCE_DIR}/concurrency_control/row_mvcc.cpp
-        ${PROJECT_SOURCE_DIR}/storage/catalog.cpp
-        ${PROJECT_SOURCE_DIR}/storage/index_hash.cpp
-        ${PROJECT_SOURCE_DIR}/storage/row.cpp
-        ${PROJECT_SOURCE_DIR}/storage/table.cpp
-        ${PROJECT_SOURCE_DIR}/system/arena.cpp
-        ${PROJECT_SOURCE_DIR}/system/global.cpp
-        ${PROJECT_SOURCE_DIR}/system/helper.cpp
-        ${PROJECT_SOURCE_DIR}/system/manager.cpp
-        ${PROJECT_SOURCE_DIR}/system/parser.cpp
-        ${PROJECT_SOURCE_DIR}/system/query.cpp
-        ${PROJECT_SOURCE_DIR}/system/stats.cpp
-        ${PROJECT_SOURCE_DIR}/system/thread.cpp
-        ${PROJECT_SOURCE_DIR}/system/txn.cpp
-        ${PROJECT_SOURCE_DIR}/system/wl.cpp
-        ${PROJECT_SOURCE_DIR}/config.cpp
-        ${PROJECT_SOURCE_DIR}/system/mem_alloc.cpp
+        workload/wl.cpp
+        workload/ycsb_wl.cpp
+        config.cpp
         )
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 add_executable(test_wl test/test_wl.cpp ${WL_FILES})

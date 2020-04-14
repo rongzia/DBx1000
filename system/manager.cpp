@@ -1,6 +1,6 @@
 #include "manager.h"
 #include "row.h"
-#include "txn.h"
+#include "txn/txn.h"
 #include "pthread.h"
 
 void Manager::init() {

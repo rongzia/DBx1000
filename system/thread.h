@@ -38,7 +38,7 @@ private:
 	drand48_data buffer;
 
 	// A restart buffer for aborted txns.
-	//! 当事务执行失败时，几下当前事务的 query，并给这个 query 一个随机时间，来指明下次该 query 何时执行
+	//! 当事务执行失败时，记下当前事务的 query，并给这个 query 一个随机时间，来指明下次该 query 何时执行
 	struct AbortBufferEntry	{
 		ts_t ready_time;                //! 下次执行该 query 的时间
 		base_query * query;             //! 失败的 query

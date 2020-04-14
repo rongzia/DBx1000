@@ -5,14 +5,17 @@
 #include <iostream>
 #include <memory>
 #include "leveldb/db.h"
-#include "ycsb.h"
+//#include "ycsb.h"
+#include "ycsb_query.h"
+#include "workload/ycsb_wl.h"
 #include "table.h"
 #include "catalog.h"
 #include "util/numbercomparator.h"
 
 void Test_wl() {
     leveldb::DB *db;
-    if (0) {
+//    if (0) {
+    if (1) {
         std::unique_ptr<workload> m_wl(new ycsb_wl);
         m_wl->init();
         std::unique_ptr<table_t> table(m_wl->tables["MAIN_TABLE"]);

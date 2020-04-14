@@ -1,14 +1,12 @@
-#ifndef _SYNTH_BM_H_
-#define _SYNTH_BM_H_
+//
+// Created by rrzhang on 2020/4/9.
+//
+
+#ifndef DBX1000_YCSB_WL_H
+#define DBX1000_YCSB_WL_H
 
 #include <atomic>
-#include "global.h"
-#include "helper.h"
-
 #include "wl.h"
-#include "txn.h"
-
-class ycsb_query;
 
 class ycsb_wl : public workload {
 public :
@@ -27,24 +25,13 @@ private:
     //! 初始化单个区间
 	void * init_table_slice();
 	static void * threadInitTable(void * This) {
-		((ycsb_wl *)This)->init_table_slice(); 
+		((ycsb_wl *)This)->init_table_slice();
 		return NULL;
 	}
-	pthread_mutex_t insert_lock;
+//	pthread_mutex_t insert_lock;
 	//  For parallel initialization
 //	static int next_tid;
 	static std::atomic<int> next_tid;
 };
 
-class ycsb_txn_man : public txn_man
-{
-public:
-	void init(thread_t * h_thd, workload * h_wl, uint64_t part_id); 
-	RC run_txn(base_query * query);
-private:
-	uint64_t row_cnt;
-	ycsb_wl * _wl;
-
-};
-
-#endif
+#endif //DBX1000_YCSB_WL_H

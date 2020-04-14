@@ -2,15 +2,14 @@
 #include "global.h"
 #include "manager.h"
 #include "thread.h"
-#include "txn.h"
-#include "wl.h"
+#include "txn/txn.h"
+#include "workload/wl.h"
 #include "query.h"
 //#include "plock.h"
 //#include "occ.h"
 //#include "vll.h"
 #include "ycsb_query.h"
 //#include "tpcc_query.h"
-#include "mem_alloc.h"
 //#include "test.h"
 
 //! thd_id = 0...3
