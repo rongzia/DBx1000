@@ -22,13 +22,8 @@ workload::~workload(){
 
 RC workload::init() {
     for (int i = 0; i < g_init_parallelism; i++) {
-//        std::unique_ptr<dbx1000::Arena> arena(new dbx1000::Arena(i));
-//        arenas_.emplace_back(std::move(arena));
         arenas_.emplace_back(dbx1000::make_unique<dbx1000::Arena>(i));
     }
-//    for (int i = 0; i < g_init_parallelism; i++) {
-//        arenas_.emplace_back(new dbx1000::Arena(i));
-//    }
 
     leveldb::DB *db;
     leveldb::Options options;

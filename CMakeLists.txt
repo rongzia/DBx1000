@@ -46,6 +46,7 @@ target_link_libraries(rundb  libleveldb.a libsnappy.a libjemalloc.so libpthread.
 add_definitions(-DCACHING_FACILITY)
 #add_definitions(-DCREATE_LEVELDB)
 set(WL_FILES
+        buffer/buffer.cpp
         benchmarks/query.cpp
         benchmarks/ycsb_query.cpp
         concurrency_control/row_mvcc.cpp
@@ -59,6 +60,7 @@ set(WL_FILES
         system/parser.cpp
         system/stats.cpp
         system/thread.cpp
+        storage/buffer
         txn/txn.cpp
         txn/ycsb_txn.cpp
         util/arena.cpp
@@ -70,3 +72,5 @@ set(WL_FILES
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 add_executable(test_wl test/test_wl.cpp ${WL_FILES})
 target_link_libraries(test_wl libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
+
+add_subdirectory(buffer)

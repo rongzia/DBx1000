@@ -14,9 +14,9 @@
 
 //! thd_id = 0...3
 void thread_t::init(uint64_t thd_id, workload * workload) {
-	_thd_id = thd_id;
+	thread_id_ = thd_id;
 	_wl = workload;
-	srand48_r((_thd_id + 1) * get_sys_clock(), &buffer);
+	srand48_r((thread_id_ + 1) * get_sys_clock(), &buffer);
 	_abort_buffer_size = ABORT_BUFFER_SIZE;                                 //! 10
 	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64); 
 	for (int i = 0; i < _abort_buffer_size; i++)
@@ -25,11 +25,7 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     //! true
 }
 
-uint64_t thread_t::get_thd_id() { return _thd_id; }
-uint64_t thread_t::get_host_cid() {	return _host_cid; }
-void thread_t::set_host_cid(uint64_t cid) { _host_cid = cid; }
-uint64_t thread_t::get_cur_cid() { return _cur_cid; }
-void thread_t::set_cur_cid(uint64_t cid) {_cur_cid = cid; }
+uint64_t thread_t::get_thd_id() { return thread_id_; }
 
 //! 这是每个线程的主要工作，执行事务操作，里面包含了一个无限循环，除非到达种植条件，否则事务一直执行。
 //! 循环之前给每个线程分配一个事务空间（在后面循环里重复使用）
@@ -44,10 +40,10 @@ void thread_t::set_cur_cid(uint64_t cid) {_cur_cid = cid; }
 //! 且
 RC thread_t::run() {
 #if !NOGRAPHITE
-	_thd_id = CarbonGetTileId();
+	thread_id_ = CarbonGetTileId();
 #endif
 //	if (warmup_finish) {
-//		mem_allocator.register_thread(_thd_id);
+//		mem_allocator.register_thread(thread_id_);
 //	}
 	pthread_barrier_wait( &warmup_bar );
 	stats.init(get_thd_id());
@@ -99,7 +95,7 @@ RC thread_t::run() {
 						usleep((min_ready_time - curr_time) / 1000);
 					}
 					else if (m_query == NULL) {
-						m_query = query_queue->get_next_query( _thd_id );
+						m_query = query_queue->get_next_query( thread_id_ );
 					#if CC_ALG == WAIT_DIE
 						m_txn->set_ts(get_next_ts());
 					#endif
@@ -112,10 +108,10 @@ RC thread_t::run() {
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
 				if (rc == RCOK)
-					m_query = query_queue->get_next_query( _thd_id );
+					m_query = query_queue->get_next_query( thread_id_ );
 			}
 		}
-		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
+		INC_STATS(thread_id_, time_query, get_sys_clock() - starttime);
 		m_txn->abort_cnt = 0;
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);

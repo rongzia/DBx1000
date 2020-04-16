@@ -14,6 +14,7 @@ class thread_t;
 class index_base;
 class Timestamp;
 class Mvcc;
+
 namespace leveldb {
     class DB;
 }

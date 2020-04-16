@@ -11,16 +11,10 @@ class base_query;
 //! 当 txn_cnt 达到一定数量，则退出循环，该线程退出。
 class thread_t {
 public:
-	uint64_t _thd_id;   //! from 0 to g_thread_cnt
+	uint64_t thread_id_;   //! from 0 to g_thread_cnt
 	workload * _wl;     //!
 
 	uint64_t 	get_thd_id();
-
-	uint64_t 	get_host_cid();
-	void 	 	set_host_cid(uint64_t cid);
-
-	uint64_t 	get_cur_cid();
-	void 		set_cur_cid(uint64_t cid);
 
 	void 		init(uint64_t thd_id, workload * workload);
 	// the following function must be in the form void* (*)(void*)
@@ -28,8 +22,6 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 private:
-	uint64_t 	_host_cid;
-	uint64_t 	_cur_cid;
 	ts_t 		_curr_ts;      //! 当前时间戳
     //! 获取下一个时间戳
 	ts_t 		get_next_ts();
