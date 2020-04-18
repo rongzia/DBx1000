@@ -39,7 +39,7 @@ set(SRC_FILES
         config.cpp
         )
 add_executable(rundb system/main.cpp ${SRC_FILES})
-target_link_libraries(rundb  libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
+target_link_libraries(rundb libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
 
 
 

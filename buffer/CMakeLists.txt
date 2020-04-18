@@ -9,6 +9,14 @@
 #
 #add_definitions(-DNOGRAPHITE=1)
 
-add_executable(test_buffer test_buffer.cpp buffer.cpp lru_index.cpp lru.cpp)
+add_definitions(-DUSE_MEMORY_DB)
+add_definitions(-Ddb_num_item_=1000000)
+#add_definitions(-DWARMUP_LEVELDB)
 
-add_executable(test_lru test_lru.cpp)
+add_executable(test_buffer
+        test_buffer.cpp buffer.cpp lru_index.cpp lru.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../util/numbercomparator.cpp
+        )
+target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
+
+add_executable(test_lru test_lru.cpp lru.cpp lru_index.cpp)

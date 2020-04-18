@@ -5,109 +5,160 @@
 #include <iostream>
 #include <cassert>
 #include <cstring>
+#include <unistd.h>
+#include <thread>
+#include <vector>
 #include "buffer.h"
 #include "lru_index.h"
-#include "lru.h"
+#include "leveldb/db.h"
 #include "../util/string_util.h"
 #include "../util/profiler.h"
+#include "../util/numbercomparator.h"
 
 using namespace dbx1000;
 using namespace std;
 
-int pool_size = 6553600000/10*9;
-int row_size = 65536;
-int pool_item = pool_size/row_size;
-int total_item = pool_item * 10;
+size_t bench_size = db_num_item_/1000;
 
-void SimpleTest(Buffer *buffer){
-    /// Warmup, initital lruindex and db
-    cout << "start WarmUp" << endl;
-    for(int i = 0; i < total_item; i++){
-        std::string str("aaaaaaaaaa");
-        std::string num = std::to_string(i);
-        buffer->db_->Put(i, str.replace(0, num.size(), num));
-        buffer->lru_index_->IndexInsert(i, nullptr);
-    }
-    buffer->Print();
-    cout << "WarmUp finish" << endl;
+//int pool_size = 6553600000/10*9;
+int pool_size = 65536000;
+size_t row_size = 65536;
 
-    /// simple test
-    for(int i = 0; i< 11; i++) {
-        string row(10, 'b');
-        buffer->BufferPut(i, row);
-//        buffer->Print();
-    }buffer->Print();
-    for(int i = 0; i < 11; i++) {
-        string row = buffer->BufferGet(i);
-        cout << row << endl;
-//        buffer->Print();
+string db_path("/home/zhangrongrong/dbx1000_leveldb");
+
+
+void Print_unordered_map(unordered_map<uint64_t, string> row_map) {
+    std::cout << "unordered_map : {" << std::endl;
+    int count = 0;
+    for(auto& iter : row_map) {
+        if (count % 10 == 0) { std::cout << "    "; }
+        std::cout << ", {key:" << iter.first << ", row:" << iter.second << "}";
+        if (count++ % 10 == 0) { std::cout << std::endl; }
     }
-    buffer->Print();
-    buffer->FlushALl();
-    buffer->Print();
+    std::cout << std::endl << "}" << std::endl;
+}
+
+void Warmup_leveldb(leveldb::DB *db) {
+    std::unique_ptr<Profiler> profiler_total(new Profiler());
+    std::unique_ptr<Profiler> profiler_gen_string(new Profiler());
+    std::unique_ptr<Profiler> profiler_buffer_put(new Profiler());
+
+    profiler_total->Start();
+    for(uint64_t i = 0; i < db_num_item_; i++) {
+//        if(0 == i % pool_item ) { cout << i << endl; }
+//        profiler_gen_string->Start();
+//        string str = StringUtil::Random_string(rng, row_size);
+//        profiler_gen_string->End();
+
+//        profiler_buffer_put->Start();
+        string str(row_size, 0);
+        db->Put(leveldb::WriteOptions(), to_string(i), str);
+//        profiler_buffer_put->End();
+    }
+
+    profiler_total->End();
+//    cout << "gen string time : " << profiler_gen_string->Micros() << " micros." << endl;
+//    cout << "buffer put time : " << profiler_buffer_put->Micros() << " micros." << endl;
+    cout << "total      time : " << profiler_total->Micros() << " micros." << endl;
+
+    /// some check
+    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
+    size_t count = 0;
+    iter->SeekToFirst();
+    while (iter->Valid()) {
+        assert(count == std::stoi(iter->key().ToString()));
+        assert(row_size == iter->value().size());
+        iter->Next();
+        count++;
+    }
+}
+
+void SimpleTest(Buffer* buffer){
+    std::unique_ptr<Profiler> profiler(new Profiler());
+
+    /// 单线程读
+    profiler->Start();
+    for(int i = 0; i < bench_size; i++) {
+        char buf[row_size];
+        int a = rand() % db_num_item_;
+        buffer->BufferGet(a, buf, row_size);
+    }
+    profiler->End();
+    cout << "single thread read time  : " << profiler->Micros() << " micros." << endl;
+
+    /// 单线程写
+    profiler->Clear();
+    profiler->Start();
+    char buf[row_size];
+    memset(buf, 0, row_size);
+    for(int i = 0; i < bench_size; i++) {
+        int a = rand() % db_num_item_;
+        buffer->BufferPut(a, buf, row_size);
+    }
+    profiler->End();
+    cout << "single thread write time : " << profiler->Micros() << " micros." << endl;
+
+
+    size_t num_threads = 5;
+    /// 读
+    std::unique_ptr<Profiler> profiler_read(new Profiler());
+    profiler_read->Start();
+    std::vector<std::thread> read_threads;
+    for(int i = 0; i < num_threads; i++) {
+        read_threads.emplace_back(std::thread([&] {
+            srand(i);
+            for (int i = 0; i < bench_size / num_threads; i++) {
+                char buf[row_size];
+                int a = rand() % db_num_item_;
+                buffer->BufferGet(a, buf, row_size);
+            }
+        }));
+    }
+    /// 等待读完成
+    for(int i = 0; i < num_threads; i++){
+        read_threads[i].join();
+    }
+    profiler_read->End();
+    cout << num_threads << " thread read, each thread read db_size/num_threads times   : " << profiler_read->Micros() << " micros." << endl;
+
+    /// 写
+    std::unique_ptr<Profiler> profiler_write(new Profiler());
+    profiler_write->Start();
+    std::vector<std::thread> write_threads;
+    for(int i = 0; i < num_threads; i++) {
+        write_threads.emplace_back(std::thread([&] {
+            srand(num_threads - i -1);
+            for (int i = 0; i < bench_size / num_threads; i++) {
+                int a = rand() % db_num_item_;
+                buffer->BufferPut(a, buf, row_size);
+            }
+        }));
+    }
+    /// 等待写完成
+    for(int i = 0; i < num_threads; i++){
+        write_threads[i].join();
+    }
+    profiler_write->End();
+    cout << num_threads << " thread write, each thread write db_size/num_threads times : " << profiler_write->Micros() << " micros." << endl;
 }
 
 int main(){
+//#define WARMUP_LEVELDB 1
+#ifdef WARMUP_LEVELDB
+    /// 必要时，删除 leveldb 目录
+    int rc = system("rm -rf /home/zhangrongrong/dbx1000_leveldb");
+    cout << "rmdir rc : " << rc << endl;
+#endif
+
     std::unique_ptr<Profiler> profiler(new Profiler());
-    std::unique_ptr<Buffer> buffer(new Buffer(pool_size, row_size));
+    std::unique_ptr<Buffer> buffer(new Buffer(pool_size, row_size, db_path));
     cout << "buffer inited" << endl;
 
-//    SimpleTest(buffer.get());
+#ifdef WARMUP_LEVELDB
+    Warmup_leveldb(buffer->db_.get());
+#endif
 
-    /// 一共 total_item 个数据，row_map 用来对比后期读出来的数据一致否
-    cout << endl << endl;
-    unordered_map<int , string> row_map;
-    RandNum_generator rng('a', 'z');
-    profiler->Start();
-    for(int i = 0; i < total_item; i++) {
-        if(0 == i % pool_item ) { cout << i << endl; }
-        row_map.insert(pair<int, string>(i, StringUtil::Random_string(rng, row_size)));
-    }
-    profiler->End();
-    cout << "init row_map time : " << profiler->Seconds() << endl;
-
-    /// 写入
-    cout << "start put" << endl;
-    profiler->Clear();
-    profiler->Start();
-    int count = 0;
-    for(auto &iter : row_map) {
-        if(0 == count % pool_item ) { cout << count++ << endl; }
-        buffer->BufferPut(iter.first, iter.second);
-    }
-    // buffer->Print();
-    cout << "put finish" << endl;
-    profiler->End();
-    cout << "put time : " << profiler->Seconds() << endl;
-
-    /// 按写入的顺序顺序读
-    count = 0;
-    profiler->Clear();
-    profiler->Start();
-    for(auto &iter : row_map) {
-        if(0 == count % pool_item ) { cout << count++ << endl; }
-        string row = buffer->BufferGet(iter.first);
-        assert(0 == strcmp(row.data(), iter.second.data()));
-    }
-    cout << "sequential read finish" << endl;
-    profiler->End();
-    cout << "sequential read time : " << profiler->Seconds() << endl;
-
-    /// 随机读总数量的十倍次
-    count = 0;
-    profiler->Clear();
-    profiler->Start();
-    srand(10);
-    for(int i = 0; i< total_item * 10; i++) {
-        if(0 == i % pool_item ) { cout << i << endl; }
-        int a = rand() % total_item;
-//        cout << a << endl;
-        string row = buffer->BufferGet(a);
-        assert(0 == strcmp(row.data(), row_map[a].data()));
-    }
-    cout << "read finish" << endl;
-    profiler->End();
-    cout << "read time : " << profiler->Seconds() << endl;
+    SimpleTest(buffer.get());
 
     return 0;
 }

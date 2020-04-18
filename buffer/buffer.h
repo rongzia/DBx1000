@@ -10,21 +10,27 @@
 #include <unordered_map>
 #include <memory>
 #include <iostream>
+#include <mutex>
+#include "leveldb/db.h"
 
 namespace dbx1000 {
 
-    /// 测试使用，实际使用 leveldb
-    class DB {
+#ifdef USE_MEMORY_DB
+    class MemoryDB {
     public:
-        void Put(uint64_t key, std::string value){
+        void Put(uint64_t key, const void* buf, size_t count){
             auto iter = db_.find(key);
             if(db_.end() != iter) {
                 db_.erase(iter);
             }
-            db_.insert(std::pair<uint64_t, std::string>(key, value));
+            db_.insert(std::pair<uint64_t, std::string>(key, std::string((char*) buf, count)));
         }
-        std::string Get(uint64_t key, std::string *value) {
-            return (db_.end() != db_.find(key) ? db_[key] : nullptr);
+        int Get(uint64_t key, void* buf, size_t count) {
+            if(db_.end() == db_.find(key)) {
+                return -1;
+            }
+            memcpy(buf, db_[key].data(), count);
+            return 0;
         }
 
         void Print(){
@@ -33,13 +39,15 @@ namespace dbx1000 {
             for (auto &iter : db_) {
                 if (count % 10 == 0) { std::cout << "    "; }
                 std::cout << ", {key:" << iter.first << ", row:" << iter.second << "}";
-                count++;
                 if (count % 10 == 0) { std::cout << std::endl; }
+                count++;
             }
             std::cout << std::endl << "}" << std::endl;
         }
+
         std::unordered_map<uint64_t, std::string> db_;
     };
+#endif
 
     class RowNode;
     class LRU;
@@ -48,11 +56,11 @@ namespace dbx1000 {
     class Buffer {
 
     public:
-        Buffer(uint64_t total_size, int row_size);
+        Buffer(uint64_t total_size, size_t row_size, std::string db_path);
         ~Buffer();
 
-        std::string BufferGet(uint64_t key);
-        void BufferPut(uint64_t key, std::string value);
+        int BufferGet(uint64_t key, void* buf, size_t count);
+        int BufferPut(uint64_t key, const void* buf, size_t count);
 
         void Print();
 
@@ -61,19 +69,25 @@ namespace dbx1000 {
         void FlushRowList();
         void FlushALl();
         /// 从 free_list_ 头部取出一个节点放到 row_list_ 中，同时设置节点的 key_ 和 row_
-        void FreeListToRowList(uint64_t key, const std::string &value);
+        void FreeListToRowList(uint64_t key, const void* row, size_t count);
 
-        uint64_t total_size_;               /// in bytes
-        int row_size_;
-        int num_item_;                      /// numbers of item, == total_size_ / row_size_
+        void *ptr;                          /// 内存池，存放 row 数据
+        uint64_t total_size_;               /// size of ptr, in bytes
+        size_t row_size_;
+        int num_item_;                      /// number of items, == total_size_ / row_size_
 
         std::unique_ptr<LRU> row_list_;     /// 被使用的链表
         std::unique_ptr<LRU> free_list_;    /// 空闲链表
-
         std::unique_ptr<LruIndex> lru_index_;   /// row_list_ 的索引，根据 key, 直接定位到相应的 RowNode
-        std::unique_ptr<DB> db_;
 
-        void *ptr;                          /// 内存池
+#ifdef USE_MEMORY_DB
+        std::unique_ptr<MemoryDB> db_;
+#else
+	    std::unique_ptr<leveldb::DB> db_;
+	    std::string db_path_;
+#endif
+
+        std::mutex mutex_;
     };
 }
 

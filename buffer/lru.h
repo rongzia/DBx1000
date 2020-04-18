@@ -27,10 +27,11 @@ namespace dbx1000 {
     class LRU {
     public:
         explicit LRU(int item_size);
+        ~LRU();
 
         void Prepend(RowNode* row_node);
         RowNode* Popback();
-        void Get(RowNode*& row_node);
+        void Get(RowNode* row_node);
 
         int Size();
         void DebugSize();

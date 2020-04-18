@@ -25,10 +25,15 @@ namespace dbx1000 {
         tail_ = head_;
     }
 
+    LRU::~LRU() {
+//        std::cout << "~LRU" <<std::endl;
+    }
+
     void LRU::Prepend(RowNode* row_node) {
         if(tail_ == head_) {
             tail_ = row_node;
-            tail_->next_ = nullptr;
+            assert(nullptr == tail_->next_);
+//            tail_->next_ = nullptr;
         }
 
         row_node->prev_ = head_;
@@ -41,7 +46,7 @@ namespace dbx1000 {
         size_++;
     }
 
-    void LRU::Get(RowNode*& row_node) {
+    void LRU::Get(RowNode* row_node) {
         if(tail_ == row_node) {
             tail_ = tail_->prev_;
             tail_->next_ = nullptr;
