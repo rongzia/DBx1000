@@ -18,7 +18,7 @@ namespace dbx1000 {
     class DBx1000ServiceUtil {
     public:
         static void Set_Mess_RowItem(uint64_t key, char *row, size_t size, Mess_RowItem *messRowItem);
-        static void Set_Mess_TxnRowMan(txn_man *txnMan, Mess_RowItem messRowItem, Mess_TxnRowMan *messTxnRowMan);
+        static void Set_Mess_TxnRowMan(txn_man *txnMan, Mess_RowItem* messRowItem, Mess_TxnRowMan *messTxnRowMan);
     };
 }
 

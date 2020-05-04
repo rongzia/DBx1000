@@ -16,16 +16,33 @@
 
 
 namespace dbx1000 {
-    void ManagerServer::init(workload* wl) {
+
+    ManagerServer::ManagerServer() {
         timestamp_ = 1;
 	    min_ts_ = 0;
 	    all_ts_ = new uint64_t[g_thread_cnt]();
 	    all_txns_ = new TxnRowMan[g_thread_cnt]();
-        wl_ = wl;
+        txn_ready_ = new bool[g_thread_cnt]();
         for (uint32_t i = 0; i < g_thread_cnt; i++) {
             all_ts_[i] = UINT64_MAX;
-            all_txns_[i].cur_row_ = new RowItem(0, ((ycsb_wl*)wl)->the_table->get_schema()->get_tuple_size());
+            txn_ready_[i] = false;
         }
+        init_wl_done_ = false;
+    }
+    void ManagerServer::InitWl(ycsb_wl* wl) {
+        wl_ = wl;
+        for(int i = 0; i < g_thread_cnt; i++) {
+            all_txns_[i].cur_row_ = new RowItem(0, wl_->the_table->get_schema()->get_tuple_size());
+        }
+        init_wl_done_ = true;
+    }
+
+    bool ManagerServer::AllTxnReady() {
+        bool flag = true;
+        for(size_t i = 0; i < g_thread_cnt; i++) {
+            if(false == txn_ready_[i]) { flag = false; }
+        }
+        return flag;
     }
 
     uint64_t ManagerServer::get_next_ts(uint64_t thread_id) { return timestamp_.fetch_add(1, std::memory_order_consume); }
@@ -53,12 +70,10 @@ namespace dbx1000 {
         all_txns_[thread_id].txn_id_    = messTxnRowMan.txn_id();
         all_txns_[thread_id].ts_ready_  = messTxnRowMan.ts_ready();
         assert(messTxnRowMan.has_cur_row());
-        all_txns_[thread_id].cur_row_->MergeFrom(messTxnRowMan.cur_row());
+        all_txns_[thread_id].cur_row_->key_ = messTxnRowMan.cur_row().key();
+//        assert(messTxnRowMan.cur_row().row());
+        memcpy(all_txns_[thread_id].cur_row_->row_, messTxnRowMan.cur_row().row().data(), messTxnRowMan.cur_row().size());
         all_txns_[thread_id].timestamp_ = messTxnRowMan.timestamp();
         return &all_txns_[thread_id];
     }
-
-//    void ManagerServer::SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready, RowItem* cur_row, uint64_t timestamp) {
-//        TxnRowMan::CopyTxnRowMan(all_txns_[thread_id], thread_id, txn_id, ts_ready, cur_row, timestamp);
-//    }
 }

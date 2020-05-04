@@ -26,7 +26,7 @@ int main() {
     std::this_thread::sleep_for(std::chrono::seconds(10));
 
 
-    api_con_ctl_client = new dbx1000::ApiConCtlClient();
+//    api_con_ctl_client = new dbx1000::ApiConCtlClient();
 //    api_con_ctl_client.
 
 

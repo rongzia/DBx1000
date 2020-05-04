@@ -23,6 +23,8 @@ namespace dbx1000 {
         static void CopyTxnRowMan(TxnRowMan* to, TxnRowMan* from);
         static void CopyTxnRowMan(TxnRowMan* to, uint64_t thread_id, uint64_t txn_id, bool ts_ready, RowItem* cur_row, uint64_t timestamp);
 
+        void PrintTxnRowMan();
+
 //	    void 			set_txn_id(uint64_t txn_id);
 //	    uint64_t 		get_txn_id();
 

@@ -21,6 +21,7 @@
 #include "query.h"
 #include "ycsb_query.h"
 #include "thread.h"
+#include "myhelper.h"
 
 #include "api_cc.h"
 #include "api_txn.h"
@@ -42,10 +43,10 @@ void RunConCtlServer() {
 void parser(int argc, char * argv[]);
 
 void Test_wl() {
+    glob_manager_server = new dbx1000::ManagerServer();
     std::unique_ptr<workload> m_wl(new ycsb_wl());
-glob_manager_server = new dbx1000::ManagerServer();
-    glob_manager_server->init(m_wl.get());
     m_wl->init();
+    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
 }
 
 
@@ -54,17 +55,22 @@ int main(int argc, char* argv[]) {
 
 	parser(argc, argv);
     stats.init();
+    for(int i = 0; i < g_thread_cnt; i++) {
+        stats.init(i);
+    }
 //    Test_wl();
     glob_manager_server = new dbx1000::ManagerServer();
-    std::unique_ptr<workload> m_wl(new ycsb_wl());
-    m_wl->init();
-    glob_manager_server->init(m_wl.get());
-
-
     std::thread cc_server(RunConCtlServer);
     cc_server.detach();
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    api_con_ctl_client = new dbx1000::ApiConCtlClient();
+    std::unique_ptr<workload> m_wl(new ycsb_wl());
+    m_wl->init();
+    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
+
+
+
+    while (!glob_manager_server->AllTxnReady()) { PAUSE }
+    api_con_ctl_client = new dbx1000::ApiConCtlClient("127.0.0.1:50040");
+    api_con_ctl_client->Test();
 
 
 

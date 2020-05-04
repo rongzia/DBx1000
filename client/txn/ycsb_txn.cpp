@@ -11,7 +11,7 @@ void ycsb_txn_man::init(thread_t * h_thd) {
 }
 
 RC ycsb_txn_man::run_txn(base_query * query) {
-//    cout << "start ycsb_txn_man::run_txn" << endl;
+//    cout << "ycsb_txn_man::run_txn start" << endl;
     txn_count++;
 	RC rc;
 	ycsb_query * m_query = (ycsb_query *) query;

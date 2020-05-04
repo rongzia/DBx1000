@@ -22,6 +22,7 @@
 #include "ycsb_query.h"
 #include "thread.h"
 #include "txn.h"
+#include "myhelper.h"
 
 #include "api_cc.h"
 #include "api_txn.h"
@@ -47,11 +48,17 @@ void parser(int argc, char * argv[]);
 
 int main(int argc, char* argv[]) {
     cout << "mian test txn thread" << endl;
+    api_txn_client = new dbx1000::ApiTxnClient("127.0.0.1:50051");
     std::thread txn_server(RunTxnServer);
     txn_server.detach();
-    api_txn_client = new dbx1000::ApiTxnClient();
 
-//    while(a)
+    for(size_t i = 0; i < g_thread_cnt; i++) {
+        api_txn_client->TxnReady(i);
+    }
+
+
+
+    while(!api_txn_client->InitWlDone()) {PAUSE}
 
 	parser(argc, argv);
     stats.init();
@@ -61,10 +68,7 @@ int main(int argc, char* argv[]) {
 
     query_queue = new Query_queue();
     query_queue->init();
-//
-//
-//
-//
+
 	warmup_finish = true;
 
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
@@ -78,7 +82,6 @@ int main(int argc, char* argv[]) {
         v_thread[i].join();
     }
 
-
     stats.print();
 
     for(int i = 0; i <  g_thread_cnt; i++) {
@@ -88,7 +91,7 @@ int main(int argc, char* argv[]) {
 
     }
 
-    while(1) {}
+//    while(1) {}
     cout << "exit main." << endl;
     return 0;
 };

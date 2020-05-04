@@ -64,13 +64,13 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
-    cout << "table size:" << g_synth_table_size << endl;
+    cout << "ycsb_wl::init_table, table size:" << g_synth_table_size << endl;
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
     profiler->Start();
 
     init_table_parallel();
     profiler->End();
-    std::cout << "workload Init Time : " << profiler->Millis() << " Millis" << std::endl;
+    std::cout << "ycsb_wl::init_table, workload Init Time : " << profiler->Millis() << " Millis" << std::endl;
     return RCOK;
 }
 
@@ -111,27 +111,7 @@ void * ycsb_wl::init_table_slice() {
 		glob_manager_server->row_mvccs_mutex_.lock();
 		glob_manager_server->row_mvccs_.insert(std::pair<uint64_t, Row_mvcc*>(key, rowMvcc));
         glob_manager_server->row_mvccs_mutex_.unlock();
-
-/*
-		row_t * new_row = NULL;
-		uint64_t row_id;
-		int part_id = key_to_part(key);     //! 区间内 index
-		rc = the_table->get_new_row(new_row, part_id, row_id);  //! TODO, row_id 到底返回的啥？
-		assert(rc == RCOK);
-		uint64_t primary_key = key;
-		new_row->set_primary_key(primary_key);
-//		new_row->set_value(0, &primary_key);    //! 第 0 列是主键
-
-		for (uint32_t fid = 0; fid < the_table->get_schema()->get_field_cnt(); fid ++) {
-			char value[11] = "hellohello";
-			new_row->set_value(fid, value);
-		}
-
-		index_insert(the_index, primary_key, new_row, part_id);
-		assert(rc == RCOK);
-*/
 	}
-/*	return NULL; */
 }
 /*
 ! h_thd = 0, 1, 2, 3

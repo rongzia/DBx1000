@@ -14,12 +14,19 @@
 #include "row_mvcc.h"
 
 namespace dbx1000 {
-//    ::grpc::Status ApiConCtlServer::InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response) {
-//
-//    }
+    ::grpc::Status ApiConCtlServer::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
+        glob_manager_server->txn_ready_[request->thread_id()] = true;
+        return ::grpc::Status::OK;
+    }
+
+    ::grpc::Status ApiConCtlServer::InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response) {
+        response->set_is_done(glob_manager_server->init_wl_done_);
+        return ::grpc::Status::OK;
+    }
 
     ::grpc::Status ApiConCtlServer::GetRow(::grpc::ServerContext *context, const ::dbx1000::GetRowRequest *request
                                         , ::dbx1000::GetRowReply *response) {
+//        cout << "ApiConCtlServer::GetRow" << endl;
         TsType ts_type = MyHelper::IntToTsType(request->ts_type());
         uint64_t thread_id = request->txnman().thread_id();
 
@@ -33,12 +40,12 @@ namespace dbx1000 {
             response->set_rc(MyHelper::RCToInt(rc));
             return ::grpc::Status::OK;
         }
-
         assert(false);
     }
 
     ::grpc::Status ApiConCtlServer::ReturnRow(::grpc::ServerContext *context, const ::dbx1000::ReturnRowRequest *request
                                            , ::dbx1000::ReturnRowReply *response) {
+//        cout << "ApiConCtlServer::ReturnRow" << endl;
         TsType ts_type = MyHelper::IntToTsType(request->ts_type());
         uint64_t thread_id = request->txnman().thread_id();
 
@@ -70,8 +77,8 @@ namespace dbx1000 {
 
 
 
-    ApiConCtlClient::ApiConCtlClient() : stub_(dbx1000::DBx1000Service::NewStub(
-            grpc::CreateChannel("localhost:50040", grpc::InsecureChannelCredentials())
+    ApiConCtlClient::ApiConCtlClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
+            grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
             )) {
         cout << "ApiConCtlClient connect success." << endl;
     }
@@ -80,15 +87,22 @@ namespace dbx1000 {
         /// gen request
         assert(true == global_server_txn->ts_ready_);
         dbx1000::SetTsReadyRequest request;
-        Mess_RowItem messRowItem;
         request.set_thread_id(global_server_txn->thread_id_);
+        Mess_RowItem* messRowItem = new Mess_RowItem();
         DBx1000ServiceUtil::Set_Mess_RowItem(global_server_txn->cur_row_->key_, global_server_txn->cur_row_->row_
-                                             , global_server_txn->cur_row_->size_, &messRowItem);
+                                             , global_server_txn->cur_row_->size_, messRowItem);
+        request.set_allocated_cur_row(messRowItem);
 
         grpc::ClientContext context;
         dbx1000::SetTsReadyReply reply;
         ::grpc::Status status = stub_->SetTsReady(&context, request, &reply);
 
+        assert(status.ok());
+    }
+
+    void ApiConCtlClient::Test() {
+        dbx1000::TestRequest request;
+        ::grpc::Status status = stub_->Test(new ::grpc::ClientContext(), request, new dbx1000::TestReply);
         assert(status.ok());
     }
 

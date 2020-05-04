@@ -88,10 +88,13 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 //    rc = dbx1000::API::get_row(key, type, this, row_cnt);
 	rc = api_txn_client->GetRow(key, type, this, row_cnt);
 
+
 	if (rc == Abort) {
 		return NULL;
 	}
 	accesses[row_cnt]->type = type;
+	assert(accesses[row_cnt]->orig_row->key_ == accesses[row_cnt]->data->key_);
+	assert(accesses[row_cnt]->orig_row->size_ == accesses[row_cnt]->data->size_);
 	memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, ROW_SIZE);
 
 	row_cnt ++;

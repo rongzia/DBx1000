@@ -162,6 +162,7 @@ void PrintWriteHisEntry(WriteHisEntry *writeHisEntry, size_t size) {
 //RC Row_mvcc::access(dbx1000::TxnRowMan* txn, TsType type, dbx1000::RowItem* row, size_t row_size) {
 RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 //    cout << "Row_mvcc::access" << endl;
+//    local_txn->PrintTxnRowMan();
 
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
 	RC rc = RCOK;
@@ -186,9 +187,11 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		}
 #endif
 	if (type == R_REQ) {
-		if (ts < _oldest_wts)
-			// the version was already recycled... This should be very rare
-			rc = Abort;
+//        cout << "Row_mvcc::access, type : R_REQ" << endl;
+		if (ts < _oldest_wts) {
+            // the version was already recycled... This should be very rare
+            rc = Abort;
+        }
 		//! 时间戳大于最近写时间戳
 		else if (ts > _latest_wts) {
 			if (_exists_prewrite && _prewrite_ts < ts)
@@ -234,6 +237,7 @@ PrintWriteHisEntry(_write_history, _his_len);
 	   			local_txn->cur_row_ = _write_history[the_i].row;
 		}
 	} else if (type == P_REQ) {
+//        cout << "Row_mvcc::access, type : P_REQ" << endl;
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts)) {
             rc = Abort;
         }
@@ -255,7 +259,7 @@ PrintWriteHisEntry(_write_history, _his_len);
             memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
 		}
 	} else if (type == W_REQ) {
-//			cout << "Row_mvcc::access, type == W_REQ, write key : " << this->key_ << endl;
+//        cout << "Row_mvcc::access, type : W_REQ" << endl;
 		rc = RCOK;
 		assert(ts > _latest_wts);
 //		assert(row == _write_history[_prewrite_his_id].row);
@@ -263,27 +267,16 @@ PrintWriteHisEntry(_write_history, _his_len);
 		_write_history[_prewrite_his_id].valid = true;
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
-//		cout << "__LINE__" << __LINE__ << endl;
-//		cout << _write_history[_prewrite_his_id].valid << endl;
-//		cout << _write_history[_prewrite_his_id].reserved << endl;
-//		cout << _write_history[_prewrite_his_id].row->key_ << endl;
-//		cout << _write_history[_prewrite_his_id].row->row_ << endl;
-//		cout << _write_history[_prewrite_his_id].row->size_ << endl;
-//		cout << _write_history[_prewrite_his_id].ts << endl;
 		assert(nullptr != _write_history[_prewrite_his_id].row);
-//		cout << "__LINE__" << __LINE__ << endl;
 		assert(nullptr != local_txn->cur_row_);
-//		cout << "__LINE__" << __LINE__ << endl;
         _write_history[_prewrite_his_id].row->MergeFrom(*local_txn->cur_row_);
-//		cout << "__LINE__" << __LINE__ << endl;
 		memcpy(_latest_row->row_, local_txn->cur_row_->row_, row_size_);
-//		cout << "__LINE__" << __LINE__ << endl;
 		_exists_prewrite = false;
 		_num_versions ++;
 		update_buffer(local_txn, W_REQ);
 	} else if (type == XP_REQ) {
+        cout << "Row_mvcc::access, type : XP_REQ" << endl;
 		rc = RCOK;
-//		assert(row == _write_history[_prewrite_his_id].row);
         assert(local_txn->cur_row_->key_ == this->key_);
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;

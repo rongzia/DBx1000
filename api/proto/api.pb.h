@@ -38,7 +38,7 @@ namespace protobuf_api_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[18];
+  static const ::google::protobuf::internal::ParseTable schema[22];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -100,6 +100,18 @@ extern SetWlSimDoneReplyDefaultTypeInternal _SetWlSimDoneReply_default_instance_
 class SetWlSimDoneRequest;
 class SetWlSimDoneRequestDefaultTypeInternal;
 extern SetWlSimDoneRequestDefaultTypeInternal _SetWlSimDoneRequest_default_instance_;
+class TestReply;
+class TestReplyDefaultTypeInternal;
+extern TestReplyDefaultTypeInternal _TestReply_default_instance_;
+class TestRequest;
+class TestRequestDefaultTypeInternal;
+extern TestRequestDefaultTypeInternal _TestRequest_default_instance_;
+class TxnReadyReply;
+class TxnReadyReplyDefaultTypeInternal;
+extern TxnReadyReplyDefaultTypeInternal _TxnReadyReply_default_instance_;
+class TxnReadyRequest;
+class TxnReadyRequestDefaultTypeInternal;
+extern TxnReadyRequestDefaultTypeInternal _TxnReadyRequest_default_instance_;
 }  // namespace dbx1000
 namespace google {
 namespace protobuf {
@@ -121,11 +133,214 @@ template<> ::dbx1000::SetTsReadyReply* Arena::CreateMaybeMessage<::dbx1000::SetT
 template<> ::dbx1000::SetTsReadyRequest* Arena::CreateMaybeMessage<::dbx1000::SetTsReadyRequest>(Arena*);
 template<> ::dbx1000::SetWlSimDoneReply* Arena::CreateMaybeMessage<::dbx1000::SetWlSimDoneReply>(Arena*);
 template<> ::dbx1000::SetWlSimDoneRequest* Arena::CreateMaybeMessage<::dbx1000::SetWlSimDoneRequest>(Arena*);
+template<> ::dbx1000::TestReply* Arena::CreateMaybeMessage<::dbx1000::TestReply>(Arena*);
+template<> ::dbx1000::TestRequest* Arena::CreateMaybeMessage<::dbx1000::TestRequest>(Arena*);
+template<> ::dbx1000::TxnReadyReply* Arena::CreateMaybeMessage<::dbx1000::TxnReadyReply>(Arena*);
+template<> ::dbx1000::TxnReadyRequest* Arena::CreateMaybeMessage<::dbx1000::TxnReadyRequest>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace dbx1000 {
 
 // ===================================================================
+
+class TxnReadyRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.TxnReadyRequest) */ {
+ public:
+  TxnReadyRequest();
+  virtual ~TxnReadyRequest();
+
+  TxnReadyRequest(const TxnReadyRequest& from);
+
+  inline TxnReadyRequest& operator=(const TxnReadyRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  TxnReadyRequest(TxnReadyRequest&& from) noexcept
+    : TxnReadyRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline TxnReadyRequest& operator=(TxnReadyRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TxnReadyRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const TxnReadyRequest* internal_default_instance() {
+    return reinterpret_cast<const TxnReadyRequest*>(
+               &_TxnReadyRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    0;
+
+  void Swap(TxnReadyRequest* other);
+  friend void swap(TxnReadyRequest& a, TxnReadyRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline TxnReadyRequest* New() const final {
+    return CreateMaybeMessage<TxnReadyRequest>(NULL);
+  }
+
+  TxnReadyRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TxnReadyRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const TxnReadyRequest& from);
+  void MergeFrom(const TxnReadyRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(TxnReadyRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // uint64 thread_id = 1;
+  void clear_thread_id();
+  static const int kThreadIdFieldNumber = 1;
+  ::google::protobuf::uint64 thread_id() const;
+  void set_thread_id(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.TxnReadyRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint64 thread_id_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class TxnReadyReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.TxnReadyReply) */ {
+ public:
+  TxnReadyReply();
+  virtual ~TxnReadyReply();
+
+  TxnReadyReply(const TxnReadyReply& from);
+
+  inline TxnReadyReply& operator=(const TxnReadyReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  TxnReadyReply(TxnReadyReply&& from) noexcept
+    : TxnReadyReply() {
+    *this = ::std::move(from);
+  }
+
+  inline TxnReadyReply& operator=(TxnReadyReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TxnReadyReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const TxnReadyReply* internal_default_instance() {
+    return reinterpret_cast<const TxnReadyReply*>(
+               &_TxnReadyReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  void Swap(TxnReadyReply* other);
+  friend void swap(TxnReadyReply& a, TxnReadyReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline TxnReadyReply* New() const final {
+    return CreateMaybeMessage<TxnReadyReply>(NULL);
+  }
+
+  TxnReadyReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TxnReadyReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const TxnReadyReply& from);
+  void MergeFrom(const TxnReadyReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(TxnReadyReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.TxnReadyReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
 
 class InitWlDoneRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.InitWlDoneRequest) */ {
  public:
@@ -162,7 +377,7 @@ class InitWlDoneRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_InitWlDoneRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    0;
+    2;
 
   void Swap(InitWlDoneRequest* other);
   friend void swap(InitWlDoneRequest& a, InitWlDoneRequest& b) {
@@ -258,7 +473,7 @@ class InitWlDoneReply : public ::google::protobuf::Message /* @@protoc_insertion
                &_InitWlDoneReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    3;
 
   void Swap(InitWlDoneReply* other);
   friend void swap(InitWlDoneReply& a, InitWlDoneReply& b) {
@@ -361,7 +576,7 @@ class Mess_RowItem : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_Mess_RowItem_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    4;
 
   void Swap(Mess_RowItem* other);
   friend void swap(Mess_RowItem& a, Mess_RowItem& b) {
@@ -486,7 +701,7 @@ class Mess_TxnRowMan : public ::google::protobuf::Message /* @@protoc_insertion_
                &_Mess_TxnRowMan_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    5;
 
   void Swap(Mess_TxnRowMan* other);
   friend void swap(Mess_TxnRowMan& a, Mess_TxnRowMan& b) {
@@ -623,7 +838,7 @@ class GetRowRequest : public ::google::protobuf::Message /* @@protoc_insertion_p
                &_GetRowRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    6;
 
   void Swap(GetRowRequest* other);
   friend void swap(GetRowRequest& a, GetRowRequest& b) {
@@ -746,7 +961,7 @@ class GetRowReply : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_GetRowReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    7;
 
   void Swap(GetRowReply* other);
   friend void swap(GetRowReply& a, GetRowReply& b) {
@@ -864,7 +1079,7 @@ class ReturnRowRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_ReturnRowRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    8;
 
   void Swap(ReturnRowRequest* other);
   friend void swap(ReturnRowRequest& a, ReturnRowRequest& b) {
@@ -987,7 +1202,7 @@ class ReturnRowReply : public ::google::protobuf::Message /* @@protoc_insertion_
                &_ReturnRowReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    9;
 
   void Swap(ReturnRowReply* other);
   friend void swap(ReturnRowReply& a, ReturnRowReply& b) {
@@ -1083,7 +1298,7 @@ class SetWlSimDoneRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_SetWlSimDoneRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    10;
 
   void Swap(SetWlSimDoneRequest* other);
   friend void swap(SetWlSimDoneRequest& a, SetWlSimDoneRequest& b) {
@@ -1179,7 +1394,7 @@ class SetWlSimDoneReply : public ::google::protobuf::Message /* @@protoc_inserti
                &_SetWlSimDoneReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    11;
 
   void Swap(SetWlSimDoneReply* other);
   friend void swap(SetWlSimDoneReply& a, SetWlSimDoneReply& b) {
@@ -1275,7 +1490,7 @@ class GetWlSimDoneRequest : public ::google::protobuf::Message /* @@protoc_inser
                &_GetWlSimDoneRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    12;
 
   void Swap(GetWlSimDoneRequest* other);
   friend void swap(GetWlSimDoneRequest& a, GetWlSimDoneRequest& b) {
@@ -1371,7 +1586,7 @@ class GetWlSimDoneReply : public ::google::protobuf::Message /* @@protoc_inserti
                &_GetWlSimDoneReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    13;
 
   void Swap(GetWlSimDoneReply* other);
   friend void swap(GetWlSimDoneReply& a, GetWlSimDoneReply& b) {
@@ -1474,7 +1689,7 @@ class SetTsReadyRequest : public ::google::protobuf::Message /* @@protoc_inserti
                &_SetTsReadyRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    14;
 
   void Swap(SetTsReadyRequest* other);
   friend void swap(SetTsReadyRequest& a, SetTsReadyRequest& b) {
@@ -1590,7 +1805,7 @@ class SetTsReadyReply : public ::google::protobuf::Message /* @@protoc_insertion
                &_SetTsReadyReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    15;
 
   void Swap(SetTsReadyReply* other);
   friend void swap(SetTsReadyReply& a, SetTsReadyReply& b) {
@@ -1686,7 +1901,7 @@ class GetNextTsRequest : public ::google::protobuf::Message /* @@protoc_insertio
                &_GetNextTsRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    16;
 
   void Swap(GetNextTsRequest* other);
   friend void swap(GetNextTsRequest& a, GetNextTsRequest& b) {
@@ -1789,7 +2004,7 @@ class GetNextTsReply : public ::google::protobuf::Message /* @@protoc_insertion_
                &_GetNextTsReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    17;
 
   void Swap(GetNextTsReply* other);
   friend void swap(GetNextTsReply& a, GetNextTsReply& b) {
@@ -1892,7 +2107,7 @@ class AddTsRequest : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_AddTsRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    18;
 
   void Swap(AddTsRequest* other);
   friend void swap(AddTsRequest& a, AddTsRequest& b) {
@@ -2002,7 +2217,7 @@ class AddTsReply : public ::google::protobuf::Message /* @@protoc_insertion_poin
                &_AddTsReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    19;
 
   void Swap(AddTsReply* other);
   friend void swap(AddTsReply& a, AddTsReply& b) {
@@ -2061,6 +2276,198 @@ class AddTsReply : public ::google::protobuf::Message /* @@protoc_insertion_poin
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class TestRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.TestRequest) */ {
+ public:
+  TestRequest();
+  virtual ~TestRequest();
+
+  TestRequest(const TestRequest& from);
+
+  inline TestRequest& operator=(const TestRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  TestRequest(TestRequest&& from) noexcept
+    : TestRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline TestRequest& operator=(TestRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TestRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const TestRequest* internal_default_instance() {
+    return reinterpret_cast<const TestRequest*>(
+               &_TestRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    20;
+
+  void Swap(TestRequest* other);
+  friend void swap(TestRequest& a, TestRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline TestRequest* New() const final {
+    return CreateMaybeMessage<TestRequest>(NULL);
+  }
+
+  TestRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TestRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const TestRequest& from);
+  void MergeFrom(const TestRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(TestRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.TestRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class TestReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.TestReply) */ {
+ public:
+  TestReply();
+  virtual ~TestReply();
+
+  TestReply(const TestReply& from);
+
+  inline TestReply& operator=(const TestReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  TestReply(TestReply&& from) noexcept
+    : TestReply() {
+    *this = ::std::move(from);
+  }
+
+  inline TestReply& operator=(TestReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const TestReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const TestReply* internal_default_instance() {
+    return reinterpret_cast<const TestReply*>(
+               &_TestReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    21;
+
+  void Swap(TestReply* other);
+  friend void swap(TestReply& a, TestReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline TestReply* New() const final {
+    return CreateMaybeMessage<TestReply>(NULL);
+  }
+
+  TestReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TestReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const TestReply& from);
+  void MergeFrom(const TestReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(TestReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.TestReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -2070,6 +2477,28 @@ class AddTsReply : public ::google::protobuf::Message /* @@protoc_insertion_poin
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// TxnReadyRequest
+
+// uint64 thread_id = 1;
+inline void TxnReadyRequest::clear_thread_id() {
+  thread_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 TxnReadyRequest::thread_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.TxnReadyRequest.thread_id)
+  return thread_id_;
+}
+inline void TxnReadyRequest::set_thread_id(::google::protobuf::uint64 value) {
+  
+  thread_id_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.TxnReadyRequest.thread_id)
+}
+
+// -------------------------------------------------------------------
+
+// TxnReadyReply
+
+// -------------------------------------------------------------------
+
 // InitWlDoneRequest
 
 // -------------------------------------------------------------------
@@ -2714,9 +3143,25 @@ inline void AddTsRequest::set_timestamp(::google::protobuf::uint64 value) {
 
 // AddTsReply
 
+// -------------------------------------------------------------------
+
+// TestRequest
+
+// -------------------------------------------------------------------
+
+// TestReply
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

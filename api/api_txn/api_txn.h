@@ -18,17 +18,19 @@ namespace dbx1000 {
 
     class ApiTxnServer : public dbx1000::DBx1000Service::Service {
     public:
-        virtual ::grpc::Status SetTsReady(::grpc::ClientContext* context, const ::dbx1000::SetTsReadyRequest& request, ::dbx1000::SetTsReadyReply* response);
+        virtual ::grpc::Status SetTsReady(::grpc::ServerContext* context, const ::dbx1000::SetTsReadyRequest* request, ::dbx1000::SetTsReadyReply* response);
+        virtual ::grpc::Status Test(::grpc::ServerContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response);
     };
 
     class ApiTxnClient {
     public:
 //        ApiTxnClient(std::shared_ptr<grpc::Channel> channel);
-        ApiTxnClient();
+        ApiTxnClient(std::string addr);
         ApiTxnClient(const ApiTxnClient &) = delete;
         ApiTxnClient &operator=(const ApiTxnClient &) = delete;
 
-//        bool InitWlDone();
+        void TxnReady(uint64_t thread_id);
+        bool InitWlDone();
 
         RC GetRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);
         void ReturnRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);

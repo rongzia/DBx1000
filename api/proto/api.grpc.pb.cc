@@ -19,6 +19,7 @@
 namespace dbx1000 {
 
 static const char* DBx1000Service_method_names[] = {
+  "/dbx1000.DBx1000Service/TxnReady",
   "/dbx1000.DBx1000Service/InitWlDone",
   "/dbx1000.DBx1000Service/GetRow",
   "/dbx1000.DBx1000Service/ReturnRow",
@@ -27,6 +28,7 @@ static const char* DBx1000Service_method_names[] = {
   "/dbx1000.DBx1000Service/GetNextTs",
   "/dbx1000.DBx1000Service/AddTs",
   "/dbx1000.DBx1000Service/SetTsReady",
+  "/dbx1000.DBx1000Service/Test",
 };
 
 std::unique_ptr< DBx1000Service::Stub> DBx1000Service::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -36,15 +38,45 @@ std::unique_ptr< DBx1000Service::Stub> DBx1000Service::NewStub(const std::shared
 }
 
 DBx1000Service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_InitWlDone_(DBx1000Service_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetRow_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_ReturnRow_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_SetWlSimDone_(DBx1000Service_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetWlSimDone_(DBx1000Service_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetNextTs_(DBx1000Service_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_AddTs_(DBx1000Service_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_SetTsReady_(DBx1000Service_method_names[7], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  : channel_(channel), rpcmethod_TxnReady_(DBx1000Service_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_InitWlDone_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetRow_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_ReturnRow_(DBx1000Service_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_SetWlSimDone_(DBx1000Service_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetWlSimDone_(DBx1000Service_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetNextTs_(DBx1000Service_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_AddTs_(DBx1000Service_method_names[7], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_SetTsReady_(DBx1000Service_method_names[8], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Test_(DBx1000Service_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
+
+::grpc::Status DBx1000Service::Stub::TxnReady(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::dbx1000::TxnReadyReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_TxnReady_, context, request, response);
+}
+
+void DBx1000Service::Stub::experimental_async::TxnReady(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_TxnReady_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::TxnReady(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::TxnReadyReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_TxnReady_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::TxnReady(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_TxnReady_, context, request, response, reactor);
+}
+
+void DBx1000Service::Stub::experimental_async::TxnReady(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::TxnReadyReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_TxnReady_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::TxnReadyReply>* DBx1000Service::Stub::AsyncTxnReadyRaw(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::TxnReadyReply>::Create(channel_.get(), cq, rpcmethod_TxnReady_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::TxnReadyReply>* DBx1000Service::Stub::PrepareAsyncTxnReadyRaw(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::TxnReadyReply>::Create(channel_.get(), cq, rpcmethod_TxnReady_, context, request, false);
+}
 
 ::grpc::Status DBx1000Service::Stub::InitWlDone(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::dbx1000::InitWlDoneReply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_InitWlDone_, context, request, response);
@@ -270,50 +302,95 @@ void DBx1000Service::Stub::experimental_async::SetTsReady(::grpc::ClientContext*
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::SetTsReadyReply>::Create(channel_.get(), cq, rpcmethod_SetTsReady_, context, request, false);
 }
 
+::grpc::Status DBx1000Service::Stub::Test(::grpc::ClientContext* context, const ::dbx1000::TestRequest& request, ::dbx1000::TestReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Test_, context, request, response);
+}
+
+void DBx1000Service::Stub::experimental_async::Test(::grpc::ClientContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Test_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::Test(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::TestReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Test_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::Test(::grpc::ClientContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Test_, context, request, response, reactor);
+}
+
+void DBx1000Service::Stub::experimental_async::Test(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::TestReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Test_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::TestReply>* DBx1000Service::Stub::AsyncTestRaw(::grpc::ClientContext* context, const ::dbx1000::TestRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::TestReply>::Create(channel_.get(), cq, rpcmethod_Test_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::TestReply>* DBx1000Service::Stub::PrepareAsyncTestRaw(::grpc::ClientContext* context, const ::dbx1000::TestRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::TestReply>::Create(channel_.get(), cq, rpcmethod_Test_, context, request, false);
+}
+
 DBx1000Service::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::TxnReadyRequest, ::dbx1000::TxnReadyReply>(
+          std::mem_fn(&DBx1000Service::Service::TxnReady), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DBx1000Service_method_names[1],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InitWlDoneRequest, ::dbx1000::InitWlDoneReply>(
           std::mem_fn(&DBx1000Service::Service::InitWlDone), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[1],
+      DBx1000Service_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetRowRequest, ::dbx1000::GetRowReply>(
           std::mem_fn(&DBx1000Service::Service::GetRow), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[2],
+      DBx1000Service_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::ReturnRowRequest, ::dbx1000::ReturnRowReply>(
           std::mem_fn(&DBx1000Service::Service::ReturnRow), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[3],
+      DBx1000Service_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::SetWlSimDoneRequest, ::dbx1000::SetWlSimDoneReply>(
           std::mem_fn(&DBx1000Service::Service::SetWlSimDone), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[4],
+      DBx1000Service_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetWlSimDoneRequest, ::dbx1000::GetWlSimDoneReply>(
           std::mem_fn(&DBx1000Service::Service::GetWlSimDone), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[5],
+      DBx1000Service_method_names[6],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>(
           std::mem_fn(&DBx1000Service::Service::GetNextTs), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[6],
+      DBx1000Service_method_names[7],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::AddTsRequest, ::dbx1000::AddTsReply>(
           std::mem_fn(&DBx1000Service::Service::AddTs), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[7],
+      DBx1000Service_method_names[8],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>(
           std::mem_fn(&DBx1000Service::Service::SetTsReady), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DBx1000Service_method_names[9],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::TestRequest, ::dbx1000::TestReply>(
+          std::mem_fn(&DBx1000Service::Service::Test), this)));
 }
 
 DBx1000Service::Service::~Service() {
+}
+
+::grpc::Status DBx1000Service::Service::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
 ::grpc::Status DBx1000Service::Service::InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response) {
@@ -366,6 +443,13 @@ DBx1000Service::Service::~Service() {
 }
 
 ::grpc::Status DBx1000Service::Service::SetTsReady(::grpc::ServerContext* context, const ::dbx1000::SetTsReadyRequest* request, ::dbx1000::SetTsReadyReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DBx1000Service::Service::Test(::grpc::ServerContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response) {
   (void) context;
   (void) request;
   (void) response;

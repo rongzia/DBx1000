@@ -22,6 +22,7 @@ workload::~workload(){
 }
 
 RC workload::init() {
+    cout << "workload::init()" << endl;
     for (int i = 0; i < g_init_parallelism; i++) {
         arenas_.emplace_back(dbx1000::make_unique<dbx1000::Arena>(i));
     }

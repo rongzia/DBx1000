@@ -16,14 +16,22 @@
 
 namespace dbx1000 {
 
-    ::grpc::Status ApiTxnServer::SetTsReady(::grpc::ClientContext* context
-            , const ::dbx1000::SetTsReadyRequest& request, ::dbx1000::SetTsReadyReply* response) {
-        uint64_t thread_id = request.thread_id();
+    ::grpc::Status ApiTxnServer::SetTsReady(::grpc::ServerContext* context, const ::dbx1000::SetTsReadyRequest* request, ::dbx1000::SetTsReadyReply* response) {
+//        cout << "ApiTxnServer::SetTsReady" << endl;
+        uint64_t thread_id = request->thread_id();
         int row_cnt = glob_manager_client->all_txns_[thread_id]->row_cnt;
 
         glob_manager_client->all_txns_[thread_id]->ts_ready = true;
-        glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->MergeFrom(request.cur_row());
+        assert(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->size_ == request->cur_row().size()
+            && request->cur_row().size() == request->cur_row().row().size());
+        memcpy(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->row_
+            , request->cur_row().row().data(), request->cur_row().row().size());
 
+        return ::grpc::Status::OK;
+    }
+
+    ::grpc::Status ApiTxnServer::Test(::grpc::ServerContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response) {
+        cout << " ApiTxnServer::Test" << endl;
         return ::grpc::Status::OK;
     }
 
@@ -33,36 +41,47 @@ namespace dbx1000 {
 
 
 
-    ApiTxnClient::ApiTxnClient() : stub_(dbx1000::DBx1000Service::NewStub(
-            grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials())
+    ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
+            grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
             )) {
-        cout << "ApiTxnClient connect success." << endl;
+        cout << "ApiTxnClient::ApiTxnClient connect to " << addr << " success." << endl;
     }
 
-//    bool ApiTxnClient::InitWlDone() {
-//        /// gen request
-//        dbx1000::InitWlDoneRequest request;
-//        grpc::ClientContext context;
-//        dbx1000::InitWlDoneReply reply;
-//        ::grpc::Status status = stub_->InitWlDone(&context, request, &reply);
-//        assert(status.ok());
-//
-//        return reply.is_done();
-//    }
+    void ApiTxnClient::TxnReady(uint64_t thread_id) {
+        /// gen request
+        dbx1000::TxnReadyRequest request;
+        request.set_thread_id(thread_id);
+        ::grpc::ClientContext context;
+        dbx1000::TxnReadyReply reply;
+        ::grpc::Status status = stub_->TxnReady(&context, request, &reply);
+        assert(status.ok());
+    }
+
+    bool ApiTxnClient::InitWlDone() {
+        /// gen request
+        dbx1000::InitWlDoneRequest request;
+        grpc::ClientContext context;
+        dbx1000::InitWlDoneReply reply;
+        ::grpc::Status status = stub_->InitWlDone(&context, request, &reply);
+        assert(status.ok());
+
+        return reply.is_done();
+    }
 
     RC ApiTxnClient::GetRow(uint64_t key, access_t type, txn_man* txn, int accesses_index) {
+//        cout << "ApiTxnClient::GetRow" << endl;
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
         uint64_t thread_id = txn->get_thd_id();
 
         /// gen request
         dbx1000::GetRowRequest request;
-        Mess_RowItem messRowItem;
-        Mess_TxnRowMan messTxnRowMan;
+        Mess_RowItem* messRowItem = new Mess_RowItem();
+        Mess_TxnRowMan* messTxnRowMan = new Mess_TxnRowMan();
         request.set_key(key);
         request.set_ts_type(MyHelper::TsTypeToInt(ts_type));
-        DBx1000ServiceUtil::Set_Mess_RowItem(key, nullptr, 0, &messRowItem);
-        DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, &messTxnRowMan);
-        request.set_allocated_txnman(&messTxnRowMan);
+        DBx1000ServiceUtil::Set_Mess_RowItem(key, nullptr, 0, messRowItem);
+        DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, messTxnRowMan);
+        request.set_allocated_txnman(messTxnRowMan);
 //        request.set_accesses_index(accesses_index);
 
         grpc::ClientContext context;
@@ -87,6 +106,7 @@ namespace dbx1000 {
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
         }
         else if (WAIT == rc) {
+//            cout << "ApiTxnClient::GetRow, type == WAIT" << endl;
             std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
             profiler->Start();
             while (!txn->ts_ready) { PAUSE }
@@ -100,23 +120,33 @@ namespace dbx1000 {
     }
 
     void ApiTxnClient::ReturnRow(uint64_t key, access_t type, txn_man *txn, int accesses_index) {
+//        cout << "ApiTxnClient::ReturnRow" << endl;
+
+        if(RD == type) { return;}
+        else if(SCAN == type) { cout << "SCAN." << endl; return;}
+
         /// gen request
         dbx1000::ReturnRowRequest request;
-        Mess_RowItem messRowItem;
-        Mess_TxnRowMan messTxnRowMan;
+        Mess_RowItem* messRowItem = new Mess_RowItem();
+        Mess_TxnRowMan* messTxnRowMan = new Mess_TxnRowMan();
         request.set_key(key);
 
         TxnRowMan txnRowMan(txn->get_thd_id(), txn->get_txn_id(), txn->ts_ready, nullptr, txn->get_ts());
         if (type == XP) {
             request.set_ts_type(MyHelper::TsTypeToInt(XP_REQ));
-            DBx1000ServiceUtil::Set_Mess_RowItem(key, txn->accesses[accesses_index]->orig_row->row_, txn->accesses[accesses_index]->orig_row->size_, &messRowItem);
-            DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, &messTxnRowMan);
+            assert(txn->accesses[accesses_index]->orig_row->size_ > 0);
+            assert(txn->accesses[accesses_index]->orig_row->row_ != nullptr);
+            DBx1000ServiceUtil::Set_Mess_RowItem(key, txn->accesses[accesses_index]->orig_row->row_, txn->accesses[accesses_index]->orig_row->size_, messRowItem);
+            DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, messTxnRowMan);
+            request.set_allocated_txnman(messTxnRowMan);
         } else if (type == WR) {
             request.set_ts_type(MyHelper::TsTypeToInt(W_REQ));
-            DBx1000ServiceUtil::Set_Mess_RowItem(key, txn->accesses[accesses_index]->data->row_, txn->accesses[accesses_index]->data->size_, &messRowItem);
-            DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, &messTxnRowMan);
-        } else if (type == RD) { return;}
-        else if (type == SCAN) { cout << "SCAN." << endl; return;}
+            assert(txn->accesses[accesses_index]->data->size_ > 0);
+            assert(txn->accesses[accesses_index]->data->row_ != nullptr);
+            DBx1000ServiceUtil::Set_Mess_RowItem(key, txn->accesses[accesses_index]->data->row_, txn->accesses[accesses_index]->data->size_, messRowItem);
+            DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, messTxnRowMan);
+            request.set_allocated_txnman(messTxnRowMan);
+        }
         else { assert(false); }
 
         grpc::ClientContext context;

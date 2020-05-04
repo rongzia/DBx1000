@@ -17,7 +17,8 @@ namespace dbx1000 {
 
     class ApiConCtlServer : public dbx1000::DBx1000Service::Service {
     public:
-//        virtual ::grpc::Status InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response);
+        virtual ::grpc::Status TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response);
+        virtual ::grpc::Status InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response);
         virtual ::grpc::Status GetRow(::grpc::ServerContext *context, const ::dbx1000::GetRowRequest *request, ::dbx1000::GetRowReply *response);
         virtual ::grpc::Status ReturnRow(::grpc::ServerContext* context, const ::dbx1000::ReturnRowRequest* request, ::dbx1000::ReturnRowReply* response);
         virtual ::grpc::Status SetWlSimDone(::grpc::ServerContext* context, const ::dbx1000::SetWlSimDoneRequest* request, ::dbx1000::SetWlSimDoneReply* response);
@@ -29,11 +30,12 @@ namespace dbx1000 {
     class TxnRowMan;
     class ApiConCtlClient {
     public:
-        ApiConCtlClient();
+        ApiConCtlClient(std::string addr);
         ApiConCtlClient(const ApiConCtlClient &) = delete;
         ApiConCtlClient &operator=(const ApiConCtlClient &) = delete;
 
         void SetTsReady(TxnRowMan* global_server_txn);
+        void Test();
 
     private:
         std::unique_ptr<dbx1000::DBx1000Service::Stub> stub_;

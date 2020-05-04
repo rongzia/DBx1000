@@ -25,7 +25,7 @@ int main(){
 
     std::thread txn_server(RunTxnServer);
     txn_server.detach();
-    api_txn_client = new dbx1000::ApiTxnClient();
+//    api_txn_client = new dbx1000::ApiTxnClient();
 
 
     while(1) {}

@@ -15,13 +15,10 @@
 #include "api_txn.h"
 
 //! thd_id = 0...3
-//void thread_t::init(uint64_t thd_id, workload * workload) {
 void thread_t::init(uint64_t thd_id) {
 	thread_id_ = thd_id;
-//	_wl = workload;
-//	srand48_r((thread_id_ + 1) * std::chrono::system_clock::now().time_since_epoch().count(), &buffer);
+	srand48_r((thread_id_ + 1) * std::chrono::system_clock::now().time_since_epoch().count(), &buffer);
 	_abort_buffer_size = ABORT_BUFFER_SIZE;                                 /// 10
-//	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64);
 	_abort_buffer = new AbortBufferEntry[_abort_buffer_size]();
 	for (int i = 0; i < _abort_buffer_size; i++) { _abort_buffer[i].query = NULL; }
 	_abort_buffer_empty_slots = _abort_buffer_size;                         /// 10

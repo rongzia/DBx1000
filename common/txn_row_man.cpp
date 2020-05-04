@@ -43,6 +43,16 @@ namespace dbx1000 {
         to->timestamp_ = timestamp;
     }
 
+    void TxnRowMan::PrintTxnRowMan() {
+        cout << "TxnRowMan::PrintTxnRowMan" << endl;
+        cout << "    thread_id_      : " << this->thread_id_ << endl;
+        cout << "    txn_id_         : " << this->txn_id_ << endl;
+        cout << "    ts_ready_       : " << this->ts_ready_ << endl;
+        cout << "    cur_row_->key_  : " << this->cur_row_->key_ << endl;
+        cout << "    cur_row_->size_ : " << this->cur_row_->size_ << endl;
+    cout << "    timestamp_      : " << this->timestamp_ << endl;
+    }
+
 //    void TxnRowMan::set_txn_id(uint64_t txn_id) { this->txn_id_ = txn_id; }
 //
 //    ts_t TxnRowMan::get_ts() { return this->timestamp_; }
