@@ -6,7 +6,8 @@
 #include "leveldb/slice.h"
 
 namespace dbx1000 {
-    NumberComparatorImpl::NumberComparatorImpl() {}
+//    NumberComparatorImpl::NumberComparatorImpl() {}
+//    NumberComparatorImpl::~NumberComparatorImpl() {}
 
     const char *NumberComparatorImpl::Name() const {
         return "leveldb.NumberComparator";

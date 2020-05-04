@@ -1,5 +1,5 @@
-#include "global.h"
-#include "helper.h"
+#include "common/global.h"
+#include "common/helper.h"
 #include "stats.h"
 
 #define BILLION 1000000000UL

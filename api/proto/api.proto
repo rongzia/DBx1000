@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package dbx1000;
+
+service DBx1000Service {
+    /// for txn thread
+    rpc InitWlDone(InitWlDoneRequest) returns (InitWlDoneReply) {}
+    rpc GetRow (GetRowRequest) returns (GetRowReply) {}
+    rpc ReturnRow (ReturnRowRequest) returns (ReturnRowReply) {}
+    rpc SetWlSimDone(SetWlSimDoneRequest) returns (SetWlSimDoneReply) {}
+    rpc GetWlSimDone(GetWlSimDoneRequest) returns (GetWlSimDoneReply) {}
+    rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
+    rpc AddTs(AddTsRequest) returns (AddTsReply) {}
+
+    /// for cc
+    rpc SetTsReady(SetTsReadyRequest) returns (SetTsReadyReply) {}
+}
+
+message InitWlDoneRequest {}
+
+message InitWlDoneReply {
+    bool is_done = 1;
+}
+
+message Mess_RowItem {
+    uint64 key = 1;
+    bytes row = 2;
+    uint64 size = 3;
+}
+
+message Mess_TxnRowMan {
+    uint64 thread_id = 1;
+    uint64 txn_id = 2;
+    bool ts_ready = 3;
+    Mess_RowItem cur_row = 4;
+    uint64 timestamp = 5;
+}
+
+message GetRowRequest {
+    uint64 key = 1;
+    int32 ts_type = 2;
+    Mess_TxnRowMan txnman = 3;
+//    int32 accesses_index = 4;
+}
+message GetRowReply {
+    int32 rc = 1;
+    bytes row = 2;
+}
+
+message ReturnRowRequest {
+    uint64 key = 1;
+    int32 ts_type = 2;
+    Mess_TxnRowMan txnman = 3;
+//    int32 accesses_index = 4;
+}
+message ReturnRowReply {}
+
+message SetWlSimDoneRequest {}
+message SetWlSimDoneReply {}
+
+message GetWlSimDoneRequest {}
+message GetWlSimDoneReply {
+    bool sim_done = 1;
+}
+
+message SetTsReadyRequest {
+    uint64 thread_id = 1;
+    Mess_RowItem cur_row = 2;
+}
+message SetTsReadyReply {}
+
+message GetNextTsRequest {
+    uint64 thread_id = 1;
+}
+
+message GetNextTsReply {
+    uint64 timestamp = 1;
+}
+
+message AddTsRequest {
+    uint64 thread_id = 1;
+    uint64 timestamp = 2;
+}
+
+message AddTsReply {}

@@ -1,6 +1,6 @@
-#include "global.h"
+#include "common/global.h"
 #include "config.h"
-#include "helper.h"
+#include "common/helper.h"
 
 void print_usage() {
 	printf("[usage]:\n");

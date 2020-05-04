@@ -12,7 +12,8 @@ namespace dbx1000 {
 
     class NumberComparatorImpl : public leveldb::Comparator {
     public:
-        NumberComparatorImpl();
+//        NumberComparatorImpl();
+//        ~NumberComparatorImpl();
 
         virtual const char *Name() const;
 
