@@ -1,7 +1,7 @@
 #pragma once 
 
 #include <cstdlib>
-#include "global.h"
+#include "common/global.h"
 
 class base_query;
 
@@ -22,10 +22,6 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 
-	int count1;
-	int count2;
-	int count3;
-	int count4;
 private:
 
 //	RC	 		runTest(txn_man * txn);

@@ -5,7 +5,7 @@
 #include "dbx1000_service_util.h"
 
 #include "api.pb.h"
-#include "txn.h"
+#include "client/txn/txn.h"
 
 namespace dbx1000 {
     void DBx1000ServiceUtil::Set_Mess_RowItem(uint64_t key, char* row, size_t size, Mess_RowItem* messRowItem) {

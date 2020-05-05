@@ -1,6 +1,7 @@
 //
 // Created by rrzhang on 2020/4/23.
 //
+#include <iostream>
 #include "txn_row_man.h"
 
 #include "row_item.h"
@@ -44,13 +45,13 @@ namespace dbx1000 {
     }
 
     void TxnRowMan::PrintTxnRowMan() {
-        cout << "TxnRowMan::PrintTxnRowMan" << endl;
-        cout << "    thread_id_      : " << this->thread_id_ << endl;
-        cout << "    txn_id_         : " << this->txn_id_ << endl;
-        cout << "    ts_ready_       : " << this->ts_ready_ << endl;
-        cout << "    cur_row_->key_  : " << this->cur_row_->key_ << endl;
-        cout << "    cur_row_->size_ : " << this->cur_row_->size_ << endl;
-    cout << "    timestamp_      : " << this->timestamp_ << endl;
+        std::cout << "TxnRowMan::PrintTxnRowMan" << std::endl;
+        std::cout << "    thread_id_      : " << this->thread_id_ << std::endl;
+        std::cout << "    txn_id_         : " << this->txn_id_ << std::endl;
+        std::cout << "    ts_ready_       : " << this->ts_ready_ << std::endl;
+        std::cout << "    cur_row_->key_  : " << this->cur_row_->key_ << std::endl;
+        std::cout << "    cur_row_->size_ : " << this->cur_row_->size_ << std::endl;
+        std::cout << "    timestamp_      : " << this->timestamp_ << std::endl;
     }
 
 //    void TxnRowMan::set_txn_id(uint64_t txn_id) { this->txn_id_ = txn_id; }

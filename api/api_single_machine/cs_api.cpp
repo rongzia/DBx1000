@@ -1,18 +1,20 @@
 //
 // Created by rrzhang on 2020/4/23.
 //
+#ifndef WITH_RPC
 
-#include <client/manager_client.h>
 #include <memory>
+#include <cstring>
 #include "cs_api.h"
-#include "row_mvcc.h"
-#include "manager_server.h"
-#include "profiler.h"
-#include "stats.h"
-#include "myhelper.h"
-#include "wl.h"
-#include "ycsb_wl.h"
-#include "cstring"
+
+#include "client/manager_client.h"
+#include "common/mystats.h"
+#include "common/myhelper.h"
+#include "server/concurrency_control/row_mvcc.h"
+#include "server/manager_server.h"
+#include "server/workload/wl.h"
+#include "server/workload/ycsb_wl.h"
+#include "util/profiler.h"
 
 namespace dbx1000 {
     int API::count_ = 0;
@@ -22,103 +24,76 @@ namespace dbx1000 {
     RC API::get_row(uint64_t key, access_t type, txn_man* txn, int accesses_index) {
 //        std::cout << "API::get_row, key:" << key << ", type:" << (type == RD ? "R_REQ" : "P_REQ") << std::endl;
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
-//        cout << "__LINE__" << __LINE__ << endl;
         uint64_t thread_id = txn->get_thd_id();
 
-        TxnRowMan txnRowMan(thread_id, txn->get_txn_id(), txn->ts_ready, new RowItem(key, 0, false), txn->get_ts());
+        TxnRowMan* temp = glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready
+                                    , key, nullptr, 0, txn->get_ts());
+        RC rc = glob_manager_server->row_mvccs_[key]->access(temp, ts_type);
+//        mtx_.lock();
+//        count_++;
+//        mtx_.unlock();
 //        cout << "__LINE__" << __LINE__ << endl;
-        glob_manager_server->SetTxn(&txnRowMan);
-//        cout << "__LINE__" << __LINE__ << endl;
-        RC rc = glob_manager_server->row_mvccs_[key]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
-//        cout << "__LINE__" << __LINE__ << endl;
-        mtx_.lock();
-        count_++;
-        mtx_.unlock();
-//        cout << "__LINE__" << __LINE__ << endl;
-        delete txnRowMan.cur_row_;
-        cout << "__LINE__" << __LINE__ << endl;
-        cout << "accesses_index" << accesses_index << endl;
-        cout << "orig_row.key : " << txn->accesses[accesses_index]->orig_row->key_ << endl;
-        cout << "orig_row.size_ : " << txn->accesses[accesses_index]->orig_row->size_ << endl;
-        cout << "orig_row.row_ : " << txn->accesses[accesses_index]->orig_row->row_ << endl;
-        txnRowMan.cur_row_ = txn->accesses[accesses_index]->orig_row;
-
-//        cout << "__LINE__" << __LINE__ << endl;
-//        cout << "rc : " << rc << endl;
+//        cout << "accesses_index" << accesses_index << endl;
+//        cout << "orig_row.key : " << txn->accesses[accesses_index]->orig_row->key_ << endl;
+//        cout << "orig_row.size_ : " << txn->accesses[accesses_index]->orig_row->size_ << endl;
+//        cout << "orig_row.row_ : " << txn->accesses[accesses_index]->orig_row->row_ << endl;
 
         if (RCOK == rc) {
-//        cout << "__LINE__" << __LINE__ << endl;
-            memcpy(txnRowMan.cur_row_->row_, glob_manager_server->all_txns_[thread_id]->cur_row_->row_
-                    , glob_manager_server->all_txns_[thread_id]->cur_row_->size_);
-//        cout << "__LINE__" << __LINE__ << endl;
+            assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
+            memcpy(txn->accesses[accesses_index]->orig_row->row_
+                   , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
         }
         else if (WAIT == rc) {
-//        cout << "__LINE__" << __LINE__ << endl;
-    cout << "API::get_row WAIT" << endl;
-            /// TODO: WAIT
-//        cout << "__LINE__" << __LINE__ << endl;
-            std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
-            profiler->Start();
-//        cout << "__LINE__" << __LINE__ << endl;
-            while (!glob_manager_client->all_txns_[txn->get_thd_id()]->ts_ready) { PAUSE }
-//        cout << "__LINE__" << __LINE__ << endl;
-            profiler->End();
-            INC_TMP_STATS(txn->get_thd_id(), time_wait, profiler->Nanos());
-//        cout << "__LINE__" << __LINE__ << endl;
-            txnRowMan.ts_ready_ = true;
-//        cout << "__LINE__" << __LINE__ << endl;
-            memcpy(txnRowMan.cur_row_->row_, glob_manager_server->all_txns_[thread_id]->cur_row_->row_
-                    , glob_manager_server->all_txns_[thread_id]->cur_row_->size_);
-//        cout << "__LINE__" << __LINE__ << endl;
-    cout << "out API::get_row WAIT" << endl;
+//            cout << "API::get_row, type == WAIT" << endl;
+            stats.tmp_stats[thread_id]->profiler->Clear();
+            stats.tmp_stats[thread_id]->profiler->Start();
+            while (!txn->ts_ready) { PAUSE }
+            stats.tmp_stats[thread_id]->profiler->End();
+            stats.tmp_stats[thread_id]->time_wait += stats.tmp_stats[thread_id]->profiler->Nanos();
+
+            txn->ts_ready = true;
+            memcpy(txn->accesses[accesses_index]->orig_row->row_
+                   , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
         }
-//        std::cout << "out API::get_row" << std::endl;
         return rc;
 
     }
 
     void API::return_row(uint64_t key, access_t type, txn_man* txn, int accesses_index) {
 //    cout << "API::return_row" << endl;
+        if(RD == type) { return;}
+        else if(SCAN == type) { cout << "SCAN." << endl; return;}
+
+        uint64_t thread_id = txn->get_thd_id();
+
         RC rc;
-//            cout << "return_row::key : " << key
-//            << ", orig_row->key_" << txn->accesses[accesses_index]->orig_row->key_
-//            << ", data->key_" << txn->accesses[accesses_index]->data->key_ << endl;
-        TxnRowMan txnRowMan(txn->get_thd_id(), txn->get_txn_id(), txn->ts_ready, nullptr, txn->get_ts());
         if (type == XP) {
-            txnRowMan.cur_row_ = txn->accesses[accesses_index]->orig_row;
-            assert(nullptr != txnRowMan.cur_row_);
-            glob_manager_server->SetTxn(&txnRowMan);
-
-//            cout << "all_txns_[txnRowMan.thread_id_].key : " << glob_manager_server->all_txns_[txnRowMan.thread_id_]->cur_row_->key_
-//            << ", txnRowMan.key : " << txnRowMan.cur_row_->key_ << endl;
-
-            rc = glob_manager_server->row_mvccs_[key]->access(glob_manager_server->all_txns_[txnRowMan.thread_id_], XP_REQ);
-            return;
+            glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready
+                    , key
+                    , glob_manager_client->all_txns_[thread_id]->accesses[accesses_index]->orig_row->row_
+                    , glob_manager_client->all_txns_[thread_id]->accesses[accesses_index]->orig_row->size_
+                    , txn->get_ts());
+            rc = glob_manager_server->row_mvccs_[key]->access(&glob_manager_server->all_txns_[thread_id], XP_REQ);
+        } else if(type == WR) {
+            glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready
+                    , key
+                    , glob_manager_client->all_txns_[thread_id]->accesses[accesses_index]->data->row_
+                    , glob_manager_client->all_txns_[thread_id]->accesses[accesses_index]->data->size_
+                    , txn->get_ts());
+            rc = glob_manager_server->row_mvccs_[key]->access(&glob_manager_server->all_txns_[thread_id], W_REQ);
+        } else {
+            assert(false);
         }
-        if (type == WR) {
-            assert (type == WR && txn->accesses[accesses_index]->data != nullptr);
-            txnRowMan.cur_row_ = txn->accesses[accesses_index]->data;
-            glob_manager_server->SetTxn(&txnRowMan);
-
-//            cout << "all_txns_[txnRowMan.thread_id_].key : " << glob_manager_server->all_txns_[txnRowMan.thread_id_]->cur_row_->key_
-//            << ", txnRowMan.key : " << txnRowMan.cur_row_->key_ << endl;
-
-            rc = glob_manager_server->row_mvccs_[key]->access(glob_manager_server->all_txns_[txnRowMan.thread_id_], W_REQ);
-            return;
-        }
-        if (type == RD) { return;}
-        if (type == SCAN) { cout << "SCAN." << endl; return;}
-        assert(false);
         assert(RCOK == rc);
     }
 
     void API::set_wl_sim_done() {
-        glob_manager_server->wl_->sim_done_.exchange(true, std::memory_order_consume);
-        assert(true == glob_manager_server->wl_->sim_done_.load(std::memory_order_consume));
+        glob_manager_server->wl_->sim_done_.store(true);
+        assert(true == glob_manager_server->wl_->sim_done_.load());
     }
 
     bool API::get_wl_sim_done() {
-        return glob_manager_server->wl_->sim_done_.load(std::memory_order_consume);
+        return glob_manager_server->wl_->sim_done_.load();
     }
 
     uint64_t API::get_next_ts(uint64_t thread_id) {
@@ -134,8 +109,10 @@ namespace dbx1000 {
         uint64_t thread_id = global_server_txn->thread_id_;
         int row_cnt = glob_manager_client->all_txns_[thread_id]->row_cnt;
 
-        glob_manager_client->all_txns_[thread_id]->ts_ready = global_server_txn->ts_ready_;
-        glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->MergeFrom(*(global_server_txn->cur_row_));
-//        RowItem::CopyRowItem(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row, global_server_txn->cur_row_);
+        glob_manager_client->all_txns_[thread_id]->ts_ready = true;
+        memcpy(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->row_
+            , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
     }
 }
+
+#endif // no define WITH_RPC

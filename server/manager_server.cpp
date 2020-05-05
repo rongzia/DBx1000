@@ -2,17 +2,16 @@
 // Created by rrzhang on 2020/4/26.
 //
 #include <cassert>
-#include <common/txn_row_man.h>
 #include <cstring>
 #include "manager_server.h"
 
-#include "global.h"     /// for g_thread_cnt
-#include "row_item.h"
-#include "wl.h"
-#include "ycsb_wl.h"
-#include "table.h"
-#include "catalog.h"
-#include "buffer.h"
+#include "common/global.h"     /// for g_thread_cnt
+#include "common/row_item.h"
+#include "common/txn_row_man.h"
+#include "server/buffer/buffer.h"
+#include "server/storage/table.h"
+#include "server/storage/catalog.h"
+#include "server/workload/ycsb_wl.h"
 
 
 namespace dbx1000 {
@@ -63,6 +62,7 @@ namespace dbx1000 {
         return min_ts_;
     }
 
+#ifdef WITH_RPC
     TxnRowMan* ManagerServer::SetTxn(Mess_TxnRowMan messTxnRowMan) {
         uint64_t thread_id = messTxnRowMan.thread_id();
 
@@ -74,6 +74,21 @@ namespace dbx1000 {
 //        assert(messTxnRowMan.cur_row().row());
         memcpy(all_txns_[thread_id].cur_row_->row_, messTxnRowMan.cur_row().row().data(), messTxnRowMan.cur_row().size());
         all_txns_[thread_id].timestamp_ = messTxnRowMan.timestamp();
+        return &all_txns_[thread_id];
+    }
+#endif // WITH_RPC
+
+    TxnRowMan* ManagerServer::SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready
+                                     , uint64_t key, char *row, size_t size, uint64_t timestamp) {
+//        TxnRowMan* temp = &all_txns_[thread_id];
+        all_txns_[thread_id].thread_id_     = thread_id;
+        all_txns_[thread_id].txn_id_        = txn_id;
+        all_txns_[thread_id].ts_ready_      = ts_ready;
+        all_txns_[thread_id].cur_row_->key_ = key;
+        if(nullptr != row && size > 0) {
+            memcpy(all_txns_[thread_id].cur_row_->row_, row, size);
+        }
+        all_txns_[thread_id].timestamp_     = timestamp;
         return &all_txns_[thread_id];
     }
 }

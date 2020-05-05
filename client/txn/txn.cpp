@@ -1,14 +1,14 @@
 
 #include <cstring>
-#include "cs_api.h"
+#include <common/mystats.h>
+
 #include "txn.h"
-#include "stats.h"
-#include "benchmarks/ycsb_query.h"
+
+#include "api/api_single_machine/cs_api.h"
+#include "api/api_txn/api_txn.h"
+#include "client/benchmarks/ycsb_query.h"
 #include "client/thread.h"
 #include "common/row_item.h"
-#include "util/profiler.h"
-#include "myhelper.h"
-#include "api_txn.h"
 
 void txn_man::init(thread_t * h_thd) {
 	this->h_thd = h_thd;
@@ -56,12 +56,13 @@ void txn_man::cleanup(RC rc) {
 					CC_ALG == WAIT_DIE)) 
 		{
 //			orig_r->return_row(type, this, accesses[rid]->orig_data);
-            cout << "__LINE__:" << __LINE__ << endl;
-
 		} else {
 //			orig_r->return_row(type, this, accesses[rid]->data);
-//            dbx1000::API::return_row(accesses[rid]->orig_row->key_, type, this, rid);
+#ifdef WITH_RPC
             api_txn_client->ReturnRow(accesses[rid]->orig_row->key_, type, this, rid);
+#else
+            dbx1000::API::return_row(accesses[rid]->orig_row->key_, type, this, rid);
+#endif // WITH_RPC
 		}
 	}
 	row_cnt = 0;
@@ -70,8 +71,9 @@ void txn_man::cleanup(RC rc) {
 
 dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 //    cout << "txn_man::get_row, key : "  << key << endl;
-    std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
-    profiler->Start();
+    uint64_t thread_id = get_thd_id();
+    stats.tmp_stats[thread_id]->profiler->Clear();
+    stats.tmp_stats[thread_id]->profiler->Start();
 
 	RC rc = RCOK;
 	if (accesses[row_cnt] == NULL) {
@@ -85,9 +87,11 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	}
 
 	this->ts_ready = false;
-//    rc = dbx1000::API::get_row(key, type, this, row_cnt);
+#ifdef WITH_RPC
 	rc = api_txn_client->GetRow(key, type, this, row_cnt);
-
+#else
+    rc = dbx1000::API::get_row(key, type, this, row_cnt);
+#endif // WITH_RPC
 
 	if (rc == Abort) {
 		return NULL;
@@ -100,8 +104,8 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	row_cnt ++;
 	if (type == WR) { wr_cnt ++; }
 
-	profiler->End();
-	INC_TMP_STATS(get_thd_id(), time_man, profiler->Nanos());
+    stats.tmp_stats[thread_id]->profiler->End();
+	stats.tmp_stats[thread_id]->time_man += stats.tmp_stats[thread_id]->profiler->Nanos();
 	if ( RD == type || SCAN == type) {
         return accesses[row_cnt - 1]->orig_row;
 	} else {
@@ -110,15 +114,15 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 }
 
 RC txn_man::finish(RC rc) {
-    std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
-    profiler->Start();
+    uint64_t thread_id = this->get_thd_id();
+    stats.tmp_stats[thread_id]->profiler->Clear();
+    stats.tmp_stats[thread_id]->profiler->Start();
 
 //    PrintAccess(accesses, row_cnt);
 	cleanup(rc);
 
-    profiler->End();
-	INC_TMP_STATS(get_thd_id(), time_man,  profiler->Nanos());
-	INC_STATS(get_thd_id(), time_cleanup,  profiler->Nanos());
+	stats.tmp_stats[thread_id]->time_man += stats.tmp_stats[thread_id]->profiler->Nanos();
+	stats._stats[thread_id]->time_cleanup += stats.tmp_stats[thread_id]->profiler->Nanos();
 	return rc;
 }
 

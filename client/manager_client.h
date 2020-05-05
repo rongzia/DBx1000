@@ -6,8 +6,6 @@
 #define DBX1000_MANAGER_CLIENT_H
 
 #include <cstdint>
-//#include <unordered_map>
-//#include "txn.h"
 
 class txn_man;
 

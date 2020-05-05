@@ -1,14 +1,11 @@
 //
-// Created by rrzhang on 2020/5/4.
+// Created by rrzhang on 2020/5/5.
 //
-#ifdef WITH_RPC
-
 #include <iostream>
 #include <memory>
 #include <thread>
 #include <vector>
 #include "leveldb/db.h"
-
 
 //#include "ycsb_query.h"
 #include "server/workload/ycsb_wl.h"
@@ -27,43 +24,32 @@
 
 #include "api/api_cc/api_cc.h"
 #include "api/api_txn/api_txn.h"
-
 using namespace std;
+void parser(int argc, char * argv[]);
 
-void RunTxnServer() {
-    std::string txn_server_address("0.0.0.0:50040");
-  	dbx1000::ApiTxnServer service;
-
-  	grpc::ServerBuilder builder;
-  	builder.AddListeningPort(txn_server_address, grpc::InsecureServerCredentials());
-  	builder.RegisterService(&service);
-  	std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-  	cout << "Server listening on:" << txn_server_address << endl;
-  	server->Wait();
+void Test_wl() {
+    glob_manager_server = new dbx1000::ManagerServer();
+    std::unique_ptr<workload> m_wl(new ycsb_wl());
+    m_wl->init();
+    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
 }
+
 void f(thread_t* thread) {
     thread->run();
 }
 
-void parser(int argc, char * argv[]);
-
 int main(int argc, char* argv[]) {
-    cout << "mian test txn thread" << endl;
-    api_txn_client = new dbx1000::ApiTxnClient("127.0.0.1:50051");
-    std::thread txn_server(RunTxnServer);
-    txn_server.detach();
-
-    for(size_t i = 0; i < g_thread_cnt; i++) {
-        api_txn_client->TxnReady(i);
-    }
-
-
-
-    while(!api_txn_client->InitWlDone()) {PAUSE}
-
 	parser(argc, argv);
     stats.init();
 
+    /// for server
+    //    Test_wl();
+    glob_manager_server = new dbx1000::ManagerServer();
+    std::unique_ptr<workload> m_wl(new ycsb_wl());
+    m_wl->init();
+    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
+
+    /// for txn thread
     glob_manager_client = new dbx1000::ManagerClient();
     glob_manager_client->init();
 
@@ -72,7 +58,7 @@ int main(int argc, char* argv[]) {
 
 	warmup_finish = true;
 
-    thread_t *thread_t_s = new thread_t[g_thread_cnt]();
+	thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i);
@@ -85,16 +71,5 @@ int main(int argc, char* argv[]) {
 
     stats.print();
 
-//    for(int i = 0; i <  g_thread_cnt; i++) {
-//        cout << thread_t_s[i].count1 << endl;
-//        cout << thread_t_s[i].count2 << endl;
-//        cout << "txn[" << i << "].count:" << glob_manager_client->all_txns_[i]->txn_count << endl;
-//
-//    }
-
-//    while(1) {}
     cout << "exit main." << endl;
-    return 0;
-};
-
-#endif // WITH_RPC
+}

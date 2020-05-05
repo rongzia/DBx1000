@@ -1,18 +1,17 @@
 //
 // Created by rrzhang on 2020/5/3.
 //
+#ifdef WITH_RPC
 
+#include <common/mystats.h>
 #include "api_txn.h"
 
-#include "dbx1000_service_util.h"
-#include "global.h"
-#include "myhelper.h"
-#include "txn.h"
-#include "manager_client.h"
-#include "manager_server.h"
-#include "row_mvcc.h"
-#include "row_item.h"
-#include "profiler.h"
+#include "api/proto/dbx1000_service_util.h"
+#include "client/txn/txn.h"
+#include "client/manager_client.h"
+#include "common/row_item.h"
+#include "common/myhelper.h"
+#include "server/concurrency_control/row_mvcc.h"
 
 namespace dbx1000 {
 
@@ -107,12 +106,13 @@ namespace dbx1000 {
         }
         else if (WAIT == rc) {
 //            cout << "ApiTxnClient::GetRow, type == WAIT" << endl;
-            std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
-            profiler->Start();
+//            uint64_t thread_id = txn->get_thd_id();
+            stats.tmp_stats[thread_id]->profiler->Clear();
+            stats.tmp_stats[thread_id]->profiler->Start();
             while (!txn->ts_ready) { PAUSE }
-            profiler->End();
-            INC_TMP_STATS(txn->get_thd_id(), time_wait, profiler->Nanos());
-
+            stats.tmp_stats[thread_id]->profiler->End();
+            stats.tmp_stats[thread_id]->time_wait += stats.tmp_stats[thread_id]->profiler->Nanos();
+//            INC_TMP_STATS(txn->get_thd_id(), time_wait, profiler->Nanos());
             txn->ts_ready = true;
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
         }
@@ -179,6 +179,8 @@ namespace dbx1000 {
 
 
     uint64_t ApiTxnClient::get_next_ts(uint64_t thread_id) {
+        stats._stats[thread_id]->profiler->Clear();
+        stats._stats[thread_id]->profiler->Start();
         /// gen request
         dbx1000::GetNextTsRequest request;
         request.set_thread_id(thread_id);
@@ -187,6 +189,9 @@ namespace dbx1000 {
         dbx1000::GetNextTsReply reply;
         ::grpc::Status status = stub_->GetNextTs(&context, request, &reply);
         assert(status.ok());
+
+        stats._stats[thread_id]->profiler->End();
+        stats._stats[thread_id]->time_ts_alloc += stats._stats[thread_id]->profiler->Nanos();
 
         return reply.timestamp();
     }
@@ -203,3 +208,5 @@ namespace dbx1000 {
         assert(status.ok());
     }
 }
+
+#endif // WITH_RPC

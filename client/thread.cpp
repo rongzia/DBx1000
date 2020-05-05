@@ -1,30 +1,25 @@
-#include <sched.h>
+//#include <sched.h>
 #include <chrono>
-#include "cs_api.h"
-#include "thread.h"
-#include "txn.h"
-#include "ycsb_txn.h"
-#include "wl.h"
+#include <unistd.h>
+
+#include "api/api_single_machine/cs_api.h"
+#include "api/api_txn/api_txn.h"
 #include "client/benchmarks/query.h"
 #include "client/benchmarks/ycsb_query.h"
-#include "cs_api.h"
-#include "util/profiler.h"
-#include "system/stats.h"
-#include "common/myhelper.h"
+#include "client/thread.h"
+#include "client/txn/ycsb_txn.h"
 #include "client/manager_client.h"
-#include "api_txn.h"
+#include "common/myhelper.h"
 
 //! thd_id = 0...3
-void thread_t::init(uint64_t thd_id) {
-	thread_id_ = thd_id;
+void thread_t::init(uint64_t thread_id) {
+	thread_id_ = thread_id;
 	srand48_r((thread_id_ + 1) * std::chrono::system_clock::now().time_since_epoch().count(), &buffer);
 	_abort_buffer_size = ABORT_BUFFER_SIZE;                                 /// 10
 	_abort_buffer = new AbortBufferEntry[_abort_buffer_size]();
 	for (int i = 0; i < _abort_buffer_size; i++) { _abort_buffer[i].query = NULL; }
 	_abort_buffer_empty_slots = _abort_buffer_size;                         /// 10
 	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     /// true
-
-	count1 = count2 = count3 = count4 = 0;
 }
 
 uint64_t thread_t::get_thd_id() { return thread_id_; }
@@ -57,12 +52,9 @@ RC thread_t::run() {
 //	myrand rdm;
 //	rdm.init(get_thd_id());
 	RC rc = RCOK;
-//	txn_man * m_txn;
-//	rc = _wl->get_txn_man(m_txn, this);
     txn_man* m_txn = new ycsb_txn_man();
     m_txn->init(this);
 	assert (rc == RCOK);
-//	glob_manager->set_txn_man(m_txn);
     glob_manager_client->SetTxnMan(m_txn);
 
 	base_query * m_query = NULL;
@@ -70,9 +62,9 @@ RC thread_t::run() {
 	uint64_t txn_cnt = 0;
 
 	while (true) {
-	    std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
-	    profiler->Start();
-//		ts_t starttime = get_sys_clock();
+	    stats._stats[thread_id_]->profiler->Clear();
+	    stats._stats[thread_id_]->profiler->Start();
+
 		//! 该 if 选出一个 m_query
 		if (WORKLOAD != TEST) {
 			int trial = 0;  //! 从下面的代码来看，trial 并没有用，永远为 0
@@ -120,9 +112,10 @@ RC thread_t::run() {
 					m_query = query_queue->get_next_query( thread_id_ );
 			}
 		}
-		profiler->End();
-		INC_STATS(thread_id_, time_query, profiler->Nanos());
-		profiler->Start();
+		stats._stats[thread_id_]->profiler->End();
+		stats._stats[thread_id_]->time_query += stats._stats[thread_id_]->profiler->Nanos();
+		stats._stats[thread_id_]->profiler->ReStart();
+
 		m_txn->abort_cnt = 0;
 
         //! 事务 id 按线程划分，假设当前线程为 1 、总线程数为4，则事务 id 为 1, 5, 9...
@@ -135,8 +128,11 @@ RC thread_t::run() {
 				|| CC_ALG == TIMESTAMP) {
             //! 记录事务开始时间
 //            m_txn->set_ts(get_next_ts());
-//            m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
+#ifdef WITH_RPC
             m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
+#else
+            m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
+#endif // WITH_RPC
         }
 		rc = RCOK;
 #if CC_ALG == HSTORE
@@ -150,8 +146,11 @@ RC thread_t::run() {
 #elif CC_ALG == MVCC || CC_ALG == HEKATON
 		/// 全局数组 all_ts 记录该事务的开始时间
 //		glob_manager->add_ts(get_thd_id(), m_txn->get_ts());
-//        dbx1000::API::add_ts(this->get_thd_id(), m_txn->get_ts());
+#ifdef WITH_RPC
         api_txn_client->add_ts(this->get_thd_id(), m_txn->get_ts());
+#else
+        dbx1000::API::add_ts(this->get_thd_id(), m_txn->get_ts());
+#endif // WITH_RPC
 #elif CC_ALG == OCC
 		// In the original OCC paper, start_ts only reads the current ts without advancing it.
 		// But we advance the global ts here to simplify the implementation. However, the final
@@ -176,7 +175,6 @@ RC thread_t::run() {
 #endif
 		}
 		if (rc == Abort) {
-		    count1++;
 			uint64_t penalty = 0;
 			if (ABORT_PENALTY != 0)  {  //! ABORT_PENALTY == 100000
 				double r;
@@ -199,19 +197,16 @@ RC thread_t::run() {
 			}
 		}
 
-		profiler->End();
-		INC_STATS(get_thd_id(), run_time, profiler->Nanos());
-		INC_STATS(get_thd_id(), latency, profiler->Nanos());
-		//stats.add_lat(get_thd_id(), timespan);
+		stats._stats[thread_id_]->profiler->End();
+		stats._stats[thread_id_]->run_time += stats._stats[thread_id_]->profiler->Nanos();
+		stats._stats[thread_id_]->latency += stats._stats[thread_id_]->profiler->Nanos();
 		if (rc == RCOK) {
-		    count2++;
-			INC_STATS(get_thd_id(), txn_cnt, 1);
+		    stats._stats[thread_id_]->txn_cnt += 1;
 			stats.commit(get_thd_id());
-//			stats.print();
 			txn_cnt ++;
 		} else if (rc == Abort) {
-			INC_STATS(get_thd_id(), time_abort, profiler->Nanos());
-			INC_STATS(get_thd_id(), abort_cnt, 1);
+		    stats._stats[thread_id_]->time_abort += stats._stats[thread_id_]->profiler->Nanos();
+		    stats._stats[thread_id_]->abort_cnt += 1;
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
 		}
@@ -225,8 +220,11 @@ RC thread_t::run() {
 			stats.clear( get_thd_id() );
 			return FINISH;
 		}
+        /// c/s debug
+		if(txn_cnt % 1000 == 0) {
+		    cout << get_thd_id() << ", txn_cnt" << txn_cnt << endl;
+		}
 
-//		cout << "ok_cnt : " << count2 << ", Abort_cnt : " << count1 << endl;
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程
 		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
 		    cout << "set_wl_sim_done" << endl;
@@ -235,14 +233,20 @@ RC thread_t::run() {
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
 			 */
-//            dbx1000::API::set_wl_sim_done();
+#ifdef WITH_RPC
 			api_txn_client->SetWlSimDone();
+#else
+            dbx1000::API::set_wl_sim_done();
+#endif // WITH_RPC
 	    }
 
 		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 //	    if (_wl->sim_done) {
-//	    if (true == dbx1000::API::get_wl_sim_done()) {
+#ifdef WITH_RPC
 	    if (true == api_txn_client->GetWlSimDone()) {
+#else
+	    if (true == dbx1000::API::get_wl_sim_done()) {
+#endif // WITH_RPC
 		    cout << "set_wl_sim_done" << endl;
    		    return FINISH;
    		}

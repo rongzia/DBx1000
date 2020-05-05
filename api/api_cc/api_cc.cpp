@@ -1,17 +1,17 @@
 //
 // Created by rrzhang on 2020/5/3.
 //
+#ifdef WITH_RPC
 
 #include <common/txn_row_man.h>
 #include "api_cc.h"
 
-#include "dbx1000_service_util.h"
-#include "myhelper.h"
-#include "manager_server.h"
-#include "row_item.h"
-#include "wl.h"
-#include "ycsb_wl.h"
-#include "row_mvcc.h"
+#include "api/proto/dbx1000_service_util.h"
+#include "common/row_item.h"
+#include "common/myhelper.h"
+#include "server/manager_server.h"
+#include "server/concurrency_control/row_mvcc.h"
+#include "server/workload/ycsb_wl.h"
 
 namespace dbx1000 {
     ::grpc::Status ApiConCtlServer::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
@@ -105,5 +105,6 @@ namespace dbx1000 {
         ::grpc::Status status = stub_->Test(new ::grpc::ClientContext(), request, new dbx1000::TestReply);
         assert(status.ok());
     }
+} // namespace dbx1000
 
-}
+#endif // WITH_RPC

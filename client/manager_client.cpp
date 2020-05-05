@@ -4,8 +4,7 @@
 
 #include "manager_client.h"
 
-#include "txn.h"
-#include "manager_server.h"
+#include "client/txn/txn.h"
 
 namespace dbx1000 {
     void ManagerClient::init() { all_txns_ = new txn_man*[g_thread_cnt](); }

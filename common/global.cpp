@@ -1,8 +1,9 @@
 #include "global.h"
-#include "stats.h"
-#include "manager.h"
-#include "manager_server.h"
-#include "manager_client.h"
+
+//#include "stats.h"
+//#include "manager.h"
+#include "server/manager_server.h"
+#include "client/manager_client.h"
 //#include "query.h"
 //#include "dl_detect.h"
 //#include "plock.h"
@@ -16,8 +17,10 @@ namespace dbx1000_cf {
 namespace dbx1000_instance {
 
 }
+
+
 //mem_alloc mem_allocator;
-Stats stats;
+dbx1000::Stats stats;
 //DL_detect dl_detector;
 //Manager * glob_manager;
 dbx1000::ManagerServer * glob_manager_server;

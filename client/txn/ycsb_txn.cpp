@@ -1,8 +1,6 @@
 #include "ycsb_txn.h"
 
-#include "benchmarks/query.h"
-#include "benchmarks/ycsb_query.h"
-
+#include "client/benchmarks/ycsb_query.h"
 #include "client/thread.h"
 #include "common/row_item.h"
 

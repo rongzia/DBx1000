@@ -5,9 +5,7 @@
 #ifndef DBX1000_LRU_H
 #define DBX1000_LRU_H
 
-#include <list>
 #include <iostream>
-//#include "buffer.h"
 
 namespace dbx1000 {
 

@@ -1,18 +1,13 @@
+#include <fstream>
 #include "wl.h"
 
-#include "global.h"
-#include "helper.h"
-//#include "row.h"
-//#include "index_hash.h"
-//#include "index_btree.h"
-#include "catalog.h"
-#include "table.h"
-#include "buffer.h"
-
-#include "leveldb/db.h"
-#include "arena.h"
-#include "numbercomparator.h"
-#include "make_unique.h"
+#include "common/global.h"
+#include "server/storage/catalog.h"
+#include "server/storage/table.h"
+#include "server/buffer/buffer.h"
+#include "util/arena.h"
+#include "util/numbercomparator.h"
+#include "util/make_unique.h"
 
 workload::workload(){
     cout << "workload::workload()" << endl;

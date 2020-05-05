@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdlib>
-#include "global.h"
-#include "row_item.h"
-#include "txn_row_man.h"
+#include "common/global.h"
+#include "common/row_item.h"
+#include "common/txn_row_man.h"
 
 class table_t;
 class Catalog;

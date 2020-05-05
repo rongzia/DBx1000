@@ -24,8 +24,13 @@ namespace dbx1000 {
             start_ = Tick();
         }
 
+        void ReStart() {
+            finished_ = false;
+        }
+
         //! Finishes timing
         void End() {
+//            assert(false == finished_);
             end_ = Tick();
             finished_ = true;
             count_ += std::chrono::duration_cast<std::chrono::nanoseconds>(end_ - start_);

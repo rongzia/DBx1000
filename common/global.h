@@ -1,29 +1,10 @@
 #pragma once 
 
-#include <cstdint>
-#include <string>
 #include <map>
-#include <unistd.h>
-#include <cstddef>
-#include <cstdlib>
-#include <cassert>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <typeinfo>
-#include <list>
-#include <mm_malloc.h>
-#include <set>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <time.h>
-#include <sys/time.h>
-#include <math.h>
 
-#include "pthread.h"
+//#include "pthread.h"
 #include "config.h"
-#include "stats.h"
+#include "mystats.h"
 #ifndef NOGRAPHITE
 #include "carbon_user.h"
 #endif
@@ -31,9 +12,10 @@
 using namespace std;
 
 class mem_alloc;
-class Stats;
+//class Stats;
 //class DL_detect;
 class Manager;
+
 namespace dbx1000 {
     class ManagerServer;
     class ManagerClient;
@@ -56,7 +38,7 @@ typedef uint64_t ts_t; // time stamp type
 // Global Data Structure 
 /******************************************/
 //extern mem_alloc mem_allocator;
-extern Stats stats;
+extern dbx1000::Stats stats;
 //extern DL_detect dl_detector;
 //extern Manager * glob_manager;
 extern dbx1000::ManagerServer* glob_manager_server;
@@ -70,7 +52,6 @@ extern OptCC occ_man;
 extern VLLMan vll_man;
 #endif
 
-//! wl 加载完成，所有数据都加载到内存里了
 extern bool volatile warmup_finish;
 extern bool volatile enable_thread_mem_pool;
 extern pthread_barrier_t warmup_bar;

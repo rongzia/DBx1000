@@ -1,16 +1,16 @@
 //
 // Created by rrzhang on 2020/5/3.
 //
+#ifdef WITH_RPC
 
 #ifndef DBX1000_API_TXN_H
 #define DBX1000_API_TXN_H
 
-#include <grpcpp/grpcpp.h>
 #include <memory>
-#include "global.h"
-
+#include <grpcpp/grpcpp.h>
 #include "api.grpc.pb.h"
-#include "api.pb.h"
+#include "common/global.h"
+
 
 class txn_man;
 
@@ -48,4 +48,7 @@ namespace dbx1000 {
 }
 
 
-#endif //DBX1000_API_TXN_H
+#endif // DBX1000_API_TXN_H
+
+
+#endif // WITH_RPC

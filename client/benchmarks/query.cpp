@@ -1,13 +1,13 @@
-#include <thread>
+#include <iostream>
 #include <memory>
-#include "query.h"
+#include <thread>
 
+#include "query.h"
 #include "ycsb_query.h"
 //#include "tpcc_query.h"
 //#include "tpcc_helper.h"
 
 #include "util/make_unique.h"
-#include "util/profiler.h"
 
 /*************************************************/
 //     class Query_queue

@@ -1,6 +1,7 @@
 //
 // Created by rrzhang on 2020/4/2.
 //
+#ifdef WITH_RPC
 
 #include <iostream>
 #include <memory>
@@ -9,22 +10,22 @@
 #include "leveldb/db.h"
 
 //#include "ycsb_query.h"
-#include "ycsb_wl.h"
-#include "table.h"
-#include "catalog.h"
+#include "server/workload/ycsb_wl.h"
+#include "server/storage/table.h"
+#include "server/storage/catalog.h"
 
-#include "numbercomparator.h"
+#include "util/numbercomparator.h"
 //#include "cs_api.h"
-#include "global.h"
-#include "manager_server.h"
-#include "manager_client.h"
-#include "query.h"
-#include "ycsb_query.h"
-#include "thread.h"
-#include "myhelper.h"
+#include "common/global.h"
+#include "server/manager_server.h"
+#include "client/manager_client.h"
+#include "client/benchmarks/query.h"
+#include "client/benchmarks/ycsb_query.h"
+#include "client/thread.h"
+#include "common/myhelper.h"
 
-#include "api_cc.h"
-#include "api_txn.h"
+#include "api/api_cc/api_cc.h"
+#include "api/api_txn/api_txn.h"
 
 using namespace std;
 
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
 
 	parser(argc, argv);
     stats.init();
+
     for(int i = 0; i < g_thread_cnt; i++) {
         stats.init(i);
     }
@@ -78,3 +80,5 @@ int main(int argc, char* argv[]) {
     cout << "exit main." << endl;
     return 0;
 }
+
+#endif // WITH_RPC

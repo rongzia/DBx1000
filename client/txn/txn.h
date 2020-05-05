@@ -1,8 +1,7 @@
 #pragma once 
 
 #include <cstdint>
-#include "global.h"
-//#include "manager_client.h"
+#include "common/global.h"
 
 
 #define ROW_SIZE 100

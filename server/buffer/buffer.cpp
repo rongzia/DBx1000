@@ -8,11 +8,11 @@
 #include <sys/mman.h>
 #include "buffer.h"
 
-#include "global.h"
-#include "lru_index.h"
-#include "lru.h"
-#include "make_unique.h"
-#include "numbercomparator.h"
+#include "common/global.h"
+#include "server/buffer/lru_index.h"
+#include "server/buffer/lru.h"
+#include "util/make_unique.h"
+#include "util/numbercomparator.h"
 
 
 namespace dbx1000 {

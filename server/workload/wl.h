@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <mutex>
 #include <atomic>
-#include "global.h"
-//#include "row_mvcc.h"
+#include <vector>
+#include "common/global.h"
 
 //class row_t;
 class table_t;

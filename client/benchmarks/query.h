@@ -18,7 +18,6 @@
 
 class ycsb_query;
 //class tpcc_query;
-
 class Query_queue;
 class Query_thd;
 

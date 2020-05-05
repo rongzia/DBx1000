@@ -2,7 +2,6 @@
 // Created by rrzhang on 2020/4/21.
 //
 #include <cstring>
-#include <cassert>
 #include "row_item.h"
 
 namespace dbx1000 {

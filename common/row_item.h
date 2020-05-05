@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include "api.pb.h"
+#include "api/proto/api.pb.h"
 
 namespace dbx1000 {
     class RowItem {

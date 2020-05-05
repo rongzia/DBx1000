@@ -1,3 +1,4 @@
+/*
 #include "index_hash.h"
 
 #include "make_unique.h"
@@ -19,7 +20,7 @@ RC IndexHash::init(uint64_t bucket_cnt, int part_cnt) {
 	return RCOK;
 }
 
-RC 
+RC
 IndexHash::init(int part_cnt, table_t * table, uint64_t bucket_cnt) {
     arena_ = dbx1000::make_unique<dbx1000::Arena>();
 //    arena_ = new dbx1000::Arena();
@@ -33,12 +34,12 @@ bool IndexHash::index_exist(idx_key_t key) {
 	assert(false);
 }
 
-void 
+void
 IndexHash::get_latch(BucketHeader * bucket) {
 	while (!ATOM_CAS(bucket->locked, false, true)) {}
 }
 
-void 
+void
 IndexHash::release_latch(BucketHeader * bucket) {
 	bool ok = ATOM_CAS(bucket->locked, true, false);
 	assert(ok);
@@ -54,10 +55,10 @@ RC IndexHash::index_insert(idx_key_t key, itemid_t * item, int part_id) {
 	BucketHeader * cur_bkt = &_buckets[part_id][bkt_idx];
 	// 1. get the ex latch
 	get_latch(cur_bkt);
-	
+
 	// 2. update the latch list
 	cur_bkt->insert_item(key, item, part_id);
-	
+
 	// 3. release the latch
 	release_latch(cur_bkt);
 	return rc;
@@ -77,7 +78,7 @@ RC IndexHash::index_read(idx_key_t key, itemid_t * &item, int part_id) {
 
 }
 
-RC IndexHash::index_read(idx_key_t key, itemid_t * &item, 
+RC IndexHash::index_read(idx_key_t key, itemid_t * &item,
 						int part_id, int thd_id) {
 	uint64_t bkt_idx = hash(key);
 	assert(bkt_idx < _bucket_cnt_per_part);
@@ -103,9 +104,9 @@ void BucketHeader::init(IndexHash *indexHash) {
 
 //! 当 key 不存在重复时，每次都放到链表的末端
 //! key 重叠时，对 item_t->next 做处理
-void BucketHeader::insert_item(idx_key_t key, 
-		itemid_t * item, 
-		int part_id) 
+void BucketHeader::insert_item(idx_key_t key,
+		itemid_t * item,
+		int part_id)
 {
 	BucketNode * cur_node = first_node;
 	BucketNode * prev_node = NULL;
@@ -145,3 +146,4 @@ void BucketHeader::read_item(idx_key_t key, itemid_t * &item, std::string tname)
 	M_ASSERT(cur_node->key == key, "Key does not exist!");
 	item = cur_node->items;
 }
+*/

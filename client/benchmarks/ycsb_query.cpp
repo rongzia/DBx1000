@@ -1,4 +1,8 @@
+#include <cmath>
+#include <set>
+
 #include "ycsb_query.h"
+#include "util/arena.h"
 
 uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;

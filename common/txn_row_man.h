@@ -6,8 +6,7 @@
 #define DBX1000_TXN_ROW_MAN_H
 
 #include <cstdlib>
-#include "global.h"
-#include "api.pb.h"
+#include "api/proto/api.pb.h"
 
 namespace dbx1000 {
     class RowItem;

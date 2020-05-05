@@ -1,6 +1,7 @@
 //
 // Created by rrzhang on 2020/4/23.
 //
+#ifndef WITH_RPC
 
 #ifndef DBX1000_CS_API_H
 #define DBX1000_CS_API_H
@@ -8,8 +9,8 @@
 #include <cstdint>
 #include <atomic>
 #include <mutex>
-#include "txn.h"
-#include "txn_row_man.h"
+#include "client/txn/txn.h"
+#include "common/txn_row_man.h"
 
 namespace dbx1000 {
     class API {
@@ -32,6 +33,6 @@ namespace dbx1000 {
         static std::mutex mtx_;
     };
 }
-
-
 #endif //DBX1000_CS_API_H
+
+#endif // no define WITH_RPC

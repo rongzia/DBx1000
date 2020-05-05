@@ -1,6 +1,5 @@
-#include "common/global.h"
-#include "config.h"
-#include "common/helper.h"
+#include <cassert>
+#include "global.h"
 
 void print_usage() {
 	printf("[usage]:\n");

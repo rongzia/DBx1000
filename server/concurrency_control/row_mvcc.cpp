@@ -1,23 +1,16 @@
-//#include "mvcc.h"
-//#include "txn/txn.h"
-//#include "row.h"
+
 #include <cstring>
 #include <chrono>
 #include <memory>
 #include "row_mvcc.h"
-//#include <mm_malloc.h>
-#include "manager_server.h"
-#include "profiler.h"
+#include "server/manager_server.h"
 
-#include "myhelper.h"
-#include "cs_api.h"
-#include "wl.h"
-#include "ycsb_wl.h"
-#include "buffer.h"
-#include "api.pb.h"
-#include "api_cc.h"
-//#include "table.h"
-//#include "catalog.h"
+#include "common/myhelper.h"
+#include "api/api_single_machine/cs_api.h"
+#include "api/api_cc/api_cc.h"
+#include "server/workload/wl.h"
+#include "server/workload/ycsb_wl.h"
+#include "server/buffer/buffer.h"
 
 #if CC_ALG == MVCC
 
@@ -163,20 +156,19 @@ void PrintWriteHisEntry(WriteHisEntry *writeHisEntry, size_t size) {
 RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 //    cout << "Row_mvcc::access" << endl;
 //    local_txn->PrintTxnRowMan();
-
-    std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
 	RC rc = RCOK;
 	ts_t ts = local_txn->timestamp_;
-//uint64_t t1 = get_sys_clock();
-	profiler->Start();
+
+	uint64_t thread_id = local_txn->thread_id_;
+	stats._stats[thread_id]->profiler->Clear();
+	stats._stats[thread_id]->profiler->Start();
     /// 等待获取 row 上的锁，即其他涉及该 row 的事务结束
     while (!ATOM_CAS(blatch, false, true)) { PAUSE }
-//uint64_t t2 = get_sys_clock();
-    profiler->End();
-//INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
-    INC_STATS(local_txn->thread_id_, debug4, profiler->Nanos());
-    profiler->Clear();
-    profiler->Start();
+
+	stats._stats[thread_id]->profiler->End();
+	stats._stats[thread_id]->debug4 += stats._stats[thread_id]->profiler->Nanos();
+	stats._stats[thread_id]->profiler->Clear();
+	stats._stats[thread_id]->profiler->Start();
 
 #if DEBUG_CC
 	for (uint32_t i = 0; i < _req_len; i++)
@@ -197,8 +189,8 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 			if (_exists_prewrite && _prewrite_ts < ts)
 			{
 //			cout << "Row_mvcc::access, type == R_REQ, _exists_prewrite" << endl;
-PrintRequset(_requests, _req_len);
-PrintWriteHisEntry(_write_history, _his_len);
+//PrintRequset(_requests, _req_len);
+//PrintWriteHisEntry(_write_history, _his_len);
 //cout << "current read : " << _row->key_ << endl;
 			    //! 之前的写没有完成
 				// exists a pending prewrite request before the current read. should wait.
@@ -244,8 +236,8 @@ PrintWriteHisEntry(_write_history, _his_len);
 		else if (_exists_prewrite) {  // _prewrite_ts < ts
 //			cout << "Row_mvcc::access, type == P_REQ, _exists_prewrite" << endl;
 			rc = WAIT;
-PrintRequset(_requests, _req_len);
-PrintWriteHisEntry(_write_history, _his_len);
+//PrintRequset(_requests, _req_len);
+//PrintWriteHisEntry(_write_history, _his_len);
 //cout << "current write : " << _row->key_ << endl;
 
 
@@ -275,18 +267,20 @@ PrintWriteHisEntry(_write_history, _his_len);
 		_num_versions ++;
 		update_buffer(local_txn, W_REQ);
 	} else if (type == XP_REQ) {
-        cout << "Row_mvcc::access, type : XP_REQ" << endl;
+//        cout << "Row_mvcc::access, type : XP_REQ" << endl;
 		rc = RCOK;
         assert(local_txn->cur_row_->key_ == this->key_);
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;
 		_exists_prewrite = false;
 		update_buffer(local_txn, XP_REQ);
-	} else 
-		assert(false);
+	} else {
+        assert(false);
+    }
 
-	profiler->End();
-INC_STATS(local_txn->thread_id_, debug3, profiler->Nanos());
+	stats._stats[thread_id]->profiler->End();
+	stats._stats[thread_id]->debug3 += stats._stats[thread_id]->profiler->Nanos();
+
 	if (g_central_man) {
 //        glob_manager->release_row(_row);
     }
@@ -457,8 +451,11 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 				_max_served_rts = _requests[i].ts;
 			memcpy(_requests[i].txn->cur_row_->row_, _latest_row, row_size_);
 			_requests[i].txn->ts_ready_ = true;
-//			dbx1000::API::SetTsReady(_requests[i].txn);
+#ifdef WITH_RPC
 			api_con_ctl_client->SetTsReady(_requests[i].txn);
+#else
+			dbx1000::API::SetTsReady(_requests[i].txn);
+#endif // WITH_RPC
 			_requests[i].valid = false;
 		}
 		// return one pending P_REQ
@@ -469,8 +466,11 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 //			res_row->copy(_latest_row);
 			memcpy(_requests[i].txn->cur_row_->row_, _latest_row, row_size_);
 			_requests[i].txn->ts_ready_ = true;
-//			dbx1000::API::SetTsReady(_requests[i].txn);
+#ifdef WITH_RPC
 			api_con_ctl_client->SetTsReady(_requests[i].txn);
+#else
+			dbx1000::API::SetTsReady(_requests[i].txn);
+#endif // WITH_RPC
 			_requests[i].valid = false;
 		}
 	}

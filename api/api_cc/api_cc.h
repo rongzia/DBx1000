@@ -1,16 +1,15 @@
 //
 // Created by rrzhang on 2020/5/3.
 //
+#ifdef WITH_RPC
 
 #ifndef DBX1000_API_CC_CLIENT_H
 #define DBX1000_API_CC_CLIENT_H
 
-#include <grpcpp/grpcpp.h>
 #include <memory>
-#include "global.h"
 
+#include <grpcpp/grpcpp.h>
 #include "api.grpc.pb.h"
-#include "api.pb.h"
 
 namespace dbx1000 {
 
@@ -43,3 +42,5 @@ namespace dbx1000 {
 }
 
 #endif //DBX1000_API_CC_CLIENT_H
+
+#endif // WITH_RPC

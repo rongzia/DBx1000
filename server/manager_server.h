@@ -9,8 +9,9 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
-#include "api.pb.h"
-//#include "global.h"
+#ifdef WITH_RPC
+#include "api/proto/api.pb.h"
+#endif // WITH_RPC
 
 class Row_mvcc;
 //class workload;
@@ -21,6 +22,7 @@ namespace dbx1000 {
     class TxnRowMan;
     class RowItem;
     class Buffer;
+    class Mess_TxnRowMan;
 
     class ManagerServer {
     public:
@@ -31,7 +33,11 @@ namespace dbx1000 {
         void add_ts(uint64_t thread_id, uint64_t ts);
         uint64_t GetMinTs(uint64_t thread_id = 0);
 
+#ifdef WITH_RPC
         TxnRowMan* SetTxn(Mess_TxnRowMan messTxnRowMan);
+#endif // WITH_RPC
+        TxnRowMan* SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready
+                          , uint64_t key, char* row, size_t size, uint64_t timestamp);
 
         bool AllTxnReady();
 

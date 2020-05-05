@@ -6,26 +6,14 @@
 
 #include "ycsb_wl.h"
 
-//#include "ycsb_txn.h"
-#include "global.h"
-#include "helper.h"
-#include "buffer.h"
-//#include "ycsb.h"
-//#include "thread.h"
-#include "table.h"
-//#include "row.h"
-//#include "index_hash.h"
-//#include "index_btree.h"
-#include "catalog.h"
-#include "manager.h"
-//#include "row_lock.h"
-//#include "row_ts.h"
-#include "row_mvcc.h"
-//#include "query.h"
-
 #include "leveldb/db.h"
-#include "profiler.h"
-#include "row_item.h"
+#include "common/global.h"
+#include "common/row_item.h"
+#include "server/buffer/buffer.h"
+#include "server/storage/table.h"
+#include "server/storage/catalog.h"
+#include "server/concurrency_control/row_mvcc.h"
+#include "util/profiler.h"
 
 std::atomic<int> ycsb_wl::next_tid;
 
@@ -86,7 +74,7 @@ void ycsb_wl::init_table_parallel() {
 }
 //! 初始化单个区间
 void * ycsb_wl::init_table_slice() {
-    uint32_t tid = next_tid.fetch_add(1, std::memory_order_consume);
+    uint32_t tid = next_tid.fetch_add(1, std::memory_order_seq_cst);
 
 //	cout << tid << endl;
 //	set_affinity(tid);      /// 绑定到物理核
