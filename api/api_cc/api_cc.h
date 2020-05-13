@@ -24,6 +24,7 @@ namespace dbx1000 {
         virtual ::grpc::Status GetWlSimDone(::grpc::ServerContext* context, const ::dbx1000::GetWlSimDoneRequest* request, ::dbx1000::GetWlSimDoneReply* response);
         virtual ::grpc::Status GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response);
         virtual ::grpc::Status AddTs(::grpc::ServerContext* context, const ::dbx1000::AddTsRequest* request, ::dbx1000::AddTsReply* response);
+        virtual ::grpc::Status ThreadDone(::grpc::ServerContext* context, const ::dbx1000::ThreadDoneRequest* request, ::dbx1000::ThreadDoneReply* response);
     };
 
     class TxnRowMan;

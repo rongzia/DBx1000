@@ -9,46 +9,56 @@
 #include "util/profiler.h"
 
 namespace dbx1000 {
+    class Stats_thd_rpc{
+    public:
+
+    };
+
+    /// 每个 Stats_thd 对象只记录当前线程的信息
     class Stats_thd {
     public:
         void init(uint64_t thd_id);
         void clear();
 
         uint64_t thread_id_;
-        uint64_t txn_cnt;
-        uint64_t abort_cnt;
-        uint64_t run_time;
-        uint64_t time_man;
-        uint64_t time_index;
-        uint64_t time_wait;
-        uint64_t time_abort;
-        uint64_t time_cleanup;
-        uint64_t time_ts_alloc;     //! 获取时间戳的耗时
-        uint64_t time_query;          //! 为每个 txn 生成 m_query 的时间
-        uint64_t wait_cnt;
-        uint64_t debug1;
-        uint64_t debug2;
-        uint64_t debug3;
-        uint64_t debug4;
-        uint64_t debug5;
+        uint64_t txn_cnt;            /// RCOK 的事务个数
+        uint64_t abort_cnt;          /// Abort 的事务个数，可能该 Abort 事务在后面某个时间点 被重新执行为 RCOK
+        uint64_t run_time;           /// 累加所有单个事务/query 的执行时间
+        /// 以下三个对应 Stats_tmp 中几个成员
+        uint64_t time_man;           ///
+        uint64_t time_index;         ///
+        uint64_t time_wait;          ///
+        uint64_t time_abort;         /// 所有 abort txn 的耗时，作为 run_time 的子集
+        uint64_t time_cleanup;       /// cleanup/return_row 的时间
+        uint64_t time_ts_alloc;      /// 获取时间戳的耗时
+        uint64_t time_query;         /// 为每个 txn 生成 m_query 的时间
+        uint64_t wait_cnt;           ///
+        uint64_t debug1;             ///
+        uint64_t debug2;             ///
+        uint64_t debug3;             /// Row_mvcc::access 执行的时间，包括 R_REQ、P_REQ、WR_REQ、XP_REQ、
+        uint64_t debug4;             /// Row_mvcc::access 获取锁的时间
+        uint64_t debug5;             ///
 
         uint64_t latency;
         uint64_t *all_debug1;
         uint64_t *all_debug2;
 
-        std::unique_ptr<dbx1000::Profiler> profiler;
+//        std::unique_ptr<dbx1000::Profiler> profiler;
     };
 
+    /// 事务执行有 thread -> txn
+    /// 该类记录单个 txn 内的过程耗时
+    /// 在 thread 执行完该 txn 的执行后，将该类耗时累加到 Stats_thd 中
     class Stats_tmp {
     public:
         void init();
         void clear();
 
-        uint64_t time_man;
+        uint64_t time_man;      /// 对应 ycsb 中 get_row、return_row  时间
         uint64_t time_index;
-        uint64_t time_wait;
+        uint64_t time_wait;     /// 对应 ycsb 中 get_row 时等待的时间，time_man 的子集
 
-        std::unique_ptr<dbx1000::Profiler> profiler;
+//        std::unique_ptr<dbx1000::Profiler> profiler;
     };
 
     class Stats {
@@ -72,6 +82,7 @@ namespace dbx1000 {
         void commit(uint64_t thd_id);
         void abort(uint64_t thd_id);
         void print();
+        void PrintYCSB();
         void print_lat_distr();
     };
 }

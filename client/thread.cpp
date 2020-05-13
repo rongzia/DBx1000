@@ -62,8 +62,8 @@ RC thread_t::run() {
 	uint64_t txn_cnt = 0;
 
 	while (true) {
-	    stats._stats[thread_id_]->profiler->Clear();
-	    stats._stats[thread_id_]->profiler->Start();
+	    dbx1000::Profiler profiler;
+	    profiler.Start();
 
 		//! 该 if 选出一个 m_query
 		if (WORKLOAD != TEST) {
@@ -112,9 +112,9 @@ RC thread_t::run() {
 					m_query = query_queue->get_next_query( thread_id_ );
 			}
 		}
-		stats._stats[thread_id_]->profiler->End();
-		stats._stats[thread_id_]->time_query += stats._stats[thread_id_]->profiler->Nanos();
-		stats._stats[thread_id_]->profiler->ReStart();
+		profiler.End();
+		stats._stats[thread_id_]->time_query += profiler.Nanos();
+		profiler.ReStart();
 
 		m_txn->abort_cnt = 0;
 
@@ -197,15 +197,15 @@ RC thread_t::run() {
 			}
 		}
 
-		stats._stats[thread_id_]->profiler->End();
-		stats._stats[thread_id_]->run_time += stats._stats[thread_id_]->profiler->Nanos();
-		stats._stats[thread_id_]->latency += stats._stats[thread_id_]->profiler->Nanos();
+		profiler.End();
+		stats._stats[thread_id_]->run_time += profiler.Nanos();
+		stats._stats[thread_id_]->latency += profiler.Nanos();
 		if (rc == RCOK) {
 		    stats._stats[thread_id_]->txn_cnt += 1;
 			stats.commit(get_thd_id());
 			txn_cnt ++;
 		} else if (rc == Abort) {
-		    stats._stats[thread_id_]->time_abort += stats._stats[thread_id_]->profiler->Nanos();
+		    stats._stats[thread_id_]->time_abort += profiler.Nanos();
 		    stats._stats[thread_id_]->abort_cnt += 1;
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;

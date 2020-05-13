@@ -32,13 +32,16 @@ RC workload::init_schema(string schema_file) {
     string line;
     ifstream fin(schema_file);
     Catalog *schema = new Catalog();
+    /// while 循环读取行，不包括每行尾的 '\n'
     while (getline(fin, line)) {
+        /// such as TABLE=MAIN_TABLE
         if (line.compare(0, 6, "TABLE=") == 0) {
 			std::string tname = std::string(&line[6], line.size() - 6);
             getline(fin, line);
             int col_count = 0;
             // Read all fields for this table.
             vector<string> lines;
+            /// 该 while 读取直到遇到空行
             while (line.length() > 1) {
                 lines.push_back(line);
                 getline(fin, line);

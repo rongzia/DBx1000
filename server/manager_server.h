@@ -40,6 +40,7 @@ namespace dbx1000 {
                           , uint64_t key, char* row, size_t size, uint64_t timestamp);
 
         bool AllTxnReady();
+        bool AllThreadDone();
 
 //    private:
         std::unordered_map<uint64_t, Row_mvcc*> row_mvccs_;
@@ -53,6 +54,7 @@ namespace dbx1000 {
         ycsb_wl* wl_;
 
         bool* txn_ready_;
+        bool* thread_done_;
         bool init_wl_done_;
     };
 }

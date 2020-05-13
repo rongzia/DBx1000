@@ -27,6 +27,7 @@ static const char* DBx1000Service_method_names[] = {
   "/dbx1000.DBx1000Service/GetWlSimDone",
   "/dbx1000.DBx1000Service/GetNextTs",
   "/dbx1000.DBx1000Service/AddTs",
+  "/dbx1000.DBx1000Service/ThreadDone",
   "/dbx1000.DBx1000Service/SetTsReady",
   "/dbx1000.DBx1000Service/Test",
 };
@@ -46,8 +47,9 @@ DBx1000Service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& cha
   , rpcmethod_GetWlSimDone_(DBx1000Service_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetNextTs_(DBx1000Service_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_AddTs_(DBx1000Service_method_names[7], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_SetTsReady_(DBx1000Service_method_names[8], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Test_(DBx1000Service_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_ThreadDone_(DBx1000Service_method_names[8], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_SetTsReady_(DBx1000Service_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Test_(DBx1000Service_method_names[10], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status DBx1000Service::Stub::TxnReady(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::dbx1000::TxnReadyReply* response) {
@@ -274,6 +276,34 @@ void DBx1000Service::Stub::experimental_async::AddTs(::grpc::ClientContext* cont
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::AddTsReply>::Create(channel_.get(), cq, rpcmethod_AddTs_, context, request, false);
 }
 
+::grpc::Status DBx1000Service::Stub::ThreadDone(::grpc::ClientContext* context, const ::dbx1000::ThreadDoneRequest& request, ::dbx1000::ThreadDoneReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_ThreadDone_, context, request, response);
+}
+
+void DBx1000Service::Stub::experimental_async::ThreadDone(::grpc::ClientContext* context, const ::dbx1000::ThreadDoneRequest* request, ::dbx1000::ThreadDoneReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_ThreadDone_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::ThreadDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ThreadDoneReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_ThreadDone_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::ThreadDone(::grpc::ClientContext* context, const ::dbx1000::ThreadDoneRequest* request, ::dbx1000::ThreadDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_ThreadDone_, context, request, response, reactor);
+}
+
+void DBx1000Service::Stub::experimental_async::ThreadDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ThreadDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_ThreadDone_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::ThreadDoneReply>* DBx1000Service::Stub::AsyncThreadDoneRaw(::grpc::ClientContext* context, const ::dbx1000::ThreadDoneRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::ThreadDoneReply>::Create(channel_.get(), cq, rpcmethod_ThreadDone_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::ThreadDoneReply>* DBx1000Service::Stub::PrepareAsyncThreadDoneRaw(::grpc::ClientContext* context, const ::dbx1000::ThreadDoneRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::ThreadDoneReply>::Create(channel_.get(), cq, rpcmethod_ThreadDone_, context, request, false);
+}
+
 ::grpc::Status DBx1000Service::Stub::SetTsReady(::grpc::ClientContext* context, const ::dbx1000::SetTsReadyRequest& request, ::dbx1000::SetTsReadyReply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SetTsReady_, context, request, response);
 }
@@ -374,10 +404,15 @@ DBx1000Service::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[8],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::ThreadDoneRequest, ::dbx1000::ThreadDoneReply>(
+          std::mem_fn(&DBx1000Service::Service::ThreadDone), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DBx1000Service_method_names[9],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>(
           std::mem_fn(&DBx1000Service::Service::SetTsReady), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[9],
+      DBx1000Service_method_names[10],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::TestRequest, ::dbx1000::TestReply>(
           std::mem_fn(&DBx1000Service::Service::Test), this)));
@@ -436,6 +471,13 @@ DBx1000Service::Service::~Service() {
 }
 
 ::grpc::Status DBx1000Service::Service::AddTs(::grpc::ServerContext* context, const ::dbx1000::AddTsRequest* request, ::dbx1000::AddTsReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DBx1000Service::Service::ThreadDone(::grpc::ServerContext* context, const ::dbx1000::ThreadDoneRequest* request, ::dbx1000::ThreadDoneReply* response) {
   (void) context;
   (void) request;
   (void) response;

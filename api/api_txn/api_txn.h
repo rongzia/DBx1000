@@ -42,6 +42,8 @@ namespace dbx1000 {
         uint64_t get_next_ts(uint64_t thread_id);
         void add_ts(uint64_t thread_id, uint64_t ts);
 
+        void ThreadDone(uint64_t thread_id);
+
     private:
         std::unique_ptr<dbx1000::DBx1000Service::Stub> stub_;
     };

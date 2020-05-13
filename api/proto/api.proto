@@ -12,6 +12,7 @@ service DBx1000Service {
     rpc GetWlSimDone(GetWlSimDoneRequest) returns (GetWlSimDoneReply) {}
     rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
     rpc AddTs(AddTsRequest) returns (AddTsReply) {}
+    rpc ThreadDone(ThreadDoneRequest) returns (ThreadDoneReply) {}
 
     /// for cc
     rpc SetTsReady(SetTsReadyRequest) returns (SetTsReadyReply) {}
@@ -52,6 +53,7 @@ message GetRowRequest {
 message GetRowReply {
     int32 rc = 1;
     bytes row = 2;
+    uint64 time = 3;
 }
 
 message ReturnRowRequest {
@@ -91,3 +93,8 @@ message AddTsReply {}
 
 message TestRequest{}
 message TestReply{}
+
+message ThreadDoneRequest{
+    uint64 thread_id = 1;
+}
+message ThreadDoneReply{}

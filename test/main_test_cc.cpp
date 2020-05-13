@@ -75,8 +75,9 @@ int main(int argc, char* argv[]) {
     api_con_ctl_client->Test();
 
 
+    while(!glob_manager_server->AllThreadDone()) {}
+    stats.print();
 
-    while(1) {}
     cout << "exit main." << endl;
     return 0;
 }

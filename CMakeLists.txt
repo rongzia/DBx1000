@@ -13,8 +13,8 @@ add_definitions(-DNOGRAPHITE=1)
 
 
 ### grpc:
-#add_definitions(-DWITH_RPC)
-#option(WITH_RPC "if use rpc then on, else off?" ON)
+add_definitions(-DWITH_RPC)
+option(WITH_RPC "if use rpc then on, else off?" ON)
 if (WITH_RPC)
     message("WITH_RPC : " ${WITH_RPC})
 endif ()
@@ -71,6 +71,7 @@ set(SRC_FILES
         server/concurrency_control/row_mvcc.cpp
         server/storage/catalog.cpp
         server/storage/table.cpp
+#        server/workload/tpcc_wl.cpp
         server/workload/ycsb_wl.cpp
         server/workload/wl.cpp
         server/manager_server.cpp
@@ -100,12 +101,12 @@ add_definitions(-DUSE_MEMORY_DB)
 #add_definitions(-DWARMUP_LEVELDB)
 
 if(${WITH_RPC})
-    add_executable(main_test_cc system/main_test_cc.cpp ${SRC_FILES})
-    add_executable(main_test_txn system/main_test_txn.cpp ${SRC_FILES})
+    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES})
+    add_executable(main_test_txn test/main_test_txn.cpp ${SRC_FILES})
     target_link_libraries(main_test_cc libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
     target_link_libraries(main_test_txn libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
 else()
-    add_executable(main_test system/main_test.cpp ${SRC_FILES})
+    add_executable(main_test test/main_test.cpp ${SRC_FILES})
     target_link_libraries(main_test libleveldb.a libsnappy.a pthread)
 endif()
 
@@ -118,4 +119,6 @@ add_executable(test_query client/benchmarks/test_query.cpp
 target_link_libraries(test_query pthread)
 
 
-add_executable(test_1 test_1.cpp)
+add_executable(test_1 test/test_1.cpp)
+add_executable(test_arena test/test_arena.cpp util/arena.cpp)
+add_executable(test_fstream test/test_fstream.cpp)

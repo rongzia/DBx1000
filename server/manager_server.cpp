@@ -22,9 +22,11 @@ namespace dbx1000 {
 	    all_ts_ = new uint64_t[g_thread_cnt]();
 	    all_txns_ = new TxnRowMan[g_thread_cnt]();
         txn_ready_ = new bool[g_thread_cnt]();
+        thread_done_ = new bool[g_thread_cnt]();
         for (uint32_t i = 0; i < g_thread_cnt; i++) {
             all_ts_[i] = UINT64_MAX;
             txn_ready_[i] = false;
+            thread_done_[i] = false;
         }
         init_wl_done_ = false;
     }
@@ -40,6 +42,14 @@ namespace dbx1000 {
         bool flag = true;
         for(size_t i = 0; i < g_thread_cnt; i++) {
             if(false == txn_ready_[i]) { flag = false; }
+        }
+        return flag;
+    }
+
+    bool ManagerServer::AllThreadDone() {
+        bool flag = true;
+        for(size_t i = 0; i < g_thread_cnt; i++) {
+            if(false == thread_done_[i]) { flag = false; }
         }
         return flag;
     }

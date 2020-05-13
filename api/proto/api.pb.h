@@ -38,7 +38,7 @@ namespace protobuf_api_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[22];
+  static const ::google::protobuf::internal::ParseTable schema[24];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -106,6 +106,12 @@ extern TestReplyDefaultTypeInternal _TestReply_default_instance_;
 class TestRequest;
 class TestRequestDefaultTypeInternal;
 extern TestRequestDefaultTypeInternal _TestRequest_default_instance_;
+class ThreadDoneReply;
+class ThreadDoneReplyDefaultTypeInternal;
+extern ThreadDoneReplyDefaultTypeInternal _ThreadDoneReply_default_instance_;
+class ThreadDoneRequest;
+class ThreadDoneRequestDefaultTypeInternal;
+extern ThreadDoneRequestDefaultTypeInternal _ThreadDoneRequest_default_instance_;
 class TxnReadyReply;
 class TxnReadyReplyDefaultTypeInternal;
 extern TxnReadyReplyDefaultTypeInternal _TxnReadyReply_default_instance_;
@@ -135,6 +141,8 @@ template<> ::dbx1000::SetWlSimDoneReply* Arena::CreateMaybeMessage<::dbx1000::Se
 template<> ::dbx1000::SetWlSimDoneRequest* Arena::CreateMaybeMessage<::dbx1000::SetWlSimDoneRequest>(Arena*);
 template<> ::dbx1000::TestReply* Arena::CreateMaybeMessage<::dbx1000::TestReply>(Arena*);
 template<> ::dbx1000::TestRequest* Arena::CreateMaybeMessage<::dbx1000::TestRequest>(Arena*);
+template<> ::dbx1000::ThreadDoneReply* Arena::CreateMaybeMessage<::dbx1000::ThreadDoneReply>(Arena*);
+template<> ::dbx1000::ThreadDoneRequest* Arena::CreateMaybeMessage<::dbx1000::ThreadDoneRequest>(Arena*);
 template<> ::dbx1000::TxnReadyReply* Arena::CreateMaybeMessage<::dbx1000::TxnReadyReply>(Arena*);
 template<> ::dbx1000::TxnReadyRequest* Arena::CreateMaybeMessage<::dbx1000::TxnReadyRequest>(Arena*);
 }  // namespace protobuf
@@ -1027,6 +1035,12 @@ class GetRowReply : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_row();
   void set_allocated_row(::std::string* row);
 
+  // uint64 time = 3;
+  void clear_time();
+  static const int kTimeFieldNumber = 3;
+  ::google::protobuf::uint64 time() const;
+  void set_time(::google::protobuf::uint64 value);
+
   // int32 rc = 1;
   void clear_rc();
   static const int kRcFieldNumber = 1;
@@ -1038,6 +1052,7 @@ class GetRowReply : public ::google::protobuf::Message /* @@protoc_insertion_poi
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr row_;
+  ::google::protobuf::uint64 time_;
   ::google::protobuf::int32 rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
@@ -2468,6 +2483,205 @@ class TestReply : public ::google::protobuf::Message /* @@protoc_insertion_point
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class ThreadDoneRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.ThreadDoneRequest) */ {
+ public:
+  ThreadDoneRequest();
+  virtual ~ThreadDoneRequest();
+
+  ThreadDoneRequest(const ThreadDoneRequest& from);
+
+  inline ThreadDoneRequest& operator=(const ThreadDoneRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ThreadDoneRequest(ThreadDoneRequest&& from) noexcept
+    : ThreadDoneRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline ThreadDoneRequest& operator=(ThreadDoneRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ThreadDoneRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ThreadDoneRequest* internal_default_instance() {
+    return reinterpret_cast<const ThreadDoneRequest*>(
+               &_ThreadDoneRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    22;
+
+  void Swap(ThreadDoneRequest* other);
+  friend void swap(ThreadDoneRequest& a, ThreadDoneRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ThreadDoneRequest* New() const final {
+    return CreateMaybeMessage<ThreadDoneRequest>(NULL);
+  }
+
+  ThreadDoneRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ThreadDoneRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ThreadDoneRequest& from);
+  void MergeFrom(const ThreadDoneRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ThreadDoneRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // uint64 thread_id = 1;
+  void clear_thread_id();
+  static const int kThreadIdFieldNumber = 1;
+  ::google::protobuf::uint64 thread_id() const;
+  void set_thread_id(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.ThreadDoneRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint64 thread_id_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ThreadDoneReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.ThreadDoneReply) */ {
+ public:
+  ThreadDoneReply();
+  virtual ~ThreadDoneReply();
+
+  ThreadDoneReply(const ThreadDoneReply& from);
+
+  inline ThreadDoneReply& operator=(const ThreadDoneReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ThreadDoneReply(ThreadDoneReply&& from) noexcept
+    : ThreadDoneReply() {
+    *this = ::std::move(from);
+  }
+
+  inline ThreadDoneReply& operator=(ThreadDoneReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ThreadDoneReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ThreadDoneReply* internal_default_instance() {
+    return reinterpret_cast<const ThreadDoneReply*>(
+               &_ThreadDoneReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    23;
+
+  void Swap(ThreadDoneReply* other);
+  friend void swap(ThreadDoneReply& a, ThreadDoneReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ThreadDoneReply* New() const final {
+    return CreateMaybeMessage<ThreadDoneReply>(NULL);
+  }
+
+  ThreadDoneReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ThreadDoneReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ThreadDoneReply& from);
+  void MergeFrom(const ThreadDoneReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ThreadDoneReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.ThreadDoneReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -2875,6 +3089,20 @@ inline void GetRowReply::set_allocated_row(::std::string* row) {
   // @@protoc_insertion_point(field_set_allocated:dbx1000.GetRowReply.row)
 }
 
+// uint64 time = 3;
+inline void GetRowReply::clear_time() {
+  time_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 GetRowReply::time() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetRowReply.time)
+  return time_;
+}
+inline void GetRowReply::set_time(::google::protobuf::uint64 value) {
+  
+  time_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetRowReply.time)
+}
+
 // -------------------------------------------------------------------
 
 // ReturnRowRequest
@@ -3151,9 +3379,35 @@ inline void AddTsRequest::set_timestamp(::google::protobuf::uint64 value) {
 
 // TestReply
 
+// -------------------------------------------------------------------
+
+// ThreadDoneRequest
+
+// uint64 thread_id = 1;
+inline void ThreadDoneRequest::clear_thread_id() {
+  thread_id_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 ThreadDoneRequest::thread_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.ThreadDoneRequest.thread_id)
+  return thread_id_;
+}
+inline void ThreadDoneRequest::set_thread_id(::google::protobuf::uint64 value) {
+  
+  thread_id_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.ThreadDoneRequest.thread_id)
+}
+
+// -------------------------------------------------------------------
+
+// ThreadDoneReply
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

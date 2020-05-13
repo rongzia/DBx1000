@@ -40,7 +40,7 @@ namespace dbx1000 {
 
 
 
-    ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
+ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
             )) {
         cout << "ApiTxnClient::ApiTxnClient connect to " << addr << " success." << endl;
@@ -85,8 +85,8 @@ namespace dbx1000 {
 
         grpc::ClientContext context;
         dbx1000::GetRowReply reply;
-        grpc::Status status = stub_->GetRow(&context, request, &reply);
 
+        grpc::Status status = stub_->GetRow(&context, request, &reply);
 
 //        mtx_.lock();
 //        count_++;
@@ -107,11 +107,11 @@ namespace dbx1000 {
         else if (WAIT == rc) {
 //            cout << "ApiTxnClient::GetRow, type == WAIT" << endl;
 //            uint64_t thread_id = txn->get_thd_id();
-            stats.tmp_stats[thread_id]->profiler->Clear();
-            stats.tmp_stats[thread_id]->profiler->Start();
+            dbx1000::Profiler profiler;
+            profiler.Start();
             while (!txn->ts_ready) { PAUSE }
-            stats.tmp_stats[thread_id]->profiler->End();
-            stats.tmp_stats[thread_id]->time_wait += stats.tmp_stats[thread_id]->profiler->Nanos();
+            profiler.End();
+            stats.tmp_stats[thread_id]->time_wait += profiler.Nanos();
 //            INC_TMP_STATS(txn->get_thd_id(), time_wait, profiler->Nanos());
             txn->ts_ready = true;
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
@@ -179,8 +179,8 @@ namespace dbx1000 {
 
 
     uint64_t ApiTxnClient::get_next_ts(uint64_t thread_id) {
-        stats._stats[thread_id]->profiler->Clear();
-        stats._stats[thread_id]->profiler->Start();
+        dbx1000::Profiler profiler;
+        profiler.Start();
         /// gen request
         dbx1000::GetNextTsRequest request;
         request.set_thread_id(thread_id);
@@ -190,8 +190,8 @@ namespace dbx1000 {
         ::grpc::Status status = stub_->GetNextTs(&context, request, &reply);
         assert(status.ok());
 
-        stats._stats[thread_id]->profiler->End();
-        stats._stats[thread_id]->time_ts_alloc += stats._stats[thread_id]->profiler->Nanos();
+        profiler.End();
+        stats._stats[thread_id]->time_ts_alloc += profiler.Nanos();
 
         return reply.timestamp();
     }
@@ -205,6 +205,15 @@ namespace dbx1000 {
         grpc::ClientContext context;
         dbx1000::AddTsReply reply;
         ::grpc::Status status = stub_->AddTs(&context, request, &reply);
+        assert(status.ok());
+    }
+
+    void ApiTxnClient::ThreadDone(uint64_t thread_id) {
+        dbx1000::ThreadDoneRequest request;
+        request.set_thread_id(thread_id);
+        ::grpc::ClientContext context;
+        dbx1000::ThreadDoneReply reply;
+        ::grpc::Status status = stub_->ThreadDone(&context, request, &reply);
         assert(status.ok());
     }
 }

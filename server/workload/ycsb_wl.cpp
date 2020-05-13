@@ -64,6 +64,7 @@ RC ycsb_wl::init_table() {
 
 // init table in parallel
 void ycsb_wl::init_table_parallel() {
+
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_init_parallelism; i++) {
         v_thread.emplace_back(thread(threadInitTable, this));

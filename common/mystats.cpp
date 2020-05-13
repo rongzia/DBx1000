@@ -1,20 +1,22 @@
 //
 // Created by rrzhang on 2020/5/5.
 //
-
+#include <iostream>
+#include <iomanip>
 #include "mystats.h"
 
 #include "global.h"
 #include "util/make_unique.h"
 
-#define BILLION 1000000000UL
+//#define BILLION 1000000000UL
+#define BILLION 1000UL
 namespace dbx1000 {
     void Stats_thd::init(uint64_t thread_id) {
         thread_id_ = thread_id;
         clear();
         all_debug1 = new uint64_t[MAX_TXN_PER_PART]();
         all_debug2 = new uint64_t[MAX_TXN_PER_PART]();
-        profiler = make_unique<dbx1000::Profiler>();
+//        profiler = make_unique<dbx1000::Profiler>();
     }
 
     void Stats_thd::clear() {
@@ -38,7 +40,7 @@ namespace dbx1000 {
     }
 
     void Stats_tmp::init() {
-        profiler = make_unique<dbx1000::Profiler>();
+//        profiler = make_unique<dbx1000::Profiler>();
         clear();
     }
 
@@ -152,7 +154,7 @@ namespace dbx1000 {
                           ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
                           ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
                           ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-                          ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n", total_txn_cnt, total_abort_cnt,
+                          ", time_query=%f\n, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n", total_txn_cnt, total_abort_cnt,
                     total_run_time / BILLION, total_time_wait / BILLION, total_time_ts_alloc / BILLION,
                     (total_time_man - total_time_wait) / BILLION, total_time_index / BILLION, total_time_abort / BILLION,
                     total_time_cleanup / BILLION, total_latency / BILLION / total_txn_cnt, deadlock, cycle_detect, dl_detect_time / BILLION,
@@ -179,6 +181,18 @@ namespace dbx1000 {
         );
         if (g_prt_lat_distr)
             print_lat_distr();
+    }
+
+    void Stats::PrintYCSB() {
+        for(int i = 0; i < g_thread_cnt; i++) {
+//            std::cout << std::fixed;
+            cout << "txn_cnt:" << _stats[i]->txn_cnt << ", abort_cnt:" << _stats[i]->abort_cnt;
+            cout //<< std::setprecision(6)
+             << ", run_time:" << _stats[i]->run_time/BILLION << ", time_abort:" << _stats[i]->time_abort/BILLION
+            << ", time_query:" << _stats[i]->time_query/BILLION << ", time_ts_alloc:" << _stats[i]->time_ts_alloc/BILLION
+            << ", time_man:" << _stats[i]->time_man/BILLION << ", time_wait:" << _stats[i]->time_wait/BILLION
+            << ", time_cleanup:" << _stats[i]->time_cleanup/BILLION << endl;
+        }
     }
 
     void Stats::print_lat_distr() {

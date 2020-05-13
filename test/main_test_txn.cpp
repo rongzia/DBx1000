@@ -83,6 +83,10 @@ int main(int argc, char* argv[]) {
         v_thread[i].join();
     }
 
+    for(size_t i = 0; i < g_thread_cnt; i++) {
+        api_txn_client->ThreadDone(i);
+    }
+
     stats.print();
 
 //    for(int i = 0; i <  g_thread_cnt; i++) {

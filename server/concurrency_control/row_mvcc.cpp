@@ -160,15 +160,15 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 	ts_t ts = local_txn->timestamp_;
 
 	uint64_t thread_id = local_txn->thread_id_;
-	stats._stats[thread_id]->profiler->Clear();
-	stats._stats[thread_id]->profiler->Start();
+	dbx1000::Profiler profiler;
+	profiler.Start();
     /// 等待获取 row 上的锁，即其他涉及该 row 的事务结束
     while (!ATOM_CAS(blatch, false, true)) { PAUSE }
+    profiler.End();
+	stats._stats[thread_id]->debug4 += profiler.Nanos();\
 
-	stats._stats[thread_id]->profiler->End();
-	stats._stats[thread_id]->debug4 += stats._stats[thread_id]->profiler->Nanos();
-	stats._stats[thread_id]->profiler->Clear();
-	stats._stats[thread_id]->profiler->Start();
+	profiler.Clear();
+	profiler.Start();
 
 #if DEBUG_CC
 	for (uint32_t i = 0; i < _req_len; i++)
@@ -278,8 +278,8 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
         assert(false);
     }
 
-	stats._stats[thread_id]->profiler->End();
-	stats._stats[thread_id]->debug3 += stats._stats[thread_id]->profiler->Nanos();
+	profiler.End();
+	stats._stats[thread_id]->debug3 += profiler.Nanos();
 
 	if (g_central_man) {
 //        glob_manager->release_row(_row);

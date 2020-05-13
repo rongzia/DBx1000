@@ -30,16 +30,24 @@ namespace dbx1000 {
         TsType ts_type = MyHelper::IntToTsType(request->ts_type());
         uint64_t thread_id = request->txnman().thread_id();
 
+//    stats.tmp_stats[thread_id]->profiler->Clear();
+//    stats.tmp_stats[thread_id]->profiler->Start();
         glob_manager_server->SetTxn(request->txnman());
         RC rc = glob_manager_server->row_mvccs_[request->key()]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
         if(RCOK == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
             response->set_row(glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
+//    stats.tmp_stats[thread_id]->profiler->End();
+//    response->set_time(stats.tmp_stats[thread_id]->profiler->Nanos());
             return ::grpc::Status::OK;
         } if(Commit == rc || Abort == rc || WAIT == rc || ERROR == rc || FINISH == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
+//    stats.tmp_stats[thread_id]->profiler->End();
+//    response->set_time(stats.tmp_stats[thread_id]->profiler->Nanos());
             return ::grpc::Status::OK;
         }
+
+//    stats.tmp_stats[thread_id]->profiler->End();
         assert(false);
     }
 
@@ -74,7 +82,10 @@ namespace dbx1000 {
         return ::grpc::Status::OK;
     }
 
-
+    ::grpc::Status ApiConCtlServer::ThreadDone(::grpc::ServerContext* context, const ::dbx1000::ThreadDoneRequest* request, ::dbx1000::ThreadDoneReply* response) {
+        glob_manager_server->thread_done_[request->thread_id()] = true;
+        return ::grpc::Status::OK;
+    }
 
 
     ApiConCtlClient::ApiConCtlClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(

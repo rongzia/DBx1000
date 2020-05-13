@@ -45,11 +45,11 @@ namespace dbx1000 {
         }
         else if (WAIT == rc) {
 //            cout << "API::get_row, type == WAIT" << endl;
-            stats.tmp_stats[thread_id]->profiler->Clear();
-            stats.tmp_stats[thread_id]->profiler->Start();
+            dbx1000::Profiler profiler;
+            profiler.Start();
             while (!txn->ts_ready) { PAUSE }
-            stats.tmp_stats[thread_id]->profiler->End();
-            stats.tmp_stats[thread_id]->time_wait += stats.tmp_stats[thread_id]->profiler->Nanos();
+            profiler.End();
+            stats.tmp_stats[thread_id]->time_wait += profiler.Nanos();
 
             txn->ts_ready = true;
             memcpy(txn->accesses[accesses_index]->orig_row->row_
