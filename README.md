@@ -1,3 +1,24 @@
+rpc 分支将事务线程和并发控制分开，事务线程可以在不同的机器上执行，但是只有一个集中式的并发控制。
+
+事务线程相关的代码放在 client 下，包括 benchmarks 和 txn、thread, 还有一个 manager_client
+
+server 文件夹下代码包括：buffer、并发控制、workload、manager_server等。
+
+common 下代码为 server 和 client 共用。
+
+system 下为原来DBx1000 的旧代码，用不到。
+
+api 为 client/server 之间的接口，api/api_single_machine 为单机环境下的接口，rpc 和单机环境通过宏 WITH_RPC 控制。
+
+util 下是一些工具包：
+arena 提供内存分配
+make_unique 创建只能指针
+no_destructor 和 leveldb 相关
+numbercomparator 为 leveldb 提供数字比较，leveldb 默认为字符串比较
+profiler 为计时工具
+
+
+
 <img src="logo/dbx1000.svg" alt="DBx1000 Logo" width="40%">
 
 -----------------
