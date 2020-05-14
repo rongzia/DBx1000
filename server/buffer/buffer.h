@@ -12,6 +12,8 @@
 #include <iostream>
 #include <mutex>
 #include "leveldb/db.h"
+#include "config.h"
+#include "common/global.h"
 
 namespace dbx1000 {
 
@@ -56,7 +58,7 @@ namespace dbx1000 {
     class Buffer {
 
     public:
-        Buffer(uint64_t total_size, size_t row_size, std::string db_path);
+        Buffer(uint64_t total_size, size_t row_size);
         ~Buffer();
 
         int BufferGet(uint64_t key, void* buf, size_t count);
@@ -76,17 +78,15 @@ namespace dbx1000 {
         size_t row_size_;
         int num_item_;                      /// number of items, == total_size_ / row_size_
 
-        std::unique_ptr<LRU> row_list_;     /// 被使用的链表
-        std::unique_ptr<LRU> free_list_;    /// 空闲链表
-        std::unique_ptr<LruIndex> lru_index_;   /// row_list_ 的索引，根据 key, 直接定位到相应的 RowNode
+        LRU* row_list_;     /// 被使用的链表
+        LRU* free_list_;    /// 空闲链表
+        LruIndex* lru_index_;   /// row_list_ 的索引，根据 key, 直接定位到相应的 RowNode
 
 #ifdef USE_MEMORY_DB
-        std::unique_ptr<MemoryDB> db_;
+        MemoryDB* db_;
 #else
-	    std::unique_ptr<leveldb::DB> db_;
-	    std::string db_path_;
+	    leveldb::DB* db_;
 #endif
-
         std::mutex mutex_;
     };
 }

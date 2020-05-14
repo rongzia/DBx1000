@@ -49,16 +49,14 @@ private:
 	volatile bool blatch;
 
 	uint64_t key_;
-//	dbx1000::RowItem* _row;
 	size_t row_size_;
+//	dbx1000::RowItem* _row;
 
 
 	RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0);
 	void update_buffer(dbx1000::TxnRowMan* txn, TsType type);
 	void buffer_req(TsType type, dbx1000::TxnRowMan* txn, bool served);
 
-//	dbx1000::RowItem* SetLatestRow();
-//	dbx1000::RowItem* GetLatestRow();
 
 	// Invariant: all valid entries in _requests have greater ts than any entry in _write_history 
 	dbx1000::RowItem* 		_latest_row;
@@ -87,6 +85,8 @@ private:
 //	row_t * reserveRow(ts_t ts, txn_man * txn);
 //	dbx1000::RowItem* reserveRow(ts_t ts, dbx1000::TxnRowMan* txn);
 	dbx1000::RowItem* reserveRow(ts_t ts, uint64_t thread_id);
+	void recycle(uint64_t thread_id);
+	void GetLatestRow(dbx1000::RowItem*);
 };
 
 #endif

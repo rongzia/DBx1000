@@ -26,7 +26,7 @@ namespace dbx1000 {
     }
 
     LRU::~LRU() {
-//        std::cout << "~LRU" <<std::endl;
+        std::cout << "~LRU" <<std::endl;
     }
 
     void LRU::Prepend(RowNode* row_node) {

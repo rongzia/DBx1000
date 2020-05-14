@@ -3,7 +3,7 @@
 //
 #include <iostream>
 #include <memory>
-#include "lru.h"
+#include "server/buffer/lru.h"
 
 using namespace dbx1000;
 using namespace std;

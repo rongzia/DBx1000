@@ -219,4 +219,12 @@ extern TestCases					g_test_case;
 #define TS_HW						3
 #define TS_CLOCK					4
 
+/// for api/
+
+/// for server/buffer/, buffer can use leveldb or memorydb
+#define USE_MEMORY_DB
+#define db_num_item_ 100000
+//#define WARMUP_LEVELDB
+
+
 #endif

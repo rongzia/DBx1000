@@ -75,7 +75,7 @@ set(SRC_FILES
         server/workload/ycsb_wl.cpp
         server/workload/wl.cpp
         server/manager_server.cpp
-        util/numbercomparator.cpp
+#        util/numbercomparator.cpp
         util/arena.cpp
         config.cpp
         )
@@ -94,11 +94,6 @@ else()
 endif ()
 #add_executable(rundb system/main.cpp ${SRC_FILES})
 #target_link_libraries(rundb libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
-
-# for buffer, buffer can use leveldb or memorydb
-add_definitions(-DUSE_MEMORY_DB)
-#add_definitions(-Ddb_num_item_=1000000)
-#add_definitions(-DWARMUP_LEVELDB)
 
 if(${WITH_RPC})
     add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES})
@@ -122,3 +117,22 @@ target_link_libraries(test_query pthread)
 add_executable(test_1 test/test_1.cpp)
 add_executable(test_arena test/test_arena.cpp util/arena.cpp)
 add_executable(test_fstream test/test_fstream.cpp)
+add_executable(test_slice test/test_slice.cpp)
+
+
+add_executable(test_buffer test/test_buffer.cpp
+        server/buffer/buffer.cpp server/buffer/lru_index.cpp server/buffer/lru.cpp common/global.cpp
+        )
+target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
+target_compile_definitions(test_buffer PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
+        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
+#target_compile_definitions(test_buffer PUBLIC -fno-rtti)
+
+add_executable(test_lru test/test_lru.cpp server/buffer/lru.cpp server/buffer/lru_index.cpp common/global.cpp)
+
+add_executable(test_leveldb_comparetor test/test_leveldb_comparetor.cpp)
+#target_compile_definitions(test_leveldb_comparetor PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
+#        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
+target_link_libraries(test_leveldb_comparetor libleveldb.a libsnappy.a libpthread.so)
+#target_compile_definitions(test_leveldb_comparetor PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
+#        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")

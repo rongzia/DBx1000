@@ -6,6 +6,7 @@ service DBx1000Service {
     /// for txn thread
     rpc TxnReady(TxnReadyRequest) returns (TxnReadyReply) {}
     rpc InitWlDone(InitWlDoneRequest) returns (InitWlDoneReply) {}
+    rpc GetRowSize(GetRowSizeRequest) returns (GetRowSizeReply) {}
     rpc GetRow (GetRowRequest) returns (GetRowReply) {}
     rpc ReturnRow (ReturnRowRequest) returns (ReturnRowReply) {}
     rpc SetWlSimDone(SetWlSimDoneRequest) returns (SetWlSimDoneReply) {}
@@ -98,3 +99,8 @@ message ThreadDoneRequest{
     uint64 thread_id = 1;
 }
 message ThreadDoneReply{}
+
+message GetRowSizeRequest{}
+message GetRowSizeReply{
+    uint64 row_size = 1;
+}

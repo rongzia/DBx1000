@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
 
     glob_manager_client = new dbx1000::ManagerClient();
     glob_manager_client->init();
+    glob_manager_client->row_size_ = api_txn_client->GetRowSize();
 
     query_queue = new Query_queue();
     query_queue->init();

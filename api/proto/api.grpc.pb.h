@@ -61,6 +61,13 @@ class DBx1000Service final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::InitWlDoneReply>> PrepareAsyncInitWlDone(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::InitWlDoneReply>>(PrepareAsyncInitWlDoneRaw(context, request, cq));
     }
+    virtual ::grpc::Status GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::dbx1000::GetRowSizeReply* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>> AsyncGetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>>(AsyncGetRowSizeRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>> PrepareAsyncGetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>>(PrepareAsyncGetRowSizeRaw(context, request, cq));
+    }
     virtual ::grpc::Status GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::dbx1000::GetRowReply* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowReply>> AsyncGetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowReply>>(AsyncGetRowRaw(context, request, cq));
@@ -137,6 +144,10 @@ class DBx1000Service final {
       virtual void InitWlDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InitWlDoneReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void InitWlDone(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       virtual void InitWlDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InitWlDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetRowSize(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowSizeReply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void GetRowSize(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowSizeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       virtual void GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest* request, ::dbx1000::GetRowReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void GetRow(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest* request, ::dbx1000::GetRowReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
@@ -181,6 +192,8 @@ class DBx1000Service final {
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::TxnReadyReply>* PrepareAsyncTxnReadyRaw(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::InitWlDoneReply>* AsyncInitWlDoneRaw(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::InitWlDoneReply>* PrepareAsyncInitWlDoneRaw(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>* AsyncGetRowSizeRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowSizeReply>* PrepareAsyncGetRowSizeRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowReply>* AsyncGetRowRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetRowReply>* PrepareAsyncGetRowRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::ReturnRowReply>* AsyncReturnRowRaw(::grpc::ClientContext* context, const ::dbx1000::ReturnRowRequest& request, ::grpc::CompletionQueue* cq) = 0;
@@ -216,6 +229,13 @@ class DBx1000Service final {
     }
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::InitWlDoneReply>> PrepareAsyncInitWlDone(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::InitWlDoneReply>>(PrepareAsyncInitWlDoneRaw(context, request, cq));
+    }
+    ::grpc::Status GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::dbx1000::GetRowSizeReply* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>> AsyncGetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>>(AsyncGetRowSizeRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>> PrepareAsyncGetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>>(PrepareAsyncGetRowSizeRaw(context, request, cq));
     }
     ::grpc::Status GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::dbx1000::GetRowReply* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowReply>> AsyncGetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) {
@@ -291,6 +311,10 @@ class DBx1000Service final {
       void InitWlDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InitWlDoneReply* response, std::function<void(::grpc::Status)>) override;
       void InitWlDone(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       void InitWlDone(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InitWlDoneReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response, std::function<void(::grpc::Status)>) override;
+      void GetRowSize(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowSizeReply* response, std::function<void(::grpc::Status)>) override;
+      void GetRowSize(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void GetRowSize(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowSizeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       void GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest* request, ::dbx1000::GetRowReply* response, std::function<void(::grpc::Status)>) override;
       void GetRow(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetRowReply* response, std::function<void(::grpc::Status)>) override;
       void GetRow(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest* request, ::dbx1000::GetRowReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
@@ -342,6 +366,8 @@ class DBx1000Service final {
     ::grpc::ClientAsyncResponseReader< ::dbx1000::TxnReadyReply>* PrepareAsyncTxnReadyRaw(::grpc::ClientContext* context, const ::dbx1000::TxnReadyRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::InitWlDoneReply>* AsyncInitWlDoneRaw(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::InitWlDoneReply>* PrepareAsyncInitWlDoneRaw(::grpc::ClientContext* context, const ::dbx1000::InitWlDoneRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>* AsyncGetRowSizeRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowSizeReply>* PrepareAsyncGetRowSizeRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowSizeRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowReply>* AsyncGetRowRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::GetRowReply>* PrepareAsyncGetRowRaw(::grpc::ClientContext* context, const ::dbx1000::GetRowRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::ReturnRowReply>* AsyncReturnRowRaw(::grpc::ClientContext* context, const ::dbx1000::ReturnRowRequest& request, ::grpc::CompletionQueue* cq) override;
@@ -362,6 +388,7 @@ class DBx1000Service final {
     ::grpc::ClientAsyncResponseReader< ::dbx1000::TestReply>* PrepareAsyncTestRaw(::grpc::ClientContext* context, const ::dbx1000::TestRequest& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_TxnReady_;
     const ::grpc::internal::RpcMethod rpcmethod_InitWlDone_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetRowSize_;
     const ::grpc::internal::RpcMethod rpcmethod_GetRow_;
     const ::grpc::internal::RpcMethod rpcmethod_ReturnRow_;
     const ::grpc::internal::RpcMethod rpcmethod_SetWlSimDone_;
@@ -381,6 +408,7 @@ class DBx1000Service final {
     // / for txn thread
     virtual ::grpc::Status TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response);
     virtual ::grpc::Status InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response);
+    virtual ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response);
     virtual ::grpc::Status GetRow(::grpc::ServerContext* context, const ::dbx1000::GetRowRequest* request, ::dbx1000::GetRowReply* response);
     virtual ::grpc::Status ReturnRow(::grpc::ServerContext* context, const ::dbx1000::ReturnRowRequest* request, ::dbx1000::ReturnRowReply* response);
     virtual ::grpc::Status SetWlSimDone(::grpc::ServerContext* context, const ::dbx1000::SetWlSimDoneRequest* request, ::dbx1000::SetWlSimDoneReply* response);
@@ -433,12 +461,32 @@ class DBx1000Service final {
     }
   };
   template <class BaseClass>
+  class WithAsyncMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithAsyncMethod_GetRowSize() {
+      ::grpc::Service::MarkMethodAsync(2);
+    }
+    ~WithAsyncMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetRowSize(::grpc::ServerContext* context, ::dbx1000::GetRowSizeRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::GetRowSizeReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithAsyncMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_GetRow() {
-      ::grpc::Service::MarkMethodAsync(2);
+      ::grpc::Service::MarkMethodAsync(3);
     }
     ~WithAsyncMethod_GetRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -449,7 +497,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetRow(::grpc::ServerContext* context, ::dbx1000::GetRowRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::GetRowReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -458,7 +506,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_ReturnRow() {
-      ::grpc::Service::MarkMethodAsync(3);
+      ::grpc::Service::MarkMethodAsync(4);
     }
     ~WithAsyncMethod_ReturnRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -469,7 +517,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestReturnRow(::grpc::ServerContext* context, ::dbx1000::ReturnRowRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::ReturnRowReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -478,7 +526,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_SetWlSimDone() {
-      ::grpc::Service::MarkMethodAsync(4);
+      ::grpc::Service::MarkMethodAsync(5);
     }
     ~WithAsyncMethod_SetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -489,7 +537,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSetWlSimDone(::grpc::ServerContext* context, ::dbx1000::SetWlSimDoneRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::SetWlSimDoneReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -498,7 +546,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_GetWlSimDone() {
-      ::grpc::Service::MarkMethodAsync(5);
+      ::grpc::Service::MarkMethodAsync(6);
     }
     ~WithAsyncMethod_GetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -509,7 +557,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetWlSimDone(::grpc::ServerContext* context, ::dbx1000::GetWlSimDoneRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::GetWlSimDoneReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -518,7 +566,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_GetNextTs() {
-      ::grpc::Service::MarkMethodAsync(6);
+      ::grpc::Service::MarkMethodAsync(7);
     }
     ~WithAsyncMethod_GetNextTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -529,7 +577,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetNextTs(::grpc::ServerContext* context, ::dbx1000::GetNextTsRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::GetNextTsReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -538,7 +586,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_AddTs() {
-      ::grpc::Service::MarkMethodAsync(7);
+      ::grpc::Service::MarkMethodAsync(8);
     }
     ~WithAsyncMethod_AddTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -549,7 +597,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestAddTs(::grpc::ServerContext* context, ::dbx1000::AddTsRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::AddTsReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -558,7 +606,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_ThreadDone() {
-      ::grpc::Service::MarkMethodAsync(8);
+      ::grpc::Service::MarkMethodAsync(9);
     }
     ~WithAsyncMethod_ThreadDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -569,7 +617,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestThreadDone(::grpc::ServerContext* context, ::dbx1000::ThreadDoneRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::ThreadDoneReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -578,7 +626,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_SetTsReady() {
-      ::grpc::Service::MarkMethodAsync(9);
+      ::grpc::Service::MarkMethodAsync(10);
     }
     ~WithAsyncMethod_SetTsReady() override {
       BaseClassMustBeDerivedFromService(this);
@@ -589,7 +637,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSetTsReady(::grpc::ServerContext* context, ::dbx1000::SetTsReadyRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::SetTsReadyReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(10, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -598,7 +646,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_Test() {
-      ::grpc::Service::MarkMethodAsync(10);
+      ::grpc::Service::MarkMethodAsync(11);
     }
     ~WithAsyncMethod_Test() override {
       BaseClassMustBeDerivedFromService(this);
@@ -609,10 +657,10 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestTest(::grpc::ServerContext* context, ::dbx1000::TestRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::TestReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(10, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(11, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_TxnReady<WithAsyncMethod_InitWlDone<WithAsyncMethod_GetRow<WithAsyncMethod_ReturnRow<WithAsyncMethod_SetWlSimDone<WithAsyncMethod_GetWlSimDone<WithAsyncMethod_GetNextTs<WithAsyncMethod_AddTs<WithAsyncMethod_ThreadDone<WithAsyncMethod_SetTsReady<WithAsyncMethod_Test<Service > > > > > > > > > > > AsyncService;
+  typedef WithAsyncMethod_TxnReady<WithAsyncMethod_InitWlDone<WithAsyncMethod_GetRowSize<WithAsyncMethod_GetRow<WithAsyncMethod_ReturnRow<WithAsyncMethod_SetWlSimDone<WithAsyncMethod_GetWlSimDone<WithAsyncMethod_GetNextTs<WithAsyncMethod_AddTs<WithAsyncMethod_ThreadDone<WithAsyncMethod_SetTsReady<WithAsyncMethod_Test<Service > > > > > > > > > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_TxnReady : public BaseClass {
    private:
@@ -676,12 +724,43 @@ class DBx1000Service final {
     virtual void InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
   template <class BaseClass>
+  class ExperimentalWithCallbackMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    ExperimentalWithCallbackMethod_GetRowSize() {
+      ::grpc::Service::experimental().MarkMethodCallback(2,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetRowSizeRequest, ::dbx1000::GetRowSizeReply>(
+          [this](::grpc::ServerContext* context,
+                 const ::dbx1000::GetRowSizeRequest* request,
+                 ::dbx1000::GetRowSizeReply* response,
+                 ::grpc::experimental::ServerCallbackRpcController* controller) {
+                   return this->GetRowSize(context, request, response, controller);
+                 }));
+    }
+    void SetMessageAllocatorFor_GetRowSize(
+        ::grpc::experimental::MessageAllocator< ::dbx1000::GetRowSizeRequest, ::dbx1000::GetRowSizeReply>* allocator) {
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetRowSizeRequest, ::dbx1000::GetRowSizeReply>*>(
+          ::grpc::Service::experimental().GetHandler(2))
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual void GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+  };
+  template <class BaseClass>
   class ExperimentalWithCallbackMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_GetRow() {
-      ::grpc::Service::experimental().MarkMethodCallback(2,
+      ::grpc::Service::experimental().MarkMethodCallback(3,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetRowRequest, ::dbx1000::GetRowReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::GetRowRequest* request,
@@ -693,7 +772,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_GetRow(
         ::grpc::experimental::MessageAllocator< ::dbx1000::GetRowRequest, ::dbx1000::GetRowReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetRowRequest, ::dbx1000::GetRowReply>*>(
-          ::grpc::Service::experimental().GetHandler(2))
+          ::grpc::Service::experimental().GetHandler(3))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_GetRow() override {
@@ -712,7 +791,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_ReturnRow() {
-      ::grpc::Service::experimental().MarkMethodCallback(3,
+      ::grpc::Service::experimental().MarkMethodCallback(4,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReturnRowRequest, ::dbx1000::ReturnRowReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::ReturnRowRequest* request,
@@ -724,7 +803,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_ReturnRow(
         ::grpc::experimental::MessageAllocator< ::dbx1000::ReturnRowRequest, ::dbx1000::ReturnRowReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReturnRowRequest, ::dbx1000::ReturnRowReply>*>(
-          ::grpc::Service::experimental().GetHandler(3))
+          ::grpc::Service::experimental().GetHandler(4))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_ReturnRow() override {
@@ -743,7 +822,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_SetWlSimDone() {
-      ::grpc::Service::experimental().MarkMethodCallback(4,
+      ::grpc::Service::experimental().MarkMethodCallback(5,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::SetWlSimDoneRequest, ::dbx1000::SetWlSimDoneReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::SetWlSimDoneRequest* request,
@@ -755,7 +834,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_SetWlSimDone(
         ::grpc::experimental::MessageAllocator< ::dbx1000::SetWlSimDoneRequest, ::dbx1000::SetWlSimDoneReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::SetWlSimDoneRequest, ::dbx1000::SetWlSimDoneReply>*>(
-          ::grpc::Service::experimental().GetHandler(4))
+          ::grpc::Service::experimental().GetHandler(5))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_SetWlSimDone() override {
@@ -774,7 +853,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_GetWlSimDone() {
-      ::grpc::Service::experimental().MarkMethodCallback(5,
+      ::grpc::Service::experimental().MarkMethodCallback(6,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetWlSimDoneRequest, ::dbx1000::GetWlSimDoneReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::GetWlSimDoneRequest* request,
@@ -786,7 +865,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_GetWlSimDone(
         ::grpc::experimental::MessageAllocator< ::dbx1000::GetWlSimDoneRequest, ::dbx1000::GetWlSimDoneReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetWlSimDoneRequest, ::dbx1000::GetWlSimDoneReply>*>(
-          ::grpc::Service::experimental().GetHandler(5))
+          ::grpc::Service::experimental().GetHandler(6))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_GetWlSimDone() override {
@@ -805,7 +884,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_GetNextTs() {
-      ::grpc::Service::experimental().MarkMethodCallback(6,
+      ::grpc::Service::experimental().MarkMethodCallback(7,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::GetNextTsRequest* request,
@@ -817,7 +896,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_GetNextTs(
         ::grpc::experimental::MessageAllocator< ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>*>(
-          ::grpc::Service::experimental().GetHandler(6))
+          ::grpc::Service::experimental().GetHandler(7))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_GetNextTs() override {
@@ -836,7 +915,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_AddTs() {
-      ::grpc::Service::experimental().MarkMethodCallback(7,
+      ::grpc::Service::experimental().MarkMethodCallback(8,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::AddTsRequest, ::dbx1000::AddTsReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::AddTsRequest* request,
@@ -848,7 +927,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_AddTs(
         ::grpc::experimental::MessageAllocator< ::dbx1000::AddTsRequest, ::dbx1000::AddTsReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::AddTsRequest, ::dbx1000::AddTsReply>*>(
-          ::grpc::Service::experimental().GetHandler(7))
+          ::grpc::Service::experimental().GetHandler(8))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_AddTs() override {
@@ -867,7 +946,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_ThreadDone() {
-      ::grpc::Service::experimental().MarkMethodCallback(8,
+      ::grpc::Service::experimental().MarkMethodCallback(9,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ThreadDoneRequest, ::dbx1000::ThreadDoneReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::ThreadDoneRequest* request,
@@ -879,7 +958,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_ThreadDone(
         ::grpc::experimental::MessageAllocator< ::dbx1000::ThreadDoneRequest, ::dbx1000::ThreadDoneReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ThreadDoneRequest, ::dbx1000::ThreadDoneReply>*>(
-          ::grpc::Service::experimental().GetHandler(8))
+          ::grpc::Service::experimental().GetHandler(9))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_ThreadDone() override {
@@ -898,7 +977,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_SetTsReady() {
-      ::grpc::Service::experimental().MarkMethodCallback(9,
+      ::grpc::Service::experimental().MarkMethodCallback(10,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::SetTsReadyRequest* request,
@@ -910,7 +989,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_SetTsReady(
         ::grpc::experimental::MessageAllocator< ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>*>(
-          ::grpc::Service::experimental().GetHandler(9))
+          ::grpc::Service::experimental().GetHandler(10))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_SetTsReady() override {
@@ -929,7 +1008,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithCallbackMethod_Test() {
-      ::grpc::Service::experimental().MarkMethodCallback(10,
+      ::grpc::Service::experimental().MarkMethodCallback(11,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::TestRequest, ::dbx1000::TestReply>(
           [this](::grpc::ServerContext* context,
                  const ::dbx1000::TestRequest* request,
@@ -941,7 +1020,7 @@ class DBx1000Service final {
     void SetMessageAllocatorFor_Test(
         ::grpc::experimental::MessageAllocator< ::dbx1000::TestRequest, ::dbx1000::TestReply>* allocator) {
       static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::TestRequest, ::dbx1000::TestReply>*>(
-          ::grpc::Service::experimental().GetHandler(10))
+          ::grpc::Service::experimental().GetHandler(11))
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Test() override {
@@ -954,7 +1033,7 @@ class DBx1000Service final {
     }
     virtual void Test(::grpc::ServerContext* context, const ::dbx1000::TestRequest* request, ::dbx1000::TestReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
-  typedef ExperimentalWithCallbackMethod_TxnReady<ExperimentalWithCallbackMethod_InitWlDone<ExperimentalWithCallbackMethod_GetRow<ExperimentalWithCallbackMethod_ReturnRow<ExperimentalWithCallbackMethod_SetWlSimDone<ExperimentalWithCallbackMethod_GetWlSimDone<ExperimentalWithCallbackMethod_GetNextTs<ExperimentalWithCallbackMethod_AddTs<ExperimentalWithCallbackMethod_ThreadDone<ExperimentalWithCallbackMethod_SetTsReady<ExperimentalWithCallbackMethod_Test<Service > > > > > > > > > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_TxnReady<ExperimentalWithCallbackMethod_InitWlDone<ExperimentalWithCallbackMethod_GetRowSize<ExperimentalWithCallbackMethod_GetRow<ExperimentalWithCallbackMethod_ReturnRow<ExperimentalWithCallbackMethod_SetWlSimDone<ExperimentalWithCallbackMethod_GetWlSimDone<ExperimentalWithCallbackMethod_GetNextTs<ExperimentalWithCallbackMethod_AddTs<ExperimentalWithCallbackMethod_ThreadDone<ExperimentalWithCallbackMethod_SetTsReady<ExperimentalWithCallbackMethod_Test<Service > > > > > > > > > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_TxnReady : public BaseClass {
    private:
@@ -990,12 +1069,29 @@ class DBx1000Service final {
     }
   };
   template <class BaseClass>
+  class WithGenericMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithGenericMethod_GetRowSize() {
+      ::grpc::Service::MarkMethodGeneric(2);
+    }
+    ~WithGenericMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
   class WithGenericMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_GetRow() {
-      ::grpc::Service::MarkMethodGeneric(2);
+      ::grpc::Service::MarkMethodGeneric(3);
     }
     ~WithGenericMethod_GetRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1012,7 +1108,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_ReturnRow() {
-      ::grpc::Service::MarkMethodGeneric(3);
+      ::grpc::Service::MarkMethodGeneric(4);
     }
     ~WithGenericMethod_ReturnRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1029,7 +1125,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_SetWlSimDone() {
-      ::grpc::Service::MarkMethodGeneric(4);
+      ::grpc::Service::MarkMethodGeneric(5);
     }
     ~WithGenericMethod_SetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1046,7 +1142,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_GetWlSimDone() {
-      ::grpc::Service::MarkMethodGeneric(5);
+      ::grpc::Service::MarkMethodGeneric(6);
     }
     ~WithGenericMethod_GetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1063,7 +1159,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_GetNextTs() {
-      ::grpc::Service::MarkMethodGeneric(6);
+      ::grpc::Service::MarkMethodGeneric(7);
     }
     ~WithGenericMethod_GetNextTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1080,7 +1176,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_AddTs() {
-      ::grpc::Service::MarkMethodGeneric(7);
+      ::grpc::Service::MarkMethodGeneric(8);
     }
     ~WithGenericMethod_AddTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1097,7 +1193,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_ThreadDone() {
-      ::grpc::Service::MarkMethodGeneric(8);
+      ::grpc::Service::MarkMethodGeneric(9);
     }
     ~WithGenericMethod_ThreadDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1114,7 +1210,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_SetTsReady() {
-      ::grpc::Service::MarkMethodGeneric(9);
+      ::grpc::Service::MarkMethodGeneric(10);
     }
     ~WithGenericMethod_SetTsReady() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1131,7 +1227,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_Test() {
-      ::grpc::Service::MarkMethodGeneric(10);
+      ::grpc::Service::MarkMethodGeneric(11);
     }
     ~WithGenericMethod_Test() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1183,12 +1279,32 @@ class DBx1000Service final {
     }
   };
   template <class BaseClass>
+  class WithRawMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithRawMethod_GetRowSize() {
+      ::grpc::Service::MarkMethodRaw(2);
+    }
+    ~WithRawMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetRowSize(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
   class WithRawMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_GetRow() {
-      ::grpc::Service::MarkMethodRaw(2);
+      ::grpc::Service::MarkMethodRaw(3);
     }
     ~WithRawMethod_GetRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1199,7 +1315,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetRow(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1208,7 +1324,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_ReturnRow() {
-      ::grpc::Service::MarkMethodRaw(3);
+      ::grpc::Service::MarkMethodRaw(4);
     }
     ~WithRawMethod_ReturnRow() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1219,7 +1335,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestReturnRow(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1228,7 +1344,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_SetWlSimDone() {
-      ::grpc::Service::MarkMethodRaw(4);
+      ::grpc::Service::MarkMethodRaw(5);
     }
     ~WithRawMethod_SetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1239,7 +1355,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSetWlSimDone(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1248,7 +1364,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_GetWlSimDone() {
-      ::grpc::Service::MarkMethodRaw(5);
+      ::grpc::Service::MarkMethodRaw(6);
     }
     ~WithRawMethod_GetWlSimDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1259,7 +1375,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetWlSimDone(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1268,7 +1384,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_GetNextTs() {
-      ::grpc::Service::MarkMethodRaw(6);
+      ::grpc::Service::MarkMethodRaw(7);
     }
     ~WithRawMethod_GetNextTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1279,7 +1395,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestGetNextTs(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1288,7 +1404,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_AddTs() {
-      ::grpc::Service::MarkMethodRaw(7);
+      ::grpc::Service::MarkMethodRaw(8);
     }
     ~WithRawMethod_AddTs() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1299,7 +1415,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestAddTs(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1308,7 +1424,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_ThreadDone() {
-      ::grpc::Service::MarkMethodRaw(8);
+      ::grpc::Service::MarkMethodRaw(9);
     }
     ~WithRawMethod_ThreadDone() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1319,7 +1435,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestThreadDone(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1328,7 +1444,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_SetTsReady() {
-      ::grpc::Service::MarkMethodRaw(9);
+      ::grpc::Service::MarkMethodRaw(10);
     }
     ~WithRawMethod_SetTsReady() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1339,7 +1455,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestSetTsReady(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(10, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1348,7 +1464,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_Test() {
-      ::grpc::Service::MarkMethodRaw(10);
+      ::grpc::Service::MarkMethodRaw(11);
     }
     ~WithRawMethod_Test() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1359,7 +1475,7 @@ class DBx1000Service final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestTest(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(10, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(11, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1413,12 +1529,37 @@ class DBx1000Service final {
     virtual void InitWlDone(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
   template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    ExperimentalWithRawCallbackMethod_GetRowSize() {
+      ::grpc::Service::experimental().MarkMethodRawCallback(2,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::ServerContext* context,
+                 const ::grpc::ByteBuffer* request,
+                 ::grpc::ByteBuffer* response,
+                 ::grpc::experimental::ServerCallbackRpcController* controller) {
+                   this->GetRowSize(context, request, response, controller);
+                 }));
+    }
+    ~ExperimentalWithRawCallbackMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual void GetRowSize(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+  };
+  template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_GetRow() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(2,
+      ::grpc::Service::experimental().MarkMethodRawCallback(3,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1443,7 +1584,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_ReturnRow() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(3,
+      ::grpc::Service::experimental().MarkMethodRawCallback(4,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1468,7 +1609,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_SetWlSimDone() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(4,
+      ::grpc::Service::experimental().MarkMethodRawCallback(5,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1493,7 +1634,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_GetWlSimDone() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(5,
+      ::grpc::Service::experimental().MarkMethodRawCallback(6,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1518,7 +1659,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_GetNextTs() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(6,
+      ::grpc::Service::experimental().MarkMethodRawCallback(7,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1543,7 +1684,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_AddTs() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(7,
+      ::grpc::Service::experimental().MarkMethodRawCallback(8,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1568,7 +1709,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_ThreadDone() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(8,
+      ::grpc::Service::experimental().MarkMethodRawCallback(9,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1593,7 +1734,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_SetTsReady() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(9,
+      ::grpc::Service::experimental().MarkMethodRawCallback(10,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1618,7 +1759,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     ExperimentalWithRawCallbackMethod_Test() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(10,
+      ::grpc::Service::experimental().MarkMethodRawCallback(11,
         new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
           [this](::grpc::ServerContext* context,
                  const ::grpc::ByteBuffer* request,
@@ -1678,12 +1819,32 @@ class DBx1000Service final {
     virtual ::grpc::Status StreamedInitWlDone(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::dbx1000::InitWlDoneRequest,::dbx1000::InitWlDoneReply>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
+  class WithStreamedUnaryMethod_GetRowSize : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithStreamedUnaryMethod_GetRowSize() {
+      ::grpc::Service::MarkMethodStreamed(2,
+        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::GetRowSizeRequest, ::dbx1000::GetRowSizeReply>(std::bind(&WithStreamedUnaryMethod_GetRowSize<BaseClass>::StreamedGetRowSize, this, std::placeholders::_1, std::placeholders::_2)));
+    }
+    ~WithStreamedUnaryMethod_GetRowSize() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetRowSize(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::dbx1000::GetRowSizeRequest,::dbx1000::GetRowSizeReply>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
   class WithStreamedUnaryMethod_GetRow : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_GetRow() {
-      ::grpc::Service::MarkMethodStreamed(2,
+      ::grpc::Service::MarkMethodStreamed(3,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::GetRowRequest, ::dbx1000::GetRowReply>(std::bind(&WithStreamedUnaryMethod_GetRow<BaseClass>::StreamedGetRow, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetRow() override {
@@ -1703,7 +1864,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_ReturnRow() {
-      ::grpc::Service::MarkMethodStreamed(3,
+      ::grpc::Service::MarkMethodStreamed(4,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::ReturnRowRequest, ::dbx1000::ReturnRowReply>(std::bind(&WithStreamedUnaryMethod_ReturnRow<BaseClass>::StreamedReturnRow, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_ReturnRow() override {
@@ -1723,7 +1884,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_SetWlSimDone() {
-      ::grpc::Service::MarkMethodStreamed(4,
+      ::grpc::Service::MarkMethodStreamed(5,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::SetWlSimDoneRequest, ::dbx1000::SetWlSimDoneReply>(std::bind(&WithStreamedUnaryMethod_SetWlSimDone<BaseClass>::StreamedSetWlSimDone, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_SetWlSimDone() override {
@@ -1743,7 +1904,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_GetWlSimDone() {
-      ::grpc::Service::MarkMethodStreamed(5,
+      ::grpc::Service::MarkMethodStreamed(6,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::GetWlSimDoneRequest, ::dbx1000::GetWlSimDoneReply>(std::bind(&WithStreamedUnaryMethod_GetWlSimDone<BaseClass>::StreamedGetWlSimDone, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetWlSimDone() override {
@@ -1763,7 +1924,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_GetNextTs() {
-      ::grpc::Service::MarkMethodStreamed(6,
+      ::grpc::Service::MarkMethodStreamed(7,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>(std::bind(&WithStreamedUnaryMethod_GetNextTs<BaseClass>::StreamedGetNextTs, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_GetNextTs() override {
@@ -1783,7 +1944,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_AddTs() {
-      ::grpc::Service::MarkMethodStreamed(7,
+      ::grpc::Service::MarkMethodStreamed(8,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::AddTsRequest, ::dbx1000::AddTsReply>(std::bind(&WithStreamedUnaryMethod_AddTs<BaseClass>::StreamedAddTs, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_AddTs() override {
@@ -1803,7 +1964,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_ThreadDone() {
-      ::grpc::Service::MarkMethodStreamed(8,
+      ::grpc::Service::MarkMethodStreamed(9,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::ThreadDoneRequest, ::dbx1000::ThreadDoneReply>(std::bind(&WithStreamedUnaryMethod_ThreadDone<BaseClass>::StreamedThreadDone, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_ThreadDone() override {
@@ -1823,7 +1984,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_SetTsReady() {
-      ::grpc::Service::MarkMethodStreamed(9,
+      ::grpc::Service::MarkMethodStreamed(10,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::SetTsReadyRequest, ::dbx1000::SetTsReadyReply>(std::bind(&WithStreamedUnaryMethod_SetTsReady<BaseClass>::StreamedSetTsReady, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_SetTsReady() override {
@@ -1843,7 +2004,7 @@ class DBx1000Service final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_Test() {
-      ::grpc::Service::MarkMethodStreamed(10,
+      ::grpc::Service::MarkMethodStreamed(11,
         new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::TestRequest, ::dbx1000::TestReply>(std::bind(&WithStreamedUnaryMethod_Test<BaseClass>::StreamedTest, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_Test() override {
@@ -1857,9 +2018,9 @@ class DBx1000Service final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedTest(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::dbx1000::TestRequest,::dbx1000::TestReply>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_TxnReady<WithStreamedUnaryMethod_InitWlDone<WithStreamedUnaryMethod_GetRow<WithStreamedUnaryMethod_ReturnRow<WithStreamedUnaryMethod_SetWlSimDone<WithStreamedUnaryMethod_GetWlSimDone<WithStreamedUnaryMethod_GetNextTs<WithStreamedUnaryMethod_AddTs<WithStreamedUnaryMethod_ThreadDone<WithStreamedUnaryMethod_SetTsReady<WithStreamedUnaryMethod_Test<Service > > > > > > > > > > > StreamedUnaryService;
+  typedef WithStreamedUnaryMethod_TxnReady<WithStreamedUnaryMethod_InitWlDone<WithStreamedUnaryMethod_GetRowSize<WithStreamedUnaryMethod_GetRow<WithStreamedUnaryMethod_ReturnRow<WithStreamedUnaryMethod_SetWlSimDone<WithStreamedUnaryMethod_GetWlSimDone<WithStreamedUnaryMethod_GetNextTs<WithStreamedUnaryMethod_AddTs<WithStreamedUnaryMethod_ThreadDone<WithStreamedUnaryMethod_SetTsReady<WithStreamedUnaryMethod_Test<Service > > > > > > > > > > > > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_TxnReady<WithStreamedUnaryMethod_InitWlDone<WithStreamedUnaryMethod_GetRow<WithStreamedUnaryMethod_ReturnRow<WithStreamedUnaryMethod_SetWlSimDone<WithStreamedUnaryMethod_GetWlSimDone<WithStreamedUnaryMethod_GetNextTs<WithStreamedUnaryMethod_AddTs<WithStreamedUnaryMethod_ThreadDone<WithStreamedUnaryMethod_SetTsReady<WithStreamedUnaryMethod_Test<Service > > > > > > > > > > > StreamedService;
+  typedef WithStreamedUnaryMethod_TxnReady<WithStreamedUnaryMethod_InitWlDone<WithStreamedUnaryMethod_GetRowSize<WithStreamedUnaryMethod_GetRow<WithStreamedUnaryMethod_ReturnRow<WithStreamedUnaryMethod_SetWlSimDone<WithStreamedUnaryMethod_GetWlSimDone<WithStreamedUnaryMethod_GetNextTs<WithStreamedUnaryMethod_AddTs<WithStreamedUnaryMethod_ThreadDone<WithStreamedUnaryMethod_SetTsReady<WithStreamedUnaryMethod_Test<Service > > > > > > > > > > > > StreamedService;
 };
 
 }  // namespace dbx1000

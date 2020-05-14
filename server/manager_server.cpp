@@ -5,7 +5,6 @@
 #include <cstring>
 #include "manager_server.h"
 
-#include "common/global.h"     /// for g_thread_cnt
 #include "common/row_item.h"
 #include "common/txn_row_man.h"
 #include "server/buffer/buffer.h"

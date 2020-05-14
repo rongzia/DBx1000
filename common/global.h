@@ -149,3 +149,10 @@ enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 #define UINT64_MAX 		18446744073709551615UL
 #endif // UINT64_MAX
 
+/// for server/workload
+extern std::string g_schame_path;
+
+/// for api/
+
+/// for server/buffer/, buffer can use leveldb or memorydb
+extern std::string g_db_path;

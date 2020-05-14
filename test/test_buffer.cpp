@@ -8,12 +8,14 @@
 #include <unistd.h>
 #include <thread>
 #include <vector>
-#include "buffer.h"
-#include "lru_index.h"
+#include "config.h"
+
 #include "leveldb/db.h"
-#include "string_util.h"
-#include "profiler.h"
-#include "numbercomparator.h"
+#include "server/buffer/buffer.h"
+#include "server/buffer/lru_index.h"
+#include "util/string_util.h"
+#include "util/profiler.h"
+#include "util/numbercomparator.h"
 
 using namespace dbx1000;
 using namespace std;
@@ -21,11 +23,10 @@ using namespace std;
 size_t bench_size = db_num_item_/1000;
 
 //int pool_size = 6553600000/10*9;
-int pool_size = 65536000;
-size_t row_size = 65536;
-
-string db_path("/home/zhangrongrong/dbx1000_leveldb");
-
+//int pool_size = 65536000;
+//size_t row_size = 65536;
+int pool_size = 10000;
+size_t row_size = 10;
 
 void Print_unordered_map(unordered_map<uint64_t, string> row_map) {
     std::cout << "unordered_map : {" << std::endl;
@@ -44,33 +45,34 @@ void Warmup_leveldb(leveldb::DB *db) {
     std::unique_ptr<Profiler> profiler_buffer_put(new Profiler());
 
     profiler_total->Start();
+    RandNum_generator rng('a', 'z');
     for(uint64_t i = 0; i < db_num_item_; i++) {
-//        if(0 == i % pool_item ) { cout << i << endl; }
-//        profiler_gen_string->Start();
-//        string str = StringUtil::Random_string(rng, row_size);
-//        profiler_gen_string->End();
+//        if(0 == i % 1000 ) { cout << i << endl; }
+        profiler_gen_string->Start();
+        string str = StringUtil::Random_string(rng, row_size);
+//        string str(row_size, 0);
+        profiler_gen_string->End();
 
-//        profiler_buffer_put->Start();
-        string str(row_size, 0);
+        profiler_buffer_put->Start();
         db->Put(leveldb::WriteOptions(), to_string(i), str);
-//        profiler_buffer_put->End();
+        profiler_buffer_put->End();
     }
 
     profiler_total->End();
-//    cout << "gen string time : " << profiler_gen_string->Micros() << " micros." << endl;
-//    cout << "buffer put time : " << profiler_buffer_put->Micros() << " micros." << endl;
+    cout << "gen string time : " << profiler_gen_string->Micros() << " micros." << endl;
+    cout << "buffer put time : " << profiler_buffer_put->Micros() << " micros." << endl;
     cout << "total      time : " << profiler_total->Micros() << " micros." << endl;
 
     /// some check
-    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
-    size_t count = 0;
-    iter->SeekToFirst();
-    while (iter->Valid()) {
-        assert(count == std::stoi(iter->key().ToString()));
-        assert(row_size == iter->value().size());
-        iter->Next();
-        count++;
-    }
+//    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
+//    size_t count = 0;
+//    iter->SeekToFirst();
+//    while (iter->Valid()) {
+//        assert(count == std::stoi(iter->key().ToString()));
+//        assert(row_size == iter->value().size());
+//        iter->Next();
+//        count++;
+//    }
 }
 
 void SimpleTest(Buffer* buffer){
@@ -143,22 +145,20 @@ void SimpleTest(Buffer* buffer){
 }
 
 int main(){
-//#define WARMUP_LEVELDB 1
-#ifdef WARMUP_LEVELDB
     /// 必要时，删除 leveldb 目录
-    int rc = system("rm -rf /home/zhangrongrong/dbx1000_leveldb");
+    std::string cmd = "rm -rf " + g_db_path;
+    int rc = system(cmd.data());
     cout << "rmdir rc : " << rc << endl;
-#endif
 
     std::unique_ptr<Profiler> profiler(new Profiler());
-    std::unique_ptr<Buffer> buffer(new Buffer(pool_size, row_size, db_path));
+    Buffer* buffer = new Buffer(pool_size, row_size);
     cout << "buffer inited" << endl;
 
-#ifdef WARMUP_LEVELDB
-    Warmup_leveldb(buffer->db_.get());
-#endif
+//    Warmup_leveldb(buffer->db_);
 
-    SimpleTest(buffer.get());
+//    SimpleTest(buffer);
+
+    delete buffer;
 
     return 0;
 }

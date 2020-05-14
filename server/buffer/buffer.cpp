@@ -17,18 +17,14 @@
 
 namespace dbx1000 {
 
-    Buffer::Buffer(uint64_t total_size, size_t row_size, std::string db_path)
+    Buffer::Buffer(uint64_t total_size, size_t row_size)
             : total_size_(total_size)
               , row_size_(row_size)
-              , num_item_(total_size / row_size)
-#ifndef USE_MEMORY_DB
-              , db_path_(db_path)
-#endif
-              {
+              , num_item_(total_size / row_size) {
         ptr = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-        row_list_ = make_unique<LRU>(row_size_);
-        free_list_ = make_unique<LRU>(row_size_);
-        lru_index_ = make_unique<LruIndex>();
+        row_list_ = new LRU(row_size_);
+        free_list_ = new LRU(row_size_);
+        lru_index_ = new LruIndex();
 
         /// initital free list
         for (int i = 0; i < num_item_; i++) {
@@ -39,7 +35,7 @@ namespace dbx1000 {
         assert(row_list_->Size() == 0);
 
 #ifdef USE_MEMORY_DB
-        db_ = make_unique<MemoryDB>();
+        db_ = new MemoryDB();
         char buf[row_size_];
         memset(buf, 0, row_size_);
         for(size_t i = 0; i < g_synth_table_size; i++) {
@@ -47,13 +43,11 @@ namespace dbx1000 {
             db_->Put(i, buf, row_size_);
         }
 #else
-        leveldb::DB *db;
         leveldb::Options options;
         options.create_if_missing = true;
-        options.comparator = NumberComparator();
-        leveldb::Status status = leveldb::DB::Open(options, db_path_, &db);
+        options.comparator = new NumberComparatorImpl();
+        leveldb::Status status = leveldb::DB::Open(options, g_db_path, &db_);
         assert(status.ok());
-        db_.reset(db);
 
         /// db check and init lru_index_
         for(int i = 0; i < g_synth_table_size; i++) {
@@ -74,8 +68,15 @@ namespace dbx1000 {
 
     Buffer::~Buffer() {
         /// 使用智能指针创建 buffer 对象时，不需要显示 free
-//        std::free(ptr);
         FlushALl();
+        delete free_list_;
+        delete row_list_;
+        delete lru_index_;
+        delete db_;
+//        delete comparator_;
+        if(nullptr != ptr) {
+//            std::free(ptr);
+        }
     }
 
     void Buffer::FlushRowList() {
@@ -153,7 +154,8 @@ namespace dbx1000 {
             db_->Get(key, buf, count);
 #else
             std::string temp;
-            db_->Get(leveldb::ReadOptions(), std::to_string(key), &temp);
+            leveldb::Status status = db_->Get(leveldb::ReadOptions(), std::to_string(key), &temp);
+            assert(status.ok());
             memcpy(buf, temp.data(), count);
 #endif
             if (free_list_->Size() <= 0) {

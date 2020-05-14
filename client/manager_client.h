@@ -22,6 +22,7 @@ namespace dbx1000 {
         txn_man* GetTxnMan(uint64_t txn_id);
 
         txn_man** all_txns_;
+        uint64_t row_size_;
     };
 }
 

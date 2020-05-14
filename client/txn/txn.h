@@ -4,7 +4,7 @@
 #include "common/global.h"
 
 
-#define ROW_SIZE 100
+//#define ROW_SIZE 100
 
 class workload;
 class thread_t;

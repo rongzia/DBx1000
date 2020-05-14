@@ -19,7 +19,7 @@ class Slice;
 // from multiple threads.
 class LEVELDB_EXPORT Comparator {
  public:
-//  virtual ~Comparator();
+  virtual ~Comparator();
 
   // Three-way comparison.  Returns value:
   //   < 0 iff "a" < "b",

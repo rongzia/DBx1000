@@ -1,6 +1,7 @@
 
 #include <cstring>
 #include <common/mystats.h>
+#include <client/manager_client.h>
 
 #include "txn.h"
 
@@ -78,8 +79,8 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	RC rc = RCOK;
 	if (accesses[row_cnt] == NULL) {
 		accesses[row_cnt] = new Access();
-		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, ROW_SIZE);
-		accesses[row_cnt]->data     = new dbx1000::RowItem(key, ROW_SIZE);
+		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size_);
+		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size_);
 		num_accesses_alloc ++;
 	} else {
 	    accesses[row_cnt]->orig_row->key_ = key;
@@ -99,7 +100,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	accesses[row_cnt]->type = type;
 	assert(accesses[row_cnt]->orig_row->key_ == accesses[row_cnt]->data->key_);
 	assert(accesses[row_cnt]->orig_row->size_ == accesses[row_cnt]->data->size_);
-	memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, ROW_SIZE);
+	memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size_);
 
 	row_cnt ++;
 	if (type == WR) { wr_cnt ++; }

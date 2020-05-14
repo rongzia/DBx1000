@@ -18,6 +18,7 @@ namespace dbx1000 {
     public:
         virtual ::grpc::Status TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response);
         virtual ::grpc::Status InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response);
+        virtual ::grpc::Status GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response);
         virtual ::grpc::Status GetRow(::grpc::ServerContext *context, const ::dbx1000::GetRowRequest *request, ::dbx1000::GetRowReply *response);
         virtual ::grpc::Status ReturnRow(::grpc::ServerContext* context, const ::dbx1000::ReturnRowRequest* request, ::dbx1000::ReturnRowReply* response);
         virtual ::grpc::Status SetWlSimDone(::grpc::ServerContext* context, const ::dbx1000::SetWlSimDoneRequest* request, ::dbx1000::SetWlSimDoneReply* response);

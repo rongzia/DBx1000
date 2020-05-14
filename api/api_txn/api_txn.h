@@ -31,6 +31,7 @@ namespace dbx1000 {
 
         void TxnReady(uint64_t thread_id);
         bool InitWlDone();
+        uint64_t GetRowSize();
 
         RC GetRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);
         void ReturnRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);

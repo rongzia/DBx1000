@@ -67,6 +67,16 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         return reply.is_done();
     }
 
+    uint64_t ApiTxnClient::GetRowSize() {
+        dbx1000::GetRowSizeRequest request;
+        grpc::ClientContext context;
+        dbx1000::GetRowSizeReply reply;
+        ::grpc::Status status = stub_->GetRowSize(&context, request, &reply);
+        assert(status.ok());
+
+        return reply.row_size();
+    }
+
     RC ApiTxnClient::GetRow(uint64_t key, access_t type, txn_man* txn, int accesses_index) {
 //        cout << "ApiTxnClient::GetRow" << endl;
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
@@ -97,6 +107,7 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
             cout << status.error_message() << endl;
             cout << status.error_details() << endl;
             /// cout something
+            cout << "key : " << key << ", type :" << MyHelper::AccessToInt(type) << endl;
         }
         assert(status.ok());
         RC rc = MyHelper::IntToRC(reply.rc());

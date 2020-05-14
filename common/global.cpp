@@ -84,4 +84,12 @@ uint32_t g_cust_per_dist = 2000;
 #else 
 uint32_t g_max_items = 100000;
 uint32_t g_cust_per_dist = 3000;
+
+/// for server/workload
+std::string g_schame_path = std::string("/home/zhangrongrong/CLionProjects/DBx1000/server/workload/YCSB_schema.txt");
+
+/// for api/
+
+/// for server/buffer/, buffer can use leveldb or memorydb
+std::string g_db_path = std::string("/tmp/leveldb_for_dbx1000");
 #endif

@@ -38,7 +38,7 @@ namespace protobuf_api_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[24];
+  static const ::google::protobuf::internal::ParseTable schema[26];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -64,6 +64,12 @@ extern GetRowReplyDefaultTypeInternal _GetRowReply_default_instance_;
 class GetRowRequest;
 class GetRowRequestDefaultTypeInternal;
 extern GetRowRequestDefaultTypeInternal _GetRowRequest_default_instance_;
+class GetRowSizeReply;
+class GetRowSizeReplyDefaultTypeInternal;
+extern GetRowSizeReplyDefaultTypeInternal _GetRowSizeReply_default_instance_;
+class GetRowSizeRequest;
+class GetRowSizeRequestDefaultTypeInternal;
+extern GetRowSizeRequestDefaultTypeInternal _GetRowSizeRequest_default_instance_;
 class GetWlSimDoneReply;
 class GetWlSimDoneReplyDefaultTypeInternal;
 extern GetWlSimDoneReplyDefaultTypeInternal _GetWlSimDoneReply_default_instance_;
@@ -127,6 +133,8 @@ template<> ::dbx1000::GetNextTsReply* Arena::CreateMaybeMessage<::dbx1000::GetNe
 template<> ::dbx1000::GetNextTsRequest* Arena::CreateMaybeMessage<::dbx1000::GetNextTsRequest>(Arena*);
 template<> ::dbx1000::GetRowReply* Arena::CreateMaybeMessage<::dbx1000::GetRowReply>(Arena*);
 template<> ::dbx1000::GetRowRequest* Arena::CreateMaybeMessage<::dbx1000::GetRowRequest>(Arena*);
+template<> ::dbx1000::GetRowSizeReply* Arena::CreateMaybeMessage<::dbx1000::GetRowSizeReply>(Arena*);
+template<> ::dbx1000::GetRowSizeRequest* Arena::CreateMaybeMessage<::dbx1000::GetRowSizeRequest>(Arena*);
 template<> ::dbx1000::GetWlSimDoneReply* Arena::CreateMaybeMessage<::dbx1000::GetWlSimDoneReply>(Arena*);
 template<> ::dbx1000::GetWlSimDoneRequest* Arena::CreateMaybeMessage<::dbx1000::GetWlSimDoneRequest>(Arena*);
 template<> ::dbx1000::InitWlDoneReply* Arena::CreateMaybeMessage<::dbx1000::InitWlDoneReply>(Arena*);
@@ -2682,6 +2690,205 @@ class ThreadDoneReply : public ::google::protobuf::Message /* @@protoc_insertion
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class GetRowSizeRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetRowSizeRequest) */ {
+ public:
+  GetRowSizeRequest();
+  virtual ~GetRowSizeRequest();
+
+  GetRowSizeRequest(const GetRowSizeRequest& from);
+
+  inline GetRowSizeRequest& operator=(const GetRowSizeRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetRowSizeRequest(GetRowSizeRequest&& from) noexcept
+    : GetRowSizeRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline GetRowSizeRequest& operator=(GetRowSizeRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetRowSizeRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetRowSizeRequest* internal_default_instance() {
+    return reinterpret_cast<const GetRowSizeRequest*>(
+               &_GetRowSizeRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    24;
+
+  void Swap(GetRowSizeRequest* other);
+  friend void swap(GetRowSizeRequest& a, GetRowSizeRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetRowSizeRequest* New() const final {
+    return CreateMaybeMessage<GetRowSizeRequest>(NULL);
+  }
+
+  GetRowSizeRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetRowSizeRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetRowSizeRequest& from);
+  void MergeFrom(const GetRowSizeRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetRowSizeRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetRowSizeRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GetRowSizeReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetRowSizeReply) */ {
+ public:
+  GetRowSizeReply();
+  virtual ~GetRowSizeReply();
+
+  GetRowSizeReply(const GetRowSizeReply& from);
+
+  inline GetRowSizeReply& operator=(const GetRowSizeReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetRowSizeReply(GetRowSizeReply&& from) noexcept
+    : GetRowSizeReply() {
+    *this = ::std::move(from);
+  }
+
+  inline GetRowSizeReply& operator=(GetRowSizeReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetRowSizeReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetRowSizeReply* internal_default_instance() {
+    return reinterpret_cast<const GetRowSizeReply*>(
+               &_GetRowSizeReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    25;
+
+  void Swap(GetRowSizeReply* other);
+  friend void swap(GetRowSizeReply& a, GetRowSizeReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetRowSizeReply* New() const final {
+    return CreateMaybeMessage<GetRowSizeReply>(NULL);
+  }
+
+  GetRowSizeReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetRowSizeReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetRowSizeReply& from);
+  void MergeFrom(const GetRowSizeReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetRowSizeReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // uint64 row_size = 1;
+  void clear_row_size();
+  static const int kRowSizeFieldNumber = 1;
+  ::google::protobuf::uint64 row_size() const;
+  void set_row_size(::google::protobuf::uint64 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetRowSizeReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint64 row_size_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_api_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -3401,9 +3608,35 @@ inline void ThreadDoneRequest::set_thread_id(::google::protobuf::uint64 value) {
 
 // ThreadDoneReply
 
+// -------------------------------------------------------------------
+
+// GetRowSizeRequest
+
+// -------------------------------------------------------------------
+
+// GetRowSizeReply
+
+// uint64 row_size = 1;
+inline void GetRowSizeReply::clear_row_size() {
+  row_size_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 GetRowSizeReply::row_size() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetRowSizeReply.row_size)
+  return row_size_;
+}
+inline void GetRowSizeReply::set_row_size(::google::protobuf::uint64 value) {
+  
+  row_size_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetRowSizeReply.row_size)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -12,6 +12,8 @@
 #include "server/manager_server.h"
 #include "server/concurrency_control/row_mvcc.h"
 #include "server/workload/ycsb_wl.h"
+#include "server/storage/table.h"
+#include "server/storage/catalog.h"
 
 namespace dbx1000 {
     ::grpc::Status ApiConCtlServer::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
@@ -21,6 +23,11 @@ namespace dbx1000 {
 
     ::grpc::Status ApiConCtlServer::InitWlDone(::grpc::ServerContext* context, const ::dbx1000::InitWlDoneRequest* request, ::dbx1000::InitWlDoneReply* response) {
         response->set_is_done(glob_manager_server->init_wl_done_);
+        return ::grpc::Status::OK;
+    }
+
+    ::grpc::Status ApiConCtlServer::GetRowSize(::grpc::ServerContext* context, const ::dbx1000::GetRowSizeRequest* request, ::dbx1000::GetRowSizeReply* response) {
+        response->set_row_size(glob_manager_server->wl_->the_table->get_schema()->get_tuple_size());
         return ::grpc::Status::OK;
     }
 

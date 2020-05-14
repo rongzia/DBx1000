@@ -28,10 +28,10 @@ ycsb_wl::~ycsb_wl(){
 RC ycsb_wl::init() {
 	workload::init();
 	next_tid = 0;
-    init_schema(std::string("/home/zhangrongrong/CLionProjects/DBx1000/server/workload/YCSB_schema.txt"));
+    init_schema(g_schame_path);
 
     /// init buffer here, because 'the_table' can be use util schema be inititaled
-    dbx1000::Buffer* buffer = new dbx1000::Buffer(g_synth_table_size / 10, the_table->get_schema()->get_tuple_size(), "/home/zhangrongrong/dbx1000_leveldb");
+    dbx1000::Buffer* buffer = new dbx1000::Buffer(g_synth_table_size / 10, the_table->get_schema()->get_tuple_size());
     buffer_.reset(buffer);
 
 	init_table();
