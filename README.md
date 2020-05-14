@@ -17,6 +17,15 @@ no_destructor 和 leveldb 相关
 numbercomparator 为 leveldb 提供数字比较，leveldb 默认为字符串比较
 profiler 为计时工具
 
+global.cc 可能要调整的参数：
+/// for server/workload
+std::string g_schame_path = std::string("/home/zhangrongrong/CLionProjects/DBx1000/server/workload/YCSB_schema.txt");
+
+/// for api/
+
+/// for server/buffer/, buffer can use leveldb or memorydb
+std::string g_db_path = std::string("/tmp/leveldb_for_dbx1000");
+
 
 
 <img src="logo/dbx1000.svg" alt="DBx1000 Logo" width="40%">
