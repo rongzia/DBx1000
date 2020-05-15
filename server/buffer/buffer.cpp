@@ -21,14 +21,14 @@ namespace dbx1000 {
             : total_size_(total_size)
               , row_size_(row_size)
               , num_item_(total_size / row_size) {
-        ptr = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+        ptr_ = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
         row_list_ = new LRU(row_size_);
         free_list_ = new LRU(row_size_);
         lru_index_ = new LruIndex();
 
         /// initital free list
         for (int i = 0; i < num_item_; i++) {
-            RowNode* row_node = new RowNode((char *) ptr + i * row_size_);
+            RowNode* row_node = new RowNode((char *) ptr_ + i * row_size_);
             free_list_->Prepend(row_node);
         }
         assert(free_list_->Size() == num_item_);
@@ -36,11 +36,11 @@ namespace dbx1000 {
 
 #ifdef USE_MEMORY_DB
         db_ = new MemoryDB();
-        char buf[row_size_];
-        memset(buf, 0, row_size_);
-        for(size_t i = 0; i < g_synth_table_size; i++) {
+//        char buf[row_size_];
+//        memset(buf, 0, row_size_);
+        for(size_t i = 0; i < DB_NUM_ITEM; i++) {
             lru_index_->IndexInsert(i, nullptr);
-            db_->Put(i, buf, row_size_);
+//            db_->Put(i, buf, row_size_);
         }
 #else
         leveldb::Options options;
@@ -74,8 +74,8 @@ namespace dbx1000 {
         delete lru_index_;
         delete db_;
 //        delete comparator_;
-        if(nullptr != ptr) {
-//            std::free(ptr);
+        if(nullptr != ptr_) {
+            munmap(ptr_, total_size_);
         }
     }
 

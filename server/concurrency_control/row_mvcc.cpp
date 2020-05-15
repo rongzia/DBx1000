@@ -14,6 +14,8 @@
 
 #if CC_ALG == MVCC
 
+#define DEBUG1 1
+
 Row_mvcc::Row_mvcc() {}
 
 void Row_mvcc::recycle(uint64_t thread_id){
@@ -40,9 +42,12 @@ void Row_mvcc::recycle(uint64_t thread_id){
 					_write_history[i].valid = false;
 					_write_history[i].reserved = false;
 					glob_manager_server->wl_->buffer_->BufferPut(this->key_, _write_history[i].row->row_, _write_history[i].row->size_);
+#ifdef DEBUG1
+#else
 					if(_latest_row == _write_history[i].row) {
 					    _latest_row = nullptr;
 					}
+#endif
 					delete _write_history[i].row;
 					_write_history[i].row = nullptr;
 					assert(nullptr == _write_history[i].row);
@@ -68,9 +73,12 @@ void Row_mvcc::init(dbx1000::RowItem* rowItem) {
 		_write_history[i].reserved = false;
 		_write_history[i].row = nullptr;
 	}
-
+#ifdef DEBUG1
+    _latest_row = new dbx1000::RowItem(this->key_, this->row_size_);
+	memcpy(_latest_row->row_, rowItem->row_, this->row_size_);
+#else
     _latest_row = nullptr;
-
+#endif
 	_latest_wts = 0;
 	_oldest_wts = 0;
 
@@ -187,7 +195,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 	ts_t ts = local_txn->timestamp_;
 
 	uint64_t thread_id = local_txn->thread_id_;
-	recycle(thread_id);
+//	recycle(thread_id);
 	dbx1000::Profiler profiler;
 	profiler.Start();
     /// 等待获取 row 上的锁，即其他涉及该 row 的事务结束
@@ -229,8 +237,11 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 			    //! 读最新的 row
 				// should just read
 				rc = RCOK;
-//				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
+#ifdef DEBUG1
+				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
+#else
 				GetLatestRow(local_txn->cur_row_);
+#endif
 				if (ts > _max_served_rts)
 					_max_served_rts = ts;
 			}
@@ -252,9 +263,12 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 			  		the_i = i;
 				}
 			}
-			if (the_i == _his_len) 
-//				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
+			if (the_i == _his_len)
+#ifdef DEBUG1
+				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
+#else
 				GetLatestRow(local_txn->cur_row_);
+#endif
    			else 
 	   			local_txn->cur_row_ = _write_history[the_i].row;
 		}
@@ -286,7 +300,11 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		assert(nullptr != _write_history[_prewrite_his_id].row);
 		assert(nullptr != local_txn->cur_row_);
         _write_history[_prewrite_his_id].row->MergeFrom(*local_txn->cur_row_);
+#ifdef DEBUG1
+        memcpy(_latest_row->row_, local_txn->cur_row_->row_, this->row_size_);
+#else
 		_latest_row = _write_history[_prewrite_his_id].row;
+#endif
 		_exists_prewrite = false;
 		_num_versions ++;
 		update_buffer(local_txn, W_REQ);
@@ -359,9 +377,12 @@ dbx1000::RowItem* Row_mvcc::reserveRow(ts_t ts, uint64_t thread_id)
 					_write_history[i].valid = false;
 					_write_history[i].reserved = false;
 					glob_manager_server->wl_->buffer_->BufferPut(this->key_, _write_history[i].row->row_, _write_history[i].row->size_);
+#ifdef DEBUG1
+#else
 					if(_latest_row == _write_history[i].row) {
 					    _latest_row = nullptr;
 					}
+#endif
                     delete _write_history[i].row;
 					_write_history[i].row = nullptr;
 					assert(nullptr == _write_history[i].row);
@@ -471,7 +492,11 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 		if (_requests[i].valid && _requests[i].type == R_REQ && _requests[i].ts < next_pre_ts) {
 			if (_requests[i].ts > _max_served_rts)
 				_max_served_rts = _requests[i].ts;
+#ifdef DEBUG1
+			memcpy(_requests[i].txn->cur_row_->row_, _latest_row->row_, this->row_size_);
+#else
 			GetLatestRow(_requests[i].txn->cur_row_);
+#endif
 			_requests[i].txn->ts_ready_ = true;
 #ifdef WITH_RPC
 			api_con_ctl_client->SetTsReady(_requests[i].txn);
@@ -486,7 +511,11 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 			dbx1000::RowItem* res_row = reserveRow(_requests[i].ts, local_txn->thread_id_);
 			assert(res_row);
 //			res_row->copy(_latest_row);
+#ifdef DEBUG1
+			memcpy(_requests[i].txn->cur_row_->row_, _latest_row->row_, this->row_size_);
+#else
 			GetLatestRow(_requests[i].txn->cur_row_);
+#endif
 			_requests[i].txn->ts_ready_ = true;
 #ifdef WITH_RPC
 			api_con_ctl_client->SetTsReady(_requests[i].txn);

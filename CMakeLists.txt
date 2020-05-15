@@ -131,8 +131,6 @@ target_compile_definitions(test_buffer PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS
 add_executable(test_lru test/test_lru.cpp server/buffer/lru.cpp server/buffer/lru_index.cpp common/global.cpp)
 
 add_executable(test_leveldb_comparetor test/test_leveldb_comparetor.cpp)
-#target_compile_definitions(test_leveldb_comparetor PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
-#        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
 target_link_libraries(test_leveldb_comparetor libleveldb.a libsnappy.a libpthread.so)
-#target_compile_definitions(test_leveldb_comparetor PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
-#        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
+
+add_executable(test_unordered_map test/test_unordered_map.cpp)

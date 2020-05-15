@@ -223,7 +223,8 @@ extern TestCases					g_test_case;
 
 /// for server/buffer/, buffer can use leveldb or memorydb
 #define USE_MEMORY_DB
-#define db_num_item_ 100000
+#define DB_NUM_ITEM SYNTH_TABLE_SIZE
+//#define DB_NUM_ITEM (1024 * 1024)     // 1 M
 //#define WARMUP_LEVELDB
 
 

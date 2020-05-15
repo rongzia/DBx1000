@@ -31,7 +31,8 @@ RC ycsb_wl::init() {
     init_schema(g_schame_path);
 
     /// init buffer here, because 'the_table' can be use util schema be inititaled
-    dbx1000::Buffer* buffer = new dbx1000::Buffer(g_synth_table_size / 10, the_table->get_schema()->get_tuple_size());
+    dbx1000::Buffer* buffer = new dbx1000::Buffer(g_synth_table_size * the_table->get_schema()->get_tuple_size() / 10
+            , the_table->get_schema()->get_tuple_size());
     buffer_.reset(buffer);
 
 	init_table();

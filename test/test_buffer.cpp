@@ -20,98 +20,87 @@
 using namespace dbx1000;
 using namespace std;
 
-size_t bench_size = db_num_item_/1000;
+size_t bench_size = DB_NUM_ITEM / 1000;
 
-//int pool_size = 6553600000/10*9;
-//int pool_size = 65536000;
-//size_t row_size = 65536;
-int pool_size = 10000;
-size_t row_size = 10;
+uint64_t pool_size = DB_NUM_ITEM / 8L * 16384L;
+size_t row_size = 16384;                    // 16 KB
 
-void Print_unordered_map(unordered_map<uint64_t, string> row_map) {
-    std::cout << "unordered_map : {" << std::endl;
-    int count = 0;
-    for(auto& iter : row_map) {
-        if (count % 10 == 0) { std::cout << "    "; }
-        std::cout << ", {key:" << iter.first << ", row:" << iter.second << "}";
-        if (count++ % 10 == 0) { std::cout << std::endl; }
+/// 校验 buffer 正确性
+void Check() {
+    cout << "checking whether the buffer is executed successfully..." << endl;
+    std::unordered_map<uint64_t, std::string> check_map;
+    int num_item = 10240;
+    Buffer* buffer = new Buffer(num_item * row_size / 10, row_size);
+
+    /// put
+    RandNum_generator rng(0, 255);
+    for(int i = 0; i < num_item; i++) {
+        string str = StringUtil::Random_string(rng, row_size);
+        check_map.insert(std::pair<uint64_t, std::string>(i, str));
+        buffer->BufferPut(i, str.data(), row_size);
     }
-    std::cout << std::endl << "}" << std::endl;
+
+    /// check
+    for(int i = 0; i < num_item; i++) {
+        char buf[row_size];
+        buffer->BufferGet(i, buf, row_size);
+        assert(0 == memcmp(check_map[i].data(), buf, row_size));
+    }
+
+    delete buffer;
+    cout << "checked." << endl;
 }
 
-void Warmup_leveldb(leveldb::DB *db) {
-    std::unique_ptr<Profiler> profiler_total(new Profiler());
-    std::unique_ptr<Profiler> profiler_gen_string(new Profiler());
-    std::unique_ptr<Profiler> profiler_buffer_put(new Profiler());
+void WarmupDB(Buffer* buffer) {
+    Profiler profiler;
 
-    profiler_total->Start();
-    RandNum_generator rng('a', 'z');
-    for(uint64_t i = 0; i < db_num_item_; i++) {
+    profiler.Start();
+    for(uint64_t i = 0; i < DB_NUM_ITEM; i++) {
 //        if(0 == i % 1000 ) { cout << i << endl; }
-        profiler_gen_string->Start();
-        string str = StringUtil::Random_string(rng, row_size);
-//        string str(row_size, 0);
-        profiler_gen_string->End();
-
-        profiler_buffer_put->Start();
-        db->Put(leveldb::WriteOptions(), to_string(i), str);
-        profiler_buffer_put->End();
+        string str(row_size, 0);
+        buffer->BufferPut(i, str.data(), row_size);
     }
-
-    profiler_total->End();
-    cout << "gen string time : " << profiler_gen_string->Micros() << " micros." << endl;
-    cout << "buffer put time : " << profiler_buffer_put->Micros() << " micros." << endl;
-    cout << "total      time : " << profiler_total->Micros() << " micros." << endl;
-
-    /// some check
-//    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
-//    size_t count = 0;
-//    iter->SeekToFirst();
-//    while (iter->Valid()) {
-//        assert(count == std::stoi(iter->key().ToString()));
-//        assert(row_size == iter->value().size());
-//        iter->Next();
-//        count++;
-//    }
+    profiler.End();
+    cout << "total items : " << DB_NUM_ITEM << ", warmup time : " << profiler.Micros() << " micros." << endl;
 }
 
 void SimpleTest(Buffer* buffer){
-    std::unique_ptr<Profiler> profiler(new Profiler());
+    Profiler profiler;
 
     /// 单线程读
-    profiler->Start();
+    profiler.Start();
     for(int i = 0; i < bench_size; i++) {
         char buf[row_size];
-        int a = rand() % db_num_item_;
+        int a = rand() % DB_NUM_ITEM;
         buffer->BufferGet(a, buf, row_size);
     }
-    profiler->End();
-    cout << "single thread read time  : " << profiler->Micros() << " micros." << endl;
+    profiler.End();
+    cout << "single thread read items : " << bench_size << ", time : " << profiler.Micros() << " micros." << endl;
 
     /// 单线程写
-    profiler->Clear();
-    profiler->Start();
+    profiler.Clear();
+    profiler.Start();
     char buf[row_size];
     memset(buf, 0, row_size);
     for(int i = 0; i < bench_size; i++) {
-        int a = rand() % db_num_item_;
+        int a = rand() % DB_NUM_ITEM;
         buffer->BufferPut(a, buf, row_size);
     }
-    profiler->End();
-    cout << "single thread write time : " << profiler->Micros() << " micros." << endl;
+    profiler.End();
+    cout << "single thread write items : " << bench_size << ", time : " << profiler.Micros() << " micros." << endl;
 
 
     size_t num_threads = 5;
-    /// 读
-    std::unique_ptr<Profiler> profiler_read(new Profiler());
-    profiler_read->Start();
+    /// 多线程读
+    profiler.Clear();
+    profiler.Start();
     std::vector<std::thread> read_threads;
     for(int i = 0; i < num_threads; i++) {
         read_threads.emplace_back(std::thread([&] {
             srand(i);
             for (int i = 0; i < bench_size / num_threads; i++) {
                 char buf[row_size];
-                int a = rand() % db_num_item_;
+                int a = rand() % DB_NUM_ITEM;
                 buffer->BufferGet(a, buf, row_size);
             }
         }));
@@ -120,18 +109,18 @@ void SimpleTest(Buffer* buffer){
     for(int i = 0; i < num_threads; i++){
         read_threads[i].join();
     }
-    profiler_read->End();
-    cout << num_threads << " thread read, each thread read db_size/num_threads times   : " << profiler_read->Micros() << " micros." << endl;
+    profiler.End();
+    cout << num_threads << " threads, each thread read items : " << bench_size / num_threads << ", time : " << profiler.Micros() << " micros." << endl;
 
-    /// 写
-    std::unique_ptr<Profiler> profiler_write(new Profiler());
-    profiler_write->Start();
+    /// 多线程写
+    profiler.Clear();
+    profiler.Start();
     std::vector<std::thread> write_threads;
     for(int i = 0; i < num_threads; i++) {
         write_threads.emplace_back(std::thread([&] {
             srand(num_threads - i -1);
             for (int i = 0; i < bench_size / num_threads; i++) {
-                int a = rand() % db_num_item_;
+                int a = rand() % DB_NUM_ITEM;
                 buffer->BufferPut(a, buf, row_size);
             }
         }));
@@ -140,8 +129,8 @@ void SimpleTest(Buffer* buffer){
     for(int i = 0; i < num_threads; i++){
         write_threads[i].join();
     }
-    profiler_write->End();
-    cout << num_threads << " thread write, each thread write db_size/num_threads times : " << profiler_write->Micros() << " micros." << endl;
+    profiler.End();
+    cout << num_threads << " threads, each thread write items : " << bench_size / num_threads << ", time : " << profiler.Micros() << " micros." << endl;
 }
 
 int main(){
@@ -150,15 +139,21 @@ int main(){
     int rc = system(cmd.data());
     cout << "rmdir rc : " << rc << endl;
 
-    std::unique_ptr<Profiler> profiler(new Profiler());
+    /// 验证 buffer 正确性
+    Check();
+
     Buffer* buffer = new Buffer(pool_size, row_size);
     cout << "buffer inited" << endl;
 
-//    Warmup_leveldb(buffer->db_);
+    /// 初始化 db
+    WarmupDB(buffer);
+    /// 读写测试
+    SimpleTest(buffer);
 
-//    SimpleTest(buffer);
 
     delete buffer;
+
+    while(1) {}
 
     return 0;
 }

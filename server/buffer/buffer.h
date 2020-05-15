@@ -73,7 +73,7 @@ namespace dbx1000 {
         /// 从 free_list_ 头部取出一个节点放到 row_list_ 中，同时设置节点的 key_ 和 row_
         void FreeListToRowList(uint64_t key, const void* row, size_t count);
 
-        void *ptr;                          /// 内存池，存放 row 数据
+        void *ptr_;                          /// 内存池，存放 row 数据
         uint64_t total_size_;               /// size of ptr, in bytes
         size_t row_size_;
         int num_item_;                      /// number of items, == total_size_ / row_size_
