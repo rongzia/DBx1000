@@ -26,14 +26,12 @@ namespace dbx1000 {
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
         uint64_t thread_id = txn->get_thd_id();
 
-        glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready, key, nullptr, 0, txn->get_ts());
-        assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
-        RC rc = glob_manager_server->row_mvccs_[key]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
-        assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
+        TxnRowMan* temp = glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready, key, nullptr, 0, txn->get_ts());
+        RC rc = glob_manager_server->row_mvccs_[key]->access(temp, ts_type);
+        assert(txn->accesses[accesses_index]->orig_row->key_ == temp->cur_row_->key_);
 
         if (RCOK == rc) {
-            memcpy(txn->accesses[accesses_index]->orig_row->row_
-                   , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
+            memcpy(txn->accesses[accesses_index]->orig_row->row_, temp->cur_row_->row_, temp->cur_row_->size_);
         }
         else if (WAIT == rc) {
 //            cout << "API::get_row, type == WAIT" << endl;
@@ -44,8 +42,7 @@ namespace dbx1000 {
             stats.tmp_stats[thread_id]->time_wait += profiler.Nanos();
 
             txn->ts_ready = true;
-            memcpy(txn->accesses[accesses_index]->orig_row->row_
-                   , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
+            memcpy(txn->accesses[accesses_index]->orig_row->row_, temp->cur_row_->row_, temp->cur_row_->size_);
         }
         return rc;
 
