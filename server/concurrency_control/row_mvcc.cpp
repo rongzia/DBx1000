@@ -14,7 +14,8 @@
 
 #if CC_ALG == MVCC
 
-#define DEBUG1 1
+/// 若 DEBUG1, 则 _latest_row 占用内存，为 0 则从 buffer 获取
+//#define DEBUG1 1
 
 Row_mvcc::Row_mvcc() {}
 
@@ -164,6 +165,8 @@ void Row_mvcc::double_list(uint32_t list)
 }
 
 void Row_mvcc::GetLatestRow(dbx1000::RowItem* temp) {
+    assert(temp->size_ == row_size_);
+    assert(temp->row_ != nullptr);
     if(nullptr == _latest_row) {
         glob_manager_server->wl_->buffer_->BufferGet(this->key_, temp->row_, this->row_size_);
     } else {
@@ -190,18 +193,22 @@ void PrintWriteHisEntry(WriteHisEntry *writeHisEntry, size_t size) {
 
 //RC Row_mvcc::access(dbx1000::TxnRowMan* txn, TsType type, dbx1000::RowItem* row, size_t row_size) {
 RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
+    while (!ATOM_CAS(blatch, false, true)) { PAUSE }
+				assert(nullptr != local_txn->cur_row_->row_);
+    assert(local_txn->cur_row_->key_ == key_);
 //    cout << "Row_mvcc::access" << endl;
 	RC rc = RCOK;
 	ts_t ts = local_txn->timestamp_;
 
-	uint64_t thread_id = local_txn->thread_id_;
+	// TODO
 //	recycle(thread_id);
 	dbx1000::Profiler profiler;
 	profiler.Start();
     /// 等待获取 row 上的锁，即其他涉及该 row 的事务结束
-    while (!ATOM_CAS(blatch, false, true)) { PAUSE }
+//    while (!ATOM_CAS(blatch, false, true)) { PAUSE }
     profiler.End();
-	stats._stats[thread_id]->debug4 += profiler.Nanos();\
+	uint64_t thread_id = local_txn->thread_id_;
+	stats._stats[thread_id]->debug4 += profiler.Nanos();
 
 	profiler.Clear();
 	profiler.Start();
@@ -215,15 +222,19 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		}
 #endif
 	if (type == R_REQ) {
+    assert(local_txn->cur_row_->key_ == key_);
 //        cout << "Row_mvcc::access, type : R_REQ" << endl;
 		if (ts < _oldest_wts) {
+    assert(local_txn->cur_row_->key_ == key_);
             // the version was already recycled... This should be very rare
             rc = Abort;
         }
 		//! 时间戳大于最近写时间戳
 		else if (ts > _latest_wts) {
+    assert(local_txn->cur_row_->key_ == key_);
 			if (_exists_prewrite && _prewrite_ts < ts)
 			{
+    assert(local_txn->cur_row_->key_ == key_);
 //			cout << "Row_mvcc::access, type == R_REQ, _exists_prewrite" << endl;
 //PrintRequset(_requests, _req_len);
 //PrintWriteHisEntry(_write_history, _his_len);
@@ -234,20 +245,29 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 				buffer_req(R_REQ, local_txn, false);
 				local_txn->ts_ready_ = false;
 			} else {
+    assert(local_txn->cur_row_->key_ == key_);
 			    //! 读最新的 row
 				// should just read
 				rc = RCOK;
 #ifdef DEBUG1
 				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
 #else
-				GetLatestRow(local_txn->cur_row_);
+				assert(nullptr != local_txn->cur_row_->row_);
+//				GetLatestRow(local_txn->cur_row_);
+//        glob_manager_server->wl_->buffer_->BufferGet(this->key_, local_txn->cur_row_->row_, this->row_size_);
+memset(local_txn->cur_row_->row_, 0, row_size_);
+
 #endif
-				if (ts > _max_served_rts)
+    assert(local_txn->cur_row_->key_ == key_);
+				if (ts > _max_served_rts) {
+    assert(local_txn->cur_row_->key_ == key_);
 					_max_served_rts = ts;
+				}
 			}
 		}
 		//! 时间戳大于最老写时间戳，小于最近写时间戳
 		else {
+    assert(local_txn->cur_row_->key_ == key_);
 			rc = RCOK;
 			// ts is between _oldest_wts and _latest_wts, should find the correct version
 			uint32_t the_ts = 0;
@@ -263,32 +283,48 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 			  		the_i = i;
 				}
 			}
-			if (the_i == _his_len)
+    assert(local_txn->cur_row_->key_ == key_);
+			if (the_i == _his_len) {
+    assert(local_txn->cur_row_->key_ == key_);
 #ifdef DEBUG1
-				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
+                memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
 #else
-				GetLatestRow(local_txn->cur_row_);
+				assert(nullptr != local_txn->cur_row_->row_);
+                GetLatestRow(local_txn->cur_row_);
 #endif
-   			else 
-	   			local_txn->cur_row_ = _write_history[the_i].row;
+    assert(local_txn->cur_row_->key_ == key_);
+            }
+   			else {
+//	   			local_txn->cur_row_ = _write_history[the_i].row;
+	   			memcpy(local_txn->cur_row_->row_, _write_history[the_i].row->row_, this->row_size_);
+	   			assert(nullptr != local_txn->cur_row_->row_);
+   			}
+    assert(local_txn->cur_row_->key_ == key_);
 		}
 	} else if (type == P_REQ) {
+    assert(local_txn->cur_row_->key_ == key_);
 //        cout << "Row_mvcc::access, type : P_REQ" << endl;
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts)) {
+    assert(local_txn->cur_row_->key_ == key_);
             rc = Abort;
         }
 		else if (_exists_prewrite) {  // _prewrite_ts < ts
+    assert(local_txn->cur_row_->key_ == key_);
 			rc = WAIT;
 			buffer_req(P_REQ, local_txn, false);
 			local_txn->ts_ready_ = false;
 		} else {
+    assert(local_txn->cur_row_->key_ == key_);
 			rc = RCOK;
 			dbx1000::RowItem* res_row = reserveRow(ts, local_txn->thread_id_);
 			assert(nullptr != res_row);
-			GetLatestRow(local_txn->cur_row_);
-			memset(local_txn->cur_row_->row_, 'a', row_size_);
+				assert(nullptr != local_txn->cur_row_->row_);
+//			GetLatestRow(local_txn->cur_row_);
+memset(local_txn->cur_row_->row_, 0, row_size_);
+    assert(local_txn->cur_row_->key_ == key_);
 		}
 	} else if (type == W_REQ) {
+    assert(local_txn->cur_row_->key_ == key_);
 //        cout << "Row_mvcc::access, type : W_REQ" << endl;
 		rc = RCOK;
 		assert(ts > _latest_wts);
@@ -309,6 +345,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		_num_versions ++;
 		update_buffer(local_txn, W_REQ);
 	} else if (type == XP_REQ) {
+    assert(local_txn->cur_row_->key_ == key_);
 //        cout << "Row_mvcc::access, type : XP_REQ" << endl;
 		rc = RCOK;
         assert(local_txn->cur_row_->key_ == this->key_);
@@ -331,6 +368,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
         //pthread_mutex_unlock( latch );
     }
 //    std::cout << "out Row_mvcc::access" << std::endl;
+    assert(local_txn->cur_row_->key_ == key_);
 	return rc;
 }
 
@@ -495,6 +533,7 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 #ifdef DEBUG1
 			memcpy(_requests[i].txn->cur_row_->row_, _latest_row->row_, this->row_size_);
 #else
+				assert(nullptr != _requests[i].txn->cur_row_->row_);
 			GetLatestRow(_requests[i].txn->cur_row_);
 #endif
 			_requests[i].txn->ts_ready_ = true;
@@ -514,6 +553,7 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 #ifdef DEBUG1
 			memcpy(_requests[i].txn->cur_row_->row_, _latest_row->row_, this->row_size_);
 #else
+				assert(nullptr != _requests[i].txn->cur_row_->row_);
 			GetLatestRow(_requests[i].txn->cur_row_);
 #endif
 			_requests[i].txn->ts_ready_ = true;

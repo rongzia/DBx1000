@@ -26,6 +26,7 @@ namespace leveldb {
 namespace dbx1000{
     class Arena;
     class Buffer;
+    class MemoryDB;
 }
 
 //! workload 基类，tables (表名和table指针集各)，indexes（表名对应的索引）
@@ -43,7 +44,13 @@ public:
 	workload();
 	virtual ~workload();
 	// initialize the tables and indexes.
-	virtual RC init();
+	virtual RC init(
+//#ifdef USE_MEMORY_DB
+//    dbx1000::MemoryDB* db
+//#else
+//    leveldb::DB* db
+//#endif
+	        );
 	virtual RC init_schema(string schema_file);
 	virtual RC init_table() = 0;
 //	virtual RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd)=0;
@@ -53,8 +60,13 @@ public:
 	//! 是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 //	bool sim_done;
 	std::atomic<bool> sim_done_;
-	std::vector<std::unique_ptr<dbx1000::Arena>> arenas_;
-	std::unique_ptr<dbx1000::Buffer> buffer_;
+	std::vector<dbx1000::Arena*> arenas_;
+	dbx1000::Buffer* buffer_;
+//#ifdef USE_MEMORY_DB
+//    dbx1000::MemoryDB* db_;
+//#else
+//    leveldb::DB* db_;
+//#endif
 protected:
 //	void index_insert(string index_name, uint64_t key, row_t * row);
 //	void index_insert(INDEX * index, uint64_t key, row_t * row, int64_t part_id = -1);

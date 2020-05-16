@@ -58,7 +58,13 @@ namespace dbx1000 {
     class Buffer {
 
     public:
-        Buffer(uint64_t total_size, size_t row_size);
+        Buffer(uint64_t total_size, size_t row_size,
+#ifdef USE_MEMORY_DB
+                MemoryDB* db
+#else
+               leveldb::DB *db
+#endif
+                );
         ~Buffer();
 
         int BufferGet(uint64_t key, void* buf, size_t count);

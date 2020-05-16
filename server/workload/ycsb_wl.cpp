@@ -14,6 +14,7 @@
 #include "server/storage/catalog.h"
 #include "server/concurrency_control/row_mvcc.h"
 #include "util/profiler.h"
+#include "util/arena.h"
 
 std::atomic<int> ycsb_wl::next_tid;
 
@@ -25,17 +26,21 @@ ycsb_wl::~ycsb_wl(){
     cout << "ycsb_wl::~ycsb_wl()" << endl;
 }
 
-RC ycsb_wl::init() {
+RC ycsb_wl::init(
+//#ifdef USE_MEMORY_DB
+//    dbx1000::MemoryDB* db
+//#else
+//    leveldb::DB* db
+//#endif
+) {
+    cout << "ycsb_wl::init()" << endl;
+//	workload::init(db);
 	workload::init();
 	next_tid = 0;
+    db_has_inited = false;
     init_schema(g_schame_path);
 
-    /// init buffer here, because 'the_table' can be use util schema be inititaled
-    dbx1000::Buffer* buffer = new dbx1000::Buffer(g_synth_table_size * the_table->get_schema()->get_tuple_size() / 10
-            , the_table->get_schema()->get_tuple_size());
-    buffer_.reset(buffer);
-
-	init_table();
+//	init_table();
 	return RCOK;
 }
 
@@ -53,6 +58,19 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
+#ifndef USE_MEMORY_DB
+    leveldb::Iterator *first = buffer_->db_->NewIterator(leveldb::ReadOptions());
+    leveldb::Iterator *last = buffer_->db_->NewIterator(leveldb::ReadOptions());
+    first->SeekToFirst();
+    last->SeekToLast();
+    if (first->Valid() && 0 == stoll(first->key().ToString())
+        && last->Valid() && g_synth_table_size - 1 <= stoll(last->key().ToString())
+            ) {
+        db_has_inited = true;
+    }
+#endif
+
+    cout << "db_has_inited : " << db_has_inited << endl;
     cout << "ycsb_wl::init_table, table size:" << g_synth_table_size << endl;
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
     profiler->Start();
@@ -87,21 +105,30 @@ void * ycsb_wl::init_table_slice() {
 	uint64_t slice_size = g_synth_table_size / g_init_parallelism;
 
     uint32_t tuple_size = the_table->get_schema()->get_tuple_size();
+
+    dbx1000::RowItem *rowItem = new dbx1000::RowItem(0, tuple_size);
+    memset(rowItem->row_, 'a', tuple_size);
     for (uint64_t key = slice_size * tid; key < slice_size * (tid + 1); key++) {
-        dbx1000::RowItem *rowItem = new dbx1000::RowItem(key, tuple_size);
 //		for (uint32_t fid = 0; fid < the_table->get_schema()->get_field_cnt(); fid ++) {
 //		    uint64_t field_size = the_table->get_schema()->get_field_size(fid);
 //		    memset((char*) rowItem->row_ + fid*field_size, 'a', field_size);
 //		}
-        memset((char*) rowItem->row_, 'a', tuple_size);
+        rowItem->key_ = key;
+#ifdef USE_MEMORY_DB
 		buffer_->BufferPut(key, rowItem->row_, tuple_size);
+#else
+		if(false == db_has_inited) {
+            buffer_->BufferPut(key, rowItem->row_, tuple_size);
+        }
+#endif
 
-		Row_mvcc *rowMvcc = new Row_mvcc();
+		Row_mvcc *rowMvcc = new (arenas_[tid]->Allocate(sizeof(Row_mvcc)))Row_mvcc();
 		rowMvcc->init(rowItem);
 		glob_manager_server->row_mvccs_mutex_.lock();
 		glob_manager_server->row_mvccs_.insert(std::pair<uint64_t, Row_mvcc*>(key, rowMvcc));
         glob_manager_server->row_mvccs_mutex_.unlock();
 	}
+    delete rowItem;
 }
 /*
 ! h_thd = 0, 1, 2, 3

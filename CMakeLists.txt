@@ -13,8 +13,8 @@ add_definitions(-DNOGRAPHITE=1)
 
 
 ### grpc:
-add_definitions(-DWITH_RPC)
-option(WITH_RPC "if use rpc then on, else off?" ON)
+#add_definitions(-DWITH_RPC)
+#option(WITH_RPC "if use rpc then on, else off?" ON)
 if (WITH_RPC)
     message("WITH_RPC : " ${WITH_RPC})
 endif ()

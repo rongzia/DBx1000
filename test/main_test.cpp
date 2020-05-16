@@ -8,6 +8,7 @@
 #include "leveldb/db.h"
 
 //#include "ycsb_query.h"
+#include "server/buffer/buffer.h"
 #include "server/workload/ycsb_wl.h"
 #include "server/storage/table.h"
 #include "server/storage/catalog.h"
@@ -27,12 +28,6 @@
 using namespace std;
 void parser(int argc, char * argv[]);
 
-void Test_wl() {
-    glob_manager_server = new dbx1000::ManagerServer();
-    std::unique_ptr<workload> m_wl(new ycsb_wl());
-    m_wl->init();
-    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
-}
 
 void f(thread_t* thread) {
     thread->run();
@@ -43,15 +38,34 @@ int main(int argc, char* argv[]) {
     stats.init();
 
     /// for server
-    //    Test_wl();
     glob_manager_server = new dbx1000::ManagerServer();
-    std::unique_ptr<workload> m_wl(new ycsb_wl());
+    workload* m_wl;
+    dbx1000::Buffer* buffer;
+
+    m_wl = new ycsb_wl();
+#ifdef USE_MEMORY_DB
+    dbx1000::MemoryDB* db = new dbx1000::MemoryDB();
+#else
+    leveldb::DB* db;
+    leveldb::Options options;
+    options.create_if_missing = true;
+    options.comparator = new dbx1000::NumberComparatorImpl();
+    leveldb::Status status = leveldb::DB::Open(options, g_db_path, &db);
+    assert(status.ok());
+#endif
     m_wl->init();
-    glob_manager_server->InitWl((ycsb_wl*)m_wl.get());
+    size_t tuple_size = ((ycsb_wl*)m_wl)->the_table->get_schema()->get_tuple_size();
+    /// init buffer here, because 'the_table' can be use util schema be inititaled
+    buffer = new dbx1000::Buffer(g_synth_table_size / 8 * tuple_size, tuple_size, db);
+    m_wl->buffer_ = buffer;
+    ((ycsb_wl*)m_wl)->init_table();
+    cout << endl;
+    glob_manager_server->InitWl((ycsb_wl*)m_wl);
 
     /// for txn thread
     glob_manager_client = new dbx1000::ManagerClient();
     glob_manager_client->init();
+    glob_manager_client->row_size_ = tuple_size;
 
     query_queue = new Query_queue();
     query_queue->init();

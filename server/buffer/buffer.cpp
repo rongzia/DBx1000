@@ -17,10 +17,17 @@
 
 namespace dbx1000 {
 
-    Buffer::Buffer(uint64_t total_size, size_t row_size)
+    Buffer::Buffer(uint64_t total_size, size_t row_size,
+#ifdef USE_MEMORY_DB
+                MemoryDB* db
+#else
+               leveldb::DB *db
+#endif
+            )
             : total_size_(total_size)
               , row_size_(row_size)
-              , num_item_(total_size / row_size) {
+              , num_item_(total_size / row_size)
+              , db_(db){
         ptr_ = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
         row_list_ = new LRU(row_size_);
         free_list_ = new LRU(row_size_);
@@ -35,34 +42,26 @@ namespace dbx1000 {
         assert(row_list_->Size() == 0);
 
 #ifdef USE_MEMORY_DB
-        db_ = new MemoryDB();
-//        char buf[row_size_];
-//        memset(buf, 0, row_size_);
-        for(size_t i = 0; i < DB_NUM_ITEM; i++) {
+        for(size_t i = 0; i < g_synth_table_size; i++) {
             lru_index_->IndexInsert(i, nullptr);
-//            db_->Put(i, buf, row_size_);
         }
 #else
-        leveldb::Options options;
-        options.create_if_missing = true;
-        options.comparator = new NumberComparatorImpl();
-        leveldb::Status status = leveldb::DB::Open(options, g_db_path, &db_);
-        assert(status.ok());
-
-        /// db check and init lru_index_
-        for(int i = 0; i < g_synth_table_size; i++) {
-            lru_index_->IndexInsert(i, nullptr);
-        }
-//        size_t count = 0;
-//        leveldb::Iterator *iter = db_->NewIterator(leveldb::ReadOptions());
-//        iter->SeekToFirst();
-//        while (iter->Valid()) {
-//            assert(count == std::stoi(iter->key().ToString()));
-//            assert(row_size == iter->value().size());
-//            iter->Next();
-//            count++;
+//
+//        /// db check and init lru_index_
+//        for(int i = 0; i < g_synth_table_size; i++) {
+//            lru_index_->IndexInsert(i, nullptr);
 //        }
-//        std::cout << "db size : " << count << std::endl;
+//
+////        size_t count = 0;
+////        leveldb::Iterator *iter = db_->NewIterator(leveldb::ReadOptions());
+////        iter->SeekToFirst();
+////        while (iter->Valid()) {
+////            assert(count == std::stoi(iter->key().ToString()));
+////            assert(row_size == iter->value().size());
+////            iter->Next();
+////            count++;
+////        }
+////        std::cout << "db size : " << count << std::endl;
 #endif
     }
 
@@ -72,7 +71,6 @@ namespace dbx1000 {
         delete free_list_;
         delete row_list_;
         delete lru_index_;
-        delete db_;
 //        delete comparator_;
         if(nullptr != ptr_) {
             munmap(ptr_, total_size_);
@@ -144,6 +142,8 @@ namespace dbx1000 {
         if(IndexFlag::IN_BUFFER == flag) {
             assert(nullptr != row_node);
             row_list_->Get(row_node);
+            assert(nullptr != row_node->row_);
+            assert(nullptr != buf);
             memcpy(buf, row_node->row_, count);
             return 0;
         }

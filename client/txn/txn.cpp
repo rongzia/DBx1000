@@ -83,6 +83,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size_);
 		num_accesses_alloc ++;
 	} else {
+	    assert(accesses[row_cnt]->orig_row->row_ != nullptr);
 	    accesses[row_cnt]->orig_row->key_ = key;
 	    accesses[row_cnt]->data->key_ = key;
 	}

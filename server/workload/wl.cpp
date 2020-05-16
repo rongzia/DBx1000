@@ -14,15 +14,25 @@ workload::workload(){
 }
 workload::~workload(){
     cout << "workload::~workload()" << endl;
+    for(int i = 0; i < g_init_parallelism; i++) {
+        delete arenas_[i];
+    }
 }
 
-RC workload::init() {
+RC workload::init(
+//#ifdef USE_MEMORY_DB
+//    dbx1000::MemoryDB* db
+//#else
+//    leveldb::DB* db
+//#endif
+    ) {
     cout << "workload::init()" << endl;
     for (int i = 0; i < g_init_parallelism; i++) {
-        arenas_.emplace_back(dbx1000::make_unique<dbx1000::Arena>(i));
+        arenas_.emplace_back(new dbx1000::Arena(i));
     }
 
     sim_done_ = false;
+//    db_ = db;
     return RCOK;
 }
 

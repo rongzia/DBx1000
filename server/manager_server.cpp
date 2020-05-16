@@ -32,7 +32,7 @@ namespace dbx1000 {
     void ManagerServer::InitWl(ycsb_wl* wl) {
         wl_ = wl;
         for(int i = 0; i < g_thread_cnt; i++) {
-            all_txns_[i].cur_row_ = new RowItem(0, wl_->the_table->get_schema()->get_tuple_size());
+            all_txns_[i].cur_row_ = new RowItem(UINT64_MAX, wl_->the_table->get_schema()->get_tuple_size());
         }
         init_wl_done_ = true;
     }
@@ -94,7 +94,7 @@ namespace dbx1000 {
         all_txns_[thread_id].txn_id_        = txn_id;
         all_txns_[thread_id].ts_ready_      = ts_ready;
         all_txns_[thread_id].cur_row_->key_ = key;
-        if(nullptr != row && size > 0) {
+        if(size > 0) {
             memcpy(all_txns_[thread_id].cur_row_->row_, row, size);
         }
         all_txns_[thread_id].timestamp_     = timestamp;

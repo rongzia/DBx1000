@@ -222,7 +222,7 @@ RC thread_t::run() {
 		}
         /// c/s debug
 		if(txn_cnt % 1000 == 0) {
-		    cout << get_thd_id() << ", txn_cnt" << txn_cnt << endl;
+//		    cout << get_thd_id() << ", txn_cnt" << txn_cnt << endl;
 		}
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程

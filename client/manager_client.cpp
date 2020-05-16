@@ -7,7 +7,9 @@
 #include "client/txn/txn.h"
 
 namespace dbx1000 {
-    void ManagerClient::init() { all_txns_ = new txn_man*[g_thread_cnt](); }
+    void ManagerClient::init() {
+        all_txns_ = new txn_man*[g_thread_cnt]();
+    }
 
     void ManagerClient::SetTxnMan(txn_man *txnMan) { all_txns_[txnMan->get_thd_id()] = txnMan; }
 

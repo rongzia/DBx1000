@@ -28,8 +28,8 @@ namespace dbx1000 {
 //        void init();
 
         uint64_t key_;
-        char* row_;
         size_t size_;
+        char* row_;
     };
 }
 

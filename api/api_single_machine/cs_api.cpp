@@ -26,20 +26,12 @@ namespace dbx1000 {
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
         uint64_t thread_id = txn->get_thd_id();
 
-        TxnRowMan* temp = glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready
-                                    , key, nullptr, 0, txn->get_ts());
-        RC rc = glob_manager_server->row_mvccs_[key]->access(temp, ts_type);
-//        mtx_.lock();
-//        count_++;
-//        mtx_.unlock();
-//        cout << "__LINE__" << __LINE__ << endl;
-//        cout << "accesses_index" << accesses_index << endl;
-//        cout << "orig_row.key : " << txn->accesses[accesses_index]->orig_row->key_ << endl;
-//        cout << "orig_row.size_ : " << txn->accesses[accesses_index]->orig_row->size_ << endl;
-//        cout << "orig_row.row_ : " << txn->accesses[accesses_index]->orig_row->row_ << endl;
+        glob_manager_server->SetTxn(thread_id, txn->get_txn_id(), txn->ts_ready, key, nullptr, 0, txn->get_ts());
+        assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
+        RC rc = glob_manager_server->row_mvccs_[key]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
+        assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
 
         if (RCOK == rc) {
-            assert(txn->accesses[accesses_index]->orig_row->key_ == glob_manager_server->all_txns_[thread_id].cur_row_->key_);
             memcpy(txn->accesses[accesses_index]->orig_row->row_
                    , glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
         }

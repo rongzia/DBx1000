@@ -20,17 +20,22 @@
 using namespace dbx1000;
 using namespace std;
 
-size_t bench_size = DB_NUM_ITEM / 1000;
-
-uint64_t pool_size = DB_NUM_ITEM / 8L * 16384L;
+/// 默认 buffer 大小为总数据量的 1/8
+uint64_t pool_size = g_synth_table_size / 8L * 16384L;
 size_t row_size = 16384;                    // 16 KB
 
 /// 校验 buffer 正确性
-void Check() {
+void Check(
+#ifdef USE_MEMORY_DB
+                MemoryDB* db
+#else
+               leveldb::DB *db
+#endif
+        ) {
     cout << "checking whether the buffer is executed successfully..." << endl;
-    std::unordered_map<uint64_t, std::string> check_map;
+    std::unordered_map<uint64_t, std::string> check_map;        /// for compare
     int num_item = 10240;
-    Buffer* buffer = new Buffer(num_item * row_size / 10, row_size);
+    Buffer* buffer = new Buffer(num_item / 8 * row_size, row_size, db);
 
     /// put
     RandNum_generator rng(0, 255);
@@ -55,15 +60,18 @@ void WarmupDB(Buffer* buffer) {
     Profiler profiler;
 
     profiler.Start();
-    for(uint64_t i = 0; i < DB_NUM_ITEM; i++) {
+    for(uint64_t i = 0; i < g_synth_table_size; i++) {
 //        if(0 == i % 1000 ) { cout << i << endl; }
         string str(row_size, 0);
         buffer->BufferPut(i, str.data(), row_size);
     }
     profiler.End();
-    cout << "total items : " << DB_NUM_ITEM << ", warmup time : " << profiler.Micros() << " micros." << endl;
+    cout << "total items : " << g_synth_table_size << ", warmup time : " << profiler.Micros() << " micros." << endl;
 }
 
+
+
+size_t bench_size = g_synth_table_size / 800;
 void SimpleTest(Buffer* buffer){
     Profiler profiler;
 
@@ -71,7 +79,7 @@ void SimpleTest(Buffer* buffer){
     profiler.Start();
     for(int i = 0; i < bench_size; i++) {
         char buf[row_size];
-        int a = rand() % DB_NUM_ITEM;
+        int a = rand() % g_synth_table_size;
         buffer->BufferGet(a, buf, row_size);
     }
     profiler.End();
@@ -83,7 +91,7 @@ void SimpleTest(Buffer* buffer){
     char buf[row_size];
     memset(buf, 0, row_size);
     for(int i = 0; i < bench_size; i++) {
-        int a = rand() % DB_NUM_ITEM;
+        int a = rand() % g_synth_table_size;
         buffer->BufferPut(a, buf, row_size);
     }
     profiler.End();
@@ -100,7 +108,7 @@ void SimpleTest(Buffer* buffer){
             srand(i);
             for (int i = 0; i < bench_size / num_threads; i++) {
                 char buf[row_size];
-                int a = rand() % DB_NUM_ITEM;
+                int a = rand() % g_synth_table_size;
                 buffer->BufferGet(a, buf, row_size);
             }
         }));
@@ -120,7 +128,7 @@ void SimpleTest(Buffer* buffer){
         write_threads.emplace_back(std::thread([&] {
             srand(num_threads - i -1);
             for (int i = 0; i < bench_size / num_threads; i++) {
-                int a = rand() % DB_NUM_ITEM;
+                int a = rand() % g_synth_table_size;
                 buffer->BufferPut(a, buf, row_size);
             }
         }));
@@ -134,15 +142,30 @@ void SimpleTest(Buffer* buffer){
 }
 
 int main(){
+    Buffer* buffer;
+#ifdef USE_MEMORY_DB
+    MemoryDB* db = new MemoryDB();
+#else
+    leveldb::DB* db;
+    leveldb::Options options;
+    options.create_if_missing = true;
+    options.comparator = new dbx1000::NumberComparatorImpl();
+    leveldb::Status status = leveldb::DB::Open(options, g_db_path, &db);
+    assert(status.ok());
+    leveldb::Iterator *iter = db->NewIterator(leveldb::ReadOptions());
+    iter->SeekToFirst();
+//    assert(iter->Valid());
+#endif
+
     /// 必要时，删除 leveldb 目录
     std::string cmd = "rm -rf " + g_db_path;
     int rc = system(cmd.data());
     cout << "rmdir rc : " << rc << endl;
 
     /// 验证 buffer 正确性
-    Check();
+    Check(db);
 
-    Buffer* buffer = new Buffer(pool_size, row_size);
+    buffer = new Buffer(pool_size, row_size, db);
     cout << "buffer inited" << endl;
 
     /// 初始化 db
@@ -152,8 +175,7 @@ int main(){
 
 
     delete buffer;
-
-    while(1) {}
+    while(1) {}         /// 方便 linux top 查看占用内存大小
 
     return 0;
 }
