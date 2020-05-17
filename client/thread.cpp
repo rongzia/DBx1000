@@ -59,7 +59,7 @@ RC thread_t::run() {
 
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
-	uint64_t txn_cnt = 0;
+//	uint64_t txn_cnt = 0;
 
 	while (true) {
 	    dbx1000::Profiler profiler;
@@ -114,8 +114,8 @@ RC thread_t::run() {
 		}
 		profiler.End();
 		stats._stats[thread_id_]->time_query += profiler.Nanos();
-		profiler.ReStart();
 
+		profiler.Start();
 		m_txn->abort_cnt = 0;
 
         //! 事务 id 按线程划分，假设当前线程为 1 、总线程数为4，则事务 id 为 1, 5, 9...
@@ -196,43 +196,34 @@ RC thread_t::run() {
 				}
 			}
 		}
-
+/// 记录事务执行成功/失败的次数及时间
 		profiler.End();
 		stats._stats[thread_id_]->run_time += profiler.Nanos();
 		stats._stats[thread_id_]->latency += profiler.Nanos();
 		if (rc == RCOK) {
 		    stats._stats[thread_id_]->txn_cnt += 1;
 			stats.commit(get_thd_id());
-			txn_cnt ++;
 		} else if (rc == Abort) {
 		    stats._stats[thread_id_]->time_abort += profiler.Nanos();
 		    stats._stats[thread_id_]->abort_cnt += 1;
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
+			stats.tmp_stats[get_thd_id()]->clear();
 		}
-
+/// warmup
 		//! warmup_finish == true, 在 m_wl->init() 后，该值就为 true
 		if (rc == FINISH) {
             return rc;
         }
-		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) 
+		if (!warmup_finish && stats._stats[thread_id_]->txn_cnt >= WARMUP / g_thread_cnt)
 		{
 			stats.clear( get_thd_id() );
 			return FINISH;
 		}
-        /// c/s debug
-		if(txn_cnt % 1000 == 0) {
-//		    cout << get_thd_id() << ", txn_cnt" << txn_cnt << endl;
-		}
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程
-		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
-		    cout << "set_wl_sim_done" << endl;
-			assert(txn_cnt == MAX_TXN_PER_PART);
-			/*
-	        if( !ATOM_CAS(_wl->sim_done, false, true) )
-				assert( _wl->sim_done);
-			 */
+		if (warmup_finish && stats._stats[thread_id_]->txn_cnt >= MAX_TXN_PER_PART) {
+			assert(stats._stats[thread_id_]->txn_cnt == MAX_TXN_PER_PART);
 #ifdef WITH_RPC
 			api_txn_client->SetWlSimDone();
 #else
@@ -241,13 +232,11 @@ RC thread_t::run() {
 	    }
 
 		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
-//	    if (_wl->sim_done) {
 #ifdef WITH_RPC
 	    if (true == api_txn_client->GetWlSimDone()) {
 #else
 	    if (true == dbx1000::API::get_wl_sim_done()) {
 #endif // WITH_RPC
-		    cout << "set_wl_sim_done" << endl;
    		    return FINISH;
    		}
 	}

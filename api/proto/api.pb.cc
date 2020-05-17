@@ -611,7 +611,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetRowReply, rc_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetRowReply, row_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetRowReply, time_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetRowReply, run_time_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::ReturnRowRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -625,6 +625,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::ReturnRowReply, run_time_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::SetWlSimDoneRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -670,6 +671,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetNextTsReply, timestamp_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::GetNextTsReply, run_time_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::dbx1000::AddTsRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -726,22 +728,22 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROT
   { 48, -1, sizeof(::dbx1000::GetRowReply)},
   { 56, -1, sizeof(::dbx1000::ReturnRowRequest)},
   { 64, -1, sizeof(::dbx1000::ReturnRowReply)},
-  { 69, -1, sizeof(::dbx1000::SetWlSimDoneRequest)},
-  { 74, -1, sizeof(::dbx1000::SetWlSimDoneReply)},
-  { 79, -1, sizeof(::dbx1000::GetWlSimDoneRequest)},
-  { 84, -1, sizeof(::dbx1000::GetWlSimDoneReply)},
-  { 90, -1, sizeof(::dbx1000::SetTsReadyRequest)},
-  { 97, -1, sizeof(::dbx1000::SetTsReadyReply)},
-  { 102, -1, sizeof(::dbx1000::GetNextTsRequest)},
-  { 108, -1, sizeof(::dbx1000::GetNextTsReply)},
-  { 114, -1, sizeof(::dbx1000::AddTsRequest)},
-  { 121, -1, sizeof(::dbx1000::AddTsReply)},
-  { 126, -1, sizeof(::dbx1000::TestRequest)},
-  { 131, -1, sizeof(::dbx1000::TestReply)},
-  { 136, -1, sizeof(::dbx1000::ThreadDoneRequest)},
-  { 142, -1, sizeof(::dbx1000::ThreadDoneReply)},
-  { 147, -1, sizeof(::dbx1000::GetRowSizeRequest)},
-  { 152, -1, sizeof(::dbx1000::GetRowSizeReply)},
+  { 70, -1, sizeof(::dbx1000::SetWlSimDoneRequest)},
+  { 75, -1, sizeof(::dbx1000::SetWlSimDoneReply)},
+  { 80, -1, sizeof(::dbx1000::GetWlSimDoneRequest)},
+  { 85, -1, sizeof(::dbx1000::GetWlSimDoneReply)},
+  { 91, -1, sizeof(::dbx1000::SetTsReadyRequest)},
+  { 98, -1, sizeof(::dbx1000::SetTsReadyReply)},
+  { 103, -1, sizeof(::dbx1000::GetNextTsRequest)},
+  { 109, -1, sizeof(::dbx1000::GetNextTsReply)},
+  { 116, -1, sizeof(::dbx1000::AddTsRequest)},
+  { 123, -1, sizeof(::dbx1000::AddTsReply)},
+  { 128, -1, sizeof(::dbx1000::TestRequest)},
+  { 133, -1, sizeof(::dbx1000::TestReply)},
+  { 138, -1, sizeof(::dbx1000::ThreadDoneRequest)},
+  { 144, -1, sizeof(::dbx1000::ThreadDoneReply)},
+  { 149, -1, sizeof(::dbx1000::GetRowSizeRequest)},
+  { 154, -1, sizeof(::dbx1000::GetRowSizeReply)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -804,18 +806,19 @@ void AddDescriptorsImpl() {
       "dbx1000.Mess_RowItem\022\021\n\ttimestamp\030\005 \001(\004\""
       "V\n\rGetRowRequest\022\013\n\003key\030\001 \001(\004\022\017\n\007ts_type"
       "\030\002 \001(\005\022\'\n\006txnman\030\003 \001(\0132\027.dbx1000.Mess_Tx"
-      "nRowMan\"4\n\013GetRowReply\022\n\n\002rc\030\001 \001(\005\022\013\n\003ro"
-      "w\030\002 \001(\014\022\014\n\004time\030\003 \001(\004\"Y\n\020ReturnRowReques"
-      "t\022\013\n\003key\030\001 \001(\004\022\017\n\007ts_type\030\002 \001(\005\022\'\n\006txnma"
-      "n\030\003 \001(\0132\027.dbx1000.Mess_TxnRowMan\"\020\n\016Retu"
-      "rnRowReply\"\025\n\023SetWlSimDoneRequest\"\023\n\021Set"
-      "WlSimDoneReply\"\025\n\023GetWlSimDoneRequest\"%\n"
-      "\021GetWlSimDoneReply\022\020\n\010sim_done\030\001 \001(\010\"N\n\021"
-      "SetTsReadyRequest\022\021\n\tthread_id\030\001 \001(\004\022&\n\007"
-      "cur_row\030\002 \001(\0132\025.dbx1000.Mess_RowItem\"\021\n\017"
-      "SetTsReadyReply\"%\n\020GetNextTsRequest\022\021\n\tt"
-      "hread_id\030\001 \001(\004\"#\n\016GetNextTsReply\022\021\n\ttime"
-      "stamp\030\001 \001(\004\"4\n\014AddTsRequest\022\021\n\tthread_id"
+      "nRowMan\"8\n\013GetRowReply\022\n\n\002rc\030\001 \001(\005\022\013\n\003ro"
+      "w\030\002 \001(\014\022\020\n\010run_time\030\003 \001(\004\"Y\n\020ReturnRowRe"
+      "quest\022\013\n\003key\030\001 \001(\004\022\017\n\007ts_type\030\002 \001(\005\022\'\n\006t"
+      "xnman\030\003 \001(\0132\027.dbx1000.Mess_TxnRowMan\"\"\n\016"
+      "ReturnRowReply\022\020\n\010run_time\030\001 \001(\004\"\025\n\023SetW"
+      "lSimDoneRequest\"\023\n\021SetWlSimDoneReply\"\025\n\023"
+      "GetWlSimDoneRequest\"%\n\021GetWlSimDoneReply"
+      "\022\020\n\010sim_done\030\001 \001(\010\"N\n\021SetTsReadyRequest\022"
+      "\021\n\tthread_id\030\001 \001(\004\022&\n\007cur_row\030\002 \001(\0132\025.db"
+      "x1000.Mess_RowItem\"\021\n\017SetTsReadyReply\"%\n"
+      "\020GetNextTsRequest\022\021\n\tthread_id\030\001 \001(\004\"5\n\016"
+      "GetNextTsReply\022\021\n\ttimestamp\030\001 \001(\004\022\020\n\010run"
+      "_time\030\002 \001(\004\"4\n\014AddTsRequest\022\021\n\tthread_id"
       "\030\001 \001(\004\022\021\n\ttimestamp\030\002 \001(\004\"\014\n\nAddTsReply\""
       "\r\n\013TestRequest\"\013\n\tTestReply\"&\n\021ThreadDon"
       "eRequest\022\021\n\tthread_id\030\001 \001(\004\"\021\n\017ThreadDon"
@@ -844,7 +847,7 @@ void AddDescriptorsImpl() {
       "proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1886);
+      descriptor, 1926);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "api.proto", &protobuf_RegisterTypes);
 }
@@ -2680,7 +2683,7 @@ void GetRowReply::InitAsDefaultInstance() {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int GetRowReply::kRcFieldNumber;
 const int GetRowReply::kRowFieldNumber;
-const int GetRowReply::kTimeFieldNumber;
+const int GetRowReply::kRunTimeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 GetRowReply::GetRowReply()
@@ -2698,17 +2701,17 @@ GetRowReply::GetRowReply(const GetRowReply& from)
   if (from.row().size() > 0) {
     row_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.row_);
   }
-  ::memcpy(&time_, &from.time_,
+  ::memcpy(&run_time_, &from.run_time_,
     static_cast<size_t>(reinterpret_cast<char*>(&rc_) -
-    reinterpret_cast<char*>(&time_)) + sizeof(rc_));
+    reinterpret_cast<char*>(&run_time_)) + sizeof(rc_));
   // @@protoc_insertion_point(copy_constructor:dbx1000.GetRowReply)
 }
 
 void GetRowReply::SharedCtor() {
   row_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&time_, 0, static_cast<size_t>(
+  ::memset(&run_time_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&rc_) -
-      reinterpret_cast<char*>(&time_)) + sizeof(rc_));
+      reinterpret_cast<char*>(&run_time_)) + sizeof(rc_));
 }
 
 GetRowReply::~GetRowReply() {
@@ -2741,9 +2744,9 @@ void GetRowReply::Clear() {
   (void) cached_has_bits;
 
   row_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&time_, 0, static_cast<size_t>(
+  ::memset(&run_time_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&rc_) -
-      reinterpret_cast<char*>(&time_)) + sizeof(rc_));
+      reinterpret_cast<char*>(&run_time_)) + sizeof(rc_));
   _internal_metadata_.Clear();
 }
 
@@ -2783,14 +2786,14 @@ bool GetRowReply::MergePartialFromCodedStream(
         break;
       }
 
-      // uint64 time = 3;
+      // uint64 run_time = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &time_)));
+                 input, &run_time_)));
         } else {
           goto handle_unusual;
         }
@@ -2834,9 +2837,9 @@ void GetRowReply::SerializeWithCachedSizes(
       2, this->row(), output);
   }
 
-  // uint64 time = 3;
-  if (this->time() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->time(), output);
+  // uint64 run_time = 3;
+  if (this->run_time() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->run_time(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2865,9 +2868,9 @@ void GetRowReply::SerializeWithCachedSizes(
         2, this->row(), target);
   }
 
-  // uint64 time = 3;
-  if (this->time() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->time(), target);
+  // uint64 run_time = 3;
+  if (this->run_time() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->run_time(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2894,11 +2897,11 @@ size_t GetRowReply::ByteSizeLong() const {
         this->row());
   }
 
-  // uint64 time = 3;
-  if (this->time() != 0) {
+  // uint64 run_time = 3;
+  if (this->run_time() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
-        this->time());
+        this->run_time());
   }
 
   // int32 rc = 1;
@@ -2939,8 +2942,8 @@ void GetRowReply::MergeFrom(const GetRowReply& from) {
 
     row_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.row_);
   }
-  if (from.time() != 0) {
-    set_time(from.time());
+  if (from.run_time() != 0) {
+    set_run_time(from.run_time());
   }
   if (from.rc() != 0) {
     set_rc(from.rc());
@@ -2973,7 +2976,7 @@ void GetRowReply::InternalSwap(GetRowReply* other) {
   using std::swap;
   row_.Swap(&other->row_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  swap(time_, other->time_);
+  swap(run_time_, other->run_time_);
   swap(rc_, other->rc_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
@@ -3303,6 +3306,7 @@ void ReturnRowRequest::InternalSwap(ReturnRowRequest* other) {
 void ReturnRowReply::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ReturnRowReply::kRunTimeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ReturnRowReply::ReturnRowReply()
@@ -3316,10 +3320,12 @@ ReturnRowReply::ReturnRowReply(const ReturnRowReply& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  run_time_ = from.run_time_;
   // @@protoc_insertion_point(copy_constructor:dbx1000.ReturnRowReply)
 }
 
 void ReturnRowReply::SharedCtor() {
+  run_time_ = GOOGLE_ULONGLONG(0);
 }
 
 ReturnRowReply::~ReturnRowReply() {
@@ -3350,6 +3356,7 @@ void ReturnRowReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  run_time_ = GOOGLE_ULONGLONG(0);
   _internal_metadata_.Clear();
 }
 
@@ -3362,12 +3369,31 @@ bool ReturnRowReply::MergePartialFromCodedStream(
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
-  handle_unusual:
-    if (tag == 0) {
-      goto success;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // uint64 run_time = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &run_time_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::google::protobuf::internal::WireFormat::SkipField(
-          input, tag, _internal_metadata_.mutable_unknown_fields()));
   }
 success:
   // @@protoc_insertion_point(parse_success:dbx1000.ReturnRowReply)
@@ -3384,6 +3410,11 @@ void ReturnRowReply::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  // uint64 run_time = 1;
+  if (this->run_time() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->run_time(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -3397,6 +3428,11 @@ void ReturnRowReply::SerializeWithCachedSizes(
   // @@protoc_insertion_point(serialize_to_array_start:dbx1000.ReturnRowReply)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
+
+  // uint64 run_time = 1;
+  if (this->run_time() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->run_time(), target);
+  }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
@@ -3415,6 +3451,13 @@ size_t ReturnRowReply::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // uint64 run_time = 1;
+  if (this->run_time() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->run_time());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -3442,6 +3485,9 @@ void ReturnRowReply::MergeFrom(const ReturnRowReply& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.run_time() != 0) {
+    set_run_time(from.run_time());
+  }
 }
 
 void ReturnRowReply::CopyFrom(const ::google::protobuf::Message& from) {
@@ -3468,6 +3514,7 @@ void ReturnRowReply::Swap(ReturnRowReply* other) {
 }
 void ReturnRowReply::InternalSwap(ReturnRowReply* other) {
   using std::swap;
+  swap(run_time_, other->run_time_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 
@@ -4917,6 +4964,7 @@ void GetNextTsReply::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int GetNextTsReply::kTimestampFieldNumber;
+const int GetNextTsReply::kRunTimeFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 GetNextTsReply::GetNextTsReply()
@@ -4930,12 +4978,16 @@ GetNextTsReply::GetNextTsReply(const GetNextTsReply& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  timestamp_ = from.timestamp_;
+  ::memcpy(&timestamp_, &from.timestamp_,
+    static_cast<size_t>(reinterpret_cast<char*>(&run_time_) -
+    reinterpret_cast<char*>(&timestamp_)) + sizeof(run_time_));
   // @@protoc_insertion_point(copy_constructor:dbx1000.GetNextTsReply)
 }
 
 void GetNextTsReply::SharedCtor() {
-  timestamp_ = GOOGLE_ULONGLONG(0);
+  ::memset(&timestamp_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&run_time_) -
+      reinterpret_cast<char*>(&timestamp_)) + sizeof(run_time_));
 }
 
 GetNextTsReply::~GetNextTsReply() {
@@ -4966,7 +5018,9 @@ void GetNextTsReply::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  timestamp_ = GOOGLE_ULONGLONG(0);
+  ::memset(&timestamp_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&run_time_) -
+      reinterpret_cast<char*>(&timestamp_)) + sizeof(run_time_));
   _internal_metadata_.Clear();
 }
 
@@ -4988,6 +5042,20 @@ bool GetNextTsReply::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &timestamp_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // uint64 run_time = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &run_time_)));
         } else {
           goto handle_unusual;
         }
@@ -5025,6 +5093,11 @@ void GetNextTsReply::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(1, this->timestamp(), output);
   }
 
+  // uint64 run_time = 2;
+  if (this->run_time() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->run_time(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -5042,6 +5115,11 @@ void GetNextTsReply::SerializeWithCachedSizes(
   // uint64 timestamp = 1;
   if (this->timestamp() != 0) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(1, this->timestamp(), target);
+  }
+
+  // uint64 run_time = 2;
+  if (this->run_time() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->run_time(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -5066,6 +5144,13 @@ size_t GetNextTsReply::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->timestamp());
+  }
+
+  // uint64 run_time = 2;
+  if (this->run_time() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->run_time());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -5098,6 +5183,9 @@ void GetNextTsReply::MergeFrom(const GetNextTsReply& from) {
   if (from.timestamp() != 0) {
     set_timestamp(from.timestamp());
   }
+  if (from.run_time() != 0) {
+    set_run_time(from.run_time());
+  }
 }
 
 void GetNextTsReply::CopyFrom(const ::google::protobuf::Message& from) {
@@ -5125,6 +5213,7 @@ void GetNextTsReply::Swap(GetNextTsReply* other) {
 void GetNextTsReply::InternalSwap(GetNextTsReply* other) {
   using std::swap;
   swap(timestamp_, other->timestamp_);
+  swap(run_time_, other->run_time_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 

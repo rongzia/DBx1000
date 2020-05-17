@@ -45,7 +45,6 @@ void Query_queue::init() {
 void *Query_queue::threadInitQuery(void * This) {
 	Query_queue * query_queue = (Query_queue *)This;
 	int tid = _next_tid.fetch_add(1, std::memory_order_consume);
-    std::cout << tid << std::endl;
 //	 set cpu affinity, 绑定 CPU 物理核
 //	 set_affinity(tid);
 	query_queue->init_per_thread(tid);
@@ -76,8 +75,6 @@ void Query_thd::init(int thread_id, Query_queue *queryQueue) {
 #if ABORT_BUFFER_ENABLE
     query_cnt += ABORT_BUFFER_SIZE;
 #endif
-
-	std::cout << "single thread query_cnt : " << query_cnt << std::endl;
 
 #if WORKLOAD == YCSB
 	queries = new (queryQueue_->arenas_[thread_id_]->Allocate(sizeof(ycsb_query) * query_cnt))

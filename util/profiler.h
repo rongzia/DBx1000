@@ -24,9 +24,9 @@ namespace dbx1000 {
             start_ = Tick();
         }
 
-        void ReStart() {
-            finished_ = false;
-        }
+//        void ReStart() {
+//            finished_ = false;
+//        }
 
         //! Finishes timing
         void End() {
@@ -46,19 +46,19 @@ namespace dbx1000 {
             return *this;
         }
 
-        int64_t Nanos() {
+        uint64_t Nanos() {
             return std::chrono::duration_cast<std::chrono::nanoseconds>(count_).count();
         }
 
-        int64_t Micros() {
+        uint64_t Micros() {
             return std::chrono::duration_cast<std::chrono::microseconds>(count_).count();
         }
 
-        int64_t Millis() {
+        uint64_t Millis() {
             return std::chrono::duration_cast<std::chrono::milliseconds>(count_).count();
         }
 
-        int64_t Seconds() {
+        uint64_t Seconds() {
             return std::chrono::duration_cast<std::chrono::seconds>(count_).count();
         }
 

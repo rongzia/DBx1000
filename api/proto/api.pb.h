@@ -1043,11 +1043,11 @@ class GetRowReply : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_row();
   void set_allocated_row(::std::string* row);
 
-  // uint64 time = 3;
-  void clear_time();
-  static const int kTimeFieldNumber = 3;
-  ::google::protobuf::uint64 time() const;
-  void set_time(::google::protobuf::uint64 value);
+  // uint64 run_time = 3;
+  void clear_run_time();
+  static const int kRunTimeFieldNumber = 3;
+  ::google::protobuf::uint64 run_time() const;
+  void set_run_time(::google::protobuf::uint64 value);
 
   // int32 rc = 1;
   void clear_rc();
@@ -1060,7 +1060,7 @@ class GetRowReply : public ::google::protobuf::Message /* @@protoc_insertion_poi
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr row_;
-  ::google::protobuf::uint64 time_;
+  ::google::protobuf::uint64 run_time_;
   ::google::protobuf::int32 rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
@@ -1277,10 +1277,17 @@ class ReturnRowReply : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
+  // uint64 run_time = 1;
+  void clear_run_time();
+  static const int kRunTimeFieldNumber = 1;
+  ::google::protobuf::uint64 run_time() const;
+  void set_run_time(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:dbx1000.ReturnRowReply)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::uint64 run_time_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
 };
@@ -2085,11 +2092,18 @@ class GetNextTsReply : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::uint64 timestamp() const;
   void set_timestamp(::google::protobuf::uint64 value);
 
+  // uint64 run_time = 2;
+  void clear_run_time();
+  static const int kRunTimeFieldNumber = 2;
+  ::google::protobuf::uint64 run_time() const;
+  void set_run_time(::google::protobuf::uint64 value);
+
   // @@protoc_insertion_point(class_scope:dbx1000.GetNextTsReply)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::uint64 timestamp_;
+  ::google::protobuf::uint64 run_time_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_api_2eproto::TableStruct;
 };
@@ -3296,18 +3310,18 @@ inline void GetRowReply::set_allocated_row(::std::string* row) {
   // @@protoc_insertion_point(field_set_allocated:dbx1000.GetRowReply.row)
 }
 
-// uint64 time = 3;
-inline void GetRowReply::clear_time() {
-  time_ = GOOGLE_ULONGLONG(0);
+// uint64 run_time = 3;
+inline void GetRowReply::clear_run_time() {
+  run_time_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::uint64 GetRowReply::time() const {
-  // @@protoc_insertion_point(field_get:dbx1000.GetRowReply.time)
-  return time_;
+inline ::google::protobuf::uint64 GetRowReply::run_time() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetRowReply.run_time)
+  return run_time_;
 }
-inline void GetRowReply::set_time(::google::protobuf::uint64 value) {
+inline void GetRowReply::set_run_time(::google::protobuf::uint64 value) {
   
-  time_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.GetRowReply.time)
+  run_time_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetRowReply.run_time)
 }
 
 // -------------------------------------------------------------------
@@ -3399,6 +3413,20 @@ inline void ReturnRowRequest::set_allocated_txnman(::dbx1000::Mess_TxnRowMan* tx
 // -------------------------------------------------------------------
 
 // ReturnRowReply
+
+// uint64 run_time = 1;
+inline void ReturnRowReply::clear_run_time() {
+  run_time_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 ReturnRowReply::run_time() const {
+  // @@protoc_insertion_point(field_get:dbx1000.ReturnRowReply.run_time)
+  return run_time_;
+}
+inline void ReturnRowReply::set_run_time(::google::protobuf::uint64 value) {
+  
+  run_time_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.ReturnRowReply.run_time)
+}
 
 // -------------------------------------------------------------------
 
@@ -3540,6 +3568,20 @@ inline void GetNextTsReply::set_timestamp(::google::protobuf::uint64 value) {
   
   timestamp_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.GetNextTsReply.timestamp)
+}
+
+// uint64 run_time = 2;
+inline void GetNextTsReply::clear_run_time() {
+  run_time_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 GetNextTsReply::run_time() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetNextTsReply.run_time)
+  return run_time_;
+}
+inline void GetNextTsReply::set_run_time(::google::protobuf::uint64 value) {
+  
+  run_time_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetNextTsReply.run_time)
 }
 
 // -------------------------------------------------------------------

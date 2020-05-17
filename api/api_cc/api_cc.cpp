@@ -36,21 +36,23 @@ namespace dbx1000 {
 //        cout << "ApiConCtlServer::GetRow" << endl;
         TsType ts_type = MyHelper::IntToTsType(request->ts_type());
         uint64_t thread_id = request->txnman().thread_id();
+        Profiler profiler;
 
-//    stats.tmp_stats[thread_id]->profiler->Clear();
-//    stats.tmp_stats[thread_id]->profiler->Start();
+        profiler.Start();
         glob_manager_server->SetTxn(request->txnman());
         RC rc = glob_manager_server->row_mvccs_[request->key()]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
         if(RCOK == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
             response->set_row(glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
-//    stats.tmp_stats[thread_id]->profiler->End();
-//    response->set_time(stats.tmp_stats[thread_id]->profiler->Nanos());
+
+            profiler.End();
+            response->set_run_time(profiler.Nanos());
             return ::grpc::Status::OK;
         } if(Commit == rc || Abort == rc || WAIT == rc || ERROR == rc || FINISH == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
-//    stats.tmp_stats[thread_id]->profiler->End();
-//    response->set_time(stats.tmp_stats[thread_id]->profiler->Nanos());
+
+            profiler.End();
+            response->set_run_time(profiler.Nanos());
             return ::grpc::Status::OK;
         }
 
@@ -63,14 +65,19 @@ namespace dbx1000 {
 //        cout << "ApiConCtlServer::ReturnRow" << endl;
         TsType ts_type = MyHelper::IntToTsType(request->ts_type());
         uint64_t thread_id = request->txnman().thread_id();
+        Profiler profiler;
 
+        profiler.Start();
         glob_manager_server->SetTxn(request->txnman());
         glob_manager_server->row_mvccs_[request->key()]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
+        profiler.End();
+        response->set_run_time(profiler.Nanos());
         return ::grpc::Status::OK;
     }
 
     ::grpc::Status ApiConCtlServer::SetWlSimDone(::grpc::ServerContext* context, const ::dbx1000::SetWlSimDoneRequest* request, ::dbx1000::SetWlSimDoneReply* response) {
-        glob_manager_server->wl_->sim_done_.exchange(true, std::memory_order_consume);
+        glob_manager_server->wl_->sim_done_.store(true);
+//        assert(true == glob_manager_server->wl_->sim_done_.load());
         return ::grpc::Status::OK;
     }
 
@@ -80,7 +87,13 @@ namespace dbx1000 {
     }
 
     ::grpc::Status ApiConCtlServer::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
-        response->set_timestamp(glob_manager_server->get_next_ts(request->thread_id()));
+        Profiler profiler;
+        profiler.Start();
+        uint64_t ts = glob_manager_server->get_next_ts(request->thread_id());
+        profiler.End();
+        stats._stats[request->thread_id()]->time_ts_alloc += profiler.Nanos();
+        response->set_timestamp(ts);
+        response->set_run_time(profiler.Nanos());
         return ::grpc::Status::OK;
     }
 

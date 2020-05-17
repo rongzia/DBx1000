@@ -34,7 +34,6 @@ namespace dbx1000 {
             memcpy(txn->accesses[accesses_index]->orig_row->row_, temp->cur_row_->row_, temp->cur_row_->size_);
         }
         else if (WAIT == rc) {
-//            cout << "API::get_row, type == WAIT" << endl;
             dbx1000::Profiler profiler;
             profiler.Start();
             while (!txn->ts_ready) { PAUSE }
@@ -78,7 +77,7 @@ namespace dbx1000 {
 
     void API::set_wl_sim_done() {
         glob_manager_server->wl_->sim_done_.store(true);
-        assert(true == glob_manager_server->wl_->sim_done_.load());
+//        assert(true == glob_manager_server->wl_->sim_done_.load());
     }
 
     bool API::get_wl_sim_done() {
@@ -86,7 +85,12 @@ namespace dbx1000 {
     }
 
     uint64_t API::get_next_ts(uint64_t thread_id) {
-        return glob_manager_server->get_next_ts(thread_id);
+        Profiler profiler;
+        profiler.Start();
+        uint64_t ts = glob_manager_server->get_next_ts(thread_id);
+        profiler.End();
+        stats._stats[thread_id]->time_ts_alloc += profiler.Nanos();
+        return ts;
     }
 
     void API::add_ts(uint64_t thread_id, uint64_t ts) {

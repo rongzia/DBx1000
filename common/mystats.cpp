@@ -37,6 +37,11 @@ namespace dbx1000 {
         debug4 = 0;
         debug5 = 0;
         latency = 0;
+
+        time_ts_alloc_latency = 0;
+        time_man_latency = 0;
+        time_man_count = 0;
+        time_cleanup_latency = 0;
     }
 
     void Stats_tmp::init() {
@@ -48,6 +53,11 @@ namespace dbx1000 {
         time_man = 0;
         time_index = 0;
         time_wait = 0;
+
+        time_man_get_row_count = 0;
+        time_man_get_row_latency = 0;
+        time_man_return_row_count = 0;
+        time_man_return_row_latency = 0;
     }
 
     void Stats::init() {
@@ -97,6 +107,10 @@ namespace dbx1000 {
     void Stats::commit(uint64_t thd_id) {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_man += tmp_stats[thd_id]->time_man;
+            _stats[thd_id]->time_man_latency += (tmp_stats[thd_id]->time_man_get_row_latency + tmp_stats[thd_id]->time_man_return_row_latency);
+            _stats[thd_id]->time_man_count += (tmp_stats[thd_id]->time_man_get_row_count + tmp_stats[thd_id]->time_man_return_row_count);
+//            cout << _stats[thd_id]->time_man_count << endl;
+//            _stats[thd_id]->time_man -= _stats[thd_id]->time_man_latency;
             _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
             _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
             tmp_stats[thd_id]->clear();
@@ -109,7 +123,6 @@ namespace dbx1000 {
     }
 
     void Stats::print() {
-
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
         double total_run_time = 0;
@@ -126,7 +139,10 @@ namespace dbx1000 {
         double total_time_ts_alloc = 0;
         double total_latency = 0;
         double total_time_query = 0;
-        for (uint64_t tid = 0; tid < g_thread_cnt; tid++) {
+        double total_time_man_latency = 0;
+        double total_time_man_count = 0;
+        double total_time_ts_alloc_latency = 0;
+        for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
             total_run_time += _stats[tid]->run_time;
@@ -144,55 +160,145 @@ namespace dbx1000 {
             total_latency += _stats[tid]->latency;
             total_time_query += _stats[tid]->time_query;
 
-            printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n", tid, _stats[tid]->txn_cnt, _stats[tid]->abort_cnt
+            total_time_man_latency += _stats[tid]->time_man_latency;
+            total_time_man_count += _stats[tid]->time_man_count;
+            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_latency;
+
+            printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
+                tid,
+                _stats[tid]->txn_cnt,
+                _stats[tid]->abort_cnt
             );
         }
-        FILE *outf;
+        FILE * outf;
         if (output_file != NULL) {
             outf = fopen(output_file, "w");
             fprintf(outf, "[summary] txn_cnt=%ld, abort_cnt=%ld"
-                          ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
-                          ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
-                          ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-                          ", time_query=%f\n, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n", total_txn_cnt, total_abort_cnt,
-                    total_run_time / BILLION, total_time_wait / BILLION, total_time_ts_alloc / BILLION,
-                    (total_time_man - total_time_wait) / BILLION, total_time_index / BILLION, total_time_abort / BILLION,
-                    total_time_cleanup / BILLION, total_latency / BILLION / total_txn_cnt, deadlock, cycle_detect, dl_detect_time / BILLION,
-                    dl_wait_time / BILLION, total_time_query / BILLION, total_debug1, // / BILLION,
-                    total_debug2, // / BILLION,
-                    total_debug3, // / BILLION,
-                    total_debug4, // / BILLION,
-                    total_debug5 / BILLION
+                ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
+                ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
+                ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
+                ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n",
+                total_txn_cnt,
+                total_abort_cnt,
+                total_run_time / BILLION,
+                total_time_wait / BILLION,
+                total_time_ts_alloc / BILLION,
+                (total_time_man - total_time_wait) / BILLION,
+                total_time_index / BILLION,
+                total_time_abort / BILLION,
+                total_time_cleanup / BILLION,
+                total_latency / BILLION / total_txn_cnt,
+                deadlock,
+                cycle_detect,
+                dl_detect_time / BILLION,
+                dl_wait_time / BILLION,
+                total_time_query / BILLION,
+                total_debug1, // / BILLION,
+                total_debug2, // / BILLION,
+                total_debug3, // / BILLION,
+                total_debug4, // / BILLION,
+                total_debug5 / BILLION
             );
             fclose(outf);
         }
         printf("[summary] txn_cnt=%ld, abort_cnt=%ld"
-               ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
-               ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
-               ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-               ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n", total_txn_cnt, total_abort_cnt,
-                total_run_time / BILLION, total_time_wait / BILLION, total_time_ts_alloc / BILLION,
-                (total_time_man - total_time_wait) / BILLION, total_time_index / BILLION, total_time_abort / BILLION,
-                total_time_cleanup / BILLION, total_latency / BILLION / total_txn_cnt, deadlock, cycle_detect, dl_detect_time / BILLION,
-                dl_wait_time / BILLION, total_time_query / BILLION, total_debug1 / BILLION, total_debug2, // / BILLION,
-                total_debug3, // / BILLION,
-                total_debug4, // / BILLION,
-                total_debug5  // / BILLION
+            ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
+            ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
+//            ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
+            ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f"
+            ", time_man_latency=%f, time_man_count=%ld"
+            ", time_ts_alloc_latency=%f\n",
+            total_txn_cnt,
+            total_abort_cnt,
+            total_run_time / BILLION,
+            total_time_wait / BILLION,
+            total_time_ts_alloc / BILLION,
+            (total_time_man - total_time_wait) / BILLION,
+            total_time_index / BILLION,
+            total_time_abort / BILLION,
+            total_time_cleanup / BILLION,
+            total_latency / BILLION / total_txn_cnt,
+//            deadlock,
+//            cycle_detect,
+//            dl_detect_time / BILLION,
+//            dl_wait_time / BILLION,
+            total_time_query / BILLION,
+            total_debug1 / BILLION,
+            total_debug2, // / BILLION,
+            total_debug3, // / BILLION,
+            total_debug4, // / BILLION,
+            total_debug5,  // / BILLION
+
+            total_time_man_latency / BILLION,
+            total_time_man_count,
+            total_time_ts_alloc_latency / BILLION
         );
         if (g_prt_lat_distr)
             print_lat_distr();
     }
 
-    void Stats::PrintYCSB() {
-        for(int i = 0; i < g_thread_cnt; i++) {
-//            std::cout << std::fixed;
-            cout << "txn_cnt:" << _stats[i]->txn_cnt << ", abort_cnt:" << _stats[i]->abort_cnt;
-            cout //<< std::setprecision(6)
-             << ", run_time:" << _stats[i]->run_time/BILLION << ", time_abort:" << _stats[i]->time_abort/BILLION
-            << ", time_query:" << _stats[i]->time_query/BILLION << ", time_ts_alloc:" << _stats[i]->time_ts_alloc/BILLION
-            << ", time_man:" << _stats[i]->time_man/BILLION << ", time_wait:" << _stats[i]->time_wait/BILLION
-            << ", time_cleanup:" << _stats[i]->time_cleanup/BILLION << endl;
+    void Stats::print2() {
+        uint64_t total_txn_cnt = 0;
+        uint64_t total_abort_cnt = 0;
+        double total_run_time = 0;
+        double total_time_man = 0;
+        double total_debug1 = 0;
+        double total_debug2 = 0;
+        double total_debug3 = 0;
+        double total_debug4 = 0;
+        double total_debug5 = 0;
+        double total_time_index = 0;
+        double total_time_abort = 0;
+        double total_time_cleanup = 0;
+        double total_time_wait = 0;
+        double total_time_ts_alloc = 0;
+        double total_latency = 0;
+        double total_time_query = 0;
+        double total_time_man_latency = 0;
+        double total_time_man_count = 0;
+        double total_time_ts_alloc_latency = 0;
+        for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
+            total_txn_cnt += _stats[tid]->txn_cnt;
+            total_abort_cnt += _stats[tid]->abort_cnt;
+            total_run_time += _stats[tid]->run_time;
+            total_time_man += _stats[tid]->time_man;
+            total_debug1 += _stats[tid]->debug1;
+            total_debug2 += _stats[tid]->debug2;
+            total_debug3 += _stats[tid]->debug3;
+            total_debug4 += _stats[tid]->debug4;
+            total_debug5 += _stats[tid]->debug5;
+            total_time_index += _stats[tid]->time_index;
+            total_time_abort += _stats[tid]->time_abort;
+            total_time_cleanup += _stats[tid]->time_cleanup;
+            total_time_wait += _stats[tid]->time_wait;
+            total_time_ts_alloc += _stats[tid]->time_ts_alloc;
+            total_latency += _stats[tid]->latency;
+            total_time_query += _stats[tid]->time_query;
+
+            total_time_man_latency += _stats[tid]->time_man_latency;
+            total_time_man_count += _stats[tid]->time_man_count;
+            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_latency;
+
+            cout << "[tid=" << _stats[tid]->txn_cnt
+            << " txn_cnt=" << _stats[tid]->txn_cnt << ",abort_cnt=" << _stats[tid]->abort_cnt << endl;
         }
+        cout << fixed << "[summary] txn_cnt=" << total_txn_cnt
+        << ", abort_cnt=" << total_abort_cnt
+        << ", run_time=" << total_run_time / BILLION
+        << ", time_wait=" << total_time_wait / BILLION
+        << ", time_ts_alloc=" << total_time_ts_alloc / BILLION
+        << ", time_man=" << (total_time_man - total_time_wait) / BILLION
+        << ", time_index=" << total_time_index / BILLION
+        << ", time_abort=" << total_time_abort / BILLION
+        << ", time_cleanup=" << total_time_cleanup / BILLION
+        << ", latency=" << total_latency / BILLION / total_txn_cnt
+        << ", time_query=" << total_time_query / BILLION
+        << ", debug1=" << total_debug1 / BILLION << ", debug2=" << total_debug2 << ", debug3=" << total_debug3 << ", debug4=" << total_debug4 << ", debug5=" << total_debug5
+        << ", time_man_latency=" << total_time_man_latency / BILLION
+        << ", time_man_count=" << total_time_man_count
+        << ", time_ts_alloc_latency=" << total_time_ts_alloc_latency / BILLION << endl;
+        if (g_prt_lat_distr)
+            print_lat_distr();
     }
 
     void Stats::print_lat_distr() {

@@ -39,7 +39,6 @@ namespace dbx1000 {
         void SetWlSimDone();
         bool GetWlSimDone();
 
-
         uint64_t get_next_ts(uint64_t thread_id);
         void add_ts(uint64_t thread_id, uint64_t ts);
 

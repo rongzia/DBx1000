@@ -88,14 +88,7 @@ int main(int argc, char* argv[]) {
         api_txn_client->ThreadDone(i);
     }
 
-    stats.print();
-
-//    for(int i = 0; i <  g_thread_cnt; i++) {
-//        cout << thread_t_s[i].count1 << endl;
-//        cout << thread_t_s[i].count2 << endl;
-//        cout << "txn[" << i << "].count:" << glob_manager_client->all_txns_[i]->txn_count << endl;
-//
-//    }
+    stats.print2();
 
 //    while(1) {}
     cout << "exit main." << endl;

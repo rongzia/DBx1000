@@ -12,9 +12,9 @@ add_definitions(-DNOGRAPHITE=1)
 
 
 
-### grpc:
-#add_definitions(-DWITH_RPC)
-#option(WITH_RPC "if use rpc then on, else off?" ON)
+### ******************************* grpc *******************************:
+add_definitions(-DWITH_RPC)
+option(WITH_RPC "if use rpc then on, else off?" ON)
 if (WITH_RPC)
     message("WITH_RPC : " ${WITH_RPC})
 endif ()
@@ -40,7 +40,7 @@ include_directories(${PROJECT_SOURCE_DIR}/api/api_txn)
 include_directories(${PROJECT_SOURCE_DIR}/api/proto)
 include_directories(${Protobuf_INCLUDE_DIR})
 include_directories(${gRPC_INCLUDE_DIR})
-### grpc
+### ******************************* grpc *******************************
 
 
 # include header files
@@ -75,7 +75,6 @@ set(SRC_FILES
         server/workload/ycsb_wl.cpp
         server/workload/wl.cpp
         server/manager_server.cpp
-#        util/numbercomparator.cpp
         util/arena.cpp
         config.cpp
         )
@@ -105,7 +104,7 @@ else()
     target_link_libraries(main_test libleveldb.a libsnappy.a pthread)
 endif()
 
-# test query
+### ******************************* test query *******************************
 add_executable(test_query client/benchmarks/test_query.cpp
         client/benchmarks/query.cpp
         client/benchmarks/ycsb_query.cpp
@@ -113,24 +112,17 @@ add_executable(test_query client/benchmarks/test_query.cpp
         util/arena.cpp)
 target_link_libraries(test_query pthread)
 
+### ******************************* test buffer *******************************
+add_executable(test_buffer test/test_buffer.cpp
+        server/buffer/buffer.cpp server/buffer/lru_index.cpp server/buffer/lru.cpp common/global.cpp)
+target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
+add_executable(test_lru test/test_lru.cpp server/buffer/lru.cpp server/buffer/lru_index.cpp common/global.cpp)
 
+### ******************************* other test *******************************
 add_executable(test_1 test/test_1.cpp)
 add_executable(test_arena test/test_arena.cpp util/arena.cpp)
 add_executable(test_fstream test/test_fstream.cpp)
 add_executable(test_slice test/test_slice.cpp)
-
-
-add_executable(test_buffer test/test_buffer.cpp
-        server/buffer/buffer.cpp server/buffer/lru_index.cpp server/buffer/lru.cpp common/global.cpp
-        )
-target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
-target_compile_definitions(test_buffer PUBLIC CMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -fno-rtti"
-        CMAKE_CXX_FLAGS_DEBUG="${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
-#target_compile_definitions(test_buffer PUBLIC -fno-rtti)
-
-add_executable(test_lru test/test_lru.cpp server/buffer/lru.cpp server/buffer/lru_index.cpp common/global.cpp)
-
 add_executable(test_leveldb_comparetor test/test_leveldb_comparetor.cpp)
 target_link_libraries(test_leveldb_comparetor libleveldb.a libsnappy.a libpthread.so)
-
 add_executable(test_unordered_map test/test_unordered_map.cpp)

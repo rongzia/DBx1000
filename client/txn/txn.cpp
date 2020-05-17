@@ -38,18 +38,10 @@ void PrintAccess(Access** pAccess, size_t size) {
 void txn_man::cleanup(RC rc) {
 //    cout << "txn_man::cleanup" << endl;
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
-	    if(accesses[rid]->orig_row->key_ != accesses[rid]->data->key_) {
-//            PrintAccess(accesses, row_cnt);
-	    }
-	    assert(accesses[rid]->orig_row->key_ == accesses[rid]->data->key_);
-	    assert(accesses[rid]->orig_row->size_ == accesses[rid]->data->size_);
 	    assert(nullptr != accesses[rid]->orig_row->row_ && nullptr != accesses[rid]->data->row_);
-//	    cout << "txn_man::cleanup, return key : " << accesses[rid]->orig_row->key_ << endl;
-//		row_t * orig_r = accesses[rid]->orig_row;
-//		dbx1000::RowItem* orig_r = accesses[rid]->orig_row;
+
 		access_t type = accesses[rid]->type;
 		if (type == WR && rc == Abort) { type = XP; }
-
 
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
@@ -99,10 +91,9 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 		return NULL;
 	}
 	accesses[row_cnt]->type = type;
-	assert(accesses[row_cnt]->orig_row->key_ == accesses[row_cnt]->data->key_);
-	assert(accesses[row_cnt]->orig_row->size_ == accesses[row_cnt]->data->size_);
-	memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size_);
-
+	if(RD != type && SCAN != type) {
+        memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size_);
+    }
 	row_cnt ++;
 	if (type == WR) { wr_cnt ++; }
 
@@ -125,7 +116,7 @@ RC txn_man::finish(RC rc) {
 
 	profiler.End();
 	stats.tmp_stats[thread_id]->time_man += profiler.Nanos();
-	stats._stats[thread_id]->time_cleanup += profiler.Nanos();
+	stats._stats[thread_id]->time_cleanup += (profiler.Nanos() - stats.tmp_stats[thread_id]->time_man_return_row_latency);
 	return rc;
 }
 

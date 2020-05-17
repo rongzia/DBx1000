@@ -21,10 +21,9 @@ namespace dbx1000 {
         int row_cnt = glob_manager_client->all_txns_[thread_id]->row_cnt;
 
         glob_manager_client->all_txns_[thread_id]->ts_ready = true;
-        assert(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->size_ == request->cur_row().size()
-            && request->cur_row().size() == request->cur_row().row().size());
-        memcpy(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->row_
-            , request->cur_row().row().data(), request->cur_row().row().size());
+//        assert(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->size_ == request->cur_row().size()
+//            && request->cur_row().size() == request->cur_row().row().size());
+        memcpy(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->row_, request->cur_row().row().data(), request->cur_row().row().size());
 
         return ::grpc::Status::OK;
     }
@@ -81,7 +80,9 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
 //        cout << "ApiTxnClient::GetRow" << endl;
         TsType ts_type = (type == RD || type == SCAN) ? R_REQ : P_REQ;
         uint64_t thread_id = txn->get_thd_id();
+        Profiler profiler;
 
+        profiler.Start();
         /// gen request
         dbx1000::GetRowRequest request;
         Mess_RowItem* messRowItem = new Mess_RowItem();
@@ -91,17 +92,11 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         DBx1000ServiceUtil::Set_Mess_RowItem(key, nullptr, 0, messRowItem);
         DBx1000ServiceUtil::Set_Mess_TxnRowMan(txn, messRowItem, messTxnRowMan);
         request.set_allocated_txnman(messTxnRowMan);
-//        request.set_accesses_index(accesses_index);
 
         grpc::ClientContext context;
         dbx1000::GetRowReply reply;
-
         grpc::Status status = stub_->GetRow(&context, request, &reply);
-
-//        mtx_.lock();
-//        count_++;
-//        mtx_.unlock();
-
+/// debug
         if(!status.ok()) {
             /// debug
             cout << status.error_message() << endl;
@@ -110,23 +105,28 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
             cout << "key : " << key << ", type :" << MyHelper::AccessToInt(type) << endl;
         }
         assert(status.ok());
+
         RC rc = MyHelper::IntToRC(reply.rc());
         if (RCOK == rc) {
             assert(reply.row().size() == txn->accesses[accesses_index]->orig_row->size_);
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
+            profiler.End();
+            stats.tmp_stats[thread_id]->time_man_get_row_latency += (profiler.Nanos() - reply.run_time());
         }
         else if (WAIT == rc) {
-//            cout << "ApiTxnClient::GetRow, type == WAIT" << endl;
-//            uint64_t thread_id = txn->get_thd_id();
-            dbx1000::Profiler profiler;
-            profiler.Start();
-            while (!txn->ts_ready) { PAUSE }
             profiler.End();
-            stats.tmp_stats[thread_id]->time_wait += profiler.Nanos();
-//            INC_TMP_STATS(txn->get_thd_id(), time_wait, profiler->Nanos());
+            stats.tmp_stats[thread_id]->time_man_get_row_latency += (profiler.Nanos() - reply.run_time());
+
+            dbx1000::Profiler profiler_wait;
+            profiler_wait.Start();
+            while (!txn->ts_ready) { PAUSE }
+            profiler_wait.End();
+            stats.tmp_stats[thread_id]->time_wait += ( profiler_wait.Nanos() - (profiler.Nanos() - reply.run_time()) /2 );
+
             txn->ts_ready = true;
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
         }
+        stats.tmp_stats[thread_id]->time_man_get_row_count ++;
         return rc;
     }
 
@@ -136,6 +136,8 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         if(RD == type) { return;}
         else if(SCAN == type) { cout << "SCAN." << endl; return;}
 
+        Profiler profiler;
+        profiler.Start();
         /// gen request
         dbx1000::ReturnRowRequest request;
         Mess_RowItem* messRowItem = new Mess_RowItem();
@@ -163,6 +165,11 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         grpc::ClientContext context;
         dbx1000::ReturnRowReply reply;
         grpc::Status status = stub_->ReturnRow(&context, request, &reply);
+
+        profiler.End();
+        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_count ++;
+//        cout << stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_count << endl;
+        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_latency += (profiler.Nanos() - reply.run_time());
         assert(status.ok());
     }
 
@@ -202,8 +209,8 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         assert(status.ok());
 
         profiler.End();
-        stats._stats[thread_id]->time_ts_alloc += profiler.Nanos();
-
+        stats._stats[thread_id]->time_ts_alloc += reply.run_time();
+        stats._stats[thread_id]->time_ts_alloc_latency += (profiler.Nanos() - reply.run_time());
         return reply.timestamp();
     }
 
