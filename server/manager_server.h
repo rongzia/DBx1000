@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
+#include <string>
 #ifdef WITH_RPC
 #include "api/proto/api.pb.h"
 #endif // WITH_RPC
@@ -23,6 +24,7 @@ namespace dbx1000 {
     class RowItem;
     class Buffer;
     class Mess_TxnRowMan;
+    class ApiConCtlClient;
 
     class ManagerServer {
     public:
@@ -39,6 +41,7 @@ namespace dbx1000 {
         TxnRowMan* SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready
                           , uint64_t key, char* row, size_t size, uint64_t timestamp);
 
+        void SetTxnReady(uint64_t thread_id, std::string host);
         bool AllTxnReady();
         bool AllThreadDone();
 
@@ -47,13 +50,14 @@ namespace dbx1000 {
         std::mutex row_mvccs_mutex_;                        // TODO : 尝试不用锁
 
         std::atomic<uint64_t> timestamp_;
-//        uint64_t volatile *volatile *volatile all_ts_;
         uint64_t*   all_ts_;
         uint64_t    min_ts_;
         TxnRowMan* all_txns_;
         ycsb_wl* wl_;
 
-        bool* txn_ready_;
+        /// for txn thread
+        std::string* txn_port_;
+        ApiConCtlClient** api_con_ctl_clients_;
         bool* thread_done_;
         bool init_wl_done_;
     };

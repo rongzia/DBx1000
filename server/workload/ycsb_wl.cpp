@@ -41,14 +41,14 @@ RC ycsb_wl::init(
     init_schema(g_schame_path);
 
 //	init_table();
-	return RCOK;
+	return RC::RCOK;
 }
 
 RC ycsb_wl::init_schema(string schema_file) {
 	workload::init_schema(schema_file);
 	the_table = tables["MAIN_TABLE"];
 //	the_index = indexes["MAIN_INDEX"];
-	return RCOK;
+	return RC::RCOK;
 }
 //! 数据是分区的，每个区间的 key 都是 0-g_synth_table_size / g_part_cnt，单调增，返回 key 在哪个区间
 int
@@ -78,7 +78,7 @@ RC ycsb_wl::init_table() {
     init_table_parallel();
     profiler->End();
     std::cout << "ycsb_wl::init_table, workload Init Time : " << profiler->Millis() << " Millis" << std::endl;
-    return RCOK;
+    return RC::RCOK;
 }
 
 // init table in parallel

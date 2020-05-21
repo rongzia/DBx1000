@@ -21,6 +21,7 @@ namespace dbx1000 {
     class ManagerClient;
     class ApiTxnClient;
     class ApiConCtlClient;
+    class Stats;
 }
 class Query_queue;
 class Plock;
@@ -45,6 +46,8 @@ extern dbx1000::ManagerServer* glob_manager_server;
 extern dbx1000::ManagerClient* glob_manager_client;
 extern dbx1000::ApiTxnClient* api_txn_client;
 extern dbx1000::ApiConCtlClient* api_con_ctl_client;
+extern std::string txn_thread_host;
+extern uint64_t txn_thread_id;
 extern Query_queue * query_queue;
 extern Plock part_lock_man;
 extern OptCC occ_man;
@@ -101,7 +104,7 @@ extern char * output_file;
 extern uint32_t g_max_items;
 extern uint32_t g_cust_per_dist;
 
-enum RC { RCOK, Commit, Abort, WAIT, ERROR, FINISH};
+enum class RC { RCOK, Commit, Abort, WAIT, ERROR, FINISH};
 
 /* Thread */
 typedef uint64_t txnid_t;

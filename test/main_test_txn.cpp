@@ -7,14 +7,6 @@
 #include <memory>
 #include <thread>
 #include <vector>
-#include "leveldb/db.h"
-
-
-//#include "ycsb_query.h"
-#include "server/workload/ycsb_wl.h"
-#include "server/storage/table.h"
-#include "server/storage/catalog.h"
-
 #include "util/numbercomparator.h"
 //#include "cs_api.h"
 #include "common/global.h"
@@ -31,7 +23,7 @@
 using namespace std;
 
 void RunTxnServer() {
-    std::string txn_server_address("0.0.0.0:50040");
+    std::string txn_server_address("0.0.0.0:" + txn_thread_host);
   	dbx1000::ApiTxnServer service;
 
   	grpc::ServerBuilder builder;
@@ -49,20 +41,16 @@ void parser(int argc, char * argv[]);
 
 int main(int argc, char* argv[]) {
     cout << "mian test txn thread" << endl;
-    api_txn_client = new dbx1000::ApiTxnClient("127.0.0.1:50051");
+	parser(argc, argv);
+
+    api_txn_client = new dbx1000::ApiTxnClient("10.11.6.120:50051");
     std::thread txn_server(RunTxnServer);
     txn_server.detach();
 
-    for(size_t i = 0; i < g_thread_cnt; i++) {
-        api_txn_client->TxnReady(i);
-    }
-
-
+    api_txn_client->TxnReady(txn_thread_id, txn_thread_host);
 
     while(!api_txn_client->InitWlDone()) {PAUSE}
 
-	parser(argc, argv);
-    stats.init();
 
     glob_manager_client = new dbx1000::ManagerClient();
     glob_manager_client->init();
@@ -72,25 +60,21 @@ int main(int argc, char* argv[]) {
     query_queue->init();
 
 	warmup_finish = true;
+    stats.init();
 
-    thread_t *thread_t_s = new thread_t[g_thread_cnt]();
+    thread_t *thread_t_s = new thread_t[1]();
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i);
         v_thread.emplace_back(f, &thread_t_s[i]);
     }
-
     for(int i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
 
-    for(size_t i = 0; i < g_thread_cnt; i++) {
-        api_txn_client->ThreadDone(i);
-    }
+    api_txn_client->ThreadDone(txn_thread_id);
+    stats.print_rpc();
 
-    stats.print2();
-
-//    while(1) {}
     cout << "exit main." << endl;
     return 0;
 };

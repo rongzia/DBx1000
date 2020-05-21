@@ -51,10 +51,10 @@ RC thread_t::run() {
 
 //	myrand rdm;
 //	rdm.init(get_thd_id());
-	RC rc = RCOK;
+	RC rc = RC::RCOK;
     txn_man* m_txn = new ycsb_txn_man();
     m_txn->init(this);
-	assert (rc == RCOK);
+	assert (rc == RC::RCOK);
     glob_manager_client->SetTxnMan(m_txn);
 
 	base_query * m_query = NULL;
@@ -108,7 +108,7 @@ RC thread_t::run() {
 			//! _abort_buffer_enable  == false
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
-				if (rc == RCOK)
+				if (rc == RC::RCOK)
 					m_query = query_queue->get_next_query( thread_id_ );
 			}
 		}
@@ -129,12 +129,13 @@ RC thread_t::run() {
             //! 记录事务开始时间
 //            m_txn->set_ts(get_next_ts());
 #ifdef WITH_RPC
-            m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
+//            m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
+            m_txn->set_ts(api_txn_client->GetAndAddTs(this->get_thd_id()));
 #else
             m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
 #endif // WITH_RPC
         }
-		rc = RCOK;
+		rc = RC::RCOK;
 #if CC_ALG == HSTORE
 		if (WORKLOAD == TEST) {
 			uint64_t part_to_access[1] = {0};
@@ -145,19 +146,21 @@ RC thread_t::run() {
 		vll_man.vllMainLoop(m_txn, m_query);
 #elif CC_ALG == MVCC || CC_ALG == HEKATON
 		/// 全局数组 all_ts 记录该事务的开始时间
+/*
 //		glob_manager->add_ts(get_thd_id(), m_txn->get_ts());
 #ifdef WITH_RPC
         api_txn_client->add_ts(this->get_thd_id(), m_txn->get_ts());
 #else
         dbx1000::API::add_ts(this->get_thd_id(), m_txn->get_ts());
 #endif // WITH_RPC
+*/
 #elif CC_ALG == OCC
 		// In the original OCC paper, start_ts only reads the current ts without advancing it.
 		// But we advance the global ts here to simplify the implementation. However, the final
 		// results should be the same.
 		m_txn->start_ts = get_next_ts(); 
 #endif
-		if (rc == RCOK) 
+		if (rc == RC::RCOK)
 		{
 #if CC_ALG != VLL
 			if (WORKLOAD == TEST) {
@@ -174,7 +177,7 @@ RC thread_t::run() {
 				part_lock_man.unlock(m_txn, m_query->part_to_access, m_query->part_num);
 #endif
 		}
-		if (rc == Abort) {
+		if (rc == RC::Abort) {
 			uint64_t penalty = 0;
 			if (ABORT_PENALTY != 0)  {  //! ABORT_PENALTY == 100000
 				double r;
@@ -200,25 +203,25 @@ RC thread_t::run() {
 		profiler.End();
 		stats._stats[thread_id_]->run_time += profiler.Nanos();
 		stats._stats[thread_id_]->latency += profiler.Nanos();
-		if (rc == RCOK) {
+		if (rc == RC::RCOK) {
 		    stats._stats[thread_id_]->txn_cnt += 1;
 			stats.commit(get_thd_id());
-		} else if (rc == Abort) {
+		} else if (rc == RC::Abort) {
 		    stats._stats[thread_id_]->time_abort += profiler.Nanos();
 		    stats._stats[thread_id_]->abort_cnt += 1;
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
-			stats.tmp_stats[get_thd_id()]->clear();
+			stats.commit(get_thd_id());
 		}
 /// warmup
 		//! warmup_finish == true, 在 m_wl->init() 后，该值就为 true
-		if (rc == FINISH) {
+		if (rc == RC::FINISH) {
             return rc;
         }
 		if (!warmup_finish && stats._stats[thread_id_]->txn_cnt >= WARMUP / g_thread_cnt)
 		{
 			stats.clear( get_thd_id() );
-			return FINISH;
+			return RC::FINISH;
 		}
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程
@@ -237,7 +240,7 @@ RC thread_t::run() {
 #else
 	    if (true == dbx1000::API::get_wl_sim_done()) {
 #endif // WITH_RPC
-   		    return FINISH;
+   		    return RC::FINISH;
    		}
 	}
 	assert(false);

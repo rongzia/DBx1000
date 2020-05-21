@@ -24,24 +24,29 @@ namespace dbx1000 {
 
     class ApiTxnClient {
     public:
-//        ApiTxnClient(std::shared_ptr<grpc::Channel> channel);
         ApiTxnClient(std::string addr);
         ApiTxnClient(const ApiTxnClient &) = delete;
         ApiTxnClient &operator=(const ApiTxnClient &) = delete;
 
-        void TxnReady(uint64_t thread_id);
+        /// 告知 cc 服务，该事务已经准备好，即该事务的服务 rpc 进程已经启动
+        void TxnReady(uint64_t thread_id, string thread_port);
+        /// 查看 cc 服务的 init_wl 是否完成
         bool InitWlDone();
+        /// 从 cc 服务 获取行大小
         uint64_t GetRowSize();
 
+        /// for txn[.h|.cpp]
         RC GetRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);
         void ReturnRow(uint64_t key, access_t type, txn_man* txn, int accesses_index);
 
+        /// for thread[.h|.cpp]
         void SetWlSimDone();
         bool GetWlSimDone();
-
         uint64_t get_next_ts(uint64_t thread_id);
         void add_ts(uint64_t thread_id, uint64_t ts);
+        uint64_t GetAndAddTs(uint64_t thread_id);
 
+        /// 告知 cc 服务进程，该事务线程执行完毕，cc 收到所有的事务进程完成消息，则退出
         void ThreadDone(uint64_t thread_id);
 
     private:

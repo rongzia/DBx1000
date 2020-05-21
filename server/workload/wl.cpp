@@ -33,7 +33,7 @@ RC workload::init(
 
     sim_done_ = false;
 //    db_ = db;
-    return RCOK;
+    return RC::RCOK;
 }
 
 RC workload::init_schema(string schema_file) {
@@ -130,7 +130,7 @@ RC workload::init_schema(string schema_file) {
 //        }
     }
     fin.close();
-    return RCOK;
+    return RC::RCOK;
 }
 
 

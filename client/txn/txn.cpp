@@ -41,7 +41,7 @@ void txn_man::cleanup(RC rc) {
 	    assert(nullptr != accesses[rid]->orig_row->row_ && nullptr != accesses[rid]->data->row_);
 
 		access_t type = accesses[rid]->type;
-		if (type == WR && rc == Abort) { type = XP; }
+		if (type == WR && rc == RC::Abort) { type = XP; }
 
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
@@ -68,7 +68,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
     dbx1000::Profiler profiler;
     profiler.Start();
 
-	RC rc = RCOK;
+	RC rc = RC::RCOK;
 	if (accesses[row_cnt] == NULL) {
 		accesses[row_cnt] = new Access();
 		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size_);
@@ -87,7 +87,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
     rc = dbx1000::API::get_row(key, type, this, row_cnt);
 #endif // WITH_RPC
 
-	if (rc == Abort) {
+	if (rc == RC::Abort) {
 		return NULL;
 	}
 	accesses[row_cnt]->type = type;
@@ -116,7 +116,7 @@ RC txn_man::finish(RC rc) {
 
 	profiler.End();
 	stats.tmp_stats[thread_id]->time_man += profiler.Nanos();
-	stats._stats[thread_id]->time_cleanup += (profiler.Nanos() - stats.tmp_stats[thread_id]->time_man_return_row_latency);
+	stats._stats[thread_id]->time_cleanup += (profiler.Nanos() - stats.tmp_stats[thread_id]->time_man_return_row_rpc_time);
 	return rc;
 }
 

@@ -83,16 +83,11 @@ int main(int argc, char* argv[]) {
 /// workload
 
     glob_manager_server->InitWl((ycsb_wl*)m_wl);
-
-
-
     while (!glob_manager_server->AllTxnReady()) { PAUSE }
-    api_con_ctl_client = new dbx1000::ApiConCtlClient("127.0.0.1:50040");
-    api_con_ctl_client->Test();
 
 
-    while(!glob_manager_server->AllThreadDone()) {}
-    stats.print();
+    while(!glob_manager_server->AllThreadDone()) { PAUSE }
+    stats.print_rpc();
 
     cout << endl << "delete buffer" << endl;
     delete buffer;
@@ -100,6 +95,8 @@ int main(int argc, char* argv[]) {
     delete db;
     cout << endl << "delete m_wl" << endl;
     delete m_wl;
+    delete api_con_ctl_client;
+    delete glob_manager_server;
 
     cout << "exit main." << endl;
     return 0;

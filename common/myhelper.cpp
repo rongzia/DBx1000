@@ -6,21 +6,21 @@
 
 namespace dbx1000 {
     int MyHelper::RCToInt(RC rc) {
-        if(RCOK == rc)   { return 0;}
-        if(Commit == rc) { return 1;}
-        if(Abort == rc)  { return 2;}
-        if(WAIT == rc)   { return 3;}
-        if(ERROR == rc)  { return 4;}
-        if(FINISH == rc) { return 5;}
+        if(RC::RCOK == rc)   { return 0;}
+        if(RC::Commit == rc) { return 1;}
+        if(RC::Abort == rc)  { return 2;}
+        if(RC::WAIT == rc)   { return 3;}
+        if(RC::ERROR == rc)  { return 4;}
+        if(RC::FINISH == rc) { return 5;}
     }
 
     RC MyHelper::IntToRC(int i) {
-        if(0 == i) { return RCOK; }
-        if(1 == i) { return Commit; }
-        if(2 == i) { return Abort; }
-        if(3 == i) { return WAIT; }
-        if(4 == i) { return ERROR; }
-        if(5 == i) { return FINISH; }
+        if(0 == i) { return RC::RCOK; }
+        if(1 == i) { return RC::Commit; }
+        if(2 == i) { return RC::Abort; }
+        if(3 == i) { return RC::WAIT; }
+        if(4 == i) { return RC::ERROR; }
+        if(5 == i) { return RC::FINISH; }
     }
 
     int MyHelper::AccessToInt(access_t type) {

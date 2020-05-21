@@ -8,6 +8,8 @@
 #include <memory>
 #include "util/profiler.h"
 
+//enum class RC;
+
 namespace dbx1000 {
     class Stats_thd_rpc{
     public:
@@ -43,10 +45,12 @@ namespace dbx1000 {
         uint64_t *all_debug1;
         uint64_t *all_debug2;
 
-        uint64_t time_ts_alloc_latency;
-        uint64_t time_man_latency;
-        uint64_t time_man_count;
-        uint64_t time_cleanup_latency;
+        uint64_t time_ts_alloc_rpc_time;
+        uint64_t time_ts_alloc_rpc_count;
+        uint64_t time_man_rpc_time;
+        uint64_t time_man_rpc_count;
+        uint64_t time_abort_rpc_time;
+        uint64_t time_abort_rpc_count;
 
 //        std::unique_ptr<dbx1000::Profiler> profiler;
     };
@@ -60,10 +64,10 @@ namespace dbx1000 {
         void clear();
 
         uint64_t time_man;      /// 对应 ycsb 中 get_row、return_row  时间
-        uint64_t time_man_get_row_count;
-        uint64_t time_man_get_row_latency;
-        uint64_t time_man_return_row_count;
-        uint64_t time_man_return_row_latency;
+        uint64_t time_man_get_row_rpc_count;
+        uint64_t time_man_get_row_rpc_time;
+        uint64_t time_man_return_row_rpc_count;
+        uint64_t time_man_return_row_rpc_time;
         uint64_t time_index;
         uint64_t time_wait;     /// 对应 ycsb 中 get_row 时等待的时间，time_man 的子集
 
@@ -91,7 +95,7 @@ namespace dbx1000 {
         void commit(uint64_t thd_id);
         void abort(uint64_t thd_id);
         void print();
-        void print2();
+        void print_rpc();
         void print_lat_distr();
     };
 }

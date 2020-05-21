@@ -192,7 +192,7 @@ void PrintWriteHisEntry(WriteHisEntry *writeHisEntry, size_t size) {
 //RC Row_mvcc::access(dbx1000::TxnRowMan* txn, TsType type, dbx1000::RowItem* row, size_t row_size) {
 RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 //    cout << "Row_mvcc::access" << endl;
-	RC rc = RCOK;
+	RC rc = RC::RCOK;
 	ts_t ts = local_txn->timestamp_;
 
 	// TODO
@@ -219,7 +219,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 	if (type == R_REQ) {
 		if (ts < _oldest_wts) {
             // the version was already recycled... This should be very rare
-            rc = Abort;
+            rc = RC::Abort;
         }
 		//! 时间戳大于最近写时间戳
 		else if (ts > _latest_wts) {
@@ -227,13 +227,13 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 			{
 			    //! 之前的写没有完成
 				// exists a pending prewrite request before the current read. should wait.
-				rc = WAIT;
+				rc = RC::WAIT;
 				buffer_req(R_REQ, local_txn, false);
 				local_txn->ts_ready_ = false;
 			} else {
 			    //! 读最新的 row
 				// should just read
-				rc = RCOK;
+				rc = RC::RCOK;
 #ifdef DEBUG1
 				memcpy(local_txn->cur_row_->row_, _latest_row->row_, row_size_);
 #else
@@ -247,7 +247,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		}
 		//! 时间戳大于最老写时间戳，小于最近写时间戳
 		else {
-			rc = RCOK;
+			rc = RC::RCOK;
 			// ts is between _oldest_wts and _latest_wts, should find the correct version
 			uint32_t the_ts = 0;
 		   	uint32_t the_i = _his_len;
@@ -275,19 +275,19 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		}
 	} else if (type == P_REQ) {
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts)) {
-            rc = Abort;
+            rc = RC::Abort;
         }
 		else if (_exists_prewrite) {  // _prewrite_ts < ts
-			rc = WAIT;
+			rc = RC::WAIT;
 			buffer_req(P_REQ, local_txn, false);
 			local_txn->ts_ready_ = false;
 		} else {
-			rc = RCOK;
+			rc = RC::RCOK;
 			reserveRow(ts, local_txn->thread_id_);
 			GetLatestRow(local_txn->cur_row_);
 		}
 	} else if (type == W_REQ) {
-		rc = RCOK;
+		rc = RC::RCOK;
 		assert(ts > _latest_wts);
 		_write_history[_prewrite_his_id].valid = true;
 		_write_history[_prewrite_his_id].ts = ts;
@@ -303,7 +303,7 @@ RC Row_mvcc::access(dbx1000::TxnRowMan* local_txn, TsType type) {
 		_num_versions ++;
 		update_buffer(local_txn, W_REQ);
 	} else if (type == XP_REQ) {
-		rc = RCOK;
+		rc = RC::RCOK;
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;
 		_exists_prewrite = false;

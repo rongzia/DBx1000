@@ -38,7 +38,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 //			cout << "key : " << req->key << ", type : " << req->rtype << endl;
 
 			if (row_local == NULL) {
-				rc = Abort;
+				rc = RC::Abort;
 				goto final;
 			}
 
@@ -69,7 +69,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 				finish_req = true;
 		}
 	}
-	rc = RCOK;
+	rc = RC::RCOK;
 final:
 	rc = finish(rc);
 

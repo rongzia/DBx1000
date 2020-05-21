@@ -38,10 +38,12 @@ namespace dbx1000 {
         debug5 = 0;
         latency = 0;
 
-        time_ts_alloc_latency = 0;
-        time_man_latency = 0;
-        time_man_count = 0;
-        time_cleanup_latency = 0;
+        time_ts_alloc_rpc_time = 0;
+        time_ts_alloc_rpc_count = 0;
+        time_man_rpc_time = 0;
+        time_man_rpc_count = 0;
+        time_abort_rpc_time = 0;
+        time_abort_rpc_count = 0;
     }
 
     void Stats_tmp::init() {
@@ -54,10 +56,10 @@ namespace dbx1000 {
         time_index = 0;
         time_wait = 0;
 
-        time_man_get_row_count = 0;
-        time_man_get_row_latency = 0;
-        time_man_return_row_count = 0;
-        time_man_return_row_latency = 0;
+        time_man_get_row_rpc_count = 0;
+        time_man_get_row_rpc_time = 0;
+        time_man_return_row_rpc_count = 0;
+        time_man_return_row_rpc_time = 0;
     }
 
     void Stats::init() {
@@ -107,19 +109,24 @@ namespace dbx1000 {
     void Stats::commit(uint64_t thd_id) {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_man += tmp_stats[thd_id]->time_man;
-            _stats[thd_id]->time_man_latency += (tmp_stats[thd_id]->time_man_get_row_latency + tmp_stats[thd_id]->time_man_return_row_latency);
-            _stats[thd_id]->time_man_count += (tmp_stats[thd_id]->time_man_get_row_count + tmp_stats[thd_id]->time_man_return_row_count);
-//            cout << _stats[thd_id]->time_man_count << endl;
-//            _stats[thd_id]->time_man -= _stats[thd_id]->time_man_latency;
+            _stats[thd_id]->time_man_rpc_time += (tmp_stats[thd_id]->time_man_get_row_rpc_time + tmp_stats[thd_id]->time_man_return_row_rpc_time);
+            _stats[thd_id]->time_man_rpc_count += (tmp_stats[thd_id]->time_man_get_row_rpc_count + tmp_stats[thd_id]->time_man_return_row_rpc_count);
             _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
             _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
             tmp_stats[thd_id]->clear();
+
         }
     }
 
     void Stats::abort(uint64_t thd_id) {
-        if (STATS_ENABLE)
+        if (STATS_ENABLE) {
+            _stats[thd_id]->time_abort += tmp_stats[thd_id]->time_man;
+            _stats[thd_id]->time_abort_rpc_time += (tmp_stats[thd_id]->time_man_get_row_rpc_time + tmp_stats[thd_id]->time_man_return_row_rpc_time);
+            _stats[thd_id]->time_abort_rpc_count += (tmp_stats[thd_id]->time_man_get_row_rpc_count + tmp_stats[thd_id]->time_man_return_row_rpc_count);
+//            _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
+//            _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
             tmp_stats[thd_id]->clear();
+        }
     }
 
     void Stats::print() {
@@ -160,9 +167,9 @@ namespace dbx1000 {
             total_latency += _stats[tid]->latency;
             total_time_query += _stats[tid]->time_query;
 
-            total_time_man_latency += _stats[tid]->time_man_latency;
-            total_time_man_count += _stats[tid]->time_man_count;
-            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_latency;
+            total_time_man_latency += _stats[tid]->time_man_rpc_time;
+            total_time_man_count += _stats[tid]->time_man_rpc_count;
+            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_rpc_time;
 
             printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
                 tid,
@@ -237,7 +244,7 @@ namespace dbx1000 {
             print_lat_distr();
     }
 
-    void Stats::print2() {
+    void Stats::print_rpc() {
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
         double total_run_time = 0;
@@ -254,9 +261,14 @@ namespace dbx1000 {
         double total_time_ts_alloc = 0;
         double total_latency = 0;
         double total_time_query = 0;
-        double total_time_man_latency = 0;
-        double total_time_man_count = 0;
-        double total_time_ts_alloc_latency = 0;
+
+        double total_time_man_rpc_count = 0;
+        double total_time_man_rpc_time = 0;
+        double total_time_abort_rpc_count = 0;
+        double total_time_abort_rpc_time = 0;
+        double total_time_ts_alloc_rpc_time = 0;
+        uint64_t total_time_ts_alloc_rpc_count = 0;
+
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
@@ -275,28 +287,40 @@ namespace dbx1000 {
             total_latency += _stats[tid]->latency;
             total_time_query += _stats[tid]->time_query;
 
-            total_time_man_latency += _stats[tid]->time_man_latency;
-            total_time_man_count += _stats[tid]->time_man_count;
-            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_latency;
+            total_time_man_rpc_time += _stats[tid]->time_man_rpc_time;
+            total_time_man_rpc_count += _stats[tid]->time_man_rpc_count;
+            total_time_abort_rpc_time += _stats[tid]->time_abort_rpc_time;
+            total_time_abort_rpc_count += _stats[tid]->time_abort_rpc_count;
+            total_time_ts_alloc_rpc_time += _stats[tid]->time_ts_alloc_rpc_time;
+            total_time_ts_alloc_rpc_count += _stats[tid]->time_ts_alloc_rpc_count;
 
             cout << "[tid=" << _stats[tid]->txn_cnt
             << " txn_cnt=" << _stats[tid]->txn_cnt << ",abort_cnt=" << _stats[tid]->abort_cnt << endl;
         }
         cout << fixed << "[summary] txn_cnt=" << total_txn_cnt
-        << ", abort_cnt=" << total_abort_cnt
-        << ", run_time=" << total_run_time / BILLION
-        << ", time_wait=" << total_time_wait / BILLION
-        << ", time_ts_alloc=" << total_time_ts_alloc / BILLION
-        << ", time_man=" << (total_time_man - total_time_wait) / BILLION
+        << ", abort_cnt=" << total_abort_cnt << endl
+        << ", run_time_total=" << total_run_time / BILLION
+        << ", run_time_actual=" << (total_run_time-total_time_man_rpc_time-total_time_abort_rpc_time-total_time_ts_alloc_rpc_time) / BILLION
+        << ", run_time_latency=" << (total_time_man_rpc_time+total_time_abort_rpc_time+total_time_ts_alloc_rpc_time) / BILLION
+        << ", run_time_latency_average=" << (total_time_man_rpc_time+total_time_abort_rpc_time+total_time_ts_alloc_rpc_time) / BILLION / total_time_man_rpc_count << endl
         << ", time_index=" << total_time_index / BILLION
-        << ", time_abort=" << total_time_abort / BILLION
+        << ", time_abort_total=" << total_time_abort / BILLION
+        << ", time_abort_actual=" << (total_time_abort-total_time_abort_rpc_time) / BILLION
+        << ", time_abort_latency=" << (total_time_abort_rpc_time) / BILLION
+        << ", time_abort_latency_average=" << (total_time_abort_rpc_time) / BILLION / total_time_abort_rpc_count << endl
+        << ", time_wait=" << total_time_wait / BILLION << endl
+        << ", time_ts_alloc_total=" << (total_time_ts_alloc + total_time_ts_alloc_rpc_time) / BILLION
+        << ", time_ts_alloc_actual=" << (total_time_ts_alloc) / BILLION
+        << ", time_ts_alloc_latency=" << total_time_ts_alloc_rpc_time / BILLION
+        << ", time_ts_alloc_latency_average=" << total_time_ts_alloc_rpc_time / BILLION / total_time_ts_alloc_rpc_count
+        << ", time_man_total=" << (total_time_man - total_time_wait) / BILLION
+        << ", time_man_actual=" << (total_time_man - total_time_wait - total_time_man_rpc_time) / BILLION
+        << ", time_man_latency=" << (total_time_man_rpc_time) / BILLION
+        << ", time_man_latency_average=" << (total_time_man_rpc_time) / BILLION / total_time_man_rpc_count << endl
         << ", time_cleanup=" << total_time_cleanup / BILLION
         << ", latency=" << total_latency / BILLION / total_txn_cnt
         << ", time_query=" << total_time_query / BILLION
-        << ", debug1=" << total_debug1 / BILLION << ", debug2=" << total_debug2 << ", debug3=" << total_debug3 << ", debug4=" << total_debug4 << ", debug5=" << total_debug5
-        << ", time_man_latency=" << total_time_man_latency / BILLION
-        << ", time_man_count=" << total_time_man_count
-        << ", time_ts_alloc_latency=" << total_time_ts_alloc_latency / BILLION << endl;
+        << ", debug1=" << total_debug1 / BILLION << ", debug2=" << total_debug2 << ", debug3=" << total_debug3 << ", debug4=" << total_debug4 << ", debug5=" << total_debug5 << endl;
         if (g_prt_lat_distr)
             print_lat_distr();
     }

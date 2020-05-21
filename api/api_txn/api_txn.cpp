@@ -39,16 +39,17 @@ namespace dbx1000 {
 
 
 
-ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
+    ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
             )) {
         cout << "ApiTxnClient::ApiTxnClient connect to " << addr << " success." << endl;
     }
 
-    void ApiTxnClient::TxnReady(uint64_t thread_id) {
+    void ApiTxnClient::TxnReady(uint64_t thread_id, string thread_port) {
         /// gen request
         dbx1000::TxnReadyRequest request;
         request.set_thread_id(thread_id);
+        request.set_thread_host(thread_port);
         ::grpc::ClientContext context;
         dbx1000::TxnReadyReply reply;
         ::grpc::Status status = stub_->TxnReady(&context, request, &reply);
@@ -96,6 +97,9 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         grpc::ClientContext context;
         dbx1000::GetRowReply reply;
         grpc::Status status = stub_->GetRow(&context, request, &reply);
+        profiler.End();
+        uint64_t rpc_time = profiler.Nanos() - reply.run_time();
+
 /// debug
         if(!status.ok()) {
             /// debug
@@ -107,26 +111,26 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         assert(status.ok());
 
         RC rc = MyHelper::IntToRC(reply.rc());
-        if (RCOK == rc) {
+        if (RC::RCOK == rc) {
             assert(reply.row().size() == txn->accesses[accesses_index]->orig_row->size_);
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
-            profiler.End();
-            stats.tmp_stats[thread_id]->time_man_get_row_latency += (profiler.Nanos() - reply.run_time());
+            stats.tmp_stats[thread_id]->time_man_get_row_rpc_time += rpc_time;
         }
-        else if (WAIT == rc) {
-            profiler.End();
-            stats.tmp_stats[thread_id]->time_man_get_row_latency += (profiler.Nanos() - reply.run_time());
+        else if (RC::WAIT == rc) {
+            /// 假设两次写之间没有其他的写入，实际上并发度越高，中间可能存在更多的写，即更多的 rpc time
+            /// 0.5 个 rpc time 是由服务端 SetTsReady 引起的
+            stats.tmp_stats[thread_id]->time_man_get_row_rpc_time += rpc_time/2*5;
 
             dbx1000::Profiler profiler_wait;
             profiler_wait.Start();
             while (!txn->ts_ready) { PAUSE }
             profiler_wait.End();
-            stats.tmp_stats[thread_id]->time_wait += ( profiler_wait.Nanos() - (profiler.Nanos() - reply.run_time()) /2 );
+            stats.tmp_stats[thread_id]->time_wait += ( profiler_wait.Nanos() - (rpc_time/2*3 ));
 
             txn->ts_ready = true;
             memcpy(txn->accesses[accesses_index]->orig_row->row_, reply.row().data(), reply.row().size());
         }
-        stats.tmp_stats[thread_id]->time_man_get_row_count ++;
+        stats.tmp_stats[thread_id]->time_man_get_row_rpc_count ++;
         return rc;
     }
 
@@ -165,11 +169,12 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         grpc::ClientContext context;
         dbx1000::ReturnRowReply reply;
         grpc::Status status = stub_->ReturnRow(&context, request, &reply);
-
+        assert(status.ok());
         profiler.End();
-        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_count ++;
-//        cout << stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_count << endl;
-        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_latency += (profiler.Nanos() - reply.run_time());
+        uint64_t rpc_time = profiler.Nanos() - reply.run_time();
+
+        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_rpc_time += rpc_time;
+        stats.tmp_stats[txn->get_thd_id()]->time_man_return_row_rpc_count ++;
         assert(status.ok());
     }
 
@@ -195,7 +200,6 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         return reply.sim_done();
     }
 
-
     uint64_t ApiTxnClient::get_next_ts(uint64_t thread_id) {
         dbx1000::Profiler profiler;
         profiler.Start();
@@ -207,10 +211,13 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         dbx1000::GetNextTsReply reply;
         ::grpc::Status status = stub_->GetNextTs(&context, request, &reply);
         assert(status.ok());
+        profiler.End();
+        uint64_t rpc_time = profiler.Nanos() - reply.run_time();
 
         profiler.End();
         stats._stats[thread_id]->time_ts_alloc += reply.run_time();
-        stats._stats[thread_id]->time_ts_alloc_latency += (profiler.Nanos() - reply.run_time());
+        stats._stats[thread_id]->time_ts_alloc_rpc_time += rpc_time;
+        stats._stats[thread_id]->time_ts_alloc_rpc_count ++;
         return reply.timestamp();
     }
 
@@ -224,6 +231,27 @@ ApiTxnClient::ApiTxnClient(std::string addr) : stub_(dbx1000::DBx1000Service::Ne
         dbx1000::AddTsReply reply;
         ::grpc::Status status = stub_->AddTs(&context, request, &reply);
         assert(status.ok());
+    }
+
+    uint64_t ApiTxnClient::GetAndAddTs(uint64_t thread_id) {
+        dbx1000::Profiler profiler;
+        profiler.Start();
+        /// gen request
+        GetAndAddTsRequest request;
+        request.set_thread_id(thread_id);
+
+        grpc::ClientContext context;
+        GetAndAddTsReply reply;
+        ::grpc::Status status = stub_->GetAndAddTs(&context, request, &reply);
+        assert(status.ok());
+        profiler.End();
+        uint64_t rpc_time = profiler.Nanos() - reply.run_time();
+
+        profiler.End();
+        stats._stats[thread_id]->time_ts_alloc += reply.run_time();
+        stats._stats[thread_id]->time_ts_alloc_rpc_time += rpc_time;
+        stats._stats[thread_id]->time_ts_alloc_rpc_count ++;
+        return reply.timestamp();
     }
 
     void ApiTxnClient::ThreadDone(uint64_t thread_id) {

@@ -5,6 +5,7 @@
 #include <cstring>
 #include "manager_server.h"
 
+#include "api/api_cc/api_cc.h"
 #include "common/row_item.h"
 #include "common/txn_row_man.h"
 #include "server/buffer/buffer.h"
@@ -20,11 +21,12 @@ namespace dbx1000 {
 	    min_ts_ = 0;
 	    all_ts_ = new uint64_t[g_thread_cnt]();
 	    all_txns_ = new TxnRowMan[g_thread_cnt]();
-        txn_ready_ = new bool[g_thread_cnt]();
+        txn_port_ = new std::string[g_thread_cnt]();
+        api_con_ctl_clients_ = new ApiConCtlClient*[g_thread_cnt]();
         thread_done_ = new bool[g_thread_cnt]();
         for (uint32_t i = 0; i < g_thread_cnt; i++) {
             all_ts_[i] = UINT64_MAX;
-            txn_ready_[i] = false;
+            txn_port_[i] = "";
             thread_done_[i] = false;
         }
         init_wl_done_ = false;
@@ -37,10 +39,16 @@ namespace dbx1000 {
         init_wl_done_ = true;
     }
 
+    void ManagerServer::SetTxnReady(uint64_t thread_id, string host) {
+        txn_port_[thread_id] = host;
+        api_con_ctl_clients_[thread_id] = new ApiConCtlClient(host);
+        api_con_ctl_clients_[thread_id]->Test();
+    }
+
     bool ManagerServer::AllTxnReady() {
         bool flag = true;
         for(size_t i = 0; i < g_thread_cnt; i++) {
-            if(false == txn_ready_[i]) { flag = false; }
+            if("" == txn_port_[i]) { flag = false; }
         }
         return flag;
     }
@@ -56,8 +64,8 @@ namespace dbx1000 {
     uint64_t ManagerServer::get_next_ts(uint64_t thread_id) { return timestamp_.fetch_add(1, std::memory_order_consume); }
 
     void ManagerServer::add_ts(uint64_t thd_id, uint64_t ts) {
-        assert(ts >= all_ts_[thd_id] ||
-               all_ts_[thd_id] == UINT64_MAX);
+//        assert(ts >= all_ts_[thd_id] ||
+//               all_ts_[thd_id] == UINT64_MAX);
         all_ts_[thd_id] = ts;
     }
 

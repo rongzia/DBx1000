@@ -13,6 +13,7 @@ service DBx1000Service {
     rpc GetWlSimDone(GetWlSimDoneRequest) returns (GetWlSimDoneReply) {}
     rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
     rpc AddTs(AddTsRequest) returns (AddTsReply) {}
+    rpc GetAndAddTs(GetAndAddTsRequest) returns (GetAndAddTsReply) {}
     rpc ThreadDone(ThreadDoneRequest) returns (ThreadDoneReply) {}
 
     /// for cc
@@ -22,6 +23,7 @@ service DBx1000Service {
 
 message TxnReadyRequest{
     uint64 thread_id = 1;
+    string thread_host = 2;
 }
 message TxnReadyReply {}
 
@@ -93,7 +95,18 @@ message AddTsRequest {
     uint64 thread_id = 1;
     uint64 timestamp = 2;
 }
-message AddTsReply {}
+message AddTsReply {
+    uint64 run_time = 1;
+}
+
+message GetAndAddTsRequest {
+    uint64 thread_id = 1;
+}
+message GetAndAddTsReply {
+    uint64 timestamp = 1;
+    uint64 run_time = 2;
+}
+
 
 message TestRequest{}
 message TestReply{}

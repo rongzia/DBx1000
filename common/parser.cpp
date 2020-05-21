@@ -1,5 +1,8 @@
 #include <cassert>
+#include <iostream>
+#include <fstream>
 #include "global.h"
+#include "json/json.h"
 
 void print_usage() {
 	printf("[usage]:\n");
@@ -49,6 +52,20 @@ void parser(int argc, char * argv[]) {
 
 	for (int i = 1; i < argc; i++) {
 		assert(argv[i][0] == '-');
+		/// -client=1, 2, 3
+		if(std::string(&argv[i][0], 7) == "-client") {
+            Json::Reader reader;
+            Json::Value root;
+            ifstream in("../config.json", ios::binary);
+            assert(true == reader.parse(in, root));
+            txn_thread_host = root[(string("client")+&argv[i][8])]["ip"].asString() + ":" +
+                    root[(string("client")+&argv[i][8])]["port"].asString();
+//            cout << txn_thread_port << ", size:" << txn_thread_port.size() << endl;
+		}
+		/// -tid=
+		else if(std::string(&argv[i][0], 4) == "-tid") {
+            txn_thread_id = std::stoi(&argv[i][5]);
+		} else
 		if (argv[i][1] == 'a')
 			g_part_alloc = atoi( &argv[i][2] );
 		else if (argv[i][1] == 'm')

@@ -17,7 +17,7 @@
 
 namespace dbx1000 {
     ::grpc::Status ApiConCtlServer::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
-        glob_manager_server->txn_ready_[request->thread_id()] = true;
+        glob_manager_server->SetTxnReady(request->thread_id(), request->thread_host());
         return ::grpc::Status::OK;
     }
 
@@ -41,14 +41,14 @@ namespace dbx1000 {
         profiler.Start();
         glob_manager_server->SetTxn(request->txnman());
         RC rc = glob_manager_server->row_mvccs_[request->key()]->access(&glob_manager_server->all_txns_[thread_id], ts_type);
-        if(RCOK == rc) {
+        if(RC::RCOK == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
             response->set_row(glob_manager_server->all_txns_[thread_id].cur_row_->row_, glob_manager_server->all_txns_[thread_id].cur_row_->size_);
 
             profiler.End();
             response->set_run_time(profiler.Nanos());
             return ::grpc::Status::OK;
-        } if(Commit == rc || Abort == rc || WAIT == rc || ERROR == rc || FINISH == rc) {
+        } if(RC::Commit == rc || RC::Abort == rc || RC::WAIT == rc || RC::ERROR == rc || RC::FINISH == rc) {
             response->set_rc(MyHelper::RCToInt(rc));
 
             profiler.End();
@@ -98,7 +98,24 @@ namespace dbx1000 {
     }
 
     ::grpc::Status ApiConCtlServer::AddTs(::grpc::ServerContext* context, const ::dbx1000::AddTsRequest* request, ::dbx1000::AddTsReply* response) {
+        Profiler profiler;
+        profiler.Start();
         glob_manager_server->add_ts(request->thread_id(), request->timestamp());
+        response->set_run_time(profiler.Nanos());
+        profiler.End();
+        return ::grpc::Status::OK;
+    }
+
+    ::grpc::Status ApiConCtlServer::GetAndAddTs(::grpc::ServerContext* context, const ::dbx1000::GetAndAddTsRequest* request, ::dbx1000::GetAndAddTsReply* response) {
+        Profiler profiler;
+        profiler.Start();
+        uint64_t ts = glob_manager_server->get_next_ts(request->thread_id());
+        glob_manager_server->add_ts(request->thread_id(), ts);
+        profiler.End();
+        stats._stats[request->thread_id()]->time_ts_alloc += profiler.Nanos();
+
+        response->set_timestamp(ts);
+        response->set_run_time(profiler.Nanos());
         return ::grpc::Status::OK;
     }
 
