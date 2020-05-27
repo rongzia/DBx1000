@@ -18,12 +18,12 @@ namespace dbx1000 {
     ::grpc::Status ApiTxnServer::SetTsReady(::grpc::ServerContext* context, const ::dbx1000::SetTsReadyRequest* request, ::dbx1000::SetTsReadyReply* response) {
 //        cout << "ApiTxnServer::SetTsReady" << endl;
         uint64_t thread_id = request->thread_id();
-        int row_cnt = glob_manager_client->all_txns_[thread_id]->row_cnt;
+        int row_cnt = glob_manager_client->GetTxnMan(thread_id)->row_cnt;
 
-        glob_manager_client->all_txns_[thread_id]->ts_ready = true;
+        glob_manager_client->GetTxnMan(thread_id)->ts_ready = true;
 //        assert(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->size_ == request->cur_row().size()
 //            && request->cur_row().size() == request->cur_row().row().size());
-        memcpy(glob_manager_client->all_txns_[thread_id]->accesses[row_cnt]->orig_row->row_, request->cur_row().row().data(), request->cur_row().row().size());
+        memcpy(glob_manager_client->GetTxnMan(thread_id)->accesses[row_cnt]->orig_row->row_, request->cur_row().row().data(), request->cur_row().row().size());
 
         return ::grpc::Status::OK;
     }
@@ -45,11 +45,12 @@ namespace dbx1000 {
         cout << "ApiTxnClient::ApiTxnClient connect to " << addr << " success." << endl;
     }
 
-    void ApiTxnClient::TxnReady(uint64_t thread_id, string thread_port) {
+    void ApiTxnClient::TxnReady(uint64_t thread_id, const string& thread_host) {
+        cout << "ApiTxnClient::TxnReady, thread_id:" << thread_id << ", thread_port" << thread_host << endl;
         /// gen request
         dbx1000::TxnReadyRequest request;
         request.set_thread_id(thread_id);
-        request.set_thread_host(thread_port);
+        request.set_thread_host(thread_host);
         ::grpc::ClientContext context;
         dbx1000::TxnReadyReply reply;
         ::grpc::Status status = stub_->TxnReady(&context, request, &reply);

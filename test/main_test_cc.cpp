@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
     delete db;
     cout << endl << "delete m_wl" << endl;
     delete m_wl;
-    delete api_con_ctl_client;
+//    delete api_con_ctl_client;
     delete glob_manager_server;
 
     cout << "exit main." << endl;

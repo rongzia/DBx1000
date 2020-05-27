@@ -29,7 +29,7 @@ namespace dbx1000 {
         ApiTxnClient &operator=(const ApiTxnClient &) = delete;
 
         /// 告知 cc 服务，该事务已经准备好，即该事务的服务 rpc 进程已经启动
-        void TxnReady(uint64_t thread_id, string thread_port);
+        void TxnReady(uint64_t thread_id, const string& thread_host);
         /// 查看 cc 服务的 init_wl 是否完成
         bool InitWlDone();
         /// 从 cc 服务 获取行大小

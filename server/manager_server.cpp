@@ -39,10 +39,10 @@ namespace dbx1000 {
         init_wl_done_ = true;
     }
 
-    void ManagerServer::SetTxnReady(uint64_t thread_id, string host) {
+    void ManagerServer::SetTxnReady(uint64_t thread_id, const std::string& host) {
         txn_port_[thread_id] = host;
         api_con_ctl_clients_[thread_id] = new ApiConCtlClient(host);
-        api_con_ctl_clients_[thread_id]->Test();
+//        api_con_ctl_clients_[thread_id]->Test();
     }
 
     bool ManagerServer::AllTxnReady() {

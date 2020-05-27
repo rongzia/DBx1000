@@ -52,7 +52,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 //			orig_r->return_row(type, this, accesses[rid]->data);
 #ifdef WITH_RPC
-            api_txn_client->ReturnRow(accesses[rid]->orig_row->key_, type, this, rid);
+            glob_manager_client->api_txn_client()->ReturnRow(accesses[rid]->orig_row->key_, type, this, rid);
 #else
             dbx1000::API::return_row(accesses[rid]->orig_row->key_, type, this, rid);
 #endif // WITH_RPC
@@ -71,8 +71,8 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	RC rc = RC::RCOK;
 	if (accesses[row_cnt] == NULL) {
 		accesses[row_cnt] = new Access();
-		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size_);
-		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size_);
+		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size());
+		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size());
 		num_accesses_alloc ++;
 	} else {
 	    assert(accesses[row_cnt]->orig_row->row_ != nullptr);
@@ -82,7 +82,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 
 	this->ts_ready = false;
 #ifdef WITH_RPC
-	rc = api_txn_client->GetRow(key, type, this, row_cnt);
+	rc = glob_manager_client->api_txn_client()->GetRow(key, type, this, row_cnt);
 #else
     rc = dbx1000::API::get_row(key, type, this, row_cnt);
 #endif // WITH_RPC
@@ -92,7 +92,7 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	}
 	accesses[row_cnt]->type = type;
 	if(RD != type && SCAN != type) {
-        memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size_);
+        memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size());
     }
 	row_cnt ++;
 	if (type == WR) { wr_cnt ++; }

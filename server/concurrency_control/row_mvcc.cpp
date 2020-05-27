@@ -488,7 +488,7 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 #endif
 			_requests[i].txn->ts_ready_ = true;
 #ifdef WITH_RPC
-			api_con_ctl_client->SetTsReady(_requests[i].txn);
+			glob_manager_server->api_con_ctl_clients_[_requests[i].txn->thread_id_]->SetTsReady(_requests[i].txn);
 #else
 			dbx1000::API::SetTsReady(_requests[i].txn);
 #endif // WITH_RPC
@@ -507,7 +507,7 @@ void Row_mvcc::update_buffer(dbx1000::TxnRowMan* local_txn, TsType type) {
 #endif
 			_requests[i].txn->ts_ready_ = true;
 #ifdef WITH_RPC
-			api_con_ctl_client->SetTsReady(_requests[i].txn);
+			glob_manager_server->api_con_ctl_clients_[_requests[i].txn->thread_id_]->SetTsReady(_requests[i].txn);
 #else
 			dbx1000::API::SetTsReady(_requests[i].txn);
 #endif // WITH_RPC

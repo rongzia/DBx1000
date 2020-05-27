@@ -41,7 +41,7 @@ namespace dbx1000 {
         TxnRowMan* SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready
                           , uint64_t key, char* row, size_t size, uint64_t timestamp);
 
-        void SetTxnReady(uint64_t thread_id, std::string host);
+        void SetTxnReady(uint64_t thread_id, const std::string& host);
         bool AllTxnReady();
         bool AllThreadDone();
 

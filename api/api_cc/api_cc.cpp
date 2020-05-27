@@ -17,7 +17,10 @@
 
 namespace dbx1000 {
     ::grpc::Status ApiConCtlServer::TxnReady(::grpc::ServerContext* context, const ::dbx1000::TxnReadyRequest* request, ::dbx1000::TxnReadyReply* response) {
+        cout << "ApiConCtlServer::TxnReady, thread_id: " << request->thread_id() << ", thread_host: " << request->thread_host() << endl;
+//        cout << glob_manager_server->txn_port_[request->thread_id()] << endl;
         glob_manager_server->SetTxnReady(request->thread_id(), request->thread_host());
+        cout << "out ApiConCtlServer::TxnReady" << endl;
         return ::grpc::Status::OK;
     }
 

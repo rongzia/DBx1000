@@ -130,7 +130,7 @@ RC thread_t::run() {
 //            m_txn->set_ts(get_next_ts());
 #ifdef WITH_RPC
 //            m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
-            m_txn->set_ts(api_txn_client->GetAndAddTs(this->get_thd_id()));
+            m_txn->set_ts(glob_manager_client->api_txn_client()->GetAndAddTs(this->get_thd_id()));
 #else
             m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
 #endif // WITH_RPC
@@ -226,9 +226,13 @@ RC thread_t::run() {
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART （100000）时，就退出线程
 		if (warmup_finish && stats._stats[thread_id_]->txn_cnt >= MAX_TXN_PER_PART) {
-			assert(stats._stats[thread_id_]->txn_cnt == MAX_TXN_PER_PART);
+		    if (stats._stats[thread_id_]->txn_cnt != MAX_TXN_PER_PART) {
+		        cout << " stats._stats[thread_id_]->txn_cnt : " << stats._stats[thread_id_]->txn_cnt << endl;
+		    }
+
+//			assert(stats._stats[thread_id_]->txn_cnt == MAX_TXN_PER_PART);
 #ifdef WITH_RPC
-			api_txn_client->SetWlSimDone();
+			glob_manager_client->api_txn_client()->SetWlSimDone();
 #else
             dbx1000::API::set_wl_sim_done();
 #endif // WITH_RPC
@@ -236,7 +240,7 @@ RC thread_t::run() {
 
 		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 #ifdef WITH_RPC
-	    if (true == api_txn_client->GetWlSimDone()) {
+	    if (true == glob_manager_client->api_txn_client()->GetWlSimDone()) {
 #else
 	    if (true == dbx1000::API::get_wl_sim_done()) {
 #endif // WITH_RPC

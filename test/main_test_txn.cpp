@@ -22,8 +22,8 @@
 
 using namespace std;
 
-void RunTxnServer() {
-    std::string txn_server_address("0.0.0.0:" + txn_thread_host);
+void RunTxnServer(const std::string& port) {
+    std::string txn_server_address("0.0.0.0:" + port);
   	dbx1000::ApiTxnServer service;
 
   	grpc::ServerBuilder builder;
@@ -43,18 +43,17 @@ int main(int argc, char* argv[]) {
     cout << "mian test txn thread" << endl;
 	parser(argc, argv);
 
-    api_txn_client = new dbx1000::ApiTxnClient("10.11.6.120:50051");
-    std::thread txn_server(RunTxnServer);
+    std::thread txn_server(RunTxnServer, txn_thread_host.substr(txn_thread_host.find(":")+1));
     txn_server.detach();
-
-    api_txn_client->TxnReady(txn_thread_id, txn_thread_host);
-
-    while(!api_txn_client->InitWlDone()) {PAUSE}
-
 
     glob_manager_client = new dbx1000::ManagerClient();
     glob_manager_client->init();
-    glob_manager_client->row_size_ = api_txn_client->GetRowSize();
+    glob_manager_client->api_txn_client()->TxnReady(txn_thread_id, txn_thread_host);
+
+
+
+    while(!glob_manager_client->api_txn_client()->InitWlDone()) {PAUSE}
+    glob_manager_client->SetRowSize(glob_manager_client->api_txn_client()->GetRowSize());
 
     query_queue = new Query_queue();
     query_queue->init();
@@ -64,15 +63,15 @@ int main(int argc, char* argv[]) {
 
     thread_t *thread_t_s = new thread_t[1]();
     std::vector<std::thread> v_thread;
-    for(int i = 0; i < g_thread_cnt; i++) {
-        thread_t_s[i].init(i);
+    for(int i = 0; i < 1; i++) {
+        thread_t_s[i].init(txn_thread_id);
         v_thread.emplace_back(f, &thread_t_s[i]);
     }
-    for(int i = 0; i < g_thread_cnt; i++) {
+    for(int i = 0; i < 1; i++) {
         v_thread[i].join();
     }
 
-    api_txn_client->ThreadDone(txn_thread_id);
+    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
     stats.print_rpc();
 
     cout << "exit main." << endl;
