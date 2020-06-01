@@ -6,26 +6,39 @@
 #define DBX1000_MANAGER_CLIENT_H
 
 #include <cstdint>
+#include <string>
+#include "common/workload/wl.h"
 
 class txn_man;
+class workload;
+class Query_queue;
 
 namespace dbx1000 {
     class ApiTxnClient;
 
     class ManagerClient {
     public:
-        void init();
-        void SetTxnMan(txn_man* txnMan);
-        txn_man* GetTxnMan(uint64_t txn_id);
-        ApiTxnClient* api_txn_client();
-        uint64_t row_size();
-        void SetRowSize(uint64_t size);
+        static size_t process_cnt_;
+        static size_t thread_cnt_;
+
+        void Init();
+
+        void SetTxnMan(txn_man *txnMan);
+        txn_man *GetTxnMan(uint64_t txn_id);
+
+        ApiTxnClient *api_txn_client();
+        workload *m_wl();
+        Query_queue *query_queue();
+        std::string host();
+//        uint64_t process_id();
 
     private:
-        txn_man** all_txns_;
-        uint64_t row_size_;
-        ApiTxnClient* api_txn_client_;
-
+        std::string host_;
+//        uint64_t process_id_;
+        txn_man **all_txn_mans_;
+        ApiTxnClient *api_txn_client_;
+        workload *m_wl_;
+        Query_queue *query_queue_;
     };
 }
 

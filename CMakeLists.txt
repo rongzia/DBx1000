@@ -11,7 +11,6 @@ SET (CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 add_definitions(-DNOGRAPHITE=1)
 
 
-
 ### ******************************* grpc *******************************:
 add_definitions(-DWITH_RPC)
 option(WITH_RPC "if use rpc then on, else off?" ON)
@@ -65,15 +64,15 @@ set(SRC_FILES
         common/txn_row_man.cpp
         common/parser.cpp
         common/mystats.cpp
-        server/buffer/lru_index.cpp
-        server/buffer/lru.cpp
-        server/buffer/buffer.cpp
+        common/buffer/lru_index.cpp
+        common/buffer/lru.cpp
+        common/buffer/buffer.cpp
         server/concurrency_control/row_mvcc.cpp
-        server/storage/catalog.cpp
-        server/storage/table.cpp
+        common/storage/catalog.cpp
+        common/storage/table.cpp
 #        server/workload/tpcc_wl.cpp
-        server/workload/ycsb_wl.cpp
-        server/workload/wl.cpp
+        common/workload/ycsb_wl.cpp
+        common/workload/wl.cpp
         server/manager_server.cpp
         util/arena.cpp
         config.cpp
@@ -114,9 +113,9 @@ target_link_libraries(test_query pthread)
 
 ### ******************************* test buffer *******************************
 add_executable(test_buffer test/test_buffer.cpp
-        server/buffer/buffer.cpp server/buffer/lru_index.cpp server/buffer/lru.cpp common/global.cpp)
+        common/buffer/buffer.cpp common/buffer/lru_index.cpp common/buffer/lru.cpp common/global.cpp)
 target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
-add_executable(test_lru test/test_lru.cpp server/buffer/lru.cpp server/buffer/lru_index.cpp common/global.cpp)
+add_executable(test_lru test/test_lru.cpp common/buffer/lru.cpp common/buffer/lru_index.cpp common/global.cpp)
 
 ### ******************************* other test *******************************
 add_executable(test_1 test/test_1.cpp)

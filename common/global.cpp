@@ -27,9 +27,9 @@ dbx1000::ManagerServer * glob_manager_server;
 dbx1000::ManagerClient * glob_manager_client;
 //dbx1000::ApiTxnClient* api_txn_client;
 //dbx1000::ApiConCtlClient* api_con_ctl_client;
-std::string txn_thread_host;
-uint64_t txn_thread_id;
-Query_queue * query_queue;
+//std::string txn_thread_host;
+uint64_t process_id;
+//Query_queue * query_queue;
 //Plock part_lock_man;
 //OptCC occ_man;
 #if CC_ALG == VLL

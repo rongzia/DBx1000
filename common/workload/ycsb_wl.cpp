@@ -130,12 +130,4 @@ void * ycsb_wl::init_table_slice() {
 	}
     delete rowItem;
 }
-/*
-! h_thd = 0, 1, 2, 3
-RC ycsb_wl::get_txn_man(txn_man *& txn_manager, thread_t * h_thd){
-    txn_manager = new ycsb_txn_man();
-	txn_manager->init(h_thd, this, h_thd->get_thd_id());
-	return RCOK;
-}
-*/
 

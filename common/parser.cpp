@@ -53,7 +53,7 @@ void parser(int argc, char * argv[]) {
 	for (int i = 1; i < argc; i++) {
 		assert(argv[i][0] == '-');
 		/// -tid=1, 2, 3...
-		if(std::string(&argv[i][0], 4) == "-tid") {
+		if(std::string(&argv[i][0], 4) == "-pid") {
             txn_thread_id = std::stoi(&argv[i][5]);
 
             Json::Reader reader;

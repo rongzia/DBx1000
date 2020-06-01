@@ -4,6 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
+#define THREAD_CNT_PER_NODE         1
 #define THREAD_CNT					1
 #define PROCESS_CNT					4
 #define PART_CNT					1
@@ -227,6 +228,6 @@ extern TestCases					g_test_case;
 //#define DB_NUM_ITEM SYNTH_TABLE_SIZE
 //#define DB_NUM_ITEM (1024 * 1024)     // 1 M
 //#define WARMUP_LEVELDB
-
+#define PROJECT_ROOT_PATH "/home/zhangrongrong/CLionProjects/DBx1000/"
 
 #endif
