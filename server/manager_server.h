@@ -1,65 +1,74 @@
 //
-// Created by rrzhang on 2020/4/26.
+// Created by rrzhang on 2020/6/3.
 //
 
 #ifndef DBX1000_MANAGER_SERVER_H
 #define DBX1000_MANAGER_SERVER_H
 
-#include <atomic>
-#include <unordered_map>
-#include <mutex>
-#include <memory>
+#include <cstdint>
 #include <string>
-#ifdef WITH_RPC
-#include "api/proto/api.pb.h"
-#endif // WITH_RPC
 
-class Row_mvcc;
-//class workload;
-class ycsb_wl;
+class workload;
 
 namespace dbx1000 {
 
-    class TxnRowMan;
-    class RowItem;
     class Buffer;
-    class Mess_TxnRowMan;
-    class ApiConCtlClient;
+    class Index;
+    class LockTable;
+    class TableSpace;
+    class Stats;
+    class InstanceClient;
+
 
     class ManagerServer {
     public:
         ManagerServer();
-        void InitWl(ycsb_wl* wl);
+        ManagerServer(const ManagerServer&) = delete;
+        ManagerServer &operator=(const ManagerServer&) = delete;
 
-        uint64_t get_next_ts(uint64_t thread_id);     /// 获取下个一个时间戳
-        void add_ts(uint64_t thread_id, uint64_t ts);
-        uint64_t GetMinTs(uint64_t thread_id = 0);
+        struct InstanceInfo {
+            uint16_t instance_id;
+            uint16_t thread_num;
+            std::string host;
+            bool init_done;
+            InstanceClient* instance_rpc_handler;
+        };
 
-#ifdef WITH_RPC
-        TxnRowMan* SetTxn(Mess_TxnRowMan messTxnRowMan);
-#endif // WITH_RPC
-        TxnRowMan* SetTxn(uint64_t thread_id, uint64_t txn_id, bool ts_ready
-                          , uint64_t key, char* row, size_t size, uint64_t timestamp);
 
-        void SetTxnReady(uint64_t thread_id, const std::string& host);
-        bool AllTxnReady();
-        bool AllThreadDone();
+        /// getter and setter
+        Buffer* buffer();
+        Index *index();
+        LockTable *lock_table();
+        TableSpace *table_space();
+        workload *m_workload();
+        Stats* stats();
+        bool init_done() const;
+        const std::string& host() const;
+        InstanceInfo* instances();
+        void set_buffer(Buffer*);
+        void set_index(Index*);
+        void set_lock_table(LockTable *);
+        void set_table_space(TableSpace *);
+        void set_m_workload(workload *);
+        void set_stats(Stats*);
+        void set_init_done(bool);
+        void set_host(const std::string&);
+        void set_instances_i(InstanceInfo*);
 
-//    private:
-        std::unordered_map<uint64_t, Row_mvcc*> row_mvccs_;
-        std::mutex row_mvccs_mutex_;                        // TODO : 尝试不用锁
 
-        std::atomic<uint64_t> timestamp_;
-        uint64_t*   all_ts_;
-        uint64_t    min_ts_;
-        TxnRowMan* all_txns_;
-        ycsb_wl* wl_;
+    private:
+        bool CheckDB();
 
-        /// for txn thread
-        std::string* txn_port_;
-        ApiConCtlClient** api_con_ctl_clients_;
-        bool* thread_done_;
-        bool init_wl_done_;
+        Buffer* buffer_;
+        Index* index_;
+        LockTable* lock_table_;
+        TableSpace* table_space_;
+        workload* m_workload_;
+        Stats* stats_;
+
+        bool init_done_;
+        std::string host_;
+        InstanceInfo* instances_;
     };
 }
 

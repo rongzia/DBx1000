@@ -6,29 +6,32 @@
 #include "lru_index.h"
 
 namespace dbx1000 {
-    RowNode* LruIndex::IndexGet(uint64_t key, IndexFlag *flag) {
-        auto iter = lru_map_.find(key);
-        /// 不存在 key
+    PageNode* LruIndex::IndexGet(uint64_t page_id, LruIndexFlag *flag) {
+        auto iter = lru_map_.find(page_id);
+
         if(iter == lru_map_.end()) {
-            *flag = IndexFlag::NOT_EXIST;
+            *flag = LruIndexFlag::NOT_EXIST;
             return nullptr;
         }
-        /// key 存在，但是内存没有, 只在 disk 中
-        if(nullptr == iter->second){
-            *flag = IndexFlag::IN_DISK;
-            return nullptr;
-        }
-        *flag = IndexFlag::IN_BUFFER;
+
+        *flag = LruIndexFlag::EXIST;
         assert(nullptr != iter->second);
         return iter->second;
     }
 
-    void LruIndex::IndexInsert(uint64_t key, RowNode* row_node) {
-        auto iter = lru_map_.find(key);
+    void LruIndex::IndexPut(uint64_t page_id, PageNode* page_node) {
+        auto iter = lru_map_.find(page_id);
         if(lru_map_.end() != iter) {
             lru_map_.erase(iter);
         }
-        lru_map_.insert(std::pair<uint64_t, RowNode*>(key, row_node));
+        lru_map_.insert(std::pair<uint64_t, PageNode*>(page_id, page_node));
+    }
+
+    void LruIndex::IndexDelete(uint64_t page_id) {
+        auto iter = lru_map_.find(page_id);
+        if(lru_map_.end() != iter) {
+            lru_map_.erase(iter);
+        }
     }
 
     void LruIndex::Print() {
@@ -36,7 +39,7 @@ namespace dbx1000 {
         int count = 0;
         for (auto &iter : lru_map_) {
             if (count % 10 == 0) { std::cout << "    "; }
-            std::cout << ", {key:" << iter.first << ", row:" << iter.second << "}";
+            std::cout << ", {key:" << iter.first << ", page:" << iter.second << "}";
             count++;
             if (count % 10 == 0) { std::cout << std::endl; }
         }

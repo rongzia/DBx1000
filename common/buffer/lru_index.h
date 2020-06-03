@@ -9,22 +9,22 @@
 #include <unordered_map>
 
 namespace dbx1000 {
-    class RowNode;
+    class PageNode;
 
-    enum class IndexFlag{
+    enum class LruIndexFlag{
+        EXIST,
         NOT_EXIST,
-        IN_BUFFER,
-        IN_DISK,
     };
 
     class LruIndex {
     public:
-        RowNode* IndexGet(uint64_t key, IndexFlag *flag);
-        void IndexInsert(uint64_t key, RowNode* row_node);
+        PageNode* IndexGet(uint64_t page_id, LruIndexFlag *flag);
+        void IndexPut(uint64_t page_id, PageNode* page_node);
+        void IndexDelete(uint64_t page_id);
 
         void Print();
     private:
-        std::unordered_map<uint64_t, RowNode*> lru_map_;
+        std::unordered_map<uint64_t, PageNode*> lru_map_;
     };
 } // namespace dbx1000
 

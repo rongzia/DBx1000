@@ -2,9 +2,9 @@
 #include "wl.h"
 
 #include "common/global.h"
-#include "server/storage/catalog.h"
-#include "server/storage/table.h"
-#include "server/buffer/buffer.h"
+#include "common/storage/catalog.h"
+#include "common/storage/table.h"
+#include "common/buffer/buffer.h"
 #include "util/arena.h"
 #include "util/numbercomparator.h"
 #include "util/make_unique.h"

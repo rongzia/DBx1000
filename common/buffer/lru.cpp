@@ -3,70 +3,76 @@
 //
 #include <memory>
 #include <cassert>
+#include <iostream>
+#include "tablespace/page.h"
 #include "lru.h"
 
 namespace dbx1000 {
-    RowNode::RowNode()
-            : key_(UINT64_MAX)
-            , row_(nullptr) {
+    PageNode::PageNode() {
         prev_ = next_ = nullptr;
     }
 
-    RowNode::RowNode(char* row)
-            : key_(UINT64_MAX)
-            , row_(row){
+    PageNode::PageNode(char* page_buf) {
+        page_ = new Page(page_buf);
         prev_ = next_ = nullptr;
+    }
+
+    PageNode::~PageNode() {
+        /// page_ 的空间是由缓存池提供的，不需要在这里释放，交给 buffer
+//        delete page_;
     }
 
     LRU::LRU(int item_size)
-            : size_(0)
-            , item_size_(item_size){
-        head_ = new RowNode();
+            : size_(0) {
+        head_ = new PageNode();
         tail_ = head_;
     }
 
     LRU::~LRU() {
-        std::cout << "~LRU" <<std::endl;
+        PageNode* page_node = head_->next_;
+        while(nullptr != page_node) {
+            delete page_node;
+            page_node = page_node->next_;
+        }
     }
 
-    void LRU::Prepend(RowNode* row_node) {
+    void LRU::Prepend(PageNode* page_node) {
         if(tail_ == head_) {
-            tail_ = row_node;
-            assert(nullptr == tail_->next_);
-//            tail_->next_ = nullptr;
+            tail_ = page_node;
+//            assert(nullptr == tail_->next_);
         }
 
-        row_node->prev_ = head_;
-        row_node->next_ = head_->next_;
-        if(nullptr != row_node->next_) {
-            row_node->next_->prev_ = row_node;
+        page_node->prev_ = head_;
+        page_node->next_ = head_->next_;
+        if(nullptr != page_node->next_) {
+            page_node->next_->prev_ = page_node;
         }
-        row_node->prev_->next_ = row_node;
+        page_node->prev_->next_ = page_node;
 
         size_++;
     }
 
-    void LRU::Get(RowNode* row_node) {
-        if(tail_ == row_node) {
+    void LRU::Get(PageNode* page_node) {
+        if(tail_ == page_node) {
             tail_ = tail_->prev_;
             tail_->next_ = nullptr;
-            row_node->prev_ = row_node->next_ = nullptr;
-            Prepend(row_node);
+            page_node->prev_ = page_node->next_ = nullptr;
+            Prepend(page_node);
             size_--;
         } else {
-            assert(nullptr != row_node->next_);
-            assert(nullptr != row_node->prev_);
-            row_node->prev_->next_ = row_node->next_;
-            row_node->next_->prev_ = row_node->prev_;
-            row_node->prev_ = row_node->next_ = nullptr;
-            Prepend(row_node);
+//            assert(nullptr != page_node->next_);
+//            assert(nullptr != page_node->prev_);
+            page_node->prev_->next_ = page_node->next_;
+            page_node->next_->prev_ = page_node->prev_;
+            page_node->prev_ = page_node->next_ = nullptr;
+            Prepend(page_node);
             size_--;
         }
     }
 
-    RowNode* LRU::Popback() {
+    PageNode* LRU::Popback() {
         assert(tail_ != head_);
-        RowNode* temp = tail_;
+        PageNode* temp = tail_;
         tail_ = tail_->prev_;
         tail_->next_ = nullptr;
         temp->prev_ = temp->next_ = nullptr;
@@ -74,45 +80,44 @@ namespace dbx1000 {
         return temp;
     }
 
-    int LRU::Size() { return size_; };
+    int LRU::size() { return size_; };
+//    PageNode* LRU::head() { return head_;};
+//    PageNode* LRU::tail() { return tail_;};
 
     void LRU::DebugSize() {
         int count = 0;
-        RowNode* rowNode = head_->next_;
-        while(nullptr != rowNode) {
+        PageNode* page_node = head_->next_;
+        while(nullptr != page_node) {
             count++;
-            rowNode = rowNode->next_;
+            page_node = page_node->next_;
         }
         assert(size_ == count);
     }
 
-    RowNode* LRU::Head() { return head_;};
-
-    RowNode* LRU::Tail() { return tail_;};
 
     void LRU::Print() {
         std::cout << "list size:" << size_ << std::endl;
-        RowNode* rowNode = head_->next_;
+        PageNode* page_node = head_->next_;
         std::cout << "    head --> ";
-        while(nullptr != rowNode) {
-            std::cout << rowNode->key_ << " : " << std::string(rowNode->row_, item_size_) << " : " << rowNode << " --> ";
-            rowNode = rowNode->next_;
+        while(nullptr != page_node) {
+            std::cout << "page_id:" << page_node->page_->page_id() << ", page_buf:" << std::string(page_node->page_->page_buf(), page_node->page_->page_size()) << ", addr of page_node:" << page_node << " --> ";
+            page_node = page_node->next_;
         }
-        if(nullptr == rowNode){
+        if(nullptr == page_node){
             std::cout << "nullptr" << std::endl;
         }
 
-        rowNode = tail_;
+        page_node = tail_;
         std::cout << "    ";
-        while (rowNode != head_) {
-            std::cout << rowNode->key_ << " : " << std::string(rowNode->row_, item_size_) << " : " << rowNode << " --> ";
-            rowNode = rowNode->prev_;
+        while (page_node != head_) {
+            std::cout << "page_id:" << page_node->page_->page_id() << ", page_buf:" << std::string(page_node->page_->page_buf(), page_node->page_->page_size()) << ", addr of page_node:" << page_node << " --> ";
+            page_node = page_node->prev_;
         }
-        if(rowNode == head_) {
+        if(page_node == head_) {
             std::cout << "head --> ";
-            rowNode = rowNode->prev_;
+            page_node = page_node->prev_;
         }
-        if(nullptr == rowNode) {
+        if(nullptr == page_node) {
             std::cout << "nullptr" << std::endl;
         }
     }

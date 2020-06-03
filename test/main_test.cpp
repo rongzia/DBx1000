@@ -16,7 +16,7 @@
 #include "util/numbercomparator.h"
 //#include "cs_api.h"
 #include "common/global.h"
-#include "server/manager_server.h"
+#include "server/manager_server.bak.h"
 #include "client/manager_client.h"
 #include "client/benchmarks/query.h"
 #include "client/benchmarks/ycsb_query.h"

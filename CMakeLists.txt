@@ -73,7 +73,7 @@ set(SRC_FILES
 #        server/workload/tpcc_wl.cpp
         common/workload/ycsb_wl.cpp
         common/workload/wl.cpp
-        server/manager_server.cpp
+        server/manager_server.bak.cpp
         util/arena.cpp
         config.cpp
         )
@@ -94,7 +94,7 @@ endif ()
 #target_link_libraries(rundb libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
 
 if(${WITH_RPC})
-    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES})
+    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES} server/manager_server.cpp server/manager_server.h test/other_test.cpp)
     add_executable(main_test_txn test/main_test_txn.cpp ${SRC_FILES})
     target_link_libraries(main_test_cc libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
     target_link_libraries(main_test_txn libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
@@ -112,18 +112,10 @@ add_executable(test_query client/benchmarks/test_query.cpp
 target_link_libraries(test_query pthread)
 
 ### ******************************* test buffer *******************************
-add_executable(test_buffer test/test_buffer.cpp
-        common/buffer/buffer.cpp common/buffer/lru_index.cpp common/buffer/lru.cpp common/global.cpp)
-target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
-add_executable(test_lru test/test_lru.cpp common/buffer/lru.cpp common/buffer/lru_index.cpp common/global.cpp)
+#add_executable(test_buffer test/test_buffer.cpp
+#        common/buffer/buffer.cpp common/buffer/lru_index.cpp common/buffer/lru.cpp common/global.cpp)
+#target_link_libraries(test_buffer libleveldb.a libsnappy.a libpthread.so)
+#add_executable(test_lru test/test_lru.cpp common/buffer/lru.cpp common/buffer/lru_index.cpp common/global.cpp)
 
 ### ******************************* other test *******************************
-add_executable(test_1 test/test_1.cpp)
-add_executable(test_arena test/test_arena.cpp util/arena.cpp)
-add_executable(test_fstream test/test_fstream.cpp)
-add_executable(test_slice test/test_slice.cpp)
-add_executable(test_leveldb_comparetor test/test_leveldb_comparetor.cpp)
-target_link_libraries(test_leveldb_comparetor libleveldb.a libsnappy.a libpthread.so)
-add_executable(test_unordered_map test/test_unordered_map.cpp)
-add_executable(test_jsoncpp test/test_jsoncpp.cpp)
-target_link_libraries(test_jsoncpp libjsoncpp.a)
+add_executable(other_test test/other_test.cpp)

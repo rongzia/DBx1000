@@ -9,7 +9,7 @@
 #include "api/proto/dbx1000_service_util.h"
 #include "common/row_item.h"
 #include "common/myhelper.h"
-#include "server/manager_server.h"
+#include "server/manager_server.bak.h"
 #include "server/concurrency_control/row_mvcc.h"
 #include "server/workload/ycsb_wl.h"
 #include "server/storage/table.h"

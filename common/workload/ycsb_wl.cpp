@@ -2,16 +2,16 @@
 
 #include <sched.h>
 #include <thread>
-#include <server/manager_server.h>
+#include <server/manager_server.bak.h>
 
 #include "ycsb_wl.h"
 
 #include "leveldb/db.h"
 #include "common/global.h"
 #include "common/row_item.h"
-#include "server/buffer/buffer.h"
-#include "server/storage/table.h"
-#include "server/storage/catalog.h"
+#include "common/buffer/buffer.h"
+#include "common/storage/table.h"
+#include "common/storage/catalog.h"
 #include "server/concurrency_control/row_mvcc.h"
 #include "util/profiler.h"
 #include "util/arena.h"
@@ -26,15 +26,8 @@ ycsb_wl::~ycsb_wl(){
     cout << "ycsb_wl::~ycsb_wl()" << endl;
 }
 
-RC ycsb_wl::init(
-//#ifdef USE_MEMORY_DB
-//    dbx1000::MemoryDB* db
-//#else
-//    leveldb::DB* db
-//#endif
-) {
+RC ycsb_wl::init() {
     cout << "ycsb_wl::init()" << endl;
-//	workload::init(db);
 	workload::init();
 	next_tid = 0;
     db_has_inited = false;
@@ -58,18 +51,6 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
-#ifndef USE_MEMORY_DB
-    leveldb::Iterator *first = buffer_->db_->NewIterator(leveldb::ReadOptions());
-    leveldb::Iterator *last = buffer_->db_->NewIterator(leveldb::ReadOptions());
-    first->SeekToFirst();
-    last->SeekToLast();
-    if (first->Valid() && 0 == stoll(first->key().ToString())
-        && last->Valid() && g_synth_table_size - 1 <= stoll(last->key().ToString())
-            ) {
-        db_has_inited = true;
-    }
-#endif
-
     cout << "db_has_inited : " << db_has_inited << endl;
     cout << "ycsb_wl::init_table, table size:" << g_synth_table_size << endl;
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
@@ -94,7 +75,7 @@ void ycsb_wl::init_table_parallel() {
 }
 //! 初始化单个区间
 void * ycsb_wl::init_table_slice() {
-    uint32_t tid = next_tid.fetch_add(1, std::memory_order_seq_cst);
+    uint32_t tid = next_tid.fetch_add(1);
 
 //	cout << tid << endl;
 //	set_affinity(tid);      /// 绑定到物理核
@@ -122,11 +103,11 @@ void * ycsb_wl::init_table_slice() {
         }
 #endif
 
-		Row_mvcc *rowMvcc = new (arenas_[tid]->Allocate(sizeof(Row_mvcc)))Row_mvcc();
-		rowMvcc->init(rowItem);
-		glob_manager_server->row_mvccs_mutex_.lock();
-		glob_manager_server->row_mvccs_.insert(std::pair<uint64_t, Row_mvcc*>(key, rowMvcc));
-        glob_manager_server->row_mvccs_mutex_.unlock();
+//		Row_mvcc *rowMvcc = new (arenas_[tid]->Allocate(sizeof(Row_mvcc)))Row_mvcc();
+//		rowMvcc->init(rowItem);
+//		glob_manager_server->row_mvccs_mutex_.lock();
+//		glob_manager_server->row_mvccs_.insert(std::pair<uint64_t, Row_mvcc*>(key, rowMvcc));
+//        glob_manager_server->row_mvccs_mutex_.unlock();
 	}
     delete rowItem;
 }

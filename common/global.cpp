@@ -2,7 +2,7 @@
 
 //#include "stats.h"
 //#include "manager.h"
-#include "server/manager_server.h"
+#include "server/manager_server.bak.h"
 #include "client/manager_client.h"
 //#include "query.h"
 //#include "dl_detect.h"

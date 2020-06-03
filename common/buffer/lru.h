@@ -5,21 +5,21 @@
 #ifndef DBX1000_LRU_H
 #define DBX1000_LRU_H
 
-#include <iostream>
 
 namespace dbx1000 {
 
     class LruIndex;
+    class Page;
 
-    class RowNode{
+    class PageNode{
     public:
-        RowNode();
-        RowNode(char *);
+        PageNode();
+        PageNode(char *);
+        ~PageNode();
 
-        uint64_t key_;
-        char* row_;
-        RowNode *prev_;
-        RowNode *next_;
+        Page* page_;
+        PageNode *prev_;
+        PageNode *next_;
     };
 
     class LRU {
@@ -27,23 +27,20 @@ namespace dbx1000 {
         explicit LRU(int item_size);
         ~LRU();
 
-        void Prepend(RowNode* row_node);
-        RowNode* Popback();
-        void Get(RowNode* row_node);
+        void Prepend(PageNode* );
+        PageNode* Popback();
+        void Get(PageNode* );
 
-        int Size();
         void DebugSize();
         void Print();
 
-        RowNode* Head();
-        RowNode* Tail();
+        /// getter and setter
+        int size();
+
     private:
-
-        RowNode* head_; /// head_ 指针不存数据
-        RowNode* tail_;
-
+        PageNode* head_; /// head_ 指针不存数据
+        PageNode* tail_;
         int size_;      /// length of this list
-        int item_size_;
     };
 } // namespace dbx1000
 

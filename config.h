@@ -4,8 +4,8 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT_PER_NODE         1
-#define THREAD_CNT					1
+//#define THREAD_CNT_PER_NODE         1
+#define THREAD_CNT					4
 #define PROCESS_CNT					4
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
@@ -229,5 +229,14 @@ extern TestCases					g_test_case;
 //#define DB_NUM_ITEM (1024 * 1024)     // 1 M
 //#define WARMUP_LEVELDB
 #define PROJECT_ROOT_PATH "/home/zhangrongrong/CLionProjects/DBx1000/"
+
+#define DB_PREFIX "/home/zhangrongrong/CLionProjects/DBx1000/db/"
+#define DB_SUFIX ".table"
+#define FILE_SIZE (1024 * 16 * 1024 * 100L)    // 1600 MB
+#define PAGE_SIZE (1024 * 16)
+#define ITEM_NUM_PER_FILE (1024 * 100)
+//#define FILE_SIZE (74 * 10)
+//#define PAGE_SIZE (74)
+//#define ITEM_NUM_PER_FILE (10)
 
 #endif
