@@ -6,6 +6,7 @@
 #define STORAGE_INDEX_H
 
 #include <unordered_map>
+#include <mutex>
 
 namespace dbx1000 {
 
@@ -27,6 +28,7 @@ namespace dbx1000 {
 
     class Index {
     public:
+        Index(const std::string&);
         ~Index();
 
         IndexFlag IndexGet(uint64_t key, IndexItem* indexItem);
@@ -42,9 +44,13 @@ namespace dbx1000 {
         void DeSerialize2();
 
         void Print();
+        const std::string& index_name();
+        void set_index_name(const std::string&);
 
     private:
         std::unordered_map<uint64_t, IndexItem *> index_;
+        std::string index_name_;
+        std::mutex mutex_;
     };
 }
 

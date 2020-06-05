@@ -32,7 +32,7 @@ namespace dbx1000 {
         void set_used_size(uint64_t);
         void set_version(uint64_t);
         uint64_t page_id() const;
-        char* page_buf() const;
+        char* page_buf();
         uint64_t page_size() const;
         uint64_t used_size() const;
         uint64_t version() const;

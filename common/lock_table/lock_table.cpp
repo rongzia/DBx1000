@@ -1,24 +1,50 @@
 //
 // Created by rrzhang on 2020/6/2.
 //
-
+#include <cassert>
+#include <iostream>
 #include "lock_table.h"
 
-namespace dbx1000 {
+#include "config.h"
 
-    LockNode::LockNode(uint16_t nodeid, bool val, LockMode mode) {
-        node_id = nodeid;
-        valid = val;
-        lock_mode = mode;
-        lock.clear();
+namespace dbx1000 {
+    LockNode::LockNode(uint16_t nodeid, bool val, LockMode mode, uint16_t count) {
+        this->node_id = nodeid;
+        this->valid = val;
+        this->lock_mode = mode;
+        this->count = count;
+        this->lock.clear();
     }
+
+    void LockTable::Init(uint64_t start_page, uint64_t end_page) {
+        for (uint64_t page_id = start_page; page_id < end_page; page_id++) {
+            LockNode* lock_node = new LockNode(0, true);
+            lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
+        }
+    }
+
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
             return false;
         }
-        while(iter->second->lock.test_and_set(std::memory_order_acquire)) {
-            iter->second->lock_mode = mode;
+        std::unique_lock <std::mutex> lck(iter->second->mtx);
+        if(LockMode::X == mode) {
+            while (LockMode::N != iter->second->lock_mode) {
+//                std::cout << "LockTable::Lock wait." << std::endl;
+                iter->second->cv.wait(lck);
+            }
+            iter->second->lock_mode = LockMode::X;
+            assert(iter->second->count == 0);
+            iter->second->count ++;
+            return true;
+        }
+        if(LockMode::S == mode) {
+            while (LockMode::X == iter->second->lock_mode) {
+                iter->second->cv.wait(lck);
+            }
+            iter->second->lock_mode = LockMode::S;
+            iter->second->count ++;
             return true;
         }
 
@@ -27,9 +53,24 @@ namespace dbx1000 {
 
     bool LockTable::UnLock(uint64_t page_id) {
         auto iter = lock_table_.find(page_id);
-        if(lock_table_.end() != iter) {
+        if (lock_table_.end() == iter) {
+            return false;
+        }
+        std::unique_lock <std::mutex> lck(iter->second->mtx);
+        if(LockMode::X == iter->second->lock_mode) {
+            assert(iter->second->count == 1);
+            iter->second->count--;
             iter->second->lock_mode = LockMode::N;
-            iter->second->lock.clear(std::memory_order_release);
+            iter->second->cv.notify_one();
+            return true;
+        }
+        if(LockMode::S == iter->second->lock_mode) {
+            iter->second->count--;
+            if(iter->second->count == 0) {
+                iter->second->lock_mode = LockMode::N;
+            }
+            iter->second->cv.notify_one();
+            return true;
         }
     }
 

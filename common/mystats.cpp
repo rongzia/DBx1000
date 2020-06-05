@@ -270,7 +270,8 @@ namespace dbx1000 {
         uint64_t total_time_ts_alloc_rpc_count = 0;
 
 //        for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
-        for(uint64_t tid = txn_thread_id; tid < txn_thread_id + 1; tid++) {
+// TODO
+        for(uint64_t tid = 0; tid < 0 + 1; tid++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
             total_run_time += _stats[tid]->run_time;

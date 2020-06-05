@@ -58,21 +58,31 @@ set(SRC_FILES
         client/txn/txn.cpp
         client/manager_client.cpp
         client/thread.cpp
-        common/global.cpp
-        common/myhelper.cpp
-        common/row_item.cpp
-        common/txn_row_man.cpp
-        common/parser.cpp
-        common/mystats.cpp
-        common/buffer/lru_index.cpp
-        common/buffer/lru.cpp
         common/buffer/buffer.cpp
-        server/concurrency_control/row_mvcc.cpp
+        common/buffer/lru.cpp
+        common/buffer/lru_index.cpp
+        common/buffer/test_buffer.cpp
+        common/index/index.cpp
+        common/index/test_index.cpp
+        common/lock_table/lock_table.cpp
+        common/lock_table/test_lock_table.cpp
+        common/storage/disk/file_io.cpp
+        common/storage/disk/memory_io.cpp
+        common/storage/tablespace/page.cpp
+        common/storage/tablespace/tablespace.cpp
+        common/storage/tablespace/test_page.cpp
+        common/storage/tablespace/test_tablespace.cpp
         common/storage/catalog.cpp
         common/storage/table.cpp
-#        server/workload/tpcc_wl.cpp
-        common/workload/ycsb_wl.cpp
         common/workload/wl.cpp
+        common/workload/ycsb_wl.cpp
+        common/global.cpp
+        common/myhelper.cpp
+        common/mystats.cpp
+        common/parser.cpp
+        common/row_item.cpp
+        common/txn_row_man.cpp
+        server/concurrency_control/row_mvcc.cpp
         server/manager_server.bak.cpp
         util/arena.cpp
         config.cpp
@@ -94,7 +104,7 @@ endif ()
 #target_link_libraries(rundb libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
 
 if(${WITH_RPC})
-    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES} server/manager_server.cpp server/manager_server.h test/other_test.cpp)
+    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES} server/manager_server.cpp server/manager_server.h test/other_test.cpp test/test_server.cpp)
     add_executable(main_test_txn test/main_test_txn.cpp ${SRC_FILES})
     target_link_libraries(main_test_cc libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
     target_link_libraries(main_test_txn libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
@@ -118,4 +128,37 @@ target_link_libraries(test_query pthread)
 #add_executable(test_lru test/test_lru.cpp common/buffer/lru.cpp common/buffer/lru_index.cpp common/global.cpp)
 
 ### ******************************* other test *******************************
+set(SERVER_FILE
+        common/buffer/buffer.cpp
+        common/buffer/lru.cpp
+        common/buffer/lru_index.cpp
+        common/buffer/test_buffer.cpp
+        common/index/index.cpp
+        common/index/test_index.cpp
+        common/lock_table/lock_table.cpp
+        common/lock_table/test_lock_table.cpp
+        common/storage/disk/file_io.cpp
+        common/storage/disk/memory_io.cpp
+        common/storage/tablespace/page.cpp
+        common/storage/tablespace/tablespace.cpp
+        common/storage/tablespace/test_page.cpp
+        common/storage/tablespace/test_tablespace.cpp
+        common/storage/catalog.cpp
+        common/storage/table.cpp
+        common/workload/wl.cpp
+        common/workload/ycsb_wl.cpp
+        common/global.cpp
+        common/myhelper.cpp
+        common/mystats.cpp
+        common/parser.cpp
+#        common/row_item.cpp
+#        common/txn_row_man.cpp
+#        server/concurrency_control/row_mvcc.cpp
+#        server/manager_server.bak.cpp
+        server/manager_server.cpp
+        util/arena.cpp
+        config.cpp
+        )
 add_executable(other_test test/other_test.cpp)
+add_executable(test_server test/test_server.cpp ${SERVER_FILE})
+target_link_libraries(test_server libjsoncpp.a pthread)

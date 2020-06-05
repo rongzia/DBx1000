@@ -19,20 +19,13 @@ workload::~workload(){
     }
 }
 
-RC workload::init(
-//#ifdef USE_MEMORY_DB
-//    dbx1000::MemoryDB* db
-//#else
-//    leveldb::DB* db
-//#endif
-    ) {
+RC workload::init() {
     cout << "workload::init()" << endl;
     for (int i = 0; i < g_init_parallelism; i++) {
         arenas_.emplace_back(new dbx1000::Arena(i));
     }
 
     sim_done_ = false;
-//    db_ = db;
     return RC::RCOK;
 }
 
@@ -132,32 +125,3 @@ RC workload::init_schema(string schema_file) {
     fin.close();
     return RC::RCOK;
 }
-
-
-//void workload::index_insert(string index_name, uint64_t key, row_t *row) {
-//    assert(false);
-//    INDEX *index = (INDEX *) indexes[index_name];
-//    index_insert(index, key, row);
-//}
-//
-//void workload::index_insert(INDEX *index, uint64_t key, row_t *row, int64_t part_id) {
-//    uint64_t pid = part_id;
-//    if (part_id == -1)
-//        pid = get_part_id(row);
-////    itemid_t *m_item =
-////            (itemid_t *) mem_allocator.alloc(sizeof(itemid_t), pid);
-//    itemid_t *m_item = new (arenas_[key / (g_synth_table_size / g_init_parallelism)]->Allocate(sizeof(itemid_t))) itemid_t();
-//    m_item->init();
-//    m_item->type = DT_row;
-//    m_item->location = row;
-//    m_item->valid = true;
-//
-//#ifdef CREATE_LEVELDB
-//    leveldb::Status status = workload::db_->Put(leveldb::WriteOptions(), std::to_string(key), std::string(row->data, row->get_tuple_size()));
-//    assert(status.ok());
-//#endif // CREATE_LEVELDB
-//
-//    assert(index->index_insert(key, m_item, pid) == RCOK);
-//}
-
-

@@ -3,6 +3,7 @@
 //
 #include <cstring>
 #include "memory_io.h"
+
 #include "config.h"
 
 namespace dbx1000 {
@@ -13,7 +14,7 @@ namespace dbx1000 {
         if (db_.end() != iter) {
             db_.erase(iter);
         }
-        db_.insert(std::pair<uint64_t, std::string>(page_id, std::string((char *) page_buf, PAGE_SIZE)));
+        db_.insert(std::pair<uint64_t, std::string>(page_id, std::string((char *) page_buf, MY_PAGE_SIZE)));
         return 0;
     }
 
@@ -21,7 +22,7 @@ namespace dbx1000 {
         if (db_.end() == db_.find(page_id)) {
             return -1;
         }
-        memcpy(page_buf, db_[page_id].data(), PAGE_SIZE);
+        memcpy(page_buf, db_[page_id].data(), MY_PAGE_SIZE);
         return 0;
     }
 }

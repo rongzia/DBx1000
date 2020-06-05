@@ -42,7 +42,7 @@ namespace dbx1000 {
             fd = Open(path);
         }
         assert(fd > 0);
-        return pwrite(fd, page_buf, PAGE_SIZE, (page_id % ITEM_NUM_PER_FILE) * PAGE_SIZE);
+        return pwrite(fd, page_buf, MY_PAGE_SIZE, (page_id % ITEM_NUM_PER_FILE) * MY_PAGE_SIZE);
     }
 
     size_t FileIO::ReadPage(uint64_t page_id, void* page_buf) {
@@ -58,7 +58,7 @@ namespace dbx1000 {
             fd = Open(path);
         }
         assert(fd > 0);
-        return pread(fd, page_buf, PAGE_SIZE, (page_id % ITEM_NUM_PER_FILE) * PAGE_SIZE);
+        return pread(fd, page_buf, MY_PAGE_SIZE, (page_id % ITEM_NUM_PER_FILE) * MY_PAGE_SIZE);
     }
 
     int FileIO::Close() {

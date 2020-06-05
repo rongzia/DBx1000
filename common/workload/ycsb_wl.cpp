@@ -10,8 +10,12 @@
 #include "common/global.h"
 #include "common/row_item.h"
 #include "common/buffer/buffer.h"
+#include "common/index/index.h"
 #include "common/storage/table.h"
 #include "common/storage/catalog.h"
+#include "common/storage/disk/file_io.h"
+#include "common/storage/tablespace/page.h"
+#include "common/storage/tablespace/tablespace.h"
 #include "server/concurrency_control/row_mvcc.h"
 #include "util/profiler.h"
 #include "util/arena.h"
@@ -30,7 +34,6 @@ RC ycsb_wl::init() {
     cout << "ycsb_wl::init()" << endl;
 	workload::init();
 	next_tid = 0;
-    db_has_inited = false;
     init_schema(g_schame_path);
 
 //	init_table();
@@ -40,7 +43,9 @@ RC ycsb_wl::init() {
 RC ycsb_wl::init_schema(string schema_file) {
 	workload::init_schema(schema_file);
 	the_table = tables["MAIN_TABLE"];
+
 //	the_index = indexes["MAIN_INDEX"];
+    index_name_ = the_table->get_table_name() + "_INDEX";
 	return RC::RCOK;
 }
 //! 数据是分区的，每个区间的 key 都是 0-g_synth_table_size / g_part_cnt，单调增，返回 key 在哪个区间
@@ -51,7 +56,9 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
-    cout << "db_has_inited : " << db_has_inited << endl;
+    table_space_->set_page_size(MY_PAGE_SIZE);
+    table_space_->set_row_size(the_table->get_schema()->get_tuple_size());
+    cout << "ycsb_wl::init_table, row size:" << the_table->get_schema()->get_tuple_size() << endl;
     cout << "ycsb_wl::init_table, table size:" << g_synth_table_size << endl;
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
     profiler->Start();
@@ -86,29 +93,31 @@ void * ycsb_wl::init_table_slice() {
 	uint64_t slice_size = g_synth_table_size / g_init_parallelism;
 
     uint32_t tuple_size = the_table->get_schema()->get_tuple_size();
+    dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(table_space_->GetNextPageId());
 
-    dbx1000::RowItem *rowItem = new dbx1000::RowItem(0, tuple_size);
-    memset(rowItem->row_, 'a', tuple_size);
+    char row[tuple_size];
+    uint64_t version = 0;
+    memset(row, 'a', tuple_size);
     for (uint64_t key = slice_size * tid; key < slice_size * (tid + 1); key++) {
-//		for (uint32_t fid = 0; fid < the_table->get_schema()->get_field_cnt(); fid ++) {
-//		    uint64_t field_size = the_table->get_schema()->get_field_size(fid);
-//		    memset((char*) rowItem->row_ + fid*field_size, 'a', field_size);
-//		}
-        rowItem->key_ = key;
-#ifdef USE_MEMORY_DB
-		buffer_->BufferPut(key, rowItem->row_, tuple_size);
-#else
-		if(false == db_has_inited) {
-            buffer_->BufferPut(key, rowItem->row_, tuple_size);
+        if(tuple_size > (MY_PAGE_SIZE - page->used_size())){
+            page->Serialize();
+            dbx1000::FileIO::WritePage(page->page_id(), page->page_buf());
+                            assert((((MY_PAGE_SIZE - 64) / tuple_size * tuple_size) + 64) ==
+                                   page->used_size());  /// 检查 use_size
+            page->set_page_id(table_space_->GetNextPageId());
+            page->set_used_size(64);
         }
-#endif
-
-//		Row_mvcc *rowMvcc = new (arenas_[tid]->Allocate(sizeof(Row_mvcc)))Row_mvcc();
-//		rowMvcc->init(rowItem);
-//		glob_manager_server->row_mvccs_mutex_.lock();
-//		glob_manager_server->row_mvccs_.insert(std::pair<uint64_t, Row_mvcc*>(key, rowMvcc));
-//        glob_manager_server->row_mvccs_mutex_.unlock();
+        memcpy(row, &key, sizeof(uint64_t));
+        memcpy(&row[tuple_size - 8], &version, sizeof(uint64_t));
+        page->PagePut(page->page_id(), row, tuple_size);
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - tuple_size);
+        index_->IndexPut(key, &indexItem);
 	}
-    delete rowItem;
+    if (page->used_size() > 64) {
+        page->Serialize();
+        dbx1000::FileIO::WritePage(page->page_id(), page->page_buf());
+    }
+    delete page;
 }
 

@@ -10,8 +10,8 @@
 
 #include "lru_index.h"
 #include "lru.h"
-#include "disk/file_io.h"
-#include "tablespace/page.h"
+#include "common/storage/disk/file_io.h"
+#include "common/storage/tablespace/page.h"
 
 namespace dbx1000 {
 
@@ -34,7 +34,6 @@ namespace dbx1000 {
     }
 
     Buffer::~Buffer() {
-        /// 使用智能指针创建 buffer 对象时，不需要显示 free
         FlushALl();
         delete free_list_;
         delete page_list_;
@@ -62,7 +61,7 @@ namespace dbx1000 {
     void Buffer::FlushALl() {
         PageNode* page_node;
         int size = page_list_->size();
-        for(int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             page_node = page_list_->Popback();
             /// 写盘
             FileIO::WritePage(page_node->page_->page_id(), page_node->page_->page_buf());
@@ -79,29 +78,26 @@ namespace dbx1000 {
         PageNode *page_node = free_list_->Popback();
         page_node->page_->set_page_id(page_id);
         page_node->page_->set_page_buf(page, count);
-        page_list_->Prepend(page_node);
         lru_index_->IndexPut(page_id, page_node);
+        page_list_->Prepend(page_node);
     }
 
-    int Buffer::BufferGet(uint64_t page_id, void *buf, size_t count) {
+    int Buffer::BufferGetWithLock(uint64_t page_id, void *buf, size_t count) {
         std::lock_guard<std::mutex> lock(mutex_);
-
         assert(page_list_->size() + free_list_->size() == page_num_);
+
         LruIndexFlag flag;
         PageNode *page_node = lru_index_->IndexGet(page_id, &flag);
 
         /// page in buffer
         if(LruIndexFlag::EXIST == flag) {
-            assert(nullptr != page_node);
             page_list_->Get(page_node);
             assert(nullptr != page_node->page_->page_buf());
-            assert(nullptr != buf);
             memcpy(buf, page_node->page_->page_buf(), count);
             return 0;
         }
         /// page in disk
         if(LruIndexFlag::NOT_EXIST == flag) {
-            assert(nullptr == page_node);
             /// 读盘
             FileIO::ReadPage(page_id, buf);
             if (free_list_->size() <= 0) {
@@ -114,10 +110,10 @@ namespace dbx1000 {
         assert(false);      /// 不应该到达这一步
     }
 
-    int Buffer::BufferPut(uint64_t page_id, const void* buf, size_t count) {
+    int Buffer::BufferPutWithLock(uint64_t page_id, const void* buf, size_t count) {
         std::lock_guard<std::mutex> lock(mutex_);
-
         assert(page_list_->size() + free_list_->size() == page_num_);
+
         LruIndexFlag flag;
         PageNode *page_node = lru_index_->IndexGet(page_id, &flag);
 
@@ -134,6 +130,71 @@ namespace dbx1000 {
                 FlushPageList();
             }
             FreeListToPageList(page_id, buf, count);
+            return 0;
+        }
+
+        assert(false);      /// 不应该到达这一步
+    }
+
+
+    int Buffer::BufferGet(uint64_t page_id, void *buf, size_t count) {
+        mutex_.lock();
+        assert(page_list_->size() + free_list_->size() == page_num_);
+        mutex_.unlock();
+
+        /// 找 page_node 的索引
+        LruIndexFlag flag;
+        PageNode *page_node = lru_index_->IndexGet(page_id, &flag);
+
+        /// page in buffer
+        if(LruIndexFlag::EXIST == flag) {
+            mutex_.lock();
+            page_list_->Get(page_node);
+            mutex_.unlock();
+            assert(nullptr != page_node->page_->page_buf());
+            memcpy(buf, page_node->page_->page_buf(), count);
+            return 0;
+        }
+        /// page in disk
+        if(LruIndexFlag::NOT_EXIST == flag) {
+            /// 读盘
+            FileIO::ReadPage(page_id, buf);
+            mutex_.lock();
+            if (free_list_->size() <= 0) {
+                FlushPageList();
+            }
+            FreeListToPageList(page_id, buf, count);
+            mutex_.unlock();
+            return 0;
+        }
+
+        assert(false);      /// 不应该到达这一步
+    }
+
+    int Buffer::BufferPut(uint64_t page_id, const void* buf, size_t count) {
+        mutex_.lock();
+        assert(page_list_->size() + free_list_->size() == page_num_);
+        mutex_.unlock();
+
+        /// 找 page_node 的索引
+        LruIndexFlag flag;
+        PageNode *page_node = lru_index_->IndexGet(page_id, &flag);
+
+        /// page in buffer
+        if (LruIndexFlag::EXIST == flag) {
+            mutex_.lock();
+            page_list_->Get(page_node);
+            mutex_.unlock();
+            page_node->page_->set_page_buf(buf, count);
+            return 0;
+        }
+        if(LruIndexFlag::NOT_EXIST == flag) {
+            mutex_.lock();
+            if(free_list_->size() <= 0) {
+                FlushPageList();
+            }
+            FreeListToPageList(page_id, buf, count);
+            mutex_.unlock();
             return 0;
         }
 

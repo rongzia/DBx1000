@@ -12,13 +12,7 @@ class ycsb_wl : public workload {
 public :
     ycsb_wl();
     virtual ~ycsb_wl();
-	RC init(
-//#ifdef USE_MEMORY_DB
-//    dbx1000::MemoryDB* db
-//#else
-//    leveldb::DB* db
-//#endif
-);
+	RC init();
 	RC init_table();
 	RC init_schema(string schema_file);
 //	RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd);
@@ -26,6 +20,7 @@ public :
 	int key_to_part(uint64_t key);
 //	INDEX * the_index;
 	table_t * the_table;
+	std::string index_name_;
 private:
 	void init_table_parallel();
     //! 初始化单个区间
@@ -35,10 +30,9 @@ private:
 		return NULL;
 	}
 //	pthread_mutex_t insert_lock;
-	//  For parallel initialization
+//  For parallel initialization
 //	static int next_tid;
 	static std::atomic<int> next_tid;
-	bool db_has_inited;
 };
 
 #endif //DBX1000_YCSB_WL_H

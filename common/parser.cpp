@@ -53,18 +53,18 @@ void parser(int argc, char * argv[]) {
 	for (int i = 1; i < argc; i++) {
 		assert(argv[i][0] == '-');
 		/// -tid=1, 2, 3...
-		if(std::string(&argv[i][0], 4) == "-pid") {
-            txn_thread_id = std::stoi(&argv[i][5]);
-
-            Json::Reader reader;
-            Json::Value root;
-            ifstream in("../config.json", ios::binary);
-            assert(true == reader.parse(in, root));
-            txn_thread_host = root[(string("client")+&argv[i][5])]["ip"].asString() + ":" +
-                    root[(string("client")+&argv[i][5])]["port"].asString();
-            cout << "txn_thread_id : " << txn_thread_id << endl;
-            cout << "txn_thread_host : " << txn_thread_host << ", size:" << txn_thread_host.size() << endl;
-		} else
+//		if(std::string(&argv[i][0], 4) == "-pid") {
+//            txn_thread_id = std::stoi(&argv[i][5]);
+//
+//            Json::Reader reader;
+//            Json::Value root;
+//            ifstream in("../config.json", ios::binary);
+//            assert(true == reader.parse(in, root));
+//            txn_thread_host = root[(string("client")+&argv[i][5])]["ip"].asString() + ":" +
+//                    root[(string("client")+&argv[i][5])]["port"].asString();
+//            cout << "txn_thread_id : " << txn_thread_id << endl;
+//            cout << "txn_thread_host : " << txn_thread_host << ", size:" << txn_thread_host.size() << endl;
+//		} else
 		if (argv[i][1] == 'a')
 			g_part_alloc = atoi( &argv[i][2] );
 		else if (argv[i][1] == 'm')

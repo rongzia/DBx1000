@@ -5,46 +5,62 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <cassert>
 #include "lock_table.h"
+#include "util/profiler.h"
+#include "util/string_util.h"
 
 using namespace std;
 
-/// 定义一个全为 0 的数组，几个线程并发对所有的位置都加 1，最后验证是否所有的值都为线程数
-void Print_Array(int num_array[100]) {
-    for (int i = 0; i < 100; i++) {
-        cout << num_array[i] << " ";
-        if (i % 10 == 9) {
-            cout << endl;
-        }
-    }
-    cout << endl;
-}
+#define lock_table_test_num (10000)
+#define test_thread_num (100)
 
+/// 定义一个全为 0 的数组，几个线程并发对所有的位置都加 ++，最后验证是否所有的值都为线程数
 void Test_Lock_Table() {
-    int num_array[100];
-    for (int &i : num_array) {
-        i = 0;
-    }
-    Print_Array(num_array);
-
     dbx1000::LockTable *lockTable = new dbx1000::LockTable();
-    for (int i = 0; i < 100; i++) {
-        lockTable->lock_table().insert(std::pair<uint64_t, dbx1000::LockNode *>(i, new dbx1000::LockNode(0)));
-    }
+    lockTable->Init(0, lock_table_test_num);
+    dbx1000::Profiler profiler;
 
-    std::vector<thread> threads;
-    for (int i = 0; i < 10; i++) {
-        threads.emplace_back(thread([&num_array, &lockTable]() {
-            for (int i = 0; i < 100; i++) {
-                lockTable->Lock(i, dbx1000::LockMode::X);
-                num_array[i]++;
-                lockTable->UnLock(i);
-            }
-        }));
-    }
-    for (int i = 0; i < 10; i++) {
-        threads[i].join();
-    }
+    int a[lock_table_test_num];
+    for (int i = 0; i < lock_table_test_num; i++) { a[i] = 0; }
 
-    Print_Array(num_array);
+    vector<thread> threads_write;
+    /// write
+    profiler.Start();
+    for (int i = 0; i < test_thread_num; i++) {
+        threads_write.emplace_back(thread(
+                [&]() {
+                    for (uint64_t j = 0; j < lock_table_test_num; j++) {
+                        assert(true == lockTable->Lock(j, dbx1000::LockMode::X));
+                        a[j]++;
+                        assert(true == lockTable->UnLock(j));
+                    }
+                }
+        ));
+    }
+    for (int i = 0; i < test_thread_num; i++) {
+        threads_write[i].join();
+    }
+    profiler.End();
+    cout << "10 threads write time : " << profiler.Nanos() << " nanos." << endl;
+    /// read
+    profiler.Clear();
+    profiler.Start();
+    vector<thread> threads_read;
+    for (int i = 0; i < test_thread_num; i++) {
+        threads_read.emplace_back(thread(
+                [&]() {
+                    for (uint64_t j = 0; j < lock_table_test_num; j++) {
+                        assert(true == lockTable->Lock(j, dbx1000::LockMode::S));
+//                        assert(a[j] == 100);
+                        assert(true == lockTable->UnLock(j));
+                    }
+                }
+        ));
+    }
+    for (int i = 0; i < test_thread_num; i++) {
+        threads_read[i].join();
+    }
+    profiler.End();
+    cout << "10 threads write time : " << profiler.Nanos() << " nanos." << endl;
 }

@@ -4,8 +4,9 @@
 #include <memory>
 #include <cassert>
 #include <iostream>
-#include "tablespace/page.h"
 #include "lru.h"
+
+#include "common/storage/tablespace/page.h"
 
 namespace dbx1000 {
     PageNode::PageNode() {
@@ -39,7 +40,6 @@ namespace dbx1000 {
     void LRU::Prepend(PageNode* page_node) {
         if(tail_ == head_) {
             tail_ = page_node;
-//            assert(nullptr == tail_->next_);
         }
 
         page_node->prev_ = head_;
@@ -81,8 +81,6 @@ namespace dbx1000 {
     }
 
     int LRU::size() { return size_; };
-//    PageNode* LRU::head() { return head_;};
-//    PageNode* LRU::tail() { return tail_;};
 
     void LRU::DebugSize() {
         int count = 0;

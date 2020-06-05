@@ -13,6 +13,12 @@
 #include <mutex>
 #include "config.h"
 
+/**
+ * buffer 使用 mmap 从系统申请一块大空间，划分成 MY_PAGE_SIZE 大小使用。
+ * 初始化时给定 mmap 空间大小，和 MY_PAGE_SIZE 大小，
+ * 两个链表 page_list_ 和 free_list_ 管理页面，同时使用 LruIndex 来加速 page_list_ 的查找
+ * page_list_ 写满时，会把链表后 1/5 数据刷盘
+ */
 namespace dbx1000 {
     class LRU;
     class LruIndex;
@@ -22,6 +28,11 @@ namespace dbx1000 {
         Buffer(uint64_t total_size, size_t page_size);
         ~Buffer();
 
+        /// 有锁读写，使用时直接锁住整个函数，相当于串行调度
+        int BufferGetWithLock(uint64_t page_id, void* buf, size_t count);
+        int BufferPutWithLock(uint64_t page_id, const void* buf, size_t count);
+        /// 无锁读写，使用前应保证从锁表获取了页面的权限，这样就可以并行调用，只需要在函数内部保护好链表的操作就行
+        /// 速度比有锁提升 2-3 倍
         int BufferGet(uint64_t page_id, void* buf, size_t count);
         int BufferPut(uint64_t page_id, const void* buf, size_t count);
 

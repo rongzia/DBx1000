@@ -10,10 +10,10 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
-
 #include "index.h"
+
 #include "config.h"
-#include "disk/file_io.h"
+#include "common/storage/disk/file_io.h"
 #include "util/profiler.h"
 
 namespace dbx1000 {
@@ -23,6 +23,8 @@ namespace dbx1000 {
         page_location_ = location;
     }
     IndexItem::IndexItem() {}
+
+    Index::Index(const std::string& index_name) : index_name_(index_name) {}
 
     Index::~Index() {
         Serialize();
@@ -45,30 +47,18 @@ namespace dbx1000 {
         }
     }
 
-//    int Index::IndexPut(uint64_t key, uint64_t page_id, uint64_t location) {
-//        auto iter = index_.find(key);
-//        if (index_.end() != iter) {
-//            iter->second->page_id_ = page_id;
-//            iter->second->page_location_ = location;
-//            return 0;
-//        }
-//        if (index_.end() == iter) {
-//            index_.insert(std::pair<uint64_t, IndexItem *>(key, new IndexItem(page_id, location)));
-//            return 0;
-//        }
-//
-//        return -1;
-//    }
-
     int Index::IndexPut(uint64_t key, IndexItem* indexItem) {
+        mutex_.lock();
         auto iter = index_.find(key);
         if (index_.end() != iter) {
             iter->second->page_id_ = indexItem->page_id_;
             iter->second->page_location_ = indexItem->page_location_;
+            mutex_.unlock();
             return 0;
         }
         if (index_.end() == iter) {
             index_.insert(std::pair<uint64_t, IndexItem *>(key, new IndexItem(indexItem->page_id_, indexItem->page_location_)));
+            mutex_.unlock();
             return 0;
         }
 
@@ -79,8 +69,9 @@ namespace dbx1000 {
         std::cout << "Index::Serialize..." << std::endl;
         Profiler profiler;
         profiler.Start();
-//        int fd = open(INDEX_PATH_1, O_RDWR | O_CREAT, 0644);
-        int fd = FileIO::Open(INDEX_PATH);
+
+        int fd = FileIO::Open(std::string(DB_PREFIX) + this->index_name_);
+        assert(fd >= 0);
         char buf[524280];
         uint64_t buf_used_size = 0, offset = 0;
         uint64_t index_size = index_.size();
@@ -114,7 +105,9 @@ namespace dbx1000 {
         Profiler profiler;
         profiler.Start();
         std::cout << "Index::DeSerialize..." << std::endl;
-        int fd = open(INDEX_PATH, O_RDWR | O_CREAT, 0644);
+
+        int fd = FileIO::Open(std::string(DB_PREFIX) + this->index_name_);
+        assert(fd >= 0);
         uint64_t file_size;
         uint64_t offset = 0;
         uint64_t index_size;
@@ -145,19 +138,27 @@ namespace dbx1000 {
     }
 
     void Index::Serialize2() {
+        Profiler profiler;
+        profiler.Start();
+        std::cout << "Index::Serialize2..." << std::endl;
         std::ostringstream oss;
         auto iter = index_.begin();
         while(index_.end() != iter) {
             oss << iter->first << " " << iter->second->page_id_ << " " << iter->second->page_location_ << " ";
             iter++;
         }
-        std::ofstream out(INDEX_PATH_2, std::ios::out | std::ios::binary);
+        std::ofstream out(std::string(DB_PREFIX) + index_name_, std::ios::out | std::ios::binary);
         out << oss.str();
         out.close();
+        profiler.End();
+        std::cout << "Index::Serialize2 done, time : " << profiler.Millis() << " millis."<< std::endl;
     }
 
     void Index::DeSerialize2() {
-        std::ifstream in(INDEX_PATH_2, std::ios::in | std::ios::binary);
+        Profiler profiler;
+        profiler.Start();
+        std::cout << "Index::DeSerialize2..." << std::endl;
+        std::ifstream in(std::string(DB_PREFIX) + index_name_, std::ios::in | std::ios::binary);
         std::stringstream ss;
         ss << in.rdbuf();
 //        std::cout << ss.str() << std::endl;
@@ -171,7 +172,13 @@ namespace dbx1000 {
             index_.insert(std::pair<uint64_t , IndexItem*>(key, new IndexItem(page_id, locatin)));
         }
         in.close();
+        profiler.End();
+        std::cout << "Index::DeSerialize2 done, time : " << profiler.Millis() << " millis."<< std::endl;
     }
+
+
+    const std::string& Index::index_name() { return index_name_; }
+    void Index::set_index_name(const std::string& index_name) { this->index_name_ = index_name; }
 
     void Index::Print() {
         auto iter = index_.begin();

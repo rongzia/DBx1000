@@ -10,10 +10,10 @@
 #include "leveldb/db.h"
 
 //#include "ycsb_query.h"
-#include "server/buffer/buffer.h"
-#include "server/workload/ycsb_wl.h"
-#include "server/storage/table.h"
-#include "server/storage/catalog.h"
+#include "common/buffer/buffer.h"
+#include "common/workload/ycsb_wl.h"
+#include "common/storage/table.h"
+#include "common/storage/catalog.h"
 
 #include "util/numbercomparator.h"
 //#include "cs_api.h"

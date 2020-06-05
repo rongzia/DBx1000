@@ -13,7 +13,7 @@ namespace dbx1000 {
     Page::Page(char *buf) : page_id_(UINT64_MAX)
                             , page_buf_(buf)
                             , used_size_(64)
-                            , page_size_(PAGE_SIZE) {}
+                            , page_size_(MY_PAGE_SIZE) {}
 
     Page::~Page() {
         delete page_buf_;
@@ -21,7 +21,7 @@ namespace dbx1000 {
 
     int Page::PagePut(uint64_t page_id, const char *row_buf, size_t count) {
         assert(this->page_id_ == page_id);
-        assert(used_size_ + count < page_size_);
+        assert(used_size_ + count <= page_size_);
         memcpy(&page_buf_[this->used_size_], row_buf, count);
         this->used_size_ += count;
     }
@@ -54,7 +54,7 @@ namespace dbx1000 {
     void Page::set_used_size(uint64_t used_size) {this->used_size_ = used_size; }
     void Page::set_version(uint64_t version) { this->version_ = version; }
     uint64_t Page::page_id() const { return this->page_id_; }
-    char *Page::page_buf() const { return this->page_buf_; }
+    char *Page::page_buf() { return this->page_buf_; }
     uint64_t Page::page_size() const { return this->page_size_; }
     uint64_t Page::used_size() const { return this->used_size_;}
     uint64_t Page::version() const { return this->version_; }

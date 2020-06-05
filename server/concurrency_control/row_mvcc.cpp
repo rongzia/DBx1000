@@ -8,9 +8,9 @@
 #include "common/myhelper.h"
 #include "api/api_single_machine/cs_api.h"
 #include "api/api_cc/api_cc.h"
-#include "server/workload/wl.h"
-#include "server/workload/ycsb_wl.h"
-#include "server/buffer/buffer.h"
+#include "common/workload/wl.h"
+#include "common/workload/ycsb_wl.h"
+#include "common/buffer/buffer.h"
 
 #if CC_ALG == MVCC
 

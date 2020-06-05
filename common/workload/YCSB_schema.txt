@@ -1,6 +1,6 @@
 //size, type, name
 TABLE=MAIN_TABLE
-	8,string,F0
+	8,string,KEY
 	8,string,F1
 	8,string,F2
 	8,string,F3

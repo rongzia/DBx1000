@@ -23,6 +23,7 @@ namespace dbx1000 {
     class ManagerServer {
     public:
         ManagerServer();
+        ~ManagerServer();
         ManagerServer(const ManagerServer&) = delete;
         ManagerServer &operator=(const ManagerServer&) = delete;
 
@@ -34,6 +35,7 @@ namespace dbx1000 {
             InstanceClient* instance_rpc_handler;
         };
 
+        bool LockGet();
 
         /// getter and setter
         Buffer* buffer();

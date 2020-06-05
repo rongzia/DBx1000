@@ -119,8 +119,8 @@
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
-//#define SYNTH_TABLE_SIZE 			(1024 * 1024 * 10)
-#define SYNTH_TABLE_SIZE 			(1024 * 40 * 6)         /// 适合 单机、rpc 使用
+#define SYNTH_TABLE_SIZE 			(1024 * 1024 * 10)
+//#define SYNTH_TABLE_SIZE 			(1024 * 40 * 6)         /// 适合 单机、rpc 使用
 #define ZIPF_THETA 					0.6
 #define READ_PERC 					0.9
 #define WRITE_PERC 					0.1
@@ -233,10 +233,10 @@ extern TestCases					g_test_case;
 #define DB_PREFIX "/home/zhangrongrong/CLionProjects/DBx1000/db/"
 #define DB_SUFIX ".table"
 #define FILE_SIZE (1024 * 16 * 1024 * 100L)    // 1600 MB
-#define PAGE_SIZE (1024 * 16)
+#define MY_PAGE_SIZE (1024 * 16)
 #define ITEM_NUM_PER_FILE (1024 * 100)
 //#define FILE_SIZE (74 * 10)
-//#define PAGE_SIZE (74)
+//#define MY_PAGE_SIZE (74)
 //#define ITEM_NUM_PER_FILE (10)
 
 #endif

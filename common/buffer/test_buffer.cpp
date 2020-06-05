@@ -5,38 +5,69 @@
 
 #include <iostream>
 #include <cstring>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <cassert>
+#include "buffer.h"
+
 #include "config.h"
-#include "buffer/buffer.h"
 #include "util/profiler.h"
+
 using namespace std;
 
-void Test_Buffer_Simple() {
-    dbx1000::Buffer* buffer = new dbx1000::Buffer(FILE_SIZE, PAGE_SIZE);
-    dbx1000::Profiler profiler;
+/**
+ * 初始化 buffer 为 10000 个 uint64 = 0, 10 个线程同时对每个 item++, 最后验证是否正确
+ */
+#define buffer_item_num 10000
+
+void Test_Buffer() {
+    std::size_t page_size = sizeof(uint64_t);
+    dbx1000::Buffer *buffer = new dbx1000::Buffer(page_size * buffer_item_num, page_size);
+
+    uint64_t a = 0;
+    for (uint64_t i = 0; i < buffer_item_num; i++) {
+        buffer->BufferPut(i, &a, page_size);
+    }/// warmup buffer
+
+    vector<thread> threads_write;
+    mutex mtx;
     /// write
-    profiler.Start();
-    char buf[PAGE_SIZE];
-    memset(buf, 'a', PAGE_SIZE);
-    for(int i = 0; i <  ITEM_NUM_PER_FILE * 10; ++i) {
-        buffer->BufferPut(i, buf, PAGE_SIZE);
+    for (int i = 0; i < 10; i++) {
+        threads_write.emplace_back(thread(
+                [&]() {
+                    for (uint64_t j = 0; j < buffer_item_num; j++) {
+                        mtx.lock();
+                        uint64_t a;
+                        assert(0 == buffer->BufferGetWithLock(j, &a, page_size));
+                        a++;
+                        assert(0 == buffer->BufferPutWithLock(j, (void*)&a, page_size));
+                        mtx.unlock();
+                    }
+                }
+        ));
     }
-    profiler.End();
-    cout << "buffer write time    : " << profiler.Nanos() << endl;
-
-
+    for (int i = 0; i < 10; i++) {
+        threads_write[i].join();
+    }
     /// read
-    profiler.Clear();
-    profiler.Start();
-    for(int i = 0; i <  ITEM_NUM_PER_FILE * 10; ++i) {
-        buffer->BufferGet(i, buf, PAGE_SIZE);
+    vector<thread> threads_read;
+    for (int i = 0; i < 10; i++) {
+        threads_read.emplace_back(thread(
+                [&]() {
+                    for (uint64_t j = 0; j < buffer_item_num; j++) {
+                        mtx.lock();
+                        uint64_t a;
+                        buffer->BufferGetWithLock(j, &a, page_size);
+                        assert(10 == a);
+                        mtx.unlock();
+                    }
+                }
+        ));
     }
-    profiler.End();
-    cout << "buffer read time     : " << profiler.Nanos() << endl;
+    for (int i = 0; i < 10; i++) {
+        threads_read[i].join();
+    }
 
     delete buffer;
 }
-
-//int main() {
-//    Test_Simple();
-//    return 0;
-//}

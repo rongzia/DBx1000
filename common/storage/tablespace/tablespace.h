@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <string>
+#include <mutex>
 
 namespace dbx1000 {
     class IndexItem;
@@ -14,11 +15,13 @@ namespace dbx1000 {
     class TableSpace {
     public:
         TableSpace();
+        TableSpace(const std::string& );
         ~TableSpace();
+
         uint64_t GetNextPageId();
         uint64_t GetLastPageId() const;
         void Serialize();
-        void DeSerialize(const std::string& path);
+        void DeSerialize();
 
         void Print();
 
@@ -40,6 +43,7 @@ namespace dbx1000 {
         uint64_t page_size_;        /// in bytes
         uint64_t row_size_;
         uint64_t last_page_id_;
+        std::mutex mtx_;
     };
 }
 

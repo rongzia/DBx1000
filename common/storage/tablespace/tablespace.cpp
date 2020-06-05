@@ -5,28 +5,40 @@
 #include <iostream>
 #include <cassert>
 #include "tablespace.h"
+
 #include "config.h"
 #include "json/json.h"
 
 namespace dbx1000 {
-    TableSpace::TableSpace() : table_size_(0)
-                               , page_size_(PAGE_SIZE)
-                               , last_page_id_(0) {}
+    TableSpace::TableSpace() :
+            table_size_(0)
+            , page_size_(MY_PAGE_SIZE)
+            , row_size_(0)
+            , last_page_id_(-1) {}
+
+    TableSpace::TableSpace(const std::string &table_name) :
+            table_name_(table_name)
+            , table_size_(0)
+            , page_size_(MY_PAGE_SIZE)
+            , row_size_(0)
+            , last_page_id_(-1) {}
 
     TableSpace::~TableSpace() {
         Serialize();
     }
 
     uint64_t TableSpace::GetNextPageId() {
+        mtx_.lock();
         last_page_id_++;
-        table_size_ += PAGE_SIZE;
+        table_size_ += MY_PAGE_SIZE;
+        mtx_.unlock();
         return last_page_id_;
     }
 
     uint64_t TableSpace::GetLastPageId() const { return last_page_id_; }
 
     void TableSpace::Serialize() {
-        std::ofstream out(std::string(DB_PREFIX) + table_name_, std::ios::out | std::ios::binary);
+        std::ofstream out(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
         assert(out.is_open());
 
         Json::Value root;
@@ -35,15 +47,16 @@ namespace dbx1000 {
 
         root["table_name"] = this->table_name_;
         root["table_size"] = this->table_size_;
-        root["row_size"] = this->page_size_;
+        root["page_size"] = this->page_size_;
+        root["row_size"] = this->row_size_;
         root["last_page_id"] = this->last_page_id_;
 
         writer->write(root, &out);
         out.close();
     }
 
-    void TableSpace::DeSerialize(const std::string& table_name) {
-        std::ifstream in(std::string(DB_PREFIX) + table_name, std::ios::out | std::ios::binary);
+    void TableSpace::DeSerialize() {
+        std::ifstream in(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
         assert(in.is_open());
 
         Json::Value root;
