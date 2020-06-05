@@ -18,6 +18,8 @@
 
 namespace dbx1000 {
     ManagerServer::~ManagerServer() {
+        table_space_->Serialize();
+        index_->Serialize();
         delete buffer_;
         delete m_workload_;
         delete table_space_;
@@ -34,22 +36,8 @@ namespace dbx1000 {
             || access((db_dir + table_name).data(), F_OK) < 0
             || access((db_dir + table_name + "_INDEX").data(), F_OK) < 0
                 ) {
-            cout <<__LINE__ << endl;
             return false;
         }
-            cout <<__LINE__ << endl;
-        this->table_space_->DeSerialize();
-        this->index_->DeSerialize();
-            cout <<__LINE__ << endl;
-            cout << "table page_size : " <<table_space_->page_size() << endl;
-            cout << "table row_size : " <<table_space_->row_size() << endl;
-        if (table_space_->page_size() != MY_PAGE_SIZE
-            || table_space_->row_size() != ((ycsb_wl *) m_workload_)->the_table->get_schema()->get_tuple_size()
-                ) {
-            cout <<__LINE__ << endl;
-            return false;
-        }
-            cout <<__LINE__ << endl;
         return true;
     }
 
@@ -60,9 +48,7 @@ namespace dbx1000 {
         this->m_workload_ = new ycsb_wl();
         m_workload_->init();
         this->table_space_ = new TableSpace(((ycsb_wl*)m_workload_)->the_table->get_table_name());
-        this->index_ = new Index(((ycsb_wl*)m_workload_)->index_name_);
-        m_workload_->table_space_ = this->table_space_;
-        m_workload_->index_ = this->index_;
+        this->index_ = new Index(((ycsb_wl*)m_workload_)->the_table->get_table_name() + "_INDEX");
         this->lock_table_ = new LockTable();
         this->stats_ = new Stats();
 
@@ -76,10 +62,10 @@ namespace dbx1000 {
 
         bool db_ok = CheckDB();
         if(true == db_ok) {
-            cout <<__LINE__ << endl;
+            table_space_->DeSerialize();
+            index_->DeSerialize();
             init_done_ = true;
         } else {
-            cout <<__LINE__ << endl;
             m_workload_->init_table();
         }
     }

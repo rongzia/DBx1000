@@ -42,7 +42,7 @@ namespace dbx1000 {
         uint64_t table_size_;       /// in bytes
         uint64_t page_size_;        /// in bytes
         uint64_t row_size_;
-        uint64_t last_page_id_;
+        int64_t last_page_id_;
         std::mutex mtx_;
     };
 }

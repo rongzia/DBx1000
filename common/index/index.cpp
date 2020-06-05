@@ -27,7 +27,7 @@ namespace dbx1000 {
     Index::Index(const std::string& index_name) : index_name_(index_name) {}
 
     Index::~Index() {
-        Serialize();
+//        Serialize();
         auto iter = index_.begin();
         while(index_.end() != iter) {
             delete iter->second;

@@ -58,9 +58,6 @@ public:
 	std::atomic<bool> sim_done_;
 	std::vector<dbx1000::Arena*> arenas_;
 	dbx1000::Buffer* buffer_;
-	dbx1000::TableSpace* table_space_;
-	dbx1000::Index* index_;
-
 
 protected:
 //	void index_insert(string index_name, uint64_t key, row_t * row);

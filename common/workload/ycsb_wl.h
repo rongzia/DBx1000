@@ -20,7 +20,6 @@ public :
 	int key_to_part(uint64_t key);
 //	INDEX * the_index;
 	table_t * the_table;
-	std::string index_name_;
 private:
 	void init_table_parallel();
     //! 初始化单个区间

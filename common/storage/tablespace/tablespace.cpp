@@ -24,7 +24,7 @@ namespace dbx1000 {
             , last_page_id_(-1) {}
 
     TableSpace::~TableSpace() {
-        Serialize();
+//        Serialize();
     }
 
     uint64_t TableSpace::GetNextPageId() {
@@ -65,7 +65,7 @@ namespace dbx1000 {
         this->table_size_ = root["table_size"].asUInt64();
         this->page_size_ = root["page_size"].asUInt64();
         this->row_size_ = root["row_size"].asUInt64();
-        this->last_page_id_ = root["last_page_id"].asUInt64();
+        this->last_page_id_ = root["last_page_id"].asInt64();
         in.close();
     }
 
