@@ -1,8 +1,6 @@
 #include <cassert>
-#include <iostream>
-#include <fstream>
 #include "global.h"
-#include "json/json.h"
+#include "myhelper.h"
 
 void print_usage() {
 	printf("[usage]:\n");
@@ -20,10 +18,10 @@ void print_usage() {
 	printf("\t-GnINT      ; NO_DL\n");
 	printf("\t-GoINT      ; TIMEOUT\n");
 	printf("\t-GlINT      ; DL_LOOP_DETECT\n");
-	
+
 	printf("\t-GbINT      ; TS_BATCH_ALLOC\n");
 	printf("\t-GuINT      ; TS_BATCH_NUM\n");
-	
+
 	printf("\t-o STRING   ; output file\n\n");
 	printf("  [YCSB]:\n");
 	printf("\t-cINT       ; PART_PER_TXN\n");
@@ -52,19 +50,6 @@ void parser(int argc, char * argv[]) {
 
 	for (int i = 1; i < argc; i++) {
 		assert(argv[i][0] == '-');
-		/// -tid=1, 2, 3...
-//		if(std::string(&argv[i][0], 4) == "-pid") {
-//            txn_thread_id = std::stoi(&argv[i][5]);
-//
-//            Json::Reader reader;
-//            Json::Value root;
-//            ifstream in("../config.json", ios::binary);
-//            assert(true == reader.parse(in, root));
-//            txn_thread_host = root[(string("client")+&argv[i][5])]["ip"].asString() + ":" +
-//                    root[(string("client")+&argv[i][5])]["port"].asString();
-//            cout << "txn_thread_id : " << txn_thread_id << endl;
-//            cout << "txn_thread_host : " << txn_thread_host << ", size:" << txn_thread_host.size() << endl;
-//		} else
 		if (argv[i][1] == 'a')
 			g_part_alloc = atoi( &argv[i][2] );
 		else if (argv[i][1] == 'm')
@@ -75,9 +60,9 @@ void parser(int argc, char * argv[]) {
 			g_part_per_txn = atoi( &argv[i][2] );
 		else if (argv[i][1] == 'e')
 			g_perc_multi_part = atof( &argv[i][2] );
-		else if (argv[i][1] == 'r') 
+		else if (argv[i][1] == 'r')
 			g_read_perc = atof( &argv[i][2] );
-		else if (argv[i][1] == 'w') 
+		else if (argv[i][1] == 'w')
 			g_write_perc = atof( &argv[i][2] );
 		else if (argv[i][1] == 'z')
 			g_zipf_theta = atof( &argv[i][2] );
@@ -91,7 +76,7 @@ void parser(int argc, char * argv[]) {
 			g_thread_cnt = atoi( &argv[i][2] );
 		else if (argv[i][1] == 's')
 			g_synth_table_size = atoi( &argv[i][2] );
-		else if (argv[i][1] == 'R') 
+		else if (argv[i][1] == 'R')
 			g_req_per_query = atoi( &argv[i][2] );
 		else if (argv[i][1] == 'f')
 			g_field_per_tuple = atoi( &argv[i][2] );
@@ -134,10 +119,10 @@ void parser(int argc, char * argv[]) {
 		else if (argv[i][1] == 'h') {
 			print_usage();
 			exit(0);
-		} 
+		}
 		else if (argv[i][1] == '-') {
 			string line(&argv[i][2]);
-			size_t pos = line.find("="); 
+			size_t pos = line.find("=");
 			assert(pos != string::npos);
 			string name = line.substr(0, pos);
 			string value = line.substr(pos + 1, line.length());

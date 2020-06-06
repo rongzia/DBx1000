@@ -1,14 +1,15 @@
 //#include <sched.h>
 #include <chrono>
 #include <unistd.h>
+#include <iostream>
+#include "thread.h"
 
-#include "api/api_single_machine/cs_api.h"
-#include "api/api_txn/api_txn.h"
-#include "client/benchmarks/query.h"
-#include "client/benchmarks/ycsb_query.h"
-#include "client/thread.h"
-#include "client/txn/ycsb_txn.h"
-#include "client/manager_client.h"
+//#include "api/api_single_machine/cs_api.h"
+//#include "api/api_txn/api_txn.h"
+#include "instance/benchmarks/query.h"
+#include "instance/benchmarks/ycsb_query.h"
+#include "instance/txn/ycsb_txn.h"
+#include "instance/manager_client.h"
 #include "common/myhelper.h"
 
 //! thd_id = 0...3
@@ -36,26 +37,20 @@ uint64_t thread_t::get_thd_id() { return thread_id_; }
 //! 3.1 后，进入下次循环，m_txn->abort_cnt = 0; 事务的 abort 计数永远置为 0 ,rc 同时也置为 RCOK。
 //! 且
 RC thread_t::run() {
-    cout << "thread_t::run" << endl;
+    std::cout << "thread_t::run" << std::endl;
 #if !NOGRAPHITE
 	thread_id_ = CarbonGetTileId();
 #endif
-//	if (warmup_finish) {
-//		mem_allocator.register_thread(thread_id_);
-//	}
-//	pthread_barrier_wait( &warmup_bar );
 	stats.init(get_thd_id());
-//	pthread_barrier_wait( &warmup_bar );
 
 //	set_affinity(get_thd_id());
-
 //	myrand rdm;
 //	rdm.init(get_thd_id());
 	RC rc = RC::RCOK;
     txn_man* m_txn = new ycsb_txn_man();
     m_txn->init(this);
 	assert (rc == RC::RCOK);
-    glob_manager_client->SetTxnMan(m_txn);
+//    glob_manager_client->SetTxnMan(m_txn);
 
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
@@ -96,7 +91,7 @@ RC thread_t::run() {
 						usleep((min_ready_time - curr_time) / 1000);
 					}
 					else if (m_query == NULL) {
-						m_query = query_queue->get_next_query( thread_id_ );
+						m_query = manager_client_->query_queue()->get_next_query( thread_id_ );
 					#if CC_ALG == WAIT_DIE
 						m_txn->set_ts(get_next_ts());
 					#endif
@@ -109,7 +104,7 @@ RC thread_t::run() {
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
 				if (rc == RC::RCOK)
-					m_query = query_queue->get_next_query( thread_id_ );
+					m_query = manager_client_->query_queue()->get_next_query( thread_id_ );
 			}
 		}
 		profiler.End();
@@ -130,7 +125,8 @@ RC thread_t::run() {
 //            m_txn->set_ts(get_next_ts());
 #ifdef WITH_RPC
 //            m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
-            m_txn->set_ts(glob_manager_client->api_txn_client()->GetAndAddTs(this->get_thd_id()));
+// TODO:
+            m_txn->set_ts(manager_client_->buffer_manager_rpc_handler()->GetAndAddTs(this->get_thd_id()));
 #else
             m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
 #endif // WITH_RPC
@@ -229,23 +225,9 @@ RC thread_t::run() {
 		    if (stats._stats[thread_id_]->txn_cnt != MAX_TXN_PER_PART) {
 		        cout << " stats._stats[thread_id_]->txn_cnt : " << stats._stats[thread_id_]->txn_cnt << endl;
 		    }
-
-//			assert(stats._stats[thread_id_]->txn_cnt == MAX_TXN_PER_PART);
-#ifdef WITH_RPC
-			glob_manager_client->api_txn_client()->SetWlSimDone();
-#else
-            dbx1000::API::set_wl_sim_done();
-#endif // WITH_RPC
+			assert(stats._stats[thread_id_]->txn_cnt == MAX_TXN_PER_PART);
+			return RC::FINISH;
 	    }
-
-		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
-#ifdef WITH_RPC
-	    if (true == glob_manager_client->api_txn_client()->GetWlSimDone()) {
-#else
-	    if (true == dbx1000::API::get_wl_sim_done()) {
-#endif // WITH_RPC
-   		    return RC::FINISH;
-   		}
 	}
 	assert(false);
 }

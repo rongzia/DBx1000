@@ -3,9 +3,6 @@
 #include <cstdint>
 #include "common/global.h"
 
-
-//#define ROW_SIZE 100
-
 class workload;
 class thread_t;
 namespace dbx1000 {
@@ -18,13 +15,18 @@ class base_query;
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
+//class Access {
+//public:
+//	access_t 	type;
+//	dbx1000::RowItem* 	orig_row;   /// 读出来的 row
+//	dbx1000::RowItem* 	data;       /// 脏页
+////	dbx1000::RowItem * 	orig_data;
+//	void cleanup();
+//};
+
 class Access {
 public:
-	access_t 	type;
-	dbx1000::RowItem* 	orig_row;   /// 读出来的 row
-	dbx1000::RowItem* 	data;       /// 脏页
-//	dbx1000::RowItem * 	orig_data;
-	void cleanup();
+    access_t
 };
 
 //! 每个线程持有一个，在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
@@ -62,7 +64,6 @@ public:
 	int	 			wr_cnt;
 	Access **		accesses;
 	int 			num_accesses_alloc;
-//	dbx1000::RowItem*        cur_row;
 
  private:
 	uint64_t 		txn_id;

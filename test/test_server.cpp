@@ -7,7 +7,7 @@
 #include <cstring>
 #include <thread>
 #include <vector>
-#include "server/manager_server.h"
+#include "buffer_server/manager_server.h"
 
 #include "common/global.h"
 //#include "common/buffer/buffer.h"

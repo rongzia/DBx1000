@@ -8,8 +8,8 @@
 #include "config.h"
 
 namespace dbx1000 {
-    LockNode::LockNode(uint16_t nodeid, bool val, LockMode mode, uint16_t count) {
-        this->node_id = nodeid;
+    LockNode::LockNode(int instanceid, bool val, LockMode mode, int count) {
+        this->instance_id = instanceid;
         this->valid = val;
         this->lock_mode = mode;
         this->count = count;

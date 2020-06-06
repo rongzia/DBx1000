@@ -17,9 +17,9 @@ namespace dbx1000 {
     };
 
     struct LockNode {
-        LockNode(uint16_t nodeid, bool val = false, LockMode mode = LockMode::N, uint16_t count = 0);
-        uint16_t node_id;
-        uint16_t count;
+        LockNode(int instanceid, bool val = false, LockMode mode = LockMode::N, int count = 0);
+        int instance_id;
+        int count;
         bool valid;
         LockMode lock_mode;
         std::atomic_flag lock;

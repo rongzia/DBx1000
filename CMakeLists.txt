@@ -52,12 +52,12 @@ LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
 
 set(SRC_FILES
-        client/benchmarks/ycsb_query.cpp
-        client/benchmarks/query.cpp
-        client/txn/ycsb_txn.cpp
-        client/txn/txn.cpp
-        client/manager_client.cpp
-        client/thread.cpp
+        instance/benchmarks/ycsb_query.cpp
+        instance/benchmarks/query.cpp
+        instance/txn/ycsb_txn.cpp
+        instance/txn/txn.cpp
+        instance/manager_client.cpp
+        instance/thread.cpp
         common/buffer/buffer.cpp
         common/buffer/lru.cpp
         common/buffer/lru_index.cpp
@@ -82,8 +82,8 @@ set(SRC_FILES
         common/parser.cpp
         common/row_item.cpp
         common/txn_row_man.cpp
-        server/concurrency_control/row_mvcc.cpp
-        server/manager_server.bak.cpp
+        instance/concurrency_control/row_mvcc.cpp
+        buffer_server/manager_server.bak.cpp
         util/arena.cpp
         config.cpp
         )
@@ -104,7 +104,7 @@ endif ()
 #target_link_libraries(rundb libleveldb.a libsnappy.a libjemalloc.so libpthread.so)
 
 if(${WITH_RPC})
-    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES} server/manager_server.cpp server/manager_server.h test/other_test.cpp test/test_server.cpp)
+    add_executable(main_test_cc test/main_test_cc.cpp ${SRC_FILES} buffer_server/manager_server.cpp buffer_server/manager_server.h test/other_test.cpp test/test_server.cpp common/parser_host.cpp)
     add_executable(main_test_txn test/main_test_txn.cpp ${SRC_FILES})
     target_link_libraries(main_test_cc libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
     target_link_libraries(main_test_txn libleveldb.a libsnappy.a ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
@@ -114,9 +114,9 @@ else()
 endif()
 
 ### ******************************* test query *******************************
-add_executable(test_query client/benchmarks/test_query.cpp
-        client/benchmarks/query.cpp
-        client/benchmarks/ycsb_query.cpp
+add_executable(test_query instance/benchmarks/test_query.cpp
+        instance/benchmarks/query.cpp
+        instance/benchmarks/ycsb_query.cpp
         common/global.cpp
         util/arena.cpp)
 target_link_libraries(test_query pthread)
@@ -155,10 +155,13 @@ set(SERVER_FILE
 #        common/txn_row_man.cpp
 #        server/concurrency_control/row_mvcc.cpp
 #        server/manager_server.bak.cpp
-        server/manager_server.cpp
+        buffer_server/manager_server.cpp
         util/arena.cpp
         config.cpp
         )
 add_executable(other_test test/other_test.cpp)
 add_executable(test_server test/test_server.cpp ${SERVER_FILE})
 target_link_libraries(test_server libjsoncpp.a pthread)
+
+add_executable(parser_host common/parser_host.cpp)
+target_link_libraries(parser_host libjsoncpp.a)

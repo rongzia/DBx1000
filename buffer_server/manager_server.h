@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <string>
+#include <map>
 
 class workload;
 
@@ -45,7 +46,7 @@ namespace dbx1000 {
         workload *m_workload();
         Stats* stats();
         bool init_done() const;
-        const std::string& host() const;
+//        const std::string& host() const;
         InstanceInfo* instances();
         void set_buffer(Buffer*);
         void set_index(Index*);
@@ -54,7 +55,7 @@ namespace dbx1000 {
         void set_m_workload(workload *);
         void set_stats(Stats*);
         void set_init_done(bool);
-        void set_host(const std::string&);
+//        void set_host(const std::string&);
         void set_instances_i(InstanceInfo*);
 
 
@@ -69,7 +70,7 @@ namespace dbx1000 {
         Stats* stats_;
 
         bool init_done_;
-        std::string host_;
+        std::map<int, std::string> hosts_map_;
         InstanceInfo* instances_;
     };
 }

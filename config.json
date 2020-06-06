@@ -1,84 +1,85 @@
 {
 	"server": {
+		"id": -1,
 		"ip": "10.11.6.120",
 		"port": "50051"
 	},
-	"client0": {
+	"instance0": {
 		"id": 0,
 		"ip": "10.11.1.193",
 		"port": "50051"
 	},
-	"client1": {
+	"instance1": {
 		"id": 1,
 		"ip": "10.11.1.193",
 		"port": "50052"
 	},
-	"client2": {
+	"instance2": {
 		"id": 2,
 		"ip": "10.11.1.193",
 		"port": "50053"
 	},
-	"client3": {
+	"instance3": {
 		"id": 3,
 		"ip": "10.11.1.193",
 		"port": "50054"
 	},
-	"client4": {
+	"instance4": {
 		"id": 4,
 		"ip": "10.11.1.193",
 		"port": "50055"
 	},
-	"client5": {
+	"instance5": {
 		"id": 5,
 		"ip": "10.11.1.193",
 		"port": "50056"
 	},
-	"client6": {
+	"instance6": {
 		"id": 6,
 		"ip": "10.11.1.193",
 		"port": "50057"
 	},
-	"client7": {
+	"instance7": {
 		"id": 7,
 		"ip": "10.11.1.193",
 		"port": "50058"
 	},
-	"client8": {
+	"instance8": {
 		"id": 8,
 		"ip": "10.11.1.193",
 		"port": "50059"
 	},
-	"client9": {
+	"instance9": {
 		"id": 9,
 		"ip": "10.11.1.193",
 		"port": "500"
 	},
-	"client10": {
+	"instance10": {
 		"id": 10,
 		"ip": "10.11.1.193",
 		"port": "50060"
 	},
-	"client11": {
+	"instance11": {
 		"id": 11,
 		"ip": "10.11.1.193",
 		"port": "50061"
 	},
-	"client12": {
+	"instance12": {
 		"id": 12,
 		"ip": "10.11.1.193",
 		"port": "50062"
 	},
-	"client13": {
+	"instance13": {
 		"id": 13,
 		"ip": "10.11.1.193",
 		"port": "50063"
 	},
-	"client14": {
+	"instance14": {
 		"id": 14,
 		"ip": "10.11.1.193",
 		"port": "50064"
 	},
-	"client15": {
+	"instance15": {
 		"id": 15,
 		"ip": "10.11.1.193",
 		"port": "50065"

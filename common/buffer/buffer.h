@@ -22,10 +22,11 @@
 namespace dbx1000 {
     class LRU;
     class LruIndex;
+    class ManagerClient;
 
     class Buffer {
     public:
-        Buffer(uint64_t total_size, size_t page_size);
+        Buffer(uint64_t total_size, size_t page_size, ManagerClient *managerClient = nullptr);
         ~Buffer();
 
         /// 有锁读写，使用时直接锁住整个函数，相当于串行调度
@@ -53,6 +54,7 @@ namespace dbx1000 {
         LRU* page_list_;     /// 被使用的链表
         LRU* free_list_;    /// 空闲链表
         LruIndex* lru_index_;   /// page_list_ 的索引，根据 key, 直接定位到相应的 RowNode
+        ManagerClient* manager_client_;
 
         std::mutex mutex_;
     };
