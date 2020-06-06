@@ -14,6 +14,7 @@ class txn_man;
 class workload;
 
 class Query_queue;
+class Page_mvcc;
 
 namespace dbx1000 {
     class BufferManagerClient;
@@ -27,13 +28,19 @@ namespace dbx1000 {
         ~ManagerClient();
         void Init();
         void InitBufferForTest();
+        uint64_t GetNextTs(uint64_t thread_id);
+        void add_ts(uint64_t thread_id, uint64_t ts);
 
         /// getter and setter
         Query_queue* query_queue();
         BufferManagerClient *buffer_manager_rpc_handler();
+        std::map<uint64_t, Page_mvcc*> mvcc_map();
     private:
         bool init_done_;
         int instance_id_;
+        std::atomic<uint64_t> timestamp_;
+        uint64_t*   all_ts_;
+        std::map<uint64_t, Page_mvcc*> mvcc_map_;
 
         Query_queue* query_queue_;
         workload* m_workload_;

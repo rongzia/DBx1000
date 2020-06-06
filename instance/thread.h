@@ -25,6 +25,7 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 
+    dbx1000::ManagerClient* manager_client_;
 private:
 
 //	RC	 		runTest(txn_man * txn);
@@ -41,5 +42,4 @@ private:
 	int _abort_buffer_empty_slots;      //! 未使用的 AbortBufferEntry 数量
 	bool _abort_buffer_enable;          //! 标记是否启用 AbortBuffer，若false，则事务失败时后，下次事务执行的仍然是上次失败的 query
 
-    dbx1000::ManagerClient* manager_client_;
 };

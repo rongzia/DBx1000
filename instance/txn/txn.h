@@ -7,6 +7,7 @@ class workload;
 class thread_t;
 namespace dbx1000 {
     class RowItem;
+    class Page;
 }
 class table_t;
 class base_query;
@@ -26,7 +27,10 @@ class base_query;
 
 class Access {
 public:
-    access_t
+    access_t type;
+    dbx1000::Page* orig_page;
+    dbx1000::Page*  data;
+    void cleanup();
 };
 
 //! 每个线程持有一个，在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
@@ -48,7 +52,8 @@ public:
 	void 			set_ts(uint64_t timestamp);
 	uint64_t        get_ts();
 
-	dbx1000::RowItem* 		get_row(uint64_t key, access_t type);
+//	dbx1000::RowItem* 		get_row(uint64_t key, access_t type);
+	dbx1000::RowItem* 		get_page(uint64_t key, access_t type);
 	RC 				finish(RC rc);
 	void 			cleanup(RC rc);
 

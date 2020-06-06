@@ -29,7 +29,7 @@ struct ReqEntry {
 };
 
 
-class Row_mvcc {
+class Page_mvcc {
 public:
 	void init(uint64_t key);
 	RC access(txn_man * txn, TsType type, row_t * row);

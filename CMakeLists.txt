@@ -82,7 +82,7 @@ set(SRC_FILES
         common/parser.cpp
         common/row_item.cpp
         common/txn_row_man.cpp
-        instance/concurrency_control/row_mvcc.cpp
+        instance/concurrency_control/page_mvcc.cpp
         buffer_server/manager_server.bak.cpp
         util/arena.cpp
         config.cpp

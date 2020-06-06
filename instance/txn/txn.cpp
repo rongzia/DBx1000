@@ -1,15 +1,16 @@
 
 #include <cstring>
-#include <common/mystats.h>
-#include <client/manager_client.h>
-
 #include "txn.h"
 
-#include "api/api_single_machine/cs_api.h"
-#include "api/api_txn/api_txn.h"
-#include "client/benchmarks/ycsb_query.h"
-#include "client/thread.h"
-#include "common/row_item.h"
+//#include "api/api_single_machine/cs_api.h"
+//#include "api/api_txn/api_txn.h"
+#include "instance/benchmarks/ycsb_query.h"
+#include "instance/concurrency_control/page_mvcc.h"
+#include "instance/manager_client.h"
+#include "instance/thread.h"
+//#include "common/row_item.h"
+#include "common/storage/tablespace/page.h"
+#include "common/mystats.h"
 
 void txn_man::init(thread_t * h_thd) {
 	this->h_thd = h_thd;
@@ -61,9 +62,52 @@ void txn_man::cleanup(RC rc) {
 	row_cnt = 0;
 	wr_cnt = 0;
 }
-
-dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
-//    cout << "txn_man::get_row, key : "  << key << endl;
+//
+//dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
+////    cout << "txn_man::get_row, key : "  << key << endl;
+//    uint64_t thread_id = get_thd_id();
+//    dbx1000::Profiler profiler;
+//    profiler.Start();
+//
+//	RC rc = RC::RCOK;
+//	if (accesses[row_cnt] == NULL) {
+//		accesses[row_cnt] = new Access();
+//		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size());
+//		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size());
+//		num_accesses_alloc ++;
+//	} else {
+//	    assert(accesses[row_cnt]->orig_row->row_ != nullptr);
+//	    accesses[row_cnt]->orig_row->key_ = key;
+//	    accesses[row_cnt]->data->key_ = key;
+//	}
+//
+//	this->ts_ready = false;
+//#ifdef WITH_RPC
+//	rc = glob_manager_client->api_txn_client()->GetRow(key, type, this, row_cnt);
+//#else
+//    rc = dbx1000::API::get_row(key, type, this, row_cnt);
+//#endif // WITH_RPC
+//
+//	if (rc == RC::Abort) {
+//		return NULL;
+//	}
+//	accesses[row_cnt]->type = type;
+//	if(RD != type && SCAN != type) {
+//        memcpy(accesses[row_cnt]->data->row_, accesses[row_cnt]->orig_row->row_, glob_manager_client->row_size());
+//    }
+//	row_cnt ++;
+//	if (type == WR) { wr_cnt ++; }
+//
+//	profiler.End();
+//	stats.tmp_stats[thread_id]->time_man += profiler.Nanos();
+//	if ( RD == type || SCAN == type) {
+//        return accesses[row_cnt - 1]->orig_row;
+//	} else {
+//        return accesses[row_cnt - 1]->data;
+//    }
+//}
+dbx1000::RowItem* txn_man::get_page(uint64_t page_id, access_t type) {
+//    cout << "txn_man::get_page, page_id : "  << page_id << endl;
     uint64_t thread_id = get_thd_id();
     dbx1000::Profiler profiler;
     profiler.Start();
@@ -71,8 +115,8 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	RC rc = RC::RCOK;
 	if (accesses[row_cnt] == NULL) {
 		accesses[row_cnt] = new Access();
-		accesses[row_cnt]->orig_row = new dbx1000::RowItem(key, glob_manager_client->row_size());
-		accesses[row_cnt]->data     = new dbx1000::RowItem(key, glob_manager_client->row_size());
+		accesses[row_cnt]->orig_page = new dbx1000::Page(new char[PAGE_SIZE]);
+		accesses[row_cnt]->data     = new dbx1000::Page(new char[PAGE_SIZE]);
 		num_accesses_alloc ++;
 	} else {
 	    assert(accesses[row_cnt]->orig_row->row_ != nullptr);
@@ -81,11 +125,8 @@ dbx1000::RowItem* txn_man::get_row(uint64_t key, access_t type) {
 	}
 
 	this->ts_ready = false;
-#ifdef WITH_RPC
-	rc = glob_manager_client->api_txn_client()->GetRow(key, type, this, row_cnt);
-#else
-    rc = dbx1000::API::get_row(key, type, this, row_cnt);
-#endif // WITH_RPC
+    // TODO
+    rc = this->h_thd->manager_client_->mvcc_map()[page_id]->access(this, type, )
 
 	if (rc == RC::Abort) {
 		return NULL;

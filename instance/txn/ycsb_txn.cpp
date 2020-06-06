@@ -34,7 +34,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 					break;
 			}
 #endif
-			dbx1000::RowItem* row_local = get_row(req->key, req->rtype);
+			char page_local = get_row(req->key, req->rtype);
 //			cout << "key : " << req->key << ", type : " << req->rtype << endl;
 
 			if (row_local == NULL) {

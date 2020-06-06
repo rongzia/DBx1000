@@ -2,7 +2,7 @@
 #include "txn.h"
 #include "row.h"
 #include "manager.h"
-#include "row_mvcc.h"
+#include "page_mvcc.h"
 #include "mem_alloc.h"
 #include <mm_malloc.h>
 

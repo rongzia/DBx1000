@@ -123,13 +123,7 @@ RC thread_t::run() {
 				|| CC_ALG == TIMESTAMP) {
             //! 记录事务开始时间
 //            m_txn->set_ts(get_next_ts());
-#ifdef WITH_RPC
-//            m_txn->set_ts(api_txn_client->get_next_ts(this->get_thd_id()));
-// TODO:
-            m_txn->set_ts(manager_client_->buffer_manager_rpc_handler()->GetAndAddTs(this->get_thd_id()));
-#else
-            m_txn->set_ts(dbx1000::API::get_next_ts(this->get_thd_id()));
-#endif // WITH_RPC
+            m_txn->set_ts(manager_client_->GetNextTs(get_thd_id()));
         }
 		rc = RC::RCOK;
 #if CC_ALG == HSTORE
@@ -143,13 +137,9 @@ RC thread_t::run() {
 #elif CC_ALG == MVCC || CC_ALG == HEKATON
 		/// 全局数组 all_ts 记录该事务的开始时间
 /*
-//		glob_manager->add_ts(get_thd_id(), m_txn->get_ts());
-#ifdef WITH_RPC
-        api_txn_client->add_ts(this->get_thd_id(), m_txn->get_ts());
-#else
-        dbx1000::API::add_ts(this->get_thd_id(), m_txn->get_ts());
-#endif // WITH_RPC
-*/
+		glob_manager->add_ts(get_thd_id(), m_txn->get_ts());
+ */
+        manager_client_->add_ts(get_thd_id(), m_txn->get_ts());
 #elif CC_ALG == OCC
 		// In the original OCC paper, start_ts only reads the current ts without advancing it.
 		// But we advance the global ts here to simplify the implementation. However, the final

@@ -22,15 +22,21 @@
 
 namespace dbx1000 {
 
-    ManagerClient::ManagerClient() {
+    ManagerClient::~ManagerClient() {
         delete query_queue_;
         delete m_workload_;
         delete buffer_manager_rpc_handler_;
         delete buffer_;
     }
 
-    ManagerClient::~ManagerClient() {
+    ManagerClient::ManagerClient() {
         init_done_ = false;
+        timestamp_ = 0;
+        all_ts_ = new uint64_t[g_thread_cnt]();
+        for(int i = 0; i< g_thread_cnt; i++) {
+            all_ts_[i] = UINT64_MAX;
+        }
+
         query_queue_ = new Query_queue();
         m_workload_ = new ycsb_wl();
         m_workload_->init();
@@ -50,6 +56,11 @@ namespace dbx1000 {
         }
     }
 
+    uint64_t ManagerClient::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1, std::memory_order_consume); }
+
+    void ManagerClient::add_ts(uint64_t thread_id, uint64_t ts) { all_ts_[thread_id] = ts; }
+
     Query_queue* ManagerClient::query_queue() { return this->query_queue_; }
     BufferManagerClient* ManagerClient::buffer_manager_rpc_handler() { return this->buffer_manager_rpc_handler_; }
+    std::map<uint64_t, Page_mvcc*> ManagerClient::mvcc_map() { return &this->mvcc_map_; }
 }
