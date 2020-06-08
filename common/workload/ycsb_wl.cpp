@@ -2,21 +2,19 @@
 
 #include <sched.h>
 #include <thread>
-#include <server/manager_server.bak.h>
+#include <cstring>
 
 #include "ycsb_wl.h"
 
-#include "leveldb/db.h"
 #include "common/global.h"
-#include "common/row_item.h"
 #include "common/buffer/buffer.h"
 #include "common/index/index.h"
-#include "common/storage/table.h"
-#include "common/storage/catalog.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
+#include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/tablespace.h"
-#include "server/concurrency_control/row_mvcc.h"
+#include "common/storage/catalog.h"
+#include "common/storage/table.h"
 #include "util/profiler.h"
 #include "util/arena.h"
 

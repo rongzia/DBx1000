@@ -39,12 +39,12 @@ typedef uint64_t ts_t; // time stamp type
 // Global Data Structure 
 /******************************************/
 //extern mem_alloc mem_allocator;
-extern dbx1000::Stats stats;
+//extern dbx1000::Stats stats;
 //extern DL_detect dl_detector;
 //extern Manager * glob_manager;
 extern dbx1000::ManagerServer* glob_manager_server;
-extern dbx1000::ManagerClient* glob_manager_client;
-extern uint64_t process_id;
+//extern dbx1000::ManagerClient* glob_manager_client;
+//extern uint64_t process_id;
 extern Plock part_lock_man;
 extern OptCC occ_man;
 #if CC_ALG == VLL

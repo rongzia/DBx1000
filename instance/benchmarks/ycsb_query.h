@@ -3,8 +3,8 @@
 
 
 #include <cassert>
-#include "client/benchmarks/query.h"
 #include "common/global.h"
+#include "instance/benchmarks/query.h"
 
 class workload;
 class Query_thd;

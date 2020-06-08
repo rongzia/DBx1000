@@ -1,32 +1,33 @@
 #include "ycsb_txn.h"
 
-#include "client/benchmarks/ycsb_query.h"
-#include "client/thread.h"
-#include "common/row_item.h"
+#include "common/storage/tablespace/row_item.h"
+#include "instance/benchmarks/ycsb_query.h"
+#include "instance/thread.h"
 
-void ycsb_txn_man::init(thread_t * h_thd) {
-	txn_man::init(h_thd);
+void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
+	txn_man::init(h_thd, h_wl, thd_id);
+	_wl = (ycsb_wl *) h_wl;
 }
 
 RC ycsb_txn_man::run_txn(base_query * query) {
-//    cout << "ycsb_txn_man::run_txn start" << endl;
-    txn_count++;
 	RC rc;
 	ycsb_query * m_query = (ycsb_query *) query;
-//	itemid_t * m_item = NULL;
+	/* ycsb_wl * wl = (ycsb_wl *) h_wl;
+	itemid_t * m_item = NULL; */
   	row_cnt = 0;
 
 	for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
 		ycsb_request * req = &m_query->requests[rid];
-//		int part_id = wl->key_to_part( req->key );      //! 分区数为 1，part_id == 0
+		/* int part_id = wl->key_to_part( req->key ); */      //! 分区数为 1，part_id == 0
 		//! finish_req、iteration 是为 req->rtype==SCAN 准备的，扫描需要读 SCAN_LEN 个 item，
 		//! while 虽然为 SCAN 提供了 SCAN_LEN 次读，但是每次请求的 key 是一样的，并没有对操作 [key, key + SCAN_LEN]
 		bool finish_req = false;
 		uint32_t iteration = 0;
 		while ( !finish_req ) {
-//			if (iteration == 0) {
-//				m_item = index_read(_wl->the_index, req->key, part_id);
-//			}
+		    /*
+			if (iteration == 0) {
+				m_item = index_read(_wl->the_index, req->key, part_id);
+			} 
 #if INDEX_STRUCT == IDX_BTREE
 			else {
 				_wl->the_index->index_next(get_thd_id(), m_item);
@@ -34,9 +35,12 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 					break;
 			}
 #endif
-			char page_local = get_row(req->key, req->rtype);
-//			cout << "key : " << req->key << ", type : " << req->rtype << endl;
-
+			row_t * row = ((row_t *)m_item->location);
+		     */
+			dbx1000::RowItem * row_local;
+			access_t type = req->rtype;
+			
+			row_local = get_row(req->key, type);
 			if (row_local == NULL) {
 				rc = RC::Abort;
 				goto final;
@@ -48,7 +52,6 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                 if (req->rtype == RD || req->rtype == SCAN) {
 //                  for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
 						int fid = 0;
-//						char * data = row_local->get_data();
 						char * data = row_local->row_;
 						__attribute__((unused)) uint64_t fval = *(uint64_t *)(&data[fid * 10]);
 //                  }
@@ -56,7 +59,6 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                     assert(req->rtype == WR);
 //					for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
 						int fid = 0;
-//						char * data = row->get_data();
 						char * data = row_local->row_;
 						*(uint64_t *)(&data[fid * 10]) = 0;
 //					}
@@ -72,8 +74,6 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 	rc = RC::RCOK;
 final:
 	rc = finish(rc);
-
-//    cout << "end ycsb_txn_man::run_txn" << endl;
 	return rc;
 }
 

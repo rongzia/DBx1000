@@ -2,8 +2,8 @@
 
 //#include "stats.h"
 //#include "manager.h"
-#include "server/manager_server.bak.h"
-#include "client/manager_client.h"
+#include "buffer_server/manager_server.h"
+#include "instance/manager_client.h"
 //#include "query.h"
 //#include "dl_detect.h"
 //#include "plock.h"
@@ -20,15 +20,15 @@ namespace dbx1000_instance {
 
 
 //mem_alloc mem_allocator;
-dbx1000::Stats stats;
+//dbx1000::Stats stats;
 //DL_detect dl_detector;
 //Manager * glob_manager;
 dbx1000::ManagerServer * glob_manager_server;
-dbx1000::ManagerClient * glob_manager_client;
+//dbx1000::ManagerClient * glob_manager_client;
 //dbx1000::ApiTxnClient* api_txn_client;
 //dbx1000::ApiConCtlClient* api_con_ctl_client;
 //std::string txn_thread_host;
-uint64_t process_id;
+//uint64_t process_id;
 //Query_queue * query_queue;
 //Plock part_lock_man;
 //OptCC occ_man;

@@ -6,17 +6,20 @@
 class table_t;
 class Catalog;
 class txn_man;
+namespace dbx1000 {
+    class RowItem;
+};
 
 // Only a constant number of versions can be maintained.
-// If a request accesses an old version that has been recycled,
+// If a request accesses an old version that has been recycled,   
 // simply abort the request.
 
 #if CC_ALG == MVCC
 struct WriteHisEntry {
 	bool valid;		// whether the entry contains a valid version
-	bool reserved; 	// when valid == false, whether the entry is reserved by a P_REQ
+	bool reserved; 	// when valid == false, whether the entry is reserved by a P_REQ 
 	ts_t ts;
-	char page[MY_PAGE_SIZE];
+	dbx1000::RowItem * row;
 };
 
 struct ReqEntry {
@@ -29,28 +32,32 @@ struct ReqEntry {
 };
 
 
-class Page_mvcc {
+class Row_mvcc {
 public:
-	void init(uint64_t key);
-	RC access(txn_man * txn, TsType type, row_t * row);
+	void init(uint64_t key, size_t size);
+	void GetLatestRow(txn_man * txn);
+	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
 private:
- 	pthread_mutex_t * latch;
+ 	/* pthread_mutex_t * latch; */
 	volatile bool blatch;
 
-	row_t * _row;
+	/* row_t * _row; */
+	uint64_t key_;
+	size_t size_;
+	dbx1000::RowItem* row_;
 
-	RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0);
+	/* RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0); */
 	void update_buffer(txn_man * txn, TsType type);
 	void buffer_req(TsType type, txn_man * txn, bool served);
 
-	// Invariant: all valid entries in _requests have greater ts than any entry in _write_history
-	row_t * 		_latest_row;
+	// Invariant: all valid entries in _requests have greater ts than any entry in _write_history 
+	dbx1000::RowItem * 		_latest_row;
 	ts_t			_latest_wts;
 	ts_t			_oldest_wts;
 	WriteHisEntry * _write_history;
 	// the following is a small optimization.
-	// the timestamp for the served prewrite request. There should be at most one
-	// served prewrite request.
+	// the timestamp for the served prewrite request. There should be at most one 
+	// served prewrite request. 
 	bool  			_exists_prewrite;
 	ts_t 			_prewrite_ts;
 	uint32_t 		_prewrite_his_id;
@@ -63,11 +70,11 @@ private:
 	// Invariant: _num_versions <= 4
 	// Invariant: _num_prewrite_reservation <= 2
 	uint32_t 		_num_versions;
-
+	
 	// list = 0: _write_history
 	// list = 1: _requests
 	void double_list(uint32_t list);
-	row_t * reserveRow(ts_t ts, txn_man * txn);
+	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
 };
 
 #endif
