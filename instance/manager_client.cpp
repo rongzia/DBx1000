@@ -41,10 +41,10 @@ namespace dbx1000 {
         delete m_workload_;
         delete buffer_;
         index_->Serialize();
-//        table_space_->Serialize();
+        table_space_->Serialize();
         delete table_space_;
         delete index_;
-//        delete lock_table_;
+        delete lock_table_;
 //        delete buffer_manager_rpc_handler_;
     }
 
@@ -56,7 +56,6 @@ namespace dbx1000 {
         txn_man_ = new txn_man *[g_thread_cnt]();
         for (int i = 0; i < g_thread_cnt; i++) {
             all_ts_[i] = UINT64_MAX;
-            txn_man_[i] = new ycsb_txn_man();
         }
         stats_.init();
 
@@ -68,7 +67,6 @@ namespace dbx1000 {
 
         InitMvccs();
         table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
-        cout << "table_space_->table_name() : "<< table_space_->table_name() << endl;
         index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
         table_space_->DeSerialize();
         index_->DeSerialize();
@@ -76,6 +74,7 @@ namespace dbx1000 {
         buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, this);
         lock_table_ = new LockTable();
         lock_table_->Init(0, table_space_->GetLastPageId() + 1);
+        InitLockTable();
         // TODO :
 //        server_rpc_handler_ = new Server
     }
@@ -100,9 +99,9 @@ namespace dbx1000 {
     }
     void ManagerClient::InitLockTable() {
         std::cout << "ManagerClient::InitLockTable" << std::endl;
-        for (uint64_t key = 0; key < table_space_->GetLastPageId(); key++) {
-            lock_table_->lock_table()[key]->instance_id = this->instance_id_;
-            lock_table_->lock_table()[key]->valid = true;
+        for(auto &iter : lock_table_->lock_table()) {
+            iter.second->instance_id = this->instance_id_;
+            iter.second->valid = true;
         }
         std::cout << "ManagerClient::InitLockTable done." << std::endl;
     }
@@ -113,7 +112,6 @@ namespace dbx1000 {
         RC rc = RC::RCOK;
         uint64_t thd_id = txn->get_thd_id();
         TsType ts_type = (type == RD) ? R_REQ : P_REQ;
-//        rc = this->manager->access(txn, ts_type, row);
         rc = this->mvcc_map_[key]->access(txn, ts_type, row);
         if (rc == RC::RCOK) {
             row = txn->cur_row;
@@ -157,12 +155,14 @@ namespace dbx1000 {
     }
 
 
+    void ManagerClient::set_init_done(bool init_done) { this->init_done_ = init_done; }
     void ManagerClient::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }
     std::map<int, std::string> &ManagerClient::host_map() { return this->host_map_; }
     Stats ManagerClient::stats() { return this->stats_; }
     Query_queue *ManagerClient::query_queue() { return this->query_queue_; }
     workload* ManagerClient::m_workload() { return this->m_workload_; }
     Buffer* ManagerClient::buffer() { return this->buffer_; }
+    TableSpace* ManagerClient::table_space() { return this->table_space_; }
     Index* ManagerClient::index() { return this->index_; }
     LockTable* ManagerClient::lock_table() { return this->lock_table_; }
 

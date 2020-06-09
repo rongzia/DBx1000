@@ -128,7 +128,7 @@ void Row_mvcc::GetLatestRow(txn_man * txn) {
         txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
         bool rc = txn->h_thd->manager_client_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::S);
         assert(true == rc);
-        txn->h_thd->manager_client_->buffer()->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        txn->h_thd->manager_client_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         page->Deserialize();
 
         {   /// 行读写
@@ -218,7 +218,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			  		the_i = i;
 				}
 			}
-	   		// TODO, 当历史不存在时，从 buffer 读
+	   		// 当历史不存在时，从 buffer 读
 			if (the_i == _his_len) {
                 /* txn->cur_row = _row; */
                 if(nullptr == _latest_row) { GetLatestRow(txn); }

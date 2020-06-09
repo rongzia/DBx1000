@@ -20,7 +20,7 @@ namespace dbx1000 {
 
         uint64_t GetNextPageId();
         uint64_t GetLastPageId() const;
-        void Serialize();
+        void Serialize() const;
         void DeSerialize();
 
         void Print();

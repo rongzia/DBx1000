@@ -174,12 +174,12 @@ void Check_DB() {
     delete tableSpace2;
 }
 
-int main() {
-    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
-
-    Gen_DB_single_thread();
-    Check_DB();
-
-    dbx1000::FileIO::Close();
-    return 0;
-}
+//int main() {
+//    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
+//
+//    Gen_DB_single_thread();
+//    Check_DB();
+//
+//    dbx1000::FileIO::Close();
+//    return 0;
+//}

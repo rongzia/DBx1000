@@ -16,9 +16,9 @@ namespace dbx1000 {
         this->lock.clear();
     }
     LockTable::~LockTable() {
-//        for(auto &iter : lock_table_){
-//            delete iter.second;
-//        }
+        for(auto &iter : lock_table_){
+            delete iter.second;
+        }
     }
     LockTable::LockTable() {}
 

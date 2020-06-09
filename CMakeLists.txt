@@ -157,5 +157,5 @@ target_link_libraries(parser_host libjsoncpp.a)
 add_executable(gen_db test/gen_db.cpp ${SRC_FILES})
 target_link_libraries(gen_db libjsoncpp.a pthread)
 
-add_executable(main_test_instance test/main_test_instance.cpp ${SRC_FILES})
+add_executable(main_test_instance test/main_test_instance.cpp test/gen_db.cpp ${SRC_FILES})
 target_link_libraries(main_test_instance libjsoncpp.a pthread)

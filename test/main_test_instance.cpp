@@ -39,25 +39,37 @@ void f(thread_t* thread) {
 
 extern void parser(int argc, char * argv[]);
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
+extern void Gen_DB_single_thread();
+extern void Check_DB();
 
 int main(int argc, char* argv[]) {
+
+    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
+    Gen_DB_single_thread();
+    Check_DB();
+    dbx1000::FileIO::Close();
+
+
+
+
+
     parser(argc, argv);
     cout << "mian test txn thread" << endl;
 
     dbx1000::ManagerClient* manager_client = new dbx1000::ManagerClient();
     manager_client->set_instance_id(parser_host(argc, argv, manager_client->host_map()));
-    manager_client->InitLockTable();
+    manager_client->set_init_done(true);
 
 	warmup_finish = true;
 
-    thread_t *thread_t_s = new thread_t[1]();
+    thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i, manager_client->m_workload());
         thread_t_s[i].manager_client_ = manager_client;
         v_thread.emplace_back(f, &thread_t_s[i]);
     }
-    for(int i = 0; i < 4; i++) {
+    for(int i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
 
@@ -65,7 +77,9 @@ int main(int argc, char* argv[]) {
 //    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
 //    stats.print_rpc();
 
-    dbx1000::FileIO::Close();
+//    dbx1000::FileIO::Close();
+
+//    manager_client->table_space()->Serialize();
     delete manager_client;
 
     cout << "exit main." << endl;

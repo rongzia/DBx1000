@@ -35,10 +35,12 @@ namespace dbx1000 {
 
     uint64_t TableSpace::GetLastPageId() const { return last_page_id_; }
 
-    void TableSpace::Serialize() {
-//        std::ofstream out(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
+    void TableSpace::Serialize() const {
+        std::ofstream out(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
+        /*
         std::ofstream out;
         out.open(std::string(DB_PREFIX) + this->table_name_);
+         */
         assert(out.is_open());
 
         Json::Value root;

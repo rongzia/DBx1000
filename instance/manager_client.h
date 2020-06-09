@@ -44,12 +44,14 @@ namespace dbx1000 {
         uint64_t GetMinTs(uint64_t);
 
         /// getter and setter
+        void set_init_done(bool init_done);
         void set_instance_id(int);
         std::map<int, std::string>& host_map();
         Stats stats();
         Query_queue* query_queue();
         workload* m_workload();
         Buffer* buffer();
+        TableSpace* table_space();
         Index* index();
         LockTable* lock_table();
         BufferManagerClient *buffer_manager_rpc_handler();
