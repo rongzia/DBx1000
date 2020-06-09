@@ -9,6 +9,7 @@
 #include <atomic>
 #include <unordered_map>
 #include "common/global.h"
+#include "common/mystats.h"
 
 class txn_man;
 

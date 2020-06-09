@@ -221,14 +221,14 @@ extern TestCases					g_test_case;
 #define TS_HW						3
 #define TS_CLOCK					4
 
-/// for api/
 
-/// for server/buffer/, buffer can use leveldb or memorydb
-//#define USE_MEMORY_DB
-//#define DB_NUM_ITEM SYNTH_TABLE_SIZE
-//#define DB_NUM_ITEM (1024 * 1024)     // 1 M
-//#define WARMUP_LEVELDB
-#define PROJECT_ROOT_PATH "/home/zhangrongrong/CLionProjects/DBx1000/"
+
+
+
+
+
+
+#define g_schame_path "/home/zhangrongrong/CLionProjects/DBx1000/common/workload/YCSB_schema.txt"
 
 #define DB_PREFIX "/home/zhangrongrong/CLionProjects/DBx1000/db/"
 #define DB_SUFIX ".table"

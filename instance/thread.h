@@ -5,6 +5,9 @@
 
 class workload;
 class base_query;
+namespace dbx1000{
+    class ManagerClient;
+}
 
 //! 事务执行线程，默认为 4 个线程，每个线程持有一个 txn 对象，且每个线程有独自的 Query_thd
 //! 重点在 run() 函数，里面套了个无限循环 while, 每次循环都给 txn 绑定一个 query，可以使从 Query_thd 里取得新的，也可以是上次 abort 掉的 query

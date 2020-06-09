@@ -4,7 +4,6 @@
 
 //#include "pthread.h"
 #include "config.h"
-#include "mystats.h"
 #ifndef NOGRAPHITE
 #include "carbon_user.h"
 #endif
@@ -16,13 +15,6 @@ class mem_alloc;
 //class DL_detect;
 class Manager;
 
-namespace dbx1000 {
-    class ManagerServer;
-    class ManagerClient;
-    class ApiTxnClient;
-    class ApiConCtlClient;
-    class Stats;
-}
 class Query_queue;
 class Plock;
 class OptCC;
@@ -39,12 +31,8 @@ typedef uint64_t ts_t; // time stamp type
 // Global Data Structure 
 /******************************************/
 //extern mem_alloc mem_allocator;
-//extern dbx1000::Stats stats;
 //extern DL_detect dl_detector;
-//extern Manager * glob_manager;
-extern dbx1000::ManagerServer* glob_manager_server;
-//extern dbx1000::ManagerClient* glob_manager_client;
-//extern uint64_t process_id;
+//extern dbx1000::ManagerServer* glob_manager_server;
 extern Plock part_lock_man;
 extern OptCC occ_man;
 #if CC_ALG == VLL
@@ -147,11 +135,3 @@ enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 #ifndef UINT64_MAX
 #define UINT64_MAX 		18446744073709551615UL
 #endif // UINT64_MAX
-
-/// for server/workload
-extern std::string g_schame_path;
-
-/// for api/
-
-/// for server/buffer/, buffer can use leveldb or memorydb
-extern std::string g_db_path;

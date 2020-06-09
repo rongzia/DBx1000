@@ -4,6 +4,7 @@
 
 #include "query.h"
 #include "ycsb_query.h"
+#include "util/profiler.h"
 //#include "tpcc_query.h"
 //#include "tpcc_helper.h"
 
