@@ -31,10 +31,11 @@ namespace dbx1000 {
 
     LRU::~LRU() {
         PageNode* page_node = head_->next_;
-        while(nullptr != page_node) {
-            delete page_node;
-            page_node = page_node->next_;
-        }
+//        while(nullptr != page_node) {
+//            delete page_node;
+//            page_node = page_node->next_;
+//        }
+        delete head_->page_;
     }
 
     void LRU::Prepend(PageNode* page_node) {

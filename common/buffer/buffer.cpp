@@ -73,13 +73,13 @@ namespace dbx1000 {
         }
     }
 
-    void Buffer::FreeListToPageList(uint64_t page_id, const void* page, size_t count) {
+    void Buffer::FreeListToPageList(uint64_t page_id, const void* page_buf, size_t count) {
         assert(free_list_->size() > 0);
         assert(page_list_->size() < page_num_);
 
         PageNode *page_node = free_list_->Popback();
         page_node->page_->set_page_id(page_id);
-        page_node->page_->set_page_buf(page, count);
+        page_node->page_->set_page_buf(page_buf, count);
         lru_index_->IndexPut(page_id, page_node);
         page_list_->Prepend(page_node);
     }

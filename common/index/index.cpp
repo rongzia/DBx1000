@@ -123,14 +123,15 @@ namespace dbx1000 {
             assert(x == read_size);
             offset += read_size;
 
+            IndexItem* indexItem = new IndexItem();
             for(int i = 0; i < read_size / (3 * sizeof(uint64_t)); i++) {
                 uint64_t key;
-                IndexItem* indexItem = new IndexItem();
                 memcpy(&key, &buf[3 * i * sizeof(uint64_t) + 0 * sizeof(uint64_t)], sizeof(uint64_t));
                 memcpy(&indexItem->page_id_, &buf[3 * i * sizeof(uint64_t) + 1 * sizeof(uint64_t)], sizeof(uint64_t));
                 memcpy(&indexItem->page_location_, &buf[3 * i * sizeof(uint64_t) + 2 * sizeof(uint64_t)], sizeof(uint64_t));
                 IndexPut(key, indexItem);
             }
+            delete indexItem;
         }
         assert(FileIO::Close(fd) == 0);
         profiler.End();

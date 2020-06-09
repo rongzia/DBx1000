@@ -33,16 +33,25 @@
 namespace dbx1000 {
 
     ManagerClient::~ManagerClient() {
+        delete all_ts_;
+        for(auto &iter:mvcc_map_) {
+            delete iter.second;
+        }
         delete query_queue_;
         delete m_workload_;
-        delete buffer_manager_rpc_handler_;
         delete buffer_;
+        index_->Serialize();
+//        table_space_->Serialize();
+        delete table_space_;
+        delete index_;
+//        delete lock_table_;
+//        delete buffer_manager_rpc_handler_;
     }
 
     ManagerClient::ManagerClient() {
         init_done_ = false;
 
-        timestamp_ = 0;
+        timestamp_ = 1;
         all_ts_ = new uint64_t[g_thread_cnt]();
         txn_man_ = new txn_man *[g_thread_cnt]();
         for (int i = 0; i < g_thread_cnt; i++) {
@@ -59,12 +68,14 @@ namespace dbx1000 {
 
         InitMvccs();
         table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
+        cout << "table_space_->table_name() : "<< table_space_->table_name() << endl;
         index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
         table_space_->DeSerialize();
         index_->DeSerialize();
+
         buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, this);
         lock_table_ = new LockTable();
-        lock_table_->Init(0, table_space_->GetLastPageId());
+        lock_table_->Init(0, table_space_->GetLastPageId() + 1);
         // TODO :
 //        server_rpc_handler_ = new Server
     }
@@ -78,19 +89,25 @@ namespace dbx1000 {
 
     void ManagerClient::InitMvccs() {
         std::cout << "ManagerClient::InitMvccs" << std::endl;
+        Profiler profiler;
+        profiler.Start();
         for (uint64_t  key = 0; key < g_synth_table_size; key++) {
             mvcc_map_.insert(std::pair<uint64_t, Row_mvcc *>(key, new Row_mvcc()));
             mvcc_map_[key]->init(key, ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size);
         }
+        profiler.End();
+        std::cout << "ManagerClient::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }
     void ManagerClient::InitLockTable() {
+        std::cout << "ManagerClient::InitLockTable" << std::endl;
         for (uint64_t key = 0; key < table_space_->GetLastPageId(); key++) {
-            lock_table_->lock_table_[key]->instance_id = this->instance_id_;
-            lock_table_->lock_table_[key]->valid = true;
+            lock_table_->lock_table()[key]->instance_id = this->instance_id_;
+            lock_table_->lock_table()[key]->valid = true;
         }
+        std::cout << "ManagerClient::InitLockTable done." << std::endl;
     }
 
-    uint64_t ManagerClient::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1, std::memory_order_consume); }
+    uint64_t ManagerClient::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
 
     RC ManagerClient::GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&row) {
         RC rc = RC::RCOK;
@@ -145,6 +162,7 @@ namespace dbx1000 {
     Stats ManagerClient::stats() { return this->stats_; }
     Query_queue *ManagerClient::query_queue() { return this->query_queue_; }
     workload* ManagerClient::m_workload() { return this->m_workload_; }
+    Buffer* ManagerClient::buffer() { return this->buffer_; }
     Index* ManagerClient::index() { return this->index_; }
     LockTable* ManagerClient::lock_table() { return this->lock_table_; }
 

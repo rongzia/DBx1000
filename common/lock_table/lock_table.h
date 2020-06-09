@@ -29,6 +29,8 @@ namespace dbx1000 {
 
     class LockTable {
     public:
+        ~LockTable();
+        LockTable();
         void Init(uint64_t start_page, uint64_t end_page);
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
@@ -38,9 +40,9 @@ namespace dbx1000 {
         bool LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode);
 
         /// getter and setter
-        std::unordered_map<uint64_t, LockNode*> lock_table();
+        std::unordered_map<uint64_t, LockNode*>& lock_table();
 
-//    private:
+    private:
         std::unordered_map<uint64_t, LockNode*> lock_table_;
     };
 }

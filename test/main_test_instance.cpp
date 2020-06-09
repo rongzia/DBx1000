@@ -61,9 +61,11 @@ int main(int argc, char* argv[]) {
         v_thread[i].join();
     }
 
+    manager_client->stats().print();
 //    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
 //    stats.print_rpc();
 
+    dbx1000::FileIO::Close();
     delete manager_client;
 
     cout << "exit main." << endl;

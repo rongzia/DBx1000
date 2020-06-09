@@ -6,8 +6,8 @@
 #define DBX1000_MANAGER_CLIENT_H
 
 #include <cstdint>
-//#include <string>
 #include <atomic>
+#include <unordered_map>
 #include "common/global.h"
 
 class txn_man;
@@ -49,6 +49,7 @@ namespace dbx1000 {
         Stats stats();
         Query_queue* query_queue();
         workload* m_workload();
+        Buffer* buffer();
         Index* index();
         LockTable* lock_table();
         BufferManagerClient *buffer_manager_rpc_handler();

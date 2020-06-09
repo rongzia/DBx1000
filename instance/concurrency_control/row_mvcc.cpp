@@ -2,8 +2,14 @@
 #include <cstring>
 #include "row_mvcc.h"
 
+#include "common/buffer/buffer.h"
 #include "common/index/index.h"
 #include "common/storage/tablespace/row_item.h"
+#include "common/storage/tablespace/page.h"
+#include "common/storage/catalog.h"
+#include "common/storage/table.h"
+#include "common/workload/ycsb_wl.h"
+#include "common/workload/wl.h"
 #include "common/myhelper.h"
 #include "instance/txn/txn.h"
 #include "instance/manager_client.h"
@@ -113,36 +119,29 @@ Row_mvcc::double_list(uint32_t list)
 }
 
 void Row_mvcc::GetLatestRow(txn_man * txn) {
-    if(nullptr == row_) {
-        // ...
+    assert(nullptr == _latest_row);
+    assert(nullptr == row_);
+    {
+        uint32_t row_size = ((ycsb_wl *) (txn->h_thd->manager_client_->m_workload()))->the_table->get_schema()->get_tuple_size();
+        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
         txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
-                        bool rc = txn->h_thd->manager_client_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::X);
-                        assert(true == rc);
-                        buffer->BufferGet(indexItem.page_id_, thread_page->page_buf(), MY_PAGE_SIZE);
-                        thread_page->Deserialize();
+        bool rc = txn->h_thd->manager_client_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::S);
+        assert(true == rc);
+        txn->h_thd->manager_client_->buffer()->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        page->Deserialize();
 
-                        {   /// 行读写
-                            char row[row_size];
-                            memcpy(row, &thread_page->page_buf()[indexItem.page_location_], row_size);
-                            uint64_t temp_key;
-                            uint64_t version;
-                            memcpy(&temp_key, &row[0], sizeof(uint64_t));           /// 读 key
-                            memcpy(&version, &row[row_size - 8], sizeof(uint64_t)); /// 读 version
-                            assert(key == temp_key);
+        {   /// 行读写
+        this->row_ = new dbx1000::RowItem(this->key_, this->size_);
+            memcpy(this->row_->row_, &page->page_buf()[indexItem.page_location_], row_size);
+            uint64_t temp_key;
+            memcpy(&temp_key, &this->row_->row_[0], sizeof(uint64_t));           /// 读 key
+            assert(this->key_ == temp_key);
 //                            cout << "thread " << i << ", row version before: " << version << endl;
-                            version++;
-//                            cout << "thread " << i << ", row version after: " << version << endl;
-                            memcpy(&row[row_size - 8], &version, sizeof(uint64_t));             /// 写 row
-                            memcpy(&thread_page->page_buf()[indexItem.page_location_], row, row_size);/// 写 page
-                        }
-                        buffer->BufferPut(indexItem.page_id_, thread_page->Serialize()->page_buf(), MY_PAGE_SIZE);
-                        lock_table->UnLock(indexItem.page_id_);
-
+        }
+        assert(true == txn->h_thd->manager_client_->lock_table()->UnLock(indexItem.page_id_));
 
         _latest_row = row_;
-    } else {
-
     }
 }
 
@@ -196,7 +195,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			    //! 读最新的 row
 				// should just read
 				rc = RC::RCOK;
-				if(nullptr == _latest_row) { GetLatestRow(); }
+				if(nullptr == _latest_row) { GetLatestRow(txn); }
 				txn->cur_row = _latest_row;
 				if (ts > _max_served_rts)
 					_max_served_rts = ts;
@@ -222,9 +221,8 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 	   		// TODO, 当历史不存在时，从 buffer 读
 			if (the_i == _his_len) {
                 /* txn->cur_row = _row; */
-                if(nullptr == _latest_row) { GetLatestRow(); }
+                if(nullptr == _latest_row) { GetLatestRow(txn); }
                 txn->cur_row = _latest_row;
-//                assert(false);
             }
    			else 
 	   			txn->cur_row = _write_history[the_i].row;
@@ -239,9 +237,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		} else {
 			rc =RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
-			assert(res_row);
+//			assert(res_row);
 			/* res_row->copy(_latest_row); */
-			if(nullptr == _latest_row) { GetLatestRow(); }
+			if(nullptr == _latest_row) { GetLatestRow(txn); }
             {
                 res_row->key_ = _latest_row->key_;
                 res_row->size_ = _latest_row->size_;
@@ -258,7 +256,10 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_latest_wts = ts;
 		_latest_row = row;
         {
-            delete row_;
+            if(nullptr != this->row_) {
+                delete row_;
+                row_ = nullptr;
+            }
         }
 		_exists_prewrite = false;
 		_num_versions ++;
@@ -414,6 +415,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	_write_history[idx].valid = false;
 	_write_history[idx].reserved = true;
 	_write_history[idx].ts = ts;
+	_write_history[idx].row->key_ = this->key_;
 	_exists_prewrite = true;
 	_prewrite_his_id = idx;
 	_prewrite_ts = ts;
@@ -441,7 +443,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			if (_requests[i].ts > _max_served_rts)
 				_max_served_rts = _requests[i].ts;
 			_requests[i].valid = false;
-			if(nullptr == _latest_row) { GetLatestRow(); }
+			if(nullptr == _latest_row) { GetLatestRow(txn); }
 			_requests[i].txn->cur_row = _latest_row;
 			_requests[i].txn->ts_ready = true;
 		}
@@ -451,7 +453,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			dbx1000::RowItem * res_row = reserveRow(_requests[i].ts, txn);
 			assert(res_row);
             {
-                if(nullptr == _latest_row) { GetLatestRow(); }
+                if(nullptr == _latest_row) { GetLatestRow(txn); }
                 assert(res_row->row_);
                 res_row->key_ = _latest_row->key_;
                 res_row->size_ = _latest_row->size_;

@@ -23,9 +23,7 @@ namespace dbx1000 {
             , row_size_(0)
             , last_page_id_(-1) {}
 
-    TableSpace::~TableSpace() {
-//        Serialize();
-    }
+    TableSpace::~TableSpace() {}
 
     uint64_t TableSpace::GetNextPageId() {
         mtx_.lock();
@@ -38,7 +36,9 @@ namespace dbx1000 {
     uint64_t TableSpace::GetLastPageId() const { return last_page_id_; }
 
     void TableSpace::Serialize() {
-        std::ofstream out(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
+//        std::ofstream out(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
+        std::ofstream out;
+        out.open(std::string(DB_PREFIX) + this->table_name_);
         assert(out.is_open());
 
         Json::Value root;
@@ -56,16 +56,30 @@ namespace dbx1000 {
     }
 
     void TableSpace::DeSerialize() {
-        std::ifstream in(std::string(DB_PREFIX) + this->table_name_, std::ios::out | std::ios::binary);
-        assert(in.is_open());
-
+        /*
+        std::ifstream in(std::string(DB_PREFIX) + this->table_name_, std::ios::in | std::ios::binary);
         Json::Value root;
         in >> root;
+        */
+        std::ifstream in;
+        in.open((std::string(DB_PREFIX) + this->table_name_));
+        assert(in.is_open());
+        Json::Value root;
+        Json::CharReaderBuilder builder;
+        builder["collectComments"] = true;
+        JSONCPP_STRING errs;
+        if (!parseFromStream(builder, in, &root, &errs)) {
+            std::cout << errs << std::endl;
+            assert(false);
+//            return EXIT_FAILURE;
+        }
+
         this->table_name_ = root["table_name"].asString();
         this->table_size_ = root["table_size"].asUInt64();
         this->page_size_ = root["page_size"].asUInt64();
         this->row_size_ = root["row_size"].asUInt64();
         this->last_page_id_ = root["last_page_id"].asInt64();
+
         in.close();
     }
 

@@ -168,6 +168,8 @@ void Check_DB() {
     }                                     /// for multi threads
     profiler.End();
     cout << "Check_DB time : " << profiler.Micros() << " micros" << endl;
+    index2->Serialize();
+    tableSpace2->Serialize();
     delete index2;
     delete tableSpace2;
 }
@@ -177,5 +179,7 @@ int main() {
 
     Gen_DB_single_thread();
     Check_DB();
+
+    dbx1000::FileIO::Close();
     return 0;
 }

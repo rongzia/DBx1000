@@ -63,4 +63,6 @@ void Test_Lock_Table() {
     }
     profiler.End();
     cout << "10 threads write time : " << profiler.Nanos() << " nanos." << endl;
+
+    delete lockTable;
 }

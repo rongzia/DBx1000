@@ -15,6 +15,12 @@ namespace dbx1000 {
         this->count = count;
         this->lock.clear();
     }
+    LockTable::~LockTable() {
+//        for(auto &iter : lock_table_){
+//            delete iter.second;
+//        }
+    }
+    LockTable::LockTable() {}
 
     void LockTable::Init(uint64_t start_page, uint64_t end_page) {
         for (uint64_t page_id = start_page; page_id < end_page; page_id++) {
@@ -26,6 +32,7 @@ namespace dbx1000 {
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
+            assert(false);
             return false;
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
@@ -47,7 +54,7 @@ namespace dbx1000 {
             iter->second->count ++;
             return true;
         }
-
+        assert(false);
         return false;
     }
 
@@ -82,7 +89,7 @@ namespace dbx1000 {
 
     bool LockTable::LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
 
-    std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() {
+    std::unordered_map<uint64_t, LockNode*>& LockTable::lock_table() {
         return this->lock_table_;
     }
 }
