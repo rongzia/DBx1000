@@ -8,6 +8,7 @@ class Catalog;
 class txn_man;
 namespace dbx1000 {
     class RowItem;
+    class ManagerInstance;
 };
 
 // Only a constant number of versions can be maintained.
@@ -34,17 +35,20 @@ struct ReqEntry {
 
 class Row_mvcc {
 public:
-	void init(uint64_t key, size_t size);
+	void init(uint64_t key, size_t size, dbx1000::ManagerInstance*);
 	void GetLatestRow(txn_man * txn);
+	bool Recycle();
 	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
 private:
  	/* pthread_mutex_t * latch; */
 	volatile bool blatch;
+	volatile bool recycle_latch;
 
 	/* row_t * _row; */
 	uint64_t key_;
 	size_t size_;
 	dbx1000::RowItem* row_;
+	dbx1000::ManagerInstance* manager_instance_;
 
 	/* RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0); */
 	void update_buffer(txn_man * txn, TsType type);

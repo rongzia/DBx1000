@@ -12,17 +12,18 @@
 #include "common/workload/wl.h"
 #include "common/myhelper.h"
 #include "instance/txn/txn.h"
-#include "instance/manager_client.h"
+#include "instance/manager_instance.h"
 #include "instance/thread.h"
 #include "common/lock_table/lock_table.h"
 
 
 #if CC_ALG == MVCC
 
-void Row_mvcc::init(uint64_t key, size_t size) {
+void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* managerInstance) {
 	/* _row = row; */
 	key_ = key;
 	size_ = size;
+	this->manager_instance_ = managerInstance;
 	row_ = nullptr;
 	_his_len = 4;
 	_req_len = _his_len;
@@ -121,28 +122,39 @@ Row_mvcc::double_list(uint32_t list)
 void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(nullptr == _latest_row);
     assert(nullptr == row_);
-    {
-        uint32_t row_size = ((ycsb_wl *) (txn->h_thd->manager_client_->m_workload()))->the_table->get_schema()->get_tuple_size();
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        dbx1000::IndexItem indexItem;
-        txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
-        bool rc = txn->h_thd->manager_client_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::S);
-        assert(true == rc);
-        txn->h_thd->manager_client_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-        page->Deserialize();
+    this->row_ = new dbx1000::RowItem(this->key_, this->size_);
+    assert(txn->h_thd->manager_client_->RowFromDB(this->row_));
+    _latest_row = row_;
+}
 
-        {   /// 行读写
-        this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-            memcpy(this->row_->row_, &page->page_buf()[indexItem.page_location_], row_size);
-            uint64_t temp_key;
-            memcpy(&temp_key, &this->row_->row_[0], sizeof(uint64_t));           /// 读 key
-            assert(this->key_ == temp_key);
-//                            cout << "thread " << i << ", row version before: " << version << endl;
+bool Row_mvcc::Recycle() {
+    while (!ATOM_CAS(this->recycle_latch, false, true))
+        PAUSE
+	ts_t max_ts = 0;
+    ts_t idx = _his_len;
+    for (uint32_t i = 0; i < _his_len; i++) {
+        if (_write_history[i].valid
+            && _write_history[i].ts > max_ts)
+        {
+            max_ts = _write_history[i].ts;
+            idx = i;
         }
-        assert(true == txn->h_thd->manager_client_->lock_table()->UnLock(indexItem.page_id_));
-
-        _latest_row = row_;
     }
+    assert(idx < _his_len);
+    assert(this->manager_instance_->RowToDB(_write_history[idx].row));
+    for(uint32_t i = 0; i < _his_len; i++) {
+        if(_write_history[i].valid) {
+            _num_versions--;
+        }
+        if(_write_history->row != nullptr) {
+            delete _write_history[i].row;
+            _write_history[i].row = nullptr;
+        }
+        _write_history[i].valid = false;
+        _write_history[i].reserved = false;
+    }
+    recycle_latch = false;
+    return true;
 }
 
 RC Row_mvcc::access(txn_man * txn, TsType type, dbx1000::RowItem * row) {
@@ -228,6 +240,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 	   			txn->cur_row = _write_history[the_i].row;
 		}
 	} else if (type == P_REQ) {
+    while (!ATOM_CAS(this->recycle_latch, false, true))
+        PAUSE
+
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts))
 			rc = RC::Abort;
 		else if (_exists_prewrite) {  // _prewrite_ts < ts
@@ -264,12 +279,18 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_exists_prewrite = false;
 		_num_versions ++;
 		update_buffer(txn, W_REQ);
+		recycle_latch = false;
 	} else if (type == XP_REQ) {
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;
+        {
+            delete _write_history[_prewrite_his_id].row;
+            _write_history[_prewrite_his_id].row = nullptr;
+        }
 		_exists_prewrite = false;
 		update_buffer(txn, XP_REQ);
+		recycle_latch = false;
 	} else 
 		assert(false);
 	profiler.End();

@@ -4,7 +4,7 @@
 
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/concurrency_control/row_mvcc.h"
-#include "instance/manager_client.h"
+#include "instance/manager_instance.h"
 #include "instance/thread.h"
 #include "common/storage/table.h"
 #include "common/storage/catalog.h"

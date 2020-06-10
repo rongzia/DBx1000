@@ -5,15 +5,17 @@
 #include <iostream>
 #include "lock_table.h"
 
+#include "instance/manager_instance.h"
+#include "rpc_handler/instance_handler.h"
 #include "config.h"
 
 namespace dbx1000 {
     LockNode::LockNode(int instanceid, bool val, LockMode mode, int count) {
         this->instance_id = instanceid;
-        this->valid = val;
+//        this->valid = val;
         this->lock_mode = mode;
         this->count = count;
-        this->lock.clear();
+//        this->lock.clear();
     }
     LockTable::~LockTable() {
         for(auto &iter : lock_table_){
@@ -37,16 +39,46 @@ namespace dbx1000 {
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
         if(LockMode::X == mode) {
-            while (LockMode::N != iter->second->lock_mode) {
-//                std::cout << "LockTable::Lock wait." << std::endl;
+            if(LockMode::O == iter->second->lock_mode) {
+                char page_buf[MY_PAGE_SIZE];
+                assert(manager_instance_->instance_rpc_handler()->LockGet(manager_instance_->instance_id()
+                        , page_id, LockMode::X, page_buf, MY_PAGE_SIZE));
+                assert(iter->second->count == 0);
+                iter->second->lock_mode = LockMode::X;
+                iter->second->count++;
+                return true;
+            }
+            if(LockMode::P == iter->second->lock_mode){
+                assert(iter->second->count == 0);
+                iter->second->lock_mode = LockMode::X;
+                iter->second->count++;
+                return true;
+            }
+            while(LockMode::S == iter->second->lock_mode){
                 iter->second->cv.wait(lck);
             }
-            iter->second->lock_mode = LockMode::X;
             assert(iter->second->count == 0);
+            manager_instance_->instance_rpc_handler()->LockGet()
+            iter->second->lock_mode = LockMode::X;
             iter->second->count ++;
             return true;
         }
         if(LockMode::S == mode) {
+            if(LockMode::O == iter->second->lock_mode) {
+                char page_buf[MY_PAGE_SIZE];
+                assert(manager_instance_->instance_rpc_handler()->LockGet(manager_instance_->instance_id()
+                        , page_id, LockMode::S, page_buf, MY_PAGE_SIZE));
+                assert(iter->second->count == 0);
+                iter->second->lock_mode = LockMode::S;
+                iter->second->count++;
+                return true;
+            }
+            if(LockMode::P == iter->second->lock_mode){
+                assert(iter->second->count == 0);
+                iter->second->lock_mode = LockMode::S;
+                iter->second->count++;
+                return true;
+            }
             while (LockMode::X == iter->second->lock_mode) {
                 iter->second->cv.wait(lck);
             }
@@ -67,18 +99,22 @@ namespace dbx1000 {
         if(LockMode::X == iter->second->lock_mode) {
             assert(iter->second->count == 1);
             iter->second->count--;
-            iter->second->lock_mode = LockMode::N;
+            iter->second->lock_mode = LockMode::P;
             iter->second->cv.notify_one();
             return true;
         }
         if(LockMode::S == iter->second->lock_mode) {
             iter->second->count--;
             if(iter->second->count == 0) {
-                iter->second->lock_mode = LockMode::N;
+                iter->second->lock_mode = LockMode::P;
             }
             iter->second->cv.notify_one();
             return true;
         }
+    }
+
+    bool LockTable::LockDowngrade(uint64_t page_id, LockMode from, LockMode to) {
+        
     }
 
     bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
@@ -89,7 +125,7 @@ namespace dbx1000 {
 
     bool LockTable::LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
 
-    std::unordered_map<uint64_t, LockNode*>& LockTable::lock_table() {
+    std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() {
         return this->lock_table_;
     }
 }

@@ -12,11 +12,13 @@
 #include "lru.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
-#include "instance/manager_client.h"
+#include "instance/manager_instance.h"
 
 namespace dbx1000 {
 
-    Buffer::Buffer(uint64_t total_size, size_t page_size, ManagerClient* managerClient)
+    Buffer::Buffer(uint64_t total_size, size_t page_size
+//            , ManagerClient* managerClient
+            )
             : total_size_(total_size)
               , page_size_(page_size)
               , page_num_(total_size / page_size) {
@@ -24,7 +26,7 @@ namespace dbx1000 {
         page_list_ = new LRU(page_size_);
         free_list_ = new LRU(page_size_);
         lru_index_ = new LruIndex();
-        manager_client_ = managerClient;
+//        manager_client_ = managerClient;
 
         /// initital free list
         for (int i = 0; i < page_num_; i++) {

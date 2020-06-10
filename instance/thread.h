@@ -2,11 +2,12 @@
 
 #include <cstdlib>
 #include "common/global.h"
+#include "manager_instance.h"
 
 class workload;
 class base_query;
 namespace dbx1000{
-    class ManagerClient;
+    class ManagerInstance;
 }
 
 //! 事务执行线程，默认为 4 个线程，每个线程持有一个 txn 对象，且每个线程有独自的 Query_thd
@@ -32,7 +33,7 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 
-    dbx1000::ManagerClient* manager_client_;
+    dbx1000::ManagerInstance* manager_client_;
 private:
 	uint64_t 	_host_cid;
 	uint64_t 	_cur_cid;

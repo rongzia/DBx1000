@@ -26,7 +26,7 @@
 #include "instance/concurrency_control/row_mvcc.h"
 #include "instance/txn/ycsb_txn.h"
 #include "instance/txn/txn.h"
-#include "instance/manager_client.h"
+#include "instance/manager_instance.h"
 #include "instance/thread.h"
 #include "json/json.h"
 #include "config.h"
@@ -56,31 +56,29 @@ int main(int argc, char* argv[]) {
     parser(argc, argv);
     cout << "mian test txn thread" << endl;
 
-    dbx1000::ManagerClient* manager_client = new dbx1000::ManagerClient();
-    manager_client->set_instance_id(parser_host(argc, argv, manager_client->host_map()));
-    manager_client->set_init_done(true);
+    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance();
+    managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
+    managerInstance->set_init_done(true);
 
 	warmup_finish = true;
 
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_thread_cnt; i++) {
-        thread_t_s[i].init(i, manager_client->m_workload());
-        thread_t_s[i].manager_client_ = manager_client;
+        thread_t_s[i].init(i, managerInstance->m_workload());
+        thread_t_s[i].manager_client_ = managerInstance;
         v_thread.emplace_back(f, &thread_t_s[i]);
     }
     for(int i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
 
-    manager_client->stats().print();
+    managerInstance->stats().print();
 //    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
 //    stats.print_rpc();
 
-//    dbx1000::FileIO::Close();
-
-//    manager_client->table_space()->Serialize();
-    delete manager_client;
+    delete managerInstance;
+    dbx1000::FileIO::Close();
 
     cout << "exit main." << endl;
     return 0;

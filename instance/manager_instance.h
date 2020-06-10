@@ -2,8 +2,8 @@
 // Created by rrzhang on 2020/4/27.
 //
 
-#ifndef DBX1000_MANAGER_CLIENT_H
-#define DBX1000_MANAGER_CLIENT_H
+#ifndef DBX1000_MANAGER_INSTANCE_H
+#define DBX1000_MANAGER_INSTANCE_H
 
 #include <cstdint>
 #include <atomic>
@@ -19,7 +19,7 @@ class Query_queue;
 class Row_mvcc;
 
 namespace dbx1000 {
-    class BufferManagerClient;
+    class InstanceClient;
     class Buffer;
     class Index;
     class LockTable;
@@ -27,10 +27,10 @@ namespace dbx1000 {
     class RowItem;
     class TableSpace;
 
-    class ManagerClient {
+    class ManagerInstance {
     public:
-        ManagerClient();
-        ~ManagerClient();
+        ManagerInstance();
+        ~ManagerInstance();
 
         void Init();
         void InitBufferForTest();
@@ -43,8 +43,11 @@ namespace dbx1000 {
         void SetTxnMan(txn_man* m_txn);
         void AddTs(uint64_t, uint64_t);
         uint64_t GetMinTs(uint64_t);
+        bool RowFromDB(RowItem* row);
+        bool RowToDB(RowItem* row);
 
         /// getter and setter
+        int instance_id();
         void set_init_done(bool init_done);
         void set_instance_id(int);
         std::map<int, std::string>& host_map();
@@ -55,7 +58,7 @@ namespace dbx1000 {
         TableSpace* table_space();
         Index* index();
         LockTable* lock_table();
-        BufferManagerClient *buffer_manager_rpc_handler();
+        InstanceClient *instance_rpc_handler();
         std::map<uint64_t, Row_mvcc*> mvcc_map();
     private:
         bool init_done_;
@@ -74,8 +77,8 @@ namespace dbx1000 {
         TableSpace* table_space_;
         Index* index_;
         LockTable* lock_table_;
-        BufferManagerClient *buffer_manager_rpc_handler_;
+        InstanceClient *instance_rpc_handler_;
     };
 }
 
-#endif //DBX1000_MANAGER_CLIENT_H
+#endif //DBX1000_MANAGER_INSTANCE_H

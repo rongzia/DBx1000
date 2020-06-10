@@ -26,7 +26,9 @@ namespace dbx1000 {
 
     class Buffer {
     public:
-        Buffer(uint64_t total_size, size_t page_size, ManagerClient *managerClient = nullptr);
+        Buffer(uint64_t total_size, size_t page_size
+//                , ManagerClient *managerClient = nullptr
+                );
         ~Buffer();
 
         /// 有锁读写，使用时直接锁住整个函数，相当于串行调度

@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package dbx1000;
+
+service DBx1000Service {
+  rpc LockGet(LockGetRequest) returns (LockGetReply) {}
+
+  rpc LockDowngrade(LockDowngradeRequest) returns (LockDowngradeReply) {}
+  rpc LockInvalid(LockInvalidRequest) returns (LockInvalidReply) {}
+}
+enum RpcLockMode {
+  O = 0;
+  S = 1;
+  P = 2;
+  X = 3;
+}
+message LockGetRequest{
+  int32 instance_id = 1;
+  uint64 page_id = 2;
+  RpcLockMode mode = 3;
+}
+message LockGetReply{
+  bool rc = 1;
+  bytes page_buf = 2;
+}
+message LockDowngradeRequest{
+  uint64 page_id = 1;
+  RpcLockMode from = 2;
+  RpcLockMode to = 3;
+}
+message LockDowngradeReply{
+  bool rc = 1;
+  bytes page_buf = 2;
+}
+message LockInvalidRequest{
+  uint64 page_id = 1;
+}
+message LockInvalidReply{
+  bool rc = 1;
+}

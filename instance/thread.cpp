@@ -9,7 +9,7 @@
 #include "instance/benchmarks/query.h"
 #include "instance/txn/ycsb_txn.h"
 #include "instance/txn/txn.h"
-#include "instance/manager_client.h"
+#include "instance/manager_instance.h"
 
 //! thd_id = 0...3
 void thread_t::init(uint64_t thd_id, workload * workload) {
