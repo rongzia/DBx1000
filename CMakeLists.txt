@@ -95,6 +95,7 @@ target_link_libraries(main_test_instance ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRA
 
 ### ******************************* other test *******************************
 add_executable(other_test test/other_test.cpp)
+target_link_libraries(other_test pthread)
 
 add_executable(parser_host common/parser_host.cpp)
 target_link_libraries(parser_host libjsoncpp.a)

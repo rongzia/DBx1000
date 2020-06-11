@@ -3,38 +3,37 @@ syntax = "proto3";
 package dbx1000;
 
 service DBx1000Service {
-  rpc LockGet(LockGetRequest) returns (LockGetReply) {}
+  rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
 
-  rpc LockDowngrade(LockDowngradeRequest) returns (LockDowngradeReply) {}
   rpc LockInvalid(LockInvalidRequest) returns (LockInvalidReply) {}
 }
 enum RpcLockMode {
   O = 0;
-  S = 1;
-  P = 2;
+  P = 1;
+  S = 2;
   X = 3;
 }
-message LockGetRequest{
+message LockRemoteRequest{
   int32 instance_id = 1;
   uint64 page_id = 2;
-  RpcLockMode mode = 3;
+  RpcLockMode request_mode = 3;
+  bytes page_buf = 4;
+  int64 count = 5;
 }
-message LockGetReply{
+message LockRemoteReply{
   bool rc = 1;
   bytes page_buf = 2;
-}
-message LockDowngradeRequest{
-  uint64 page_id = 1;
-  RpcLockMode from = 2;
-  RpcLockMode to = 3;
-}
-message LockDowngradeReply{
-  bool rc = 1;
-  bytes page_buf = 2;
+  bytes count = 3;
 }
 message LockInvalidRequest{
-  uint64 page_id = 1;
+  int32 instance_id = 1;
+  uint64 page_id = 2;
+  RpcLockMode request_mode = 3;
+  bytes page_buf = 4;
+  int64 count = 5;
 }
 message LockInvalidReply{
   bool rc = 1;
+  bytes page_buf = 2;
+  bytes count = 3;
 }

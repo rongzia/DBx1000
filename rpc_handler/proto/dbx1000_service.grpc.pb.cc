@@ -19,8 +19,7 @@
 namespace dbx1000 {
 
 static const char* DBx1000Service_method_names[] = {
-  "/dbx1000.DBx1000Service/LockGet",
-  "/dbx1000.DBx1000Service/LockDowngrade",
+  "/dbx1000.DBx1000Service/LockRemote",
   "/dbx1000.DBx1000Service/LockInvalid",
 };
 
@@ -31,65 +30,36 @@ std::unique_ptr< DBx1000Service::Stub> DBx1000Service::NewStub(const std::shared
 }
 
 DBx1000Service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_LockGet_(DBx1000Service_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_LockDowngrade_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_LockInvalid_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  : channel_(channel), rpcmethod_LockRemote_(DBx1000Service_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_LockInvalid_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status DBx1000Service::Stub::LockGet(::grpc::ClientContext* context, const ::dbx1000::LockGetRequest& request, ::dbx1000::LockGetReply* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LockGet_, context, request, response);
+::grpc::Status DBx1000Service::Stub::LockRemote(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest& request, ::dbx1000::LockRemoteReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LockRemote_, context, request, response);
 }
 
-void DBx1000Service::Stub::experimental_async::LockGet(::grpc::ClientContext* context, const ::dbx1000::LockGetRequest* request, ::dbx1000::LockGetReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockGet_, context, request, response, std::move(f));
+void DBx1000Service::Stub::experimental_async::LockRemote(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockRemote_, context, request, response, std::move(f));
 }
 
-void DBx1000Service::Stub::experimental_async::LockGet(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockGetReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockGet_, context, request, response, std::move(f));
+void DBx1000Service::Stub::experimental_async::LockRemote(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockRemoteReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockRemote_, context, request, response, std::move(f));
 }
 
-void DBx1000Service::Stub::experimental_async::LockGet(::grpc::ClientContext* context, const ::dbx1000::LockGetRequest* request, ::dbx1000::LockGetReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockGet_, context, request, response, reactor);
+void DBx1000Service::Stub::experimental_async::LockRemote(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockRemote_, context, request, response, reactor);
 }
 
-void DBx1000Service::Stub::experimental_async::LockGet(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockGetReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockGet_, context, request, response, reactor);
+void DBx1000Service::Stub::experimental_async::LockRemote(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockRemoteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockRemote_, context, request, response, reactor);
 }
 
-::grpc::ClientAsyncResponseReader< ::dbx1000::LockGetReply>* DBx1000Service::Stub::AsyncLockGetRaw(::grpc::ClientContext* context, const ::dbx1000::LockGetRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockGetReply>::Create(channel_.get(), cq, rpcmethod_LockGet_, context, request, true);
+::grpc::ClientAsyncResponseReader< ::dbx1000::LockRemoteReply>* DBx1000Service::Stub::AsyncLockRemoteRaw(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockRemoteReply>::Create(channel_.get(), cq, rpcmethod_LockRemote_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::dbx1000::LockGetReply>* DBx1000Service::Stub::PrepareAsyncLockGetRaw(::grpc::ClientContext* context, const ::dbx1000::LockGetRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockGetReply>::Create(channel_.get(), cq, rpcmethod_LockGet_, context, request, false);
-}
-
-::grpc::Status DBx1000Service::Stub::LockDowngrade(::grpc::ClientContext* context, const ::dbx1000::LockDowngradeRequest& request, ::dbx1000::LockDowngradeReply* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LockDowngrade_, context, request, response);
-}
-
-void DBx1000Service::Stub::experimental_async::LockDowngrade(::grpc::ClientContext* context, const ::dbx1000::LockDowngradeRequest* request, ::dbx1000::LockDowngradeReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockDowngrade_, context, request, response, std::move(f));
-}
-
-void DBx1000Service::Stub::experimental_async::LockDowngrade(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockDowngradeReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_LockDowngrade_, context, request, response, std::move(f));
-}
-
-void DBx1000Service::Stub::experimental_async::LockDowngrade(::grpc::ClientContext* context, const ::dbx1000::LockDowngradeRequest* request, ::dbx1000::LockDowngradeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockDowngrade_, context, request, response, reactor);
-}
-
-void DBx1000Service::Stub::experimental_async::LockDowngrade(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockDowngradeReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_LockDowngrade_, context, request, response, reactor);
-}
-
-::grpc::ClientAsyncResponseReader< ::dbx1000::LockDowngradeReply>* DBx1000Service::Stub::AsyncLockDowngradeRaw(::grpc::ClientContext* context, const ::dbx1000::LockDowngradeRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockDowngradeReply>::Create(channel_.get(), cq, rpcmethod_LockDowngrade_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::dbx1000::LockDowngradeReply>* DBx1000Service::Stub::PrepareAsyncLockDowngradeRaw(::grpc::ClientContext* context, const ::dbx1000::LockDowngradeRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockDowngradeReply>::Create(channel_.get(), cq, rpcmethod_LockDowngrade_, context, request, false);
+::grpc::ClientAsyncResponseReader< ::dbx1000::LockRemoteReply>* DBx1000Service::Stub::PrepareAsyncLockRemoteRaw(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockRemoteReply>::Create(channel_.get(), cq, rpcmethod_LockRemote_, context, request, false);
 }
 
 ::grpc::Status DBx1000Service::Stub::LockInvalid(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::dbx1000::LockInvalidReply* response) {
@@ -124,15 +94,10 @@ DBx1000Service::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockGetRequest, ::dbx1000::LockGetReply>(
-          std::mem_fn(&DBx1000Service::Service::LockGet), this)));
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockRemoteRequest, ::dbx1000::LockRemoteReply>(
+          std::mem_fn(&DBx1000Service::Service::LockRemote), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[1],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockDowngradeRequest, ::dbx1000::LockDowngradeReply>(
-          std::mem_fn(&DBx1000Service::Service::LockDowngrade), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockInvalidRequest, ::dbx1000::LockInvalidReply>(
           std::mem_fn(&DBx1000Service::Service::LockInvalid), this)));
@@ -141,14 +106,7 @@ DBx1000Service::Service::Service() {
 DBx1000Service::Service::~Service() {
 }
 
-::grpc::Status DBx1000Service::Service::LockGet(::grpc::ServerContext* context, const ::dbx1000::LockGetRequest* request, ::dbx1000::LockGetReply* response) {
-  (void) context;
-  (void) request;
-  (void) response;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status DBx1000Service::Service::LockDowngrade(::grpc::ServerContext* context, const ::dbx1000::LockDowngradeRequest* request, ::dbx1000::LockDowngradeReply* response) {
+::grpc::Status DBx1000Service::Service::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
   (void) context;
   (void) request;
   (void) response;

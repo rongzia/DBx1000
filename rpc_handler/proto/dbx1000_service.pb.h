@@ -39,7 +39,7 @@ namespace protobuf_dbx1000_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[6];
+  static const ::google::protobuf::internal::ParseTable schema[4];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -47,41 +47,33 @@ struct TableStruct {
 void AddDescriptors();
 }  // namespace protobuf_dbx1000_5fservice_2eproto
 namespace dbx1000 {
-class LockDowngradeReply;
-class LockDowngradeReplyDefaultTypeInternal;
-extern LockDowngradeReplyDefaultTypeInternal _LockDowngradeReply_default_instance_;
-class LockDowngradeRequest;
-class LockDowngradeRequestDefaultTypeInternal;
-extern LockDowngradeRequestDefaultTypeInternal _LockDowngradeRequest_default_instance_;
-class LockGetReply;
-class LockGetReplyDefaultTypeInternal;
-extern LockGetReplyDefaultTypeInternal _LockGetReply_default_instance_;
-class LockGetRequest;
-class LockGetRequestDefaultTypeInternal;
-extern LockGetRequestDefaultTypeInternal _LockGetRequest_default_instance_;
 class LockInvalidReply;
 class LockInvalidReplyDefaultTypeInternal;
 extern LockInvalidReplyDefaultTypeInternal _LockInvalidReply_default_instance_;
 class LockInvalidRequest;
 class LockInvalidRequestDefaultTypeInternal;
 extern LockInvalidRequestDefaultTypeInternal _LockInvalidRequest_default_instance_;
+class LockRemoteReply;
+class LockRemoteReplyDefaultTypeInternal;
+extern LockRemoteReplyDefaultTypeInternal _LockRemoteReply_default_instance_;
+class LockRemoteRequest;
+class LockRemoteRequestDefaultTypeInternal;
+extern LockRemoteRequestDefaultTypeInternal _LockRemoteRequest_default_instance_;
 }  // namespace dbx1000
 namespace google {
 namespace protobuf {
-template<> ::dbx1000::LockDowngradeReply* Arena::CreateMaybeMessage<::dbx1000::LockDowngradeReply>(Arena*);
-template<> ::dbx1000::LockDowngradeRequest* Arena::CreateMaybeMessage<::dbx1000::LockDowngradeRequest>(Arena*);
-template<> ::dbx1000::LockGetReply* Arena::CreateMaybeMessage<::dbx1000::LockGetReply>(Arena*);
-template<> ::dbx1000::LockGetRequest* Arena::CreateMaybeMessage<::dbx1000::LockGetRequest>(Arena*);
 template<> ::dbx1000::LockInvalidReply* Arena::CreateMaybeMessage<::dbx1000::LockInvalidReply>(Arena*);
 template<> ::dbx1000::LockInvalidRequest* Arena::CreateMaybeMessage<::dbx1000::LockInvalidRequest>(Arena*);
+template<> ::dbx1000::LockRemoteReply* Arena::CreateMaybeMessage<::dbx1000::LockRemoteReply>(Arena*);
+template<> ::dbx1000::LockRemoteRequest* Arena::CreateMaybeMessage<::dbx1000::LockRemoteRequest>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace dbx1000 {
 
 enum RpcLockMode {
   O = 0,
-  S = 1,
-  P = 2,
+  P = 1,
+  S = 2,
   X = 3,
   RpcLockMode_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   RpcLockMode_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
@@ -103,24 +95,24 @@ inline bool RpcLockMode_Parse(
 }
 // ===================================================================
 
-class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockGetRequest) */ {
+class LockRemoteRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockRemoteRequest) */ {
  public:
-  LockGetRequest();
-  virtual ~LockGetRequest();
+  LockRemoteRequest();
+  virtual ~LockRemoteRequest();
 
-  LockGetRequest(const LockGetRequest& from);
+  LockRemoteRequest(const LockRemoteRequest& from);
 
-  inline LockGetRequest& operator=(const LockGetRequest& from) {
+  inline LockRemoteRequest& operator=(const LockRemoteRequest& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  LockGetRequest(LockGetRequest&& from) noexcept
-    : LockGetRequest() {
+  LockRemoteRequest(LockRemoteRequest&& from) noexcept
+    : LockRemoteRequest() {
     *this = ::std::move(from);
   }
 
-  inline LockGetRequest& operator=(LockGetRequest&& from) noexcept {
+  inline LockRemoteRequest& operator=(LockRemoteRequest&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -130,34 +122,34 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const LockGetRequest& default_instance();
+  static const LockRemoteRequest& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const LockGetRequest* internal_default_instance() {
-    return reinterpret_cast<const LockGetRequest*>(
-               &_LockGetRequest_default_instance_);
+  static inline const LockRemoteRequest* internal_default_instance() {
+    return reinterpret_cast<const LockRemoteRequest*>(
+               &_LockRemoteRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     0;
 
-  void Swap(LockGetRequest* other);
-  friend void swap(LockGetRequest& a, LockGetRequest& b) {
+  void Swap(LockRemoteRequest* other);
+  friend void swap(LockRemoteRequest& a, LockRemoteRequest& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline LockGetRequest* New() const final {
-    return CreateMaybeMessage<LockGetRequest>(NULL);
+  inline LockRemoteRequest* New() const final {
+    return CreateMaybeMessage<LockRemoteRequest>(NULL);
   }
 
-  LockGetRequest* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<LockGetRequest>(arena);
+  LockRemoteRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<LockRemoteRequest>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const LockGetRequest& from);
-  void MergeFrom(const LockGetRequest& from);
+  void CopyFrom(const LockRemoteRequest& from);
+  void MergeFrom(const LockRemoteRequest& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -174,7 +166,7 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(LockGetRequest* other);
+  void InternalSwap(LockRemoteRequest* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -189,6 +181,20 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   // nested types ----------------------------------------------------
 
   // accessors -------------------------------------------------------
+
+  // bytes page_buf = 4;
+  void clear_page_buf();
+  static const int kPageBufFieldNumber = 4;
+  const ::std::string& page_buf() const;
+  void set_page_buf(const ::std::string& value);
+  #if LANG_CXX11
+  void set_page_buf(::std::string&& value);
+  #endif
+  void set_page_buf(const char* value);
+  void set_page_buf(const void* value, size_t size);
+  ::std::string* mutable_page_buf();
+  ::std::string* release_page_buf();
+  void set_allocated_page_buf(::std::string* page_buf);
 
   // uint64 page_id = 2;
   void clear_page_id();
@@ -202,42 +208,50 @@ class LockGetRequest : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int32 instance_id() const;
   void set_instance_id(::google::protobuf::int32 value);
 
-  // .dbx1000.RpcLockMode mode = 3;
-  void clear_mode();
-  static const int kModeFieldNumber = 3;
-  ::dbx1000::RpcLockMode mode() const;
-  void set_mode(::dbx1000::RpcLockMode value);
+  // .dbx1000.RpcLockMode request_mode = 3;
+  void clear_request_mode();
+  static const int kRequestModeFieldNumber = 3;
+  ::dbx1000::RpcLockMode request_mode() const;
+  void set_request_mode(::dbx1000::RpcLockMode value);
 
-  // @@protoc_insertion_point(class_scope:dbx1000.LockGetRequest)
+  // int64 count = 5;
+  void clear_count();
+  static const int kCountFieldNumber = 5;
+  ::google::protobuf::int64 count() const;
+  void set_count(::google::protobuf::int64 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.LockRemoteRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr page_buf_;
   ::google::protobuf::uint64 page_id_;
   ::google::protobuf::int32 instance_id_;
-  int mode_;
+  int request_mode_;
+  ::google::protobuf::int64 count_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class LockGetReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockGetReply) */ {
+class LockRemoteReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockRemoteReply) */ {
  public:
-  LockGetReply();
-  virtual ~LockGetReply();
+  LockRemoteReply();
+  virtual ~LockRemoteReply();
 
-  LockGetReply(const LockGetReply& from);
+  LockRemoteReply(const LockRemoteReply& from);
 
-  inline LockGetReply& operator=(const LockGetReply& from) {
+  inline LockRemoteReply& operator=(const LockRemoteReply& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  LockGetReply(LockGetReply&& from) noexcept
-    : LockGetReply() {
+  LockRemoteReply(LockRemoteReply&& from) noexcept
+    : LockRemoteReply() {
     *this = ::std::move(from);
   }
 
-  inline LockGetReply& operator=(LockGetReply&& from) noexcept {
+  inline LockRemoteReply& operator=(LockRemoteReply&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -247,34 +261,34 @@ class LockGetReply : public ::google::protobuf::Message /* @@protoc_insertion_po
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const LockGetReply& default_instance();
+  static const LockRemoteReply& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const LockGetReply* internal_default_instance() {
-    return reinterpret_cast<const LockGetReply*>(
-               &_LockGetReply_default_instance_);
+  static inline const LockRemoteReply* internal_default_instance() {
+    return reinterpret_cast<const LockRemoteReply*>(
+               &_LockRemoteReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     1;
 
-  void Swap(LockGetReply* other);
-  friend void swap(LockGetReply& a, LockGetReply& b) {
+  void Swap(LockRemoteReply* other);
+  friend void swap(LockRemoteReply& a, LockRemoteReply& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline LockGetReply* New() const final {
-    return CreateMaybeMessage<LockGetReply>(NULL);
+  inline LockRemoteReply* New() const final {
+    return CreateMaybeMessage<LockRemoteReply>(NULL);
   }
 
-  LockGetReply* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<LockGetReply>(arena);
+  LockRemoteReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<LockRemoteReply>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const LockGetReply& from);
-  void MergeFrom(const LockGetReply& from);
+  void CopyFrom(const LockRemoteReply& from);
+  void MergeFrom(const LockRemoteReply& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -291,7 +305,7 @@ class LockGetReply : public ::google::protobuf::Message /* @@protoc_insertion_po
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(LockGetReply* other);
+  void InternalSwap(LockRemoteReply* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -321,240 +335,19 @@ class LockGetReply : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_page_buf();
   void set_allocated_page_buf(::std::string* page_buf);
 
-  // bool rc = 1;
-  void clear_rc();
-  static const int kRcFieldNumber = 1;
-  bool rc() const;
-  void set_rc(bool value);
-
-  // @@protoc_insertion_point(class_scope:dbx1000.LockGetReply)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr page_buf_;
-  bool rc_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class LockDowngradeRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockDowngradeRequest) */ {
- public:
-  LockDowngradeRequest();
-  virtual ~LockDowngradeRequest();
-
-  LockDowngradeRequest(const LockDowngradeRequest& from);
-
-  inline LockDowngradeRequest& operator=(const LockDowngradeRequest& from) {
-    CopyFrom(from);
-    return *this;
-  }
+  // bytes count = 3;
+  void clear_count();
+  static const int kCountFieldNumber = 3;
+  const ::std::string& count() const;
+  void set_count(const ::std::string& value);
   #if LANG_CXX11
-  LockDowngradeRequest(LockDowngradeRequest&& from) noexcept
-    : LockDowngradeRequest() {
-    *this = ::std::move(from);
-  }
-
-  inline LockDowngradeRequest& operator=(LockDowngradeRequest&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
+  void set_count(::std::string&& value);
   #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const LockDowngradeRequest& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const LockDowngradeRequest* internal_default_instance() {
-    return reinterpret_cast<const LockDowngradeRequest*>(
-               &_LockDowngradeRequest_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    2;
-
-  void Swap(LockDowngradeRequest* other);
-  friend void swap(LockDowngradeRequest& a, LockDowngradeRequest& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline LockDowngradeRequest* New() const final {
-    return CreateMaybeMessage<LockDowngradeRequest>(NULL);
-  }
-
-  LockDowngradeRequest* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<LockDowngradeRequest>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const LockDowngradeRequest& from);
-  void MergeFrom(const LockDowngradeRequest& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(LockDowngradeRequest* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // uint64 page_id = 1;
-  void clear_page_id();
-  static const int kPageIdFieldNumber = 1;
-  ::google::protobuf::uint64 page_id() const;
-  void set_page_id(::google::protobuf::uint64 value);
-
-  // .dbx1000.RpcLockMode from = 2;
-  void clear_from();
-  static const int kFromFieldNumber = 2;
-  ::dbx1000::RpcLockMode from() const;
-  void set_from(::dbx1000::RpcLockMode value);
-
-  // .dbx1000.RpcLockMode to = 3;
-  void clear_to();
-  static const int kToFieldNumber = 3;
-  ::dbx1000::RpcLockMode to() const;
-  void set_to(::dbx1000::RpcLockMode value);
-
-  // @@protoc_insertion_point(class_scope:dbx1000.LockDowngradeRequest)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::uint64 page_id_;
-  int from_;
-  int to_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class LockDowngradeReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockDowngradeReply) */ {
- public:
-  LockDowngradeReply();
-  virtual ~LockDowngradeReply();
-
-  LockDowngradeReply(const LockDowngradeReply& from);
-
-  inline LockDowngradeReply& operator=(const LockDowngradeReply& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  LockDowngradeReply(LockDowngradeReply&& from) noexcept
-    : LockDowngradeReply() {
-    *this = ::std::move(from);
-  }
-
-  inline LockDowngradeReply& operator=(LockDowngradeReply&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const LockDowngradeReply& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const LockDowngradeReply* internal_default_instance() {
-    return reinterpret_cast<const LockDowngradeReply*>(
-               &_LockDowngradeReply_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    3;
-
-  void Swap(LockDowngradeReply* other);
-  friend void swap(LockDowngradeReply& a, LockDowngradeReply& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline LockDowngradeReply* New() const final {
-    return CreateMaybeMessage<LockDowngradeReply>(NULL);
-  }
-
-  LockDowngradeReply* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<LockDowngradeReply>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const LockDowngradeReply& from);
-  void MergeFrom(const LockDowngradeReply& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(LockDowngradeReply* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // bytes page_buf = 2;
-  void clear_page_buf();
-  static const int kPageBufFieldNumber = 2;
-  const ::std::string& page_buf() const;
-  void set_page_buf(const ::std::string& value);
-  #if LANG_CXX11
-  void set_page_buf(::std::string&& value);
-  #endif
-  void set_page_buf(const char* value);
-  void set_page_buf(const void* value, size_t size);
-  ::std::string* mutable_page_buf();
-  ::std::string* release_page_buf();
-  void set_allocated_page_buf(::std::string* page_buf);
+  void set_count(const char* value);
+  void set_count(const void* value, size_t size);
+  ::std::string* mutable_count();
+  ::std::string* release_count();
+  void set_allocated_count(::std::string* count);
 
   // bool rc = 1;
   void clear_rc();
@@ -562,11 +355,12 @@ class LockDowngradeReply : public ::google::protobuf::Message /* @@protoc_insert
   bool rc() const;
   void set_rc(bool value);
 
-  // @@protoc_insertion_point(class_scope:dbx1000.LockDowngradeReply)
+  // @@protoc_insertion_point(class_scope:dbx1000.LockRemoteReply)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr page_buf_;
+  ::google::protobuf::internal::ArenaStringPtr count_;
   bool rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
@@ -608,7 +402,7 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_LockInvalidRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    2;
 
   void Swap(LockInvalidRequest* other);
   friend void swap(LockInvalidRequest& a, LockInvalidRequest& b) {
@@ -660,17 +454,53 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
 
   // accessors -------------------------------------------------------
 
-  // uint64 page_id = 1;
+  // bytes page_buf = 4;
+  void clear_page_buf();
+  static const int kPageBufFieldNumber = 4;
+  const ::std::string& page_buf() const;
+  void set_page_buf(const ::std::string& value);
+  #if LANG_CXX11
+  void set_page_buf(::std::string&& value);
+  #endif
+  void set_page_buf(const char* value);
+  void set_page_buf(const void* value, size_t size);
+  ::std::string* mutable_page_buf();
+  ::std::string* release_page_buf();
+  void set_allocated_page_buf(::std::string* page_buf);
+
+  // uint64 page_id = 2;
   void clear_page_id();
-  static const int kPageIdFieldNumber = 1;
+  static const int kPageIdFieldNumber = 2;
   ::google::protobuf::uint64 page_id() const;
   void set_page_id(::google::protobuf::uint64 value);
+
+  // int32 instance_id = 1;
+  void clear_instance_id();
+  static const int kInstanceIdFieldNumber = 1;
+  ::google::protobuf::int32 instance_id() const;
+  void set_instance_id(::google::protobuf::int32 value);
+
+  // .dbx1000.RpcLockMode request_mode = 3;
+  void clear_request_mode();
+  static const int kRequestModeFieldNumber = 3;
+  ::dbx1000::RpcLockMode request_mode() const;
+  void set_request_mode(::dbx1000::RpcLockMode value);
+
+  // int64 count = 5;
+  void clear_count();
+  static const int kCountFieldNumber = 5;
+  ::google::protobuf::int64 count() const;
+  void set_count(::google::protobuf::int64 value);
 
   // @@protoc_insertion_point(class_scope:dbx1000.LockInvalidRequest)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr page_buf_;
   ::google::protobuf::uint64 page_id_;
+  ::google::protobuf::int32 instance_id_;
+  int request_mode_;
+  ::google::protobuf::int64 count_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
@@ -711,7 +541,7 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
                &_LockInvalidReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    3;
 
   void Swap(LockInvalidReply* other);
   friend void swap(LockInvalidReply& a, LockInvalidReply& b) {
@@ -763,6 +593,34 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
 
   // accessors -------------------------------------------------------
 
+  // bytes page_buf = 2;
+  void clear_page_buf();
+  static const int kPageBufFieldNumber = 2;
+  const ::std::string& page_buf() const;
+  void set_page_buf(const ::std::string& value);
+  #if LANG_CXX11
+  void set_page_buf(::std::string&& value);
+  #endif
+  void set_page_buf(const char* value);
+  void set_page_buf(const void* value, size_t size);
+  ::std::string* mutable_page_buf();
+  ::std::string* release_page_buf();
+  void set_allocated_page_buf(::std::string* page_buf);
+
+  // bytes count = 3;
+  void clear_count();
+  static const int kCountFieldNumber = 3;
+  const ::std::string& count() const;
+  void set_count(const ::std::string& value);
+  #if LANG_CXX11
+  void set_count(::std::string&& value);
+  #endif
+  void set_count(const char* value);
+  void set_count(const void* value, size_t size);
+  ::std::string* mutable_count();
+  ::std::string* release_count();
+  void set_allocated_count(::std::string* count);
+
   // bool rc = 1;
   void clear_rc();
   static const int kRcFieldNumber = 1;
@@ -773,6 +631,8 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr page_buf_;
+  ::google::protobuf::internal::ArenaStringPtr count_;
   bool rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
@@ -786,243 +646,260 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// LockGetRequest
+// LockRemoteRequest
 
 // int32 instance_id = 1;
-inline void LockGetRequest::clear_instance_id() {
+inline void LockRemoteRequest::clear_instance_id() {
   instance_id_ = 0;
 }
-inline ::google::protobuf::int32 LockGetRequest::instance_id() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockGetRequest.instance_id)
+inline ::google::protobuf::int32 LockRemoteRequest::instance_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.instance_id)
   return instance_id_;
 }
-inline void LockGetRequest::set_instance_id(::google::protobuf::int32 value) {
+inline void LockRemoteRequest::set_instance_id(::google::protobuf::int32 value) {
   
   instance_id_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockGetRequest.instance_id)
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.instance_id)
 }
 
 // uint64 page_id = 2;
-inline void LockGetRequest::clear_page_id() {
+inline void LockRemoteRequest::clear_page_id() {
   page_id_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::uint64 LockGetRequest::page_id() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockGetRequest.page_id)
+inline ::google::protobuf::uint64 LockRemoteRequest::page_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.page_id)
   return page_id_;
 }
-inline void LockGetRequest::set_page_id(::google::protobuf::uint64 value) {
+inline void LockRemoteRequest::set_page_id(::google::protobuf::uint64 value) {
   
   page_id_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockGetRequest.page_id)
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.page_id)
 }
 
-// .dbx1000.RpcLockMode mode = 3;
-inline void LockGetRequest::clear_mode() {
-  mode_ = 0;
+// .dbx1000.RpcLockMode request_mode = 3;
+inline void LockRemoteRequest::clear_request_mode() {
+  request_mode_ = 0;
 }
-inline ::dbx1000::RpcLockMode LockGetRequest::mode() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockGetRequest.mode)
-  return static_cast< ::dbx1000::RpcLockMode >(mode_);
+inline ::dbx1000::RpcLockMode LockRemoteRequest::request_mode() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.request_mode)
+  return static_cast< ::dbx1000::RpcLockMode >(request_mode_);
 }
-inline void LockGetRequest::set_mode(::dbx1000::RpcLockMode value) {
+inline void LockRemoteRequest::set_request_mode(::dbx1000::RpcLockMode value) {
   
-  mode_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockGetRequest.mode)
+  request_mode_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.request_mode)
 }
 
-// -------------------------------------------------------------------
-
-// LockGetReply
-
-// bool rc = 1;
-inline void LockGetReply::clear_rc() {
-  rc_ = false;
-}
-inline bool LockGetReply::rc() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockGetReply.rc)
-  return rc_;
-}
-inline void LockGetReply::set_rc(bool value) {
-  
-  rc_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockGetReply.rc)
-}
-
-// bytes page_buf = 2;
-inline void LockGetReply::clear_page_buf() {
+// bytes page_buf = 4;
+inline void LockRemoteRequest::clear_page_buf() {
   page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& LockGetReply::page_buf() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockGetReply.page_buf)
+inline const ::std::string& LockRemoteRequest::page_buf() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.page_buf)
   return page_buf_.GetNoArena();
 }
-inline void LockGetReply::set_page_buf(const ::std::string& value) {
+inline void LockRemoteRequest::set_page_buf(const ::std::string& value) {
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.page_buf)
 }
 #if LANG_CXX11
-inline void LockGetReply::set_page_buf(::std::string&& value) {
+inline void LockRemoteRequest::set_page_buf(::std::string&& value) {
   
   page_buf_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockRemoteRequest.page_buf)
 }
 #endif
-inline void LockGetReply::set_page_buf(const char* value) {
+inline void LockRemoteRequest::set_page_buf(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockRemoteRequest.page_buf)
 }
-inline void LockGetReply::set_page_buf(const void* value, size_t size) {
+inline void LockRemoteRequest::set_page_buf(const void* value, size_t size) {
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockRemoteRequest.page_buf)
 }
-inline ::std::string* LockGetReply::mutable_page_buf() {
+inline ::std::string* LockRemoteRequest::mutable_page_buf() {
   
-  // @@protoc_insertion_point(field_mutable:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockRemoteRequest.page_buf)
   return page_buf_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* LockGetReply::release_page_buf() {
-  // @@protoc_insertion_point(field_release:dbx1000.LockGetReply.page_buf)
+inline ::std::string* LockRemoteRequest::release_page_buf() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockRemoteRequest.page_buf)
   
   return page_buf_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void LockGetReply::set_allocated_page_buf(::std::string* page_buf) {
+inline void LockRemoteRequest::set_allocated_page_buf(::std::string* page_buf) {
   if (page_buf != NULL) {
     
   } else {
     
   }
   page_buf_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), page_buf);
-  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockGetReply.page_buf)
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteRequest.page_buf)
+}
+
+// int64 count = 5;
+inline void LockRemoteRequest::clear_count() {
+  count_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 LockRemoteRequest::count() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.count)
+  return count_;
+}
+inline void LockRemoteRequest::set_count(::google::protobuf::int64 value) {
+  
+  count_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.count)
 }
 
 // -------------------------------------------------------------------
 
-// LockDowngradeRequest
-
-// uint64 page_id = 1;
-inline void LockDowngradeRequest::clear_page_id() {
-  page_id_ = GOOGLE_ULONGLONG(0);
-}
-inline ::google::protobuf::uint64 LockDowngradeRequest::page_id() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockDowngradeRequest.page_id)
-  return page_id_;
-}
-inline void LockDowngradeRequest::set_page_id(::google::protobuf::uint64 value) {
-  
-  page_id_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockDowngradeRequest.page_id)
-}
-
-// .dbx1000.RpcLockMode from = 2;
-inline void LockDowngradeRequest::clear_from() {
-  from_ = 0;
-}
-inline ::dbx1000::RpcLockMode LockDowngradeRequest::from() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockDowngradeRequest.from)
-  return static_cast< ::dbx1000::RpcLockMode >(from_);
-}
-inline void LockDowngradeRequest::set_from(::dbx1000::RpcLockMode value) {
-  
-  from_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockDowngradeRequest.from)
-}
-
-// .dbx1000.RpcLockMode to = 3;
-inline void LockDowngradeRequest::clear_to() {
-  to_ = 0;
-}
-inline ::dbx1000::RpcLockMode LockDowngradeRequest::to() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockDowngradeRequest.to)
-  return static_cast< ::dbx1000::RpcLockMode >(to_);
-}
-inline void LockDowngradeRequest::set_to(::dbx1000::RpcLockMode value) {
-  
-  to_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockDowngradeRequest.to)
-}
-
-// -------------------------------------------------------------------
-
-// LockDowngradeReply
+// LockRemoteReply
 
 // bool rc = 1;
-inline void LockDowngradeReply::clear_rc() {
+inline void LockRemoteReply::clear_rc() {
   rc_ = false;
 }
-inline bool LockDowngradeReply::rc() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockDowngradeReply.rc)
+inline bool LockRemoteReply::rc() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteReply.rc)
   return rc_;
 }
-inline void LockDowngradeReply::set_rc(bool value) {
+inline void LockRemoteReply::set_rc(bool value) {
   
   rc_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockDowngradeReply.rc)
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteReply.rc)
 }
 
 // bytes page_buf = 2;
-inline void LockDowngradeReply::clear_page_buf() {
+inline void LockRemoteReply::clear_page_buf() {
   page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& LockDowngradeReply::page_buf() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockDowngradeReply.page_buf)
+inline const ::std::string& LockRemoteReply::page_buf() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteReply.page_buf)
   return page_buf_.GetNoArena();
 }
-inline void LockDowngradeReply::set_page_buf(const ::std::string& value) {
+inline void LockRemoteReply::set_page_buf(const ::std::string& value) {
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteReply.page_buf)
 }
 #if LANG_CXX11
-inline void LockDowngradeReply::set_page_buf(::std::string&& value) {
+inline void LockRemoteReply::set_page_buf(::std::string&& value) {
   
   page_buf_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockRemoteReply.page_buf)
 }
 #endif
-inline void LockDowngradeReply::set_page_buf(const char* value) {
+inline void LockRemoteReply::set_page_buf(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockRemoteReply.page_buf)
 }
-inline void LockDowngradeReply::set_page_buf(const void* value, size_t size) {
+inline void LockRemoteReply::set_page_buf(const void* value, size_t size) {
   
   page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockRemoteReply.page_buf)
 }
-inline ::std::string* LockDowngradeReply::mutable_page_buf() {
+inline ::std::string* LockRemoteReply::mutable_page_buf() {
   
-  // @@protoc_insertion_point(field_mutable:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockRemoteReply.page_buf)
   return page_buf_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* LockDowngradeReply::release_page_buf() {
-  // @@protoc_insertion_point(field_release:dbx1000.LockDowngradeReply.page_buf)
+inline ::std::string* LockRemoteReply::release_page_buf() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockRemoteReply.page_buf)
   
   return page_buf_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void LockDowngradeReply::set_allocated_page_buf(::std::string* page_buf) {
+inline void LockRemoteReply::set_allocated_page_buf(::std::string* page_buf) {
   if (page_buf != NULL) {
     
   } else {
     
   }
   page_buf_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), page_buf);
-  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockDowngradeReply.page_buf)
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteReply.page_buf)
+}
+
+// bytes count = 3;
+inline void LockRemoteReply::clear_count() {
+  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockRemoteReply::count() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockRemoteReply.count)
+  return count_.GetNoArena();
+}
+inline void LockRemoteReply::set_count(const ::std::string& value) {
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:dbx1000.LockRemoteReply.count)
+}
+#if LANG_CXX11
+inline void LockRemoteReply::set_count(::std::string&& value) {
+  
+  count_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockRemoteReply.count)
+}
+#endif
+inline void LockRemoteReply::set_count(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockRemoteReply.count)
+}
+inline void LockRemoteReply::set_count(const void* value, size_t size) {
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockRemoteReply.count)
+}
+inline ::std::string* LockRemoteReply::mutable_count() {
+  
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockRemoteReply.count)
+  return count_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockRemoteReply::release_count() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockRemoteReply.count)
+  
+  return count_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockRemoteReply::set_allocated_count(::std::string* count) {
+  if (count != NULL) {
+    
+  } else {
+    
+  }
+  count_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), count);
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteReply.count)
 }
 
 // -------------------------------------------------------------------
 
 // LockInvalidRequest
 
-// uint64 page_id = 1;
+// int32 instance_id = 1;
+inline void LockInvalidRequest::clear_instance_id() {
+  instance_id_ = 0;
+}
+inline ::google::protobuf::int32 LockInvalidRequest::instance_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.instance_id)
+  return instance_id_;
+}
+inline void LockInvalidRequest::set_instance_id(::google::protobuf::int32 value) {
+  
+  instance_id_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.instance_id)
+}
+
+// uint64 page_id = 2;
 inline void LockInvalidRequest::clear_page_id() {
   page_id_ = GOOGLE_ULONGLONG(0);
 }
@@ -1034,6 +911,87 @@ inline void LockInvalidRequest::set_page_id(::google::protobuf::uint64 value) {
   
   page_id_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.page_id)
+}
+
+// .dbx1000.RpcLockMode request_mode = 3;
+inline void LockInvalidRequest::clear_request_mode() {
+  request_mode_ = 0;
+}
+inline ::dbx1000::RpcLockMode LockInvalidRequest::request_mode() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.request_mode)
+  return static_cast< ::dbx1000::RpcLockMode >(request_mode_);
+}
+inline void LockInvalidRequest::set_request_mode(::dbx1000::RpcLockMode value) {
+  
+  request_mode_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.request_mode)
+}
+
+// bytes page_buf = 4;
+inline void LockInvalidRequest::clear_page_buf() {
+  page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockInvalidRequest::page_buf() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.page_buf)
+  return page_buf_.GetNoArena();
+}
+inline void LockInvalidRequest::set_page_buf(const ::std::string& value) {
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.page_buf)
+}
+#if LANG_CXX11
+inline void LockInvalidRequest::set_page_buf(::std::string&& value) {
+  
+  page_buf_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockInvalidRequest.page_buf)
+}
+#endif
+inline void LockInvalidRequest::set_page_buf(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockInvalidRequest.page_buf)
+}
+inline void LockInvalidRequest::set_page_buf(const void* value, size_t size) {
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockInvalidRequest.page_buf)
+}
+inline ::std::string* LockInvalidRequest::mutable_page_buf() {
+  
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockInvalidRequest.page_buf)
+  return page_buf_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockInvalidRequest::release_page_buf() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockInvalidRequest.page_buf)
+  
+  return page_buf_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockInvalidRequest::set_allocated_page_buf(::std::string* page_buf) {
+  if (page_buf != NULL) {
+    
+  } else {
+    
+  }
+  page_buf_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), page_buf);
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidRequest.page_buf)
+}
+
+// int64 count = 5;
+inline void LockInvalidRequest::clear_count() {
+  count_ = GOOGLE_LONGLONG(0);
+}
+inline ::google::protobuf::int64 LockInvalidRequest::count() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.count)
+  return count_;
+}
+inline void LockInvalidRequest::set_count(::google::protobuf::int64 value) {
+  
+  count_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.count)
 }
 
 // -------------------------------------------------------------------
@@ -1054,13 +1012,115 @@ inline void LockInvalidReply::set_rc(bool value) {
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidReply.rc)
 }
 
+// bytes page_buf = 2;
+inline void LockInvalidReply::clear_page_buf() {
+  page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockInvalidReply::page_buf() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidReply.page_buf)
+  return page_buf_.GetNoArena();
+}
+inline void LockInvalidReply::set_page_buf(const ::std::string& value) {
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidReply.page_buf)
+}
+#if LANG_CXX11
+inline void LockInvalidReply::set_page_buf(::std::string&& value) {
+  
+  page_buf_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockInvalidReply.page_buf)
+}
+#endif
+inline void LockInvalidReply::set_page_buf(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockInvalidReply.page_buf)
+}
+inline void LockInvalidReply::set_page_buf(const void* value, size_t size) {
+  
+  page_buf_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockInvalidReply.page_buf)
+}
+inline ::std::string* LockInvalidReply::mutable_page_buf() {
+  
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockInvalidReply.page_buf)
+  return page_buf_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockInvalidReply::release_page_buf() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockInvalidReply.page_buf)
+  
+  return page_buf_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockInvalidReply::set_allocated_page_buf(::std::string* page_buf) {
+  if (page_buf != NULL) {
+    
+  } else {
+    
+  }
+  page_buf_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), page_buf);
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidReply.page_buf)
+}
+
+// bytes count = 3;
+inline void LockInvalidReply::clear_count() {
+  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& LockInvalidReply::count() const {
+  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidReply.count)
+  return count_.GetNoArena();
+}
+inline void LockInvalidReply::set_count(const ::std::string& value) {
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidReply.count)
+}
+#if LANG_CXX11
+inline void LockInvalidReply::set_count(::std::string&& value) {
+  
+  count_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockInvalidReply.count)
+}
+#endif
+inline void LockInvalidReply::set_count(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:dbx1000.LockInvalidReply.count)
+}
+inline void LockInvalidReply::set_count(const void* value, size_t size) {
+  
+  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockInvalidReply.count)
+}
+inline ::std::string* LockInvalidReply::mutable_count() {
+  
+  // @@protoc_insertion_point(field_mutable:dbx1000.LockInvalidReply.count)
+  return count_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* LockInvalidReply::release_count() {
+  // @@protoc_insertion_point(field_release:dbx1000.LockInvalidReply.count)
+  
+  return count_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void LockInvalidReply::set_allocated_count(::std::string* count) {
+  if (count != NULL) {
+    
+  } else {
+    
+  }
+  count_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), count);
+  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidReply.count)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

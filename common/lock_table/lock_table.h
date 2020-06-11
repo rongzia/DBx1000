@@ -13,8 +13,8 @@
 namespace dbx1000 {
     enum class LockMode{
         O,  /// 失效
-        S,  /// 读锁
         P,  /// 独占
+        S,  /// 读锁
         X,  /// 写锁
     };
 
@@ -38,7 +38,7 @@ namespace dbx1000 {
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
 
-        bool LockDowngrade(uint64_t page_id, LockMode from, LockMode to);
+        bool LockInvalid(uint64_t page_id, LockMode from, LockMode to);
 
         bool LockGet(uint64_t page_id, uint16_t node_i, LockMode mode);
         bool LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode);

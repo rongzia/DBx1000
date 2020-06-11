@@ -9,6 +9,10 @@
 #include <vector>
 #include <map>
 #include <unistd.h>
+#include <mutex>
+#include <condition_variable>
+#include <cassert>
+#include <util/profiler.h>
 
 using namespace std;
 
@@ -25,11 +29,110 @@ map<uint64_t, char *> GetMap() {
 
 void Test_map() {
     map<uint64_t, char *> map_2 = GetMap();
-    map_2.insert(std::pair<uint64_t , char*>(1, "sdf"));
+    map_2.insert(std::pair<uint64_t, char *>(1, "sdf"));
 }
+
+enum class LockMode {
+    O,  /// 失效
+    S,  /// 读锁
+    X,  /// 写锁
+};
+struct LockNode {
+    LockMode lock;
+    mutex mtx;
+    std::condition_variable cv;
+    int count;
+};
+
+bool Lock(LockNode *lockNode, LockMode mode, int thead_id) {
+    if (mode == LockMode::X) {
+        std::unique_lock<std::mutex> lck(lockNode->mtx);
+        while (lockNode->lock != LockMode::O) {
+            cout << "thread " << thead_id << " lock X waiting..." << endl;
+            lockNode->cv.wait(lck);
+        }
+        assert(lockNode->count == 0);
+        lockNode->lock = LockMode::X;
+        lockNode->count++;
+        return true;
+    }
+    if (mode == LockMode::S) {
+        std::unique_lock<std::mutex> lck(lockNode->mtx);
+        while (lockNode->lock == LockMode::X) {
+            cout << "thread " << thead_id << " lock S waiting..." << endl;
+            lockNode->cv.wait(lck);
+        }
+        assert(lockNode->count >= 0);
+        lockNode->lock = LockMode::S;
+        lockNode->count++;
+        return true;
+    }
+    assert(false);
+}
+
+bool UnLock(LockNode *lockNode) {
+    std::unique_lock<std::mutex> lck(lockNode->mtx);
+    if (LockMode::X == lockNode->lock) {
+        assert(lockNode->count == 1);
+        lockNode->count--;
+        lockNode->lock = LockMode::O;
+//        lockNode->cv.notify_one();
+        lockNode->cv.notify_all();
+        return true;
+    }
+    if (LockMode::S == lockNode->lock) {
+        lockNode->count--;
+        assert(lockNode->count >= 0);
+            lockNode->lock = LockMode::S;
+        if (lockNode->count == 0) {
+            lockNode->lock = LockMode::O;
+        }
+//        lockNode->cv.notify_one();
+        lockNode->cv.notify_all();
+        return true;
+    }
+//    assert(false);
+}
+
+void Write(LockNode *lockNode, int thread_index) {
+    Lock(lockNode, LockMode::X, thread_index);
+    cout << "thread " << thread_index << " lock X success" << endl;
+    this_thread::sleep_for(std::chrono::seconds(1));
+    UnLock(lockNode);
+    cout << "thread " << thread_index << " unlock success" << endl;
+};
+void Read(LockNode *lockNode, int thread_index) {
+    Lock(lockNode, LockMode::S, thread_index);
+    cout << "thread " << thread_index << " lock S success" << endl;
+    this_thread::sleep_for(std::chrono::seconds(1));
+    UnLock(lockNode);
+    cout << "thread " << thread_index << " unlock success" << endl;
+};
+
 
 int main() {
 //    Test_access();
-    Test_map();
+//    Test_map();
+dbx1000::Profiler profiler;
+profiler.Start();
+    LockNode *lockNode = new LockNode();
+    lockNode->count = 0;
+    lockNode->lock = LockMode::O;
+    Lock(lockNode, LockMode::X, 0);
+
+    vector<thread> lock_threads;
+    for (int i = 0; i < 10; i++) {
+        lock_threads.emplace_back(thread(Read, lockNode, i + 1));
+    }
+    for (int i = 10; i < 20; i++) {
+        lock_threads.emplace_back(thread(Write, lockNode, i + 1));
+    }
+    UnLock(lockNode);
+    for (int i = 0; i < 20; i++) {
+        lock_threads[i].join();
+    }
+
+profiler.End();
+    cout << "exe time : " << profiler.Seconds() <<endl;
     return 0;
 }
