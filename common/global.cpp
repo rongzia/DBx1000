@@ -2,7 +2,7 @@
 
 //#include "stats.h"
 //#include "manager.h"
-#include "buffer_server/manager_server.h"
+#include "buffer_manager/manager_server.h"
 #include "instance/manager_instance.h"
 //#include "query.h"
 //#include "dl_detect.h"

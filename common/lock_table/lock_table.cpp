@@ -30,7 +30,7 @@ namespace dbx1000 {
             lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
         }
     }
-
+/*
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -112,18 +112,63 @@ namespace dbx1000 {
             return true;
         }
     }
-
-    bool LockTable::LockDowngrade(uint64_t page_id, LockMode from, LockMode to) {
-        
+*/
+    bool LockTable::Lock(uint64_t page_id, LockMode mode) {
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            return false;
+        }
+        std::unique_lock <std::mutex> lck(iter->second->mtx);
+        if(LockMode::X == mode){
+            while(iter->second->lock_mode != LockMode::O || iter->second->lock_mode != LockMode::P){
+                iter->second->cv.wait(lck);
+            }
+            assert(iter->second->count == 0);
+            iter->second->lock_mode == LockMode::X;
+            iter->second->count++;
+            return true;
+        }
+        if(LockMode::S == mode) {
+            while(iter->second->lock_mode != LockMode::O && iter->second->lock_mode == LockMode::X){
+                iter->second->cv.wait(lck);
+            }
+            assert(iter->second->count >=  0);
+            iter->second->lock_mode == LockMode::S;
+            iter->second->count++;
+            return true;
+        }
+        assert(false);
     }
 
-    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
+    bool LockTable::UnLock(uint64_t page_id) {
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            return false;
+        }
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        if (LockMode::X == iter->second->lock_mode) {
+            assert(iter->second->count == 1);
+            iter->second->count--;
+            iter->second->lock_mode = LockMode::P;
+            iter->second->cv.notify_all();
+            return true;
+        }
+        if (LockMode::S == iter->second->lock_mode) {
+            iter->second->count--;
+            assert(iter->second->count >= 0);
+            iter->second->lock_mode = LockMode::S;
+            if (iter->second->count == 0) {
+                iter->second->lock_mode = LockMode::P;
+            }
+            iter->second->cv.notify_all();
+            return true;
+    }
+    }
 
-    bool LockTable::LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode) {}
-
-    bool LockTable::LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
-
-    bool LockTable::LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
+//    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
+//    bool LockTable::LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode) {}
+//    bool LockTable::LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
+//    bool LockTable::LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
 
     std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() {
         return this->lock_table_;

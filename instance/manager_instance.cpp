@@ -101,7 +101,7 @@ namespace dbx1000 {
         std::cout << "ManagerInstance::InitLockTable" << std::endl;
         for(auto &iter : lock_table_->lock_table()) {
             iter.second->instance_id = this->instance_id_;
-            iter.second->valid = true;
+//            iter.second->valid = true;
         }
         std::cout << "ManagerInstance::InitLockTable done." << std::endl;
     }

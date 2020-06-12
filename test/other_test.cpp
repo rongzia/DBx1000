@@ -83,7 +83,7 @@ bool UnLock(LockNode *lockNode) {
     if (LockMode::S == lockNode->lock) {
         lockNode->count--;
         assert(lockNode->count >= 0);
-            lockNode->lock = LockMode::S;
+        lockNode->lock = LockMode::S;
         if (lockNode->count == 0) {
             lockNode->lock = LockMode::O;
         }
@@ -101,6 +101,7 @@ void Write(LockNode *lockNode, int thread_index) {
     UnLock(lockNode);
     cout << "thread " << thread_index << " unlock success" << endl;
 };
+
 void Read(LockNode *lockNode, int thread_index) {
     Lock(lockNode, LockMode::S, thread_index);
     cout << "thread " << thread_index << " lock S success" << endl;
@@ -109,12 +110,9 @@ void Read(LockNode *lockNode, int thread_index) {
     cout << "thread " << thread_index << " unlock success" << endl;
 };
 
-
-int main() {
-//    Test_access();
-//    Test_map();
-dbx1000::Profiler profiler;
-profiler.Start();
+void TestLock() {
+    dbx1000::Profiler profiler;
+    profiler.Start();
     LockNode *lockNode = new LockNode();
     lockNode->count = 0;
     lockNode->lock = LockMode::O;
@@ -132,7 +130,41 @@ profiler.Start();
         lock_threads[i].join();
     }
 
-profiler.End();
-    cout << "exe time : " << profiler.Seconds() <<endl;
+    profiler.End();
+    cout << "exe time : " << profiler.Seconds() << endl;
+}
+
+
+int main() {
+//    Test_access();
+//    Test_map();
+//    TestLock();
+
+    int a = INT32_MAX;
+    unsigned int ui = 2;
+    off_t offset = UINT64_MAX;
+//    size_type
+    long l = 4;
+    long long ll = 3;
+    long long int lli = 3;
+    unsigned long ul = 4;
+    unsigned long long ull = 3;
+    unsigned long long int ulli = 3;
+    int64_t i64 = 7;
+    size_t s = UINT64_MAX;
+    cout << typeid(a).name() << endl;
+    cout << typeid(ui).name() << endl;
+    cout << typeid(offset).name() << endl;
+    cout << typeid(l).name() << endl;
+    cout << typeid(ll).name() << endl;
+    cout << typeid(lli).name() << endl;
+    cout << typeid(ull).name() << endl;
+    cout << typeid(ulli).name() << endl;
+    cout << typeid(ulli).name() << endl;
+    cout << typeid(i64).name() << endl;
+    cout << typeid(s).name() << endl;
+    cout << s << endl;
+    cout << offset << endl;
+    cout << a << endl;
     return 0;
 }
