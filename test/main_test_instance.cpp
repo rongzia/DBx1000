@@ -44,14 +44,10 @@ extern void Check_DB();
 
 int main(int argc, char* argv[]) {
 
-    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
-    Gen_DB_single_thread();
-    Check_DB();
-    dbx1000::FileIO::Close();
-
-
-
-
+//    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
+//    Gen_DB_single_thread();
+//    Check_DB();
+//    dbx1000::FileIO::Close();
 
     parser(argc, argv);
     cout << "mian test txn thread" << endl;

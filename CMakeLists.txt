@@ -102,7 +102,7 @@ set(SRC_FILES
         shared_disk/shared_disk_service.cpp)
 
 add_executable(main_test_bm test/main_test_bm.cpp ${SRC_FILES})
-add_executable(main_test_instance test/main_test_instance.cpp test/gen_db.cpp ${SRC_FILES})
+add_executable(main_test_instance test/main_test_instance.cpp ${SRC_FILES})
 target_link_libraries(main_test_bm ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 target_link_libraries(main_test_instance ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
@@ -113,12 +113,12 @@ target_link_libraries(other_test pthread)
 add_executable(parser_host common/parser_host.cpp)
 target_link_libraries(parser_host libjsoncpp.a)
 
-add_executable(gen_db test/gen_db.cpp ${SRC_FILES} shared_disk/shared_disk_service.cpp shared_disk/shared_disk_service.cpp shared_disk/shared_disk_service.h)
-target_link_libraries(gen_db libjsoncpp.a pthread)
+add_executable(gen_db test/gen_db.cpp ${SRC_FILES})
+target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
 
 add_executable(disk_service test/disk_service.cpp shared_disk/shared_disk_service.cpp
         shared_disk/proto/shared_disk_service.grpc.pb.cc
         shared_disk/proto/shared_disk_service.pb.cc
         common/storage/disk/file_io.cpp)
-target_link_libraries(disk_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
+target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)

@@ -239,6 +239,6 @@ extern TestCases					g_test_case;
 //#define MY_PAGE_SIZE (74)
 //#define ITEM_NUM_PER_FILE (10)
 
-//#define SHARED_DISK
+#define SHARED_DISK
 
 #endif
