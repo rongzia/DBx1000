@@ -12,9 +12,9 @@ add_definitions(-DNOGRAPHITE=1)
 
 ### ******************************* grpc *******************************:
 set(PROTOBUF_ROOT $ENV{HOME}/.local/protobuf-3.6.1)
-include(${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/cmake/protobuf.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf.cmake)
 set(GRPC_ROOT $ENV{HOME}/.local/grpc-v1.23.x)
-include(${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/cmake/grpc.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc.cmake)
 find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
 
 execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
@@ -96,7 +96,10 @@ set(SRC_FILES
         rpc_handler/proto/dbx1000_service.pb.cc
         rpc_handler/buffer_manager_handler.cpp
         rpc_handler/dbx1000_service_helper.cpp
-        rpc_handler/instance_handler.cpp)
+        rpc_handler/instance_handler.cpp
+        shared_disk/proto/shared_disk_service.grpc.pb.cc
+        shared_disk/proto/shared_disk_service.pb.cc
+        shared_disk/shared_disk_service.cpp)
 
 add_executable(main_test_bm test/main_test_bm.cpp ${SRC_FILES})
 add_executable(main_test_instance test/main_test_instance.cpp test/gen_db.cpp ${SRC_FILES})

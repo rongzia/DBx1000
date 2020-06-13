@@ -26,10 +26,11 @@ namespace dbx1000 {
     class Page;
     class RowItem;
     class TableSpace;
+    class SharedDiskClient;
 
     class ManagerInstance {
     public:
-        ManagerInstance();
+        ManagerInstance(const std::string &);
         ~ManagerInstance();
 
         void Init();
@@ -78,6 +79,7 @@ namespace dbx1000 {
         Index* index_;
         LockTable* lock_table_;
         InstanceClient *instance_rpc_handler_;
+        SharedDiskClient * shared_disk_client_;
     };
 }
 

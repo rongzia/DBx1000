@@ -26,6 +26,7 @@
 #include "instance/txn/ycsb_txn.h"
 #include "instance/txn/txn.h"
 #include "instance/thread.h"
+#include "shared_disk/shared_disk_service.h"
 #include "json/json.h"
 #include "config.h"
 
@@ -48,7 +49,7 @@ namespace dbx1000 {
 //        delete buffer_manager_rpc_handler_;
     }
 
-    ManagerInstance::ManagerInstance() {
+    ManagerInstance::ManagerInstance(const std::string &shared_disk_host) {
         this->init_done_ = false;
 
         this->timestamp_ = 1;
@@ -64,6 +65,7 @@ namespace dbx1000 {
         this->m_workload_ = new ycsb_wl();
         m_workload_->init();
 
+        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
 
         InitMvccs();
         this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
@@ -71,7 +73,7 @@ namespace dbx1000 {
         table_space_->DeSerialize();
         index_->DeSerialize();
 
-        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE);
+        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->lock_table_ = new LockTable();
         lock_table_->Init(0, table_space_->GetLastPageId() + 1);
         InitLockTable();

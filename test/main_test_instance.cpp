@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     parser(argc, argv);
     cout << "mian test txn thread" << endl;
 
-    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance();
+    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance("127.0.0.1:5000");
     managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
     managerInstance->set_init_done(true);
 

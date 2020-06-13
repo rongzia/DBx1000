@@ -13,15 +13,15 @@
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
 #include "instance/manager_instance.h"
+#include "shared_disk/shared_disk_service.h"
 
 namespace dbx1000 {
 
-    Buffer::Buffer(uint64_t total_size, size_t page_size
-//            , ManagerClient* managerClient
-            )
+    Buffer::Buffer(uint64_t total_size, size_t page_size, SharedDiskClient *sharedDiskClient)
             : total_size_(total_size)
               , page_size_(page_size)
-              , page_num_(total_size / page_size) {
+              , page_num_(total_size / page_size)
+              , shared_disk_client_(sharedDiskClient){
         ptr_ = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
         page_list_ = new LRU(page_size_);
         free_list_ = new LRU(page_size_);
@@ -55,7 +55,11 @@ namespace dbx1000 {
         for (int i = 0; i < page_num_ / 5; i++) {
             PageNode* page_node = page_list_->Popback();
             /// 写盘
+            #ifdef SHARED_DISK
+            shared_disk_client_->WritePage(page_node->page_->page_id(), page_node->page_->page_buf());
+            #else
             FileIO::WritePage(page_node->page_->page_id(), page_node->page_->page_buf());
+            #endif
             lru_index_->IndexDelete(page_node->page_->page_id());
             page_node->page_->set_page_id(UINT64_MAX);
             free_list_->Prepend(page_node);
@@ -68,7 +72,11 @@ namespace dbx1000 {
         for (int i = 0; i < size; i++) {
             page_node = page_list_->Popback();
             /// 写盘
+            #ifdef SHARED_DISK
+            shared_disk_client_->WritePage(page_node->page_->page_id(), page_node->page_->page_buf());
+            #else
             FileIO::WritePage(page_node->page_->page_id(), page_node->page_->page_buf());
+            #endif
             lru_index_->IndexDelete(page_node->page_->page_id());
             page_node->page_->set_page_id(UINT64_MAX);
             free_list_->Prepend(page_node);
@@ -103,7 +111,11 @@ namespace dbx1000 {
         /// page in disk
         if(LruIndexFlag::NOT_EXIST == flag) {
             /// 读盘
+            #ifdef SHARED_DISK
+            shared_disk_client_->ReadPage(page_id, buf);
+            #else
             FileIO::ReadPage(page_id, buf);
+            #endif
             if (free_list_->size() <= 0) {
                 FlushPageList();
             }
@@ -162,7 +174,11 @@ namespace dbx1000 {
         /// page in disk
         if(LruIndexFlag::NOT_EXIST == flag) {
             /// 读盘
+            #ifdef SHARED_DISK
+            shared_disk_client_->ReadPage(page_id, buf);
+            #else
             FileIO::ReadPage(page_id, buf);
+            #endif
             mutex_.lock();
             if (free_list_->size() <= 0) {
                 FlushPageList();

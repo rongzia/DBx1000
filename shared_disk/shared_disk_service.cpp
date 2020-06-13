@@ -27,6 +27,7 @@ namespace dbx1000 {
         size_t read_size = FileIO::Read(request->fd(), buf, request->size(), request->offset());
         assert(read_size == request->size());
         response->set_buf(buf, read_size);
+        response->set_size(read_size);
         return ::grpc::Status::OK;
     }
 
@@ -44,6 +45,7 @@ namespace dbx1000 {
         size_t read_size = FileIO::ReadPage(request->page_id(), buf);
         assert(read_size == MY_PAGE_SIZE);
         response->set_page_buf(buf, read_size);
+        response->set_size(read_size);
         return ::grpc::Status::OK;
     }
 
