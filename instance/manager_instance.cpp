@@ -73,6 +73,7 @@ namespace dbx1000 {
         table_space_->DeSerialize();
         index_->DeSerialize();
 
+//        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->lock_table_ = new LockTable();
         lock_table_->Init(0, table_space_->GetLastPageId() + 1);
@@ -191,9 +192,9 @@ namespace dbx1000 {
     }
 
 
-    int ManagerInstance::instance_id() { return this->instance_id(); }
-    void ManagerInstance::set_init_done(bool init_done) { this->init_done_ = init_done; }
+    int ManagerInstance::instance_id() { return this->instance_id_; }
     void ManagerInstance::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }
+    void ManagerInstance::set_init_done(bool init_done) { this->init_done_ = init_done; }
     std::map<int, std::string> &ManagerInstance::host_map() { return this->host_map_; }
     Stats ManagerInstance::stats() { return this->stats_; }
     Query_queue *ManagerInstance::query_queue() { return this->query_queue_; }
@@ -205,7 +206,7 @@ namespace dbx1000 {
 
     InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
 
-    std::map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
+    std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
 
 
 }

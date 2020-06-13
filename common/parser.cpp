@@ -129,8 +129,9 @@ void parser(int argc, char * argv[]) {
 			assert(g_params.find(name) != g_params.end());
 			g_params[name] = value;
 		}
-		else
-			assert(false);
+		else {
+//			assert(false);
+		}
 	}
 	if (g_thread_cnt < g_init_parallelism)
 		g_init_parallelism = g_thread_cnt;

@@ -60,7 +60,7 @@ namespace dbx1000 {
         Index* index();
         LockTable* lock_table();
         InstanceClient *instance_rpc_handler();
-        std::map<uint64_t, Row_mvcc*> mvcc_map();
+        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map();
     private:
         bool init_done_;
         int instance_id_;
@@ -68,7 +68,7 @@ namespace dbx1000 {
 
         std::atomic<uint64_t> timestamp_;
         uint64_t*   all_ts_;
-        std::map<uint64_t, Row_mvcc*> mvcc_map_;
+        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
         txn_man** txn_man_;
         dbx1000::Stats stats_;
 

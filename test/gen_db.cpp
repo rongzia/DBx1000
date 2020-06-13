@@ -31,7 +31,7 @@
 
 #define row_size (80)
 
-#define num_item (1024 * 1024 * 10)
+//#define num_item (1024 * 1024 * 10)
 
 void Gen_DB_single_thread() {
     dbx1000::TableSpace *tableSpace = new dbx1000::TableSpace("MAIN_TABLE");
@@ -46,7 +46,7 @@ void Gen_DB_single_thread() {
     char row[row_size];
     uint64_t version = 0;
     memset(row, 'a', row_size);
-    for (uint64_t key = 0; key < num_item; key++) {
+    for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
         if (row_size > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
             dbx1000::FileIO::WritePage(page->page_id(), page->page_buf());
@@ -90,8 +90,8 @@ void Gen_DB() {
                     char row[row_size];
                     uint64_t version = 0;
                     memset(row, 'a', row_size);
-                    for (uint64_t key = (num_item / 10) * thd;          /// for multi threads
-                         key < (num_item / 10) * (thd + 1); key++) {    /// for multi threads
+                    for (uint64_t key = (SYNTH_TABLE_SIZE / 10) * thd;          /// for multi threads
+                         key < (SYNTH_TABLE_SIZE / 10) * (thd + 1); key++) {    /// for multi threads
 //                    for (uint64_t key = 0; key < num_item; key++) {
                         if (row_size > (MY_PAGE_SIZE - page->used_size())) {
                             page->Serialize();
@@ -141,8 +141,8 @@ void Check_DB() {
                 [&, thd]() {                  /// for multi threads
                     dbx1000::Page *page2 = new dbx1000::Page(new char[MY_PAGE_SIZE]);
                     char row[row_size];
-                    for (uint64_t key = (num_item / 10) * thd;          /// for multi threads
-                         key < (num_item / 10) * (thd + 1); key++) {    /// for multi threads
+                    for (uint64_t key = (SYNTH_TABLE_SIZE / 10) * thd;          /// for multi threads
+                         key < (SYNTH_TABLE_SIZE / 10) * (thd + 1); key++) {    /// for multi threads
 //                    for (uint64_t key = 0; key < num_item; key++) {
                         dbx1000::IndexItem indexItem;
                         index2->IndexGet(key, &indexItem);
@@ -181,5 +181,6 @@ int main() {
     Check_DB();
 
     dbx1000::FileIO::Close();
+    system("scp -r /home/zhangrongrong/CLionProjects/DBx1000/db/ zhangrongrong@10.11.6.121:/home/zhangrongrong/CLionProjects/DBx1000/db/");
     return 0;
 }

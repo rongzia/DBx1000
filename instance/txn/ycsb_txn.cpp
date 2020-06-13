@@ -40,7 +40,9 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			dbx1000::RowItem * row_local;
 			access_t type = req->rtype;
 			
-			row_local = get_row(req->key, type);
+//			row_local = get_row(req->key, type);
+			row_local = get_row((req->key % (g_synth_table_size/PROCESS_CNT))
+			        +(g_synth_table_size/PROCESS_CNT) *(h_thd->manager_client_->instance_id() -1 ) , type);
 			if (row_local == NULL) {
 				rc = RC::Abort;
 				goto final;

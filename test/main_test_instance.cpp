@@ -52,9 +52,10 @@ int main(int argc, char* argv[]) {
     parser(argc, argv);
     cout << "mian test txn thread" << endl;
 
-    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance("127.0.0.1:5000");
+    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance("10.11.6.120:5000");
     managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
     managerInstance->set_init_done(true);
+    cout << "this pid :" << managerInstance->instance_id() << endl;
 
 	warmup_finish = true;
 
