@@ -74,7 +74,7 @@ namespace dbx1000 {
         index_->DeSerialize();
 
 //        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
-        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
+        this->buffer_ = new Buffer(g_synth_table_size/204/10 * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->lock_table_ = new LockTable();
         lock_table_->Init(0, table_space_->GetLastPageId() + 1);
         InitLockTable();
@@ -207,6 +207,8 @@ namespace dbx1000 {
     InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
 
     std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
+
+    SharedDiskClient * ManagerInstance::shared_disk_client() { return this->shared_disk_client_; }
 
 
 }

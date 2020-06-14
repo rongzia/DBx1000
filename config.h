@@ -5,8 +5,8 @@
 // Simulation + Hardware
 /***********************************************/
 //#define THREAD_CNT_PER_NODE         1
-#define THREAD_CNT					4
-#define PROCESS_CNT					16
+#define THREAD_CNT					1
+#define PROCESS_CNT					32
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -120,7 +120,7 @@
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 //#define SYNTH_TABLE_SIZE 			(1024 * 1024 * 10)
-#define SYNTH_TABLE_SIZE 			(1024 * 100 * 204)
+#define SYNTH_TABLE_SIZE 			(1024L * 100 * 204)
 //#define SYNTH_TABLE_SIZE 			(1024 * 40 * 6)         /// 适合 单机、rpc 使用
 #define ZIPF_THETA 					0.6
 #define READ_PERC 					0.9
@@ -241,6 +241,7 @@ extern TestCases					g_test_case;
 //#define ITEM_NUM_PER_FILE (10)
 
 #define SHARED_DISK
+#define SHARED_DISK_HOST "10.11.6.120:5000"
 
 
 #endif

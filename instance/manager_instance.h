@@ -53,6 +53,7 @@ namespace dbx1000 {
         void set_instance_id(int);
         std::map<int, std::string>& host_map();
         Stats stats();
+        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map();
         Query_queue* query_queue();
         workload* m_workload();
         Buffer* buffer();
@@ -60,7 +61,7 @@ namespace dbx1000 {
         Index* index();
         LockTable* lock_table();
         InstanceClient *instance_rpc_handler();
-        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map();
+        SharedDiskClient * shared_disk_client();
     private:
         bool init_done_;
         int instance_id_;

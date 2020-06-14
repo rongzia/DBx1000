@@ -43,6 +43,7 @@ extern void Gen_DB_single_thread();
 extern void Check_DB();
 
 int main(int argc, char* argv[]) {
+    assert(argc >= 2);
 
 //    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
 //    Gen_DB_single_thread();
@@ -52,10 +53,11 @@ int main(int argc, char* argv[]) {
     parser(argc, argv);
     cout << "mian test txn thread" << endl;
 
-    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance("10.11.6.120:5000");
+    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance(SHARED_DISK_HOST);
     managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
     managerInstance->set_init_done(true);
     cout << "this pid :" << managerInstance->instance_id() << endl;
+//    managerInstance->shared_disk_client()
 
 	warmup_finish = true;
 

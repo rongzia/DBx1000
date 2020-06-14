@@ -31,8 +31,6 @@
 
 #define row_size (80)
 
-//#define num_item (1024 * 1024 * 10)
-
 void Gen_DB_single_thread() {
     dbx1000::TableSpace *tableSpace = new dbx1000::TableSpace("MAIN_TABLE");
     dbx1000::Index *index = new dbx1000::Index("MAIN_TABLE_INDEX");

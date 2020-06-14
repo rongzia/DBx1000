@@ -41,8 +41,9 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			access_t type = req->rtype;
 			
 //			row_local = get_row(req->key, type);
-			row_local = get_row((req->key % (g_synth_table_size/PROCESS_CNT))
-			        +(g_synth_table_size/PROCESS_CNT) *(h_thd->manager_client_->instance_id() -1 ) , type);
+            assert(h_thd->manager_client_->instance_id() < PROCESS_CNT);
+            assert(req->key < g_synth_table_size/32);
+			row_local = get_row(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id() , type);
 			if (row_local == NULL) {
 				rc = RC::Abort;
 				goto final;

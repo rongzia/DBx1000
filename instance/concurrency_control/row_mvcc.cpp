@@ -24,7 +24,6 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 	key_ = key;
 	size_ = size;
 	this->manager_instance_ = managerInstance;
-	row_ = nullptr;
 	_his_len = 4;
 	_req_len = _his_len;
 
@@ -36,6 +35,7 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 		_write_history[i].reserved = false;
 		_write_history[i].row = nullptr;
 	}
+	this->row_ = nullptr;
 	_latest_row = nullptr;
 	_latest_wts = 0;
 	_oldest_wts = 0;
@@ -146,7 +146,7 @@ bool Row_mvcc::Recycle() {
         if(_write_history[i].valid) {
             _num_versions--;
         }
-        if(_write_history->row != nullptr) {
+        if(_write_history[i].row != nullptr) {
             delete _write_history[i].row;
             _write_history[i].row = nullptr;
         }
@@ -236,12 +236,14 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
                 if(nullptr == _latest_row) { GetLatestRow(txn); }
                 txn->cur_row = _latest_row;
             }
-   			else 
-	   			txn->cur_row = _write_history[the_i].row;
+   			else {
+   			    assert(_write_history[the_i].row);
+                txn->cur_row = _write_history[the_i].row;
+            }
 		}
 	} else if (type == P_REQ) {
-    while (!ATOM_CAS(this->recycle_latch, false, true))
-        PAUSE
+//    while (!ATOM_CAS(this->recycle_latch, false, true))
+//        PAUSE
 
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts))
 			rc = RC::Abort;
@@ -252,12 +254,46 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		} else {
 			rc =RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
-//			assert(res_row);
 			/* res_row->copy(_latest_row); */
+//			if(_latest_row && !_latest_row->row_) {
+//                std::cout << _latest_row << std::endl;
+//                std::cout << row_ << std::endl;
+//                for (int i = 0; i < _his_len; i++) {
+//                    std::cout << _write_history[i].row << endl;
+//                }
+//            }
 			if(nullptr == _latest_row) { GetLatestRow(txn); }
             {
-                res_row->key_ = _latest_row->key_;
-                res_row->size_ = _latest_row->size_;
+//                if(_latest_row != this->row_){
+//                    bool flag = false;
+//                    for(int i = 0; i< _his_len; i++) {
+//                        if(_latest_row == _write_history[i].row) {
+//                            flag = true;
+//                            break;
+//                        }
+//                    }
+//                    assert(flag == true);
+//                }
+//			assert(_latest_row);
+//			if(!_latest_row->row_) {
+//			    std::cout << _latest_row << std::endl;
+//			    std::cout << row_ << std::endl;
+//			    for(int i = 0; i< _his_len; i++){
+//			        std::cout << _write_history[i].row << endl;
+//			    }
+//			}
+			assert(_latest_row->row_);
+//			if(_latest_row->size_ != this->size_) {
+//			    std::cout << "_latest_row->size_ != this->size_" << std::endl;
+//			    std::cout <<"_latest_row->key_ : "<<_latest_row->key_ <<std::endl;
+//			    std::cout <<"_latest_row->size_ : "<<_latest_row->size_ << ", this->size_ : "<< this->size_ <<std::endl;
+//			    std::cout << _latest_row << std::endl;
+//			    std::cout << row_ << std::endl;
+//			    for(int i = 0; i< _his_len; i++){
+//			        std::cout << _write_history[i].row << endl;
+//			    }
+//			}
+//			assert(_latest_row->size_ == this->size_);
                 memcpy(res_row->row_, _latest_row->row_, this->size_);
             }
 			txn->cur_row = res_row;
@@ -269,17 +305,19 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].valid = true;
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
-		_latest_row = row;
+		_latest_row = _write_history[_prewrite_his_id].row;
+		assert(row);
+		assert(row->row_);
         {
             if(nullptr != this->row_) {
-                delete row_;
-                row_ = nullptr;
+                delete this->row_;
+                this->row_ = nullptr;
             }
         }
 		_exists_prewrite = false;
 		_num_versions ++;
 		update_buffer(txn, W_REQ);
-		recycle_latch = false;
+//		recycle_latch = false;
 	} else if (type == XP_REQ) {
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = false;
@@ -290,7 +328,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
         }
 		_exists_prewrite = false;
 		update_buffer(txn, XP_REQ);
-		recycle_latch = false;
+//		recycle_latch = false;
 	} else 
 		assert(false);
 	profiler.End();
@@ -352,10 +390,12 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 					_write_history[i].reserved = false;
 					assert(_write_history[i].row);
                     {
-                        /// 写入 buffer
-                        // ...
-                        delete _write_history->row;
-                        _write_history->row = nullptr;
+                        /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
+                        if(_latest_row == _write_history[i].row) {
+                            _latest_row = nullptr;
+                        }
+                        delete _write_history[i].row;
+                        _write_history[i].row = nullptr;
                     }
 					_num_versions --;
 				}
@@ -380,7 +420,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	// _write_history is not full, find an unused entry for P_REQ.
 	if (_num_versions < _his_len) {
 	    //! 尽量挑 valid == true && reserved == true && row != NULL
-	    //! 实在不行就挑最后一个 valid == true && reserved == true
+	    //! 实在不行就挑最后一个 valid == false && reserved == false
 		for (uint32_t i = 0; i < _his_len; i++) {
 			if (!_write_history[i].valid 
 				&& !_write_history[i].reserved 
@@ -395,7 +435,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 		}
 		assert(idx < _his_len);
 	}
-	dbx1000::RowItem * row;
+
 	if (idx == _his_len) { 
 		if (_his_len >= g_thread_cnt) {
 			// all entries are taken. recycle the oldest version if _his_len is too long already
@@ -437,6 +477,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	_write_history[idx].reserved = true;
 	_write_history[idx].ts = ts;
 	_write_history[idx].row->key_ = this->key_;
+	_write_history[idx].row->size_ = this->size_;
 	_exists_prewrite = true;
 	_prewrite_his_id = idx;
 	_prewrite_ts = ts;
