@@ -24,7 +24,8 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 	key_ = key;
 	size_ = size;
 	this->manager_instance_ = managerInstance;
-	_his_len = 4;
+	/* _his_len = 4 */;
+	_his_len = g_thread_cnt;
 	_req_len = _his_len;
 
 	_write_history = new WriteHisEntry[_his_len]();
@@ -255,45 +256,8 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			rc =RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
 			/* res_row->copy(_latest_row); */
-//			if(_latest_row && !_latest_row->row_) {
-//                std::cout << _latest_row << std::endl;
-//                std::cout << row_ << std::endl;
-//                for (int i = 0; i < _his_len; i++) {
-//                    std::cout << _write_history[i].row << endl;
-//                }
-//            }
 			if(nullptr == _latest_row) { GetLatestRow(txn); }
             {
-//                if(_latest_row != this->row_){
-//                    bool flag = false;
-//                    for(int i = 0; i< _his_len; i++) {
-//                        if(_latest_row == _write_history[i].row) {
-//                            flag = true;
-//                            break;
-//                        }
-//                    }
-//                    assert(flag == true);
-//                }
-//			assert(_latest_row);
-//			if(!_latest_row->row_) {
-//			    std::cout << _latest_row << std::endl;
-//			    std::cout << row_ << std::endl;
-//			    for(int i = 0; i< _his_len; i++){
-//			        std::cout << _write_history[i].row << endl;
-//			    }
-//			}
-			assert(_latest_row->row_);
-//			if(_latest_row->size_ != this->size_) {
-//			    std::cout << "_latest_row->size_ != this->size_" << std::endl;
-//			    std::cout <<"_latest_row->key_ : "<<_latest_row->key_ <<std::endl;
-//			    std::cout <<"_latest_row->size_ : "<<_latest_row->size_ << ", this->size_ : "<< this->size_ <<std::endl;
-//			    std::cout << _latest_row << std::endl;
-//			    std::cout << row_ << std::endl;
-//			    for(int i = 0; i< _his_len; i++){
-//			        std::cout << _write_history[i].row << endl;
-//			    }
-//			}
-//			assert(_latest_row->size_ == this->size_);
                 memcpy(res_row->row_, _latest_row->row_, this->size_);
             }
 			txn->cur_row = res_row;
@@ -345,6 +309,14 @@ INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 	return rc;
 }
 
+void Row_mvcc::PrintWriteHistory(ts_t ts){
+    cout << "min_ts:" << ts << ", _oldest_wts" << _oldest_wts << endl;
+    for(int i = 0; i< g_thread_cnt; i++) {
+        cout << "_write_history[i].row:" << _write_history[i].row;
+        cout << ", ts:" << _write_history[i].ts << ", valid:" << _write_history[i].valid << ", rserved:" <<_write_history[i].reserved << endl;
+    }
+    cout <<"_latest_row" << _latest_row << endl;
+}
 
 //! 从 _write_history 中分配一个 WriteHisEntry，
 //! 该 WriteHisEntry 满足 valid == false && reserved == false，且尽可能 WriteHisEntry.row != NULL(为了避免额外申请内存的操作)
@@ -362,6 +334,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	if (_oldest_wts < min_ts && 
 		_num_versions == _his_len)
 	{
+	    PrintWriteHistory(min_ts);
 		ts_t max_recycle_ts = 0;
 		ts_t idx = _his_len;
 		/// 该 for 挑出最接近（不等于） min_ts 的一个版本
@@ -396,6 +369,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                         }
                         delete _write_history[i].row;
                         _write_history[i].row = nullptr;
+
                     }
 					_num_versions --;
 				}
@@ -476,8 +450,9 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	_write_history[idx].valid = false;
 	_write_history[idx].reserved = true;
 	_write_history[idx].ts = ts;
-	_write_history[idx].row->key_ = this->key_;
-	_write_history[idx].row->size_ = this->size_;
+	assert(_write_history[idx].row);
+	assert(_write_history[idx].row->key_ == this->key_);
+	assert(_write_history[idx].row->size_ == this->size_);
 	_exists_prewrite = true;
 	_prewrite_his_id = idx;
 	_prewrite_ts = ts;
@@ -513,12 +488,8 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 		else if (_requests[i].valid && _requests[i].ts == next_pre_ts) {
 			assert(_requests[i].type == P_REQ);
 			dbx1000::RowItem * res_row = reserveRow(_requests[i].ts, txn);
-			assert(res_row);
             {
                 if(nullptr == _latest_row) { GetLatestRow(txn); }
-                assert(res_row->row_);
-                res_row->key_ = _latest_row->key_;
-                res_row->size_ = _latest_row->size_;
                 memcpy(res_row->row_, _latest_row->row_, size_);
             }
 			/* res_row->copy(_latest_row); */

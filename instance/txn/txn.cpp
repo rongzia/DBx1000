@@ -167,15 +167,13 @@ dbx1000::RowItem * txn_man::get_row(uint64_t key, access_t type) {
 	/// accesses[i] 不为 RowItem:row_ 申请空间，读写空间都是指向的 row_mvcc_ 里面的 RowItem
 	/* rc = row->get_row(type, this, accesses[ row_cnt ]->data); */
 	rc = this->h_thd->manager_client_->GetRow(key, type, this, accesses[row_cnt]->data);
-    if(accesses[row_cnt]->data->key_ != key){
-        std::cout << "accesses[row_cnt]->data->key_ : " << accesses[row_cnt]->data->key_ << "key : " << key << std::endl;
-    }
-    assert(accesses[row_cnt]->data->key_ == key);
-    assert(accesses[row_cnt]->data->size_ == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
-
 	if (rc == RC::Abort) {
 		return NULL;
 	}
+    assert(accesses[row_cnt]->data == this->cur_row);
+    assert(accesses[row_cnt]->data->key_ == key);
+    assert(accesses[row_cnt]->data->size_ == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
+
 	accesses[row_cnt]->type = type;
 	/*
 	accesses[row_cnt]->orig_row = row;

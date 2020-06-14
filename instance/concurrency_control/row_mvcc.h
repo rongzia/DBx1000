@@ -79,6 +79,8 @@ private:
 	// list = 1: _requests
 	void double_list(uint32_t list);
 	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
+
+	void PrintWriteHistory(ts_t ts);
 };
 
 #endif
