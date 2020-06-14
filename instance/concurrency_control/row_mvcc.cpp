@@ -334,7 +334,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	if (_oldest_wts < min_ts && 
 		_num_versions == _his_len)
 	{
-	    PrintWriteHistory(min_ts);
+//	    PrintWriteHistory(min_ts);
 		ts_t max_recycle_ts = 0;
 		ts_t idx = _his_len;
 		/// 该 for 挑出最接近（不等于） min_ts 的一个版本

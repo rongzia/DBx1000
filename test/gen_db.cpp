@@ -179,6 +179,6 @@ int main() {
     Check_DB();
 
     dbx1000::FileIO::Close();
-    system("scp -r /home/zhangrongrong/CLionProjects/DBx1000/db/ zhangrongrong@10.11.6.121:/home/zhangrongrong/CLionProjects/DBx1000/db/");
+    system("scp -r /home/zhangrongrong/CLionProjects/DBx1000/db/ zhangrongrong@10.11.6.121:/home/zhangrongrong/CLionProjects/DBx1000/");
     return 0;
 }
