@@ -18,22 +18,22 @@ message LockRemoteRequest{
   uint64 page_id = 2;
   RpcLockMode request_mode = 3;
   bytes page_buf = 4;
-  int64 count = 5;
+  uint64 count = 5;
 }
 message LockRemoteReply{
   bool rc = 1;
   bytes page_buf = 2;
-  bytes count = 3;
+  uint64 count = 3;
 }
 message LockInvalidRequest{
   int32 instance_id = 1;
   uint64 page_id = 2;
   RpcLockMode request_mode = 3;
   bytes page_buf = 4;
-  int64 count = 5;
+  uint64 count = 5;
 }
 message LockInvalidReply{
   bool rc = 1;
   bytes page_buf = 2;
-  bytes count = 3;
+  uint64 count = 3;
 }

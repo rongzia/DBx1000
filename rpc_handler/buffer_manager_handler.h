@@ -15,7 +15,7 @@
 //
 //    class BufferManagerServer : DBx1000Service::Service {
 //    public:
-//        virtual ::grpc::Status LockGet(::grpc::ServerContext* context, const ::dbx1000::LockGetRequest* request, ::dbx1000::LockGetReply* response);
+//        virtual ::grpc::Status LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response);
 //        ManagerServer* manager_server_;
 //    };
 //

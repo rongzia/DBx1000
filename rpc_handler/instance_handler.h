@@ -14,9 +14,9 @@
 //
 //    class InstanceServer : DBx1000Service::Service {
 //    public:
-//    virtual ::grpc::Status LockDowngrade(::grpc::ServerContext* context, const ::dbx1000::LockDowngradeRequest* request, ::dbx1000::LockDowngradeReply* response);
-//    virtual ::grpc::Status LockInvalid(::grpc::ServerContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response);
-//    ManagerInstance* manager_instance_;
+//        virtual ::grpc::Status LockInvalid(::grpc::ServerContext *context, const ::dbx1000::LockInvalidRequest *request , ::dbx1000::LockInvalidReply *response);
+//
+//        ManagerInstance *manager_instance_;
 //    };
 //
 //
@@ -27,7 +27,7 @@
 //        InstanceClient(const InstanceClient&) = delete;
 //        InstanceClient &operator=(const InstanceClient&) = delete;
 //
-//        bool LockGet(int instance_id, uint64_t page_id, dbx1000::LockMode mode, char *page_buf, size_t count);
+//        bool LockRemote(int instance_id, uint64_t page_id, dbx1000::LockMode mode, char *page_buf, size_t count);
 //
 //        ManagerInstance* manager_instance();
 //

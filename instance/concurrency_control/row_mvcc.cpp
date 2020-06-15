@@ -21,8 +21,9 @@
 
 void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* managerInstance) {
 	/* _row = row; */
-	key_ = key;
-	size_ = size;
+	this->key_ = key;
+	this->size_ = size;
+	this->row_ = nullptr;
 	this->manager_instance_ = managerInstance;
 	/* _his_len = 4 */;
 	_his_len = g_thread_cnt;
@@ -36,8 +37,8 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 		_write_history[i].reserved = false;
 		_write_history[i].row = nullptr;
 	}
-	this->row_ = nullptr;
-	_latest_row = nullptr;
+	/* _latest_row = _row; */
+	_latest_row = this->row_;
 	_latest_wts = 0;
 	_oldest_wts = 0;
 
@@ -127,7 +128,24 @@ void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(txn->h_thd->manager_client_->RowFromDB(this->row_));
     _latest_row = row_;
 }
-
+void Row_mvcc::CheckLatestRow(){
+    if(nullptr == _latest_row || _latest_row == row_) {
+        return;
+    }
+    bool flag = false;
+    int idx = _his_len;
+    for(int i = 0; i < _his_len; i++){
+        if(_latest_row == _write_history[i].row){
+            idx = i;
+            flag = true;
+            break;
+        }
+    }
+    assert(true == flag);
+    assert(idx < _his_len);
+    assert(_write_history[idx].valid);
+    assert(_write_history[idx].reserved);
+}
 bool Row_mvcc::Recycle() {
     while (!ATOM_CAS(this->recycle_latch, false, true))
         PAUSE
@@ -208,6 +226,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			    //! 读最新的 row
 				// should just read
 				rc = RC::RCOK;
+//				CheckLatestRow();   // test
 				if(nullptr == _latest_row) { GetLatestRow(txn); }
 				txn->cur_row = _latest_row;
 				if (ts > _max_served_rts)
@@ -234,11 +253,13 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 	   		// 当历史不存在时，从 buffer 读
 			if (the_i == _his_len) {
                 /* txn->cur_row = _row; */
+//                CheckLatestRow();   // test
                 if(nullptr == _latest_row) { GetLatestRow(txn); }
                 txn->cur_row = _latest_row;
             }
    			else {
    			    assert(_write_history[the_i].row);
+//   			    CheckLatestRow();   // test
                 txn->cur_row = _write_history[the_i].row;
             }
 		}
@@ -255,7 +276,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		} else {
 			rc =RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
-			/* res_row->copy(_latest_row); */
+			/* assert(res_row);
+			res_row->copy(_latest_row); */
+//			CheckLatestRow();   // test
 			if(nullptr == _latest_row) { GetLatestRow(txn); }
             {
                 memcpy(res_row->row_, _latest_row->row_, this->size_);
@@ -269,9 +292,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].valid = true;
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
-		_latest_row = _write_history[_prewrite_his_id].row;
-		assert(row);
-		assert(row->row_);
+		_latest_row = row;
+//		assert(row);        // test
+//		assert(row->row_);  // test
         {
             if(nullptr != this->row_) {
                 delete this->row_;
@@ -286,10 +309,10 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;
-        {
-            delete _write_history[_prewrite_his_id].row;
-            _write_history[_prewrite_his_id].row = nullptr;
-        }
+//        { // test
+//            delete _write_history[_prewrite_his_id].row; // test
+//            _write_history[_prewrite_his_id].row = nullptr; // test
+//        } // test
 		_exists_prewrite = false;
 		update_buffer(txn, XP_REQ);
 //		recycle_latch = false;
@@ -310,19 +333,20 @@ INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 }
 
 void Row_mvcc::PrintWriteHistory(ts_t ts){
-    cout << "min_ts:" << ts << ", _oldest_wts" << _oldest_wts << endl;
+    cout << "min_ts:" << ts << ", _oldest_wts:" << _oldest_wts << endl;
     for(int i = 0; i< g_thread_cnt; i++) {
         cout << "_write_history[i].row:" << _write_history[i].row;
         cout << ", ts:" << _write_history[i].ts << ", valid:" << _write_history[i].valid << ", rserved:" <<_write_history[i].reserved << endl;
     }
-    cout <<"_latest_row" << _latest_row << endl;
+    cout <<"_latest_row:" << _latest_row << endl;
 }
 
 //! 从 _write_history 中分配一个 WriteHisEntry，
 //! 该 WriteHisEntry 满足 valid == false && reserved == false，且尽可能 WriteHisEntry.row != NULL(为了避免额外申请内存的操作)
 //! in : ts 为当前事务的开始时间
 //! out : WriteHisEntry.row，预留给后面的写操作。（该 WriteHisEntry's valid == false && reserved == true ）
-dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
+dbx1000::RowItem *
+Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 {
 	assert(!_exists_prewrite);
 	
@@ -334,7 +358,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	if (_oldest_wts < min_ts && 
 		_num_versions == _his_len)
 	{
-//	    PrintWriteHistory(min_ts);
+//	    PrintWriteHistory(min_ts); // test
 		ts_t max_recycle_ts = 0;
 		ts_t idx = _his_len;
 		/// 该 for 挑出最接近（不等于） min_ts 的一个版本
@@ -367,9 +391,8 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                         if(_latest_row == _write_history[i].row) {
                             _latest_row = nullptr;
                         }
-                        delete _write_history[i].row;
-                        _write_history[i].row = nullptr;
-
+//                        delete _write_history[i].row;
+//                        _write_history[i].row = nullptr;
                     }
 					_num_versions --;
 				}
@@ -443,7 +466,7 @@ dbx1000::RowItem * Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	} 
 	assert(idx != _his_len);
 	// some entries are not taken. But the row of that entry is NULL.
-	if (nullptr == _write_history[idx].row) {
+	if (!_write_history[idx].row) {
 		_write_history[idx].row = new dbx1000::RowItem(this->key_, this->size_);
 		/* _write_history[idx].row->init(MAX_TUPLE_SIZE); */
 	}
@@ -480,6 +503,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			if (_requests[i].ts > _max_served_rts)
 				_max_served_rts = _requests[i].ts;
 			_requests[i].valid = false;
+//			CheckLatestRow();   // test
 			if(nullptr == _latest_row) { GetLatestRow(txn); }
 			_requests[i].txn->cur_row = _latest_row;
 			_requests[i].txn->ts_ready = true;
@@ -488,11 +512,13 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 		else if (_requests[i].valid && _requests[i].ts == next_pre_ts) {
 			assert(_requests[i].type == P_REQ);
 			dbx1000::RowItem * res_row = reserveRow(_requests[i].ts, txn);
+			/* assert(res_row);
+			res_row->copy(_latest_row); */
             {
+//                CheckLatestRow();   // test
                 if(nullptr == _latest_row) { GetLatestRow(txn); }
                 memcpy(res_row->row_, _latest_row->row_, size_);
             }
-			/* res_row->copy(_latest_row); */
 			_requests[i].valid = false;
 			_requests[i].txn->cur_row = res_row;
 			_requests[i].txn->ts_ready = true;

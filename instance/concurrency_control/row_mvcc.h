@@ -36,8 +36,6 @@ struct ReqEntry {
 class Row_mvcc {
 public:
 	void init(uint64_t key, size_t size, dbx1000::ManagerInstance*);
-	void GetLatestRow(txn_man * txn);
-	bool Recycle();
 	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
 private:
  	/* pthread_mutex_t * latch; */
@@ -80,6 +78,9 @@ private:
 	void double_list(uint32_t list);
 	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
 
+	void GetLatestRow(txn_man * txn);
+	void CheckLatestRow();
+	bool Recycle();
 	void PrintWriteHistory(ts_t ts);
 };
 

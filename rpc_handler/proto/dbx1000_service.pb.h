@@ -214,11 +214,11 @@ class LockRemoteRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::dbx1000::RpcLockMode request_mode() const;
   void set_request_mode(::dbx1000::RpcLockMode value);
 
-  // int64 count = 5;
+  // uint64 count = 5;
   void clear_count();
   static const int kCountFieldNumber = 5;
-  ::google::protobuf::int64 count() const;
-  void set_count(::google::protobuf::int64 value);
+  ::google::protobuf::uint64 count() const;
+  void set_count(::google::protobuf::uint64 value);
 
   // @@protoc_insertion_point(class_scope:dbx1000.LockRemoteRequest)
  private:
@@ -228,7 +228,7 @@ class LockRemoteRequest : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::uint64 page_id_;
   ::google::protobuf::int32 instance_id_;
   int request_mode_;
-  ::google::protobuf::int64 count_;
+  ::google::protobuf::uint64 count_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
@@ -335,19 +335,11 @@ class LockRemoteReply : public ::google::protobuf::Message /* @@protoc_insertion
   ::std::string* release_page_buf();
   void set_allocated_page_buf(::std::string* page_buf);
 
-  // bytes count = 3;
+  // uint64 count = 3;
   void clear_count();
   static const int kCountFieldNumber = 3;
-  const ::std::string& count() const;
-  void set_count(const ::std::string& value);
-  #if LANG_CXX11
-  void set_count(::std::string&& value);
-  #endif
-  void set_count(const char* value);
-  void set_count(const void* value, size_t size);
-  ::std::string* mutable_count();
-  ::std::string* release_count();
-  void set_allocated_count(::std::string* count);
+  ::google::protobuf::uint64 count() const;
+  void set_count(::google::protobuf::uint64 value);
 
   // bool rc = 1;
   void clear_rc();
@@ -360,7 +352,7 @@ class LockRemoteReply : public ::google::protobuf::Message /* @@protoc_insertion
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr page_buf_;
-  ::google::protobuf::internal::ArenaStringPtr count_;
+  ::google::protobuf::uint64 count_;
   bool rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
@@ -486,11 +478,11 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::dbx1000::RpcLockMode request_mode() const;
   void set_request_mode(::dbx1000::RpcLockMode value);
 
-  // int64 count = 5;
+  // uint64 count = 5;
   void clear_count();
   static const int kCountFieldNumber = 5;
-  ::google::protobuf::int64 count() const;
-  void set_count(::google::protobuf::int64 value);
+  ::google::protobuf::uint64 count() const;
+  void set_count(::google::protobuf::uint64 value);
 
   // @@protoc_insertion_point(class_scope:dbx1000.LockInvalidRequest)
  private:
@@ -500,7 +492,7 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::uint64 page_id_;
   ::google::protobuf::int32 instance_id_;
   int request_mode_;
-  ::google::protobuf::int64 count_;
+  ::google::protobuf::uint64 count_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
@@ -607,19 +599,11 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
   ::std::string* release_page_buf();
   void set_allocated_page_buf(::std::string* page_buf);
 
-  // bytes count = 3;
+  // uint64 count = 3;
   void clear_count();
   static const int kCountFieldNumber = 3;
-  const ::std::string& count() const;
-  void set_count(const ::std::string& value);
-  #if LANG_CXX11
-  void set_count(::std::string&& value);
-  #endif
-  void set_count(const char* value);
-  void set_count(const void* value, size_t size);
-  ::std::string* mutable_count();
-  ::std::string* release_count();
-  void set_allocated_count(::std::string* count);
+  ::google::protobuf::uint64 count() const;
+  void set_count(::google::protobuf::uint64 value);
 
   // bool rc = 1;
   void clear_rc();
@@ -632,7 +616,7 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr page_buf_;
-  ::google::protobuf::internal::ArenaStringPtr count_;
+  ::google::protobuf::uint64 count_;
   bool rc_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
@@ -743,15 +727,15 @@ inline void LockRemoteRequest::set_allocated_page_buf(::std::string* page_buf) {
   // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteRequest.page_buf)
 }
 
-// int64 count = 5;
+// uint64 count = 5;
 inline void LockRemoteRequest::clear_count() {
-  count_ = GOOGLE_LONGLONG(0);
+  count_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::int64 LockRemoteRequest::count() const {
+inline ::google::protobuf::uint64 LockRemoteRequest::count() const {
   // @@protoc_insertion_point(field_get:dbx1000.LockRemoteRequest.count)
   return count_;
 }
-inline void LockRemoteRequest::set_count(::google::protobuf::int64 value) {
+inline void LockRemoteRequest::set_count(::google::protobuf::uint64 value) {
   
   count_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.LockRemoteRequest.count)
@@ -828,57 +812,18 @@ inline void LockRemoteReply::set_allocated_page_buf(::std::string* page_buf) {
   // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteReply.page_buf)
 }
 
-// bytes count = 3;
+// uint64 count = 3;
 inline void LockRemoteReply::clear_count() {
-  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  count_ = GOOGLE_ULONGLONG(0);
 }
-inline const ::std::string& LockRemoteReply::count() const {
+inline ::google::protobuf::uint64 LockRemoteReply::count() const {
   // @@protoc_insertion_point(field_get:dbx1000.LockRemoteReply.count)
-  return count_.GetNoArena();
+  return count_;
 }
-inline void LockRemoteReply::set_count(const ::std::string& value) {
+inline void LockRemoteReply::set_count(::google::protobuf::uint64 value) {
   
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  count_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.LockRemoteReply.count)
-}
-#if LANG_CXX11
-inline void LockRemoteReply::set_count(::std::string&& value) {
-  
-  count_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockRemoteReply.count)
-}
-#endif
-inline void LockRemoteReply::set_count(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:dbx1000.LockRemoteReply.count)
-}
-inline void LockRemoteReply::set_count(const void* value, size_t size) {
-  
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockRemoteReply.count)
-}
-inline ::std::string* LockRemoteReply::mutable_count() {
-  
-  // @@protoc_insertion_point(field_mutable:dbx1000.LockRemoteReply.count)
-  return count_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* LockRemoteReply::release_count() {
-  // @@protoc_insertion_point(field_release:dbx1000.LockRemoteReply.count)
-  
-  return count_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void LockRemoteReply::set_allocated_count(::std::string* count) {
-  if (count != NULL) {
-    
-  } else {
-    
-  }
-  count_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), count);
-  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockRemoteReply.count)
 }
 
 // -------------------------------------------------------------------
@@ -980,15 +925,15 @@ inline void LockInvalidRequest::set_allocated_page_buf(::std::string* page_buf) 
   // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidRequest.page_buf)
 }
 
-// int64 count = 5;
+// uint64 count = 5;
 inline void LockInvalidRequest::clear_count() {
-  count_ = GOOGLE_LONGLONG(0);
+  count_ = GOOGLE_ULONGLONG(0);
 }
-inline ::google::protobuf::int64 LockInvalidRequest::count() const {
+inline ::google::protobuf::uint64 LockInvalidRequest::count() const {
   // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.count)
   return count_;
 }
-inline void LockInvalidRequest::set_count(::google::protobuf::int64 value) {
+inline void LockInvalidRequest::set_count(::google::protobuf::uint64 value) {
   
   count_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.count)
@@ -1065,57 +1010,18 @@ inline void LockInvalidReply::set_allocated_page_buf(::std::string* page_buf) {
   // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidReply.page_buf)
 }
 
-// bytes count = 3;
+// uint64 count = 3;
 inline void LockInvalidReply::clear_count() {
-  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  count_ = GOOGLE_ULONGLONG(0);
 }
-inline const ::std::string& LockInvalidReply::count() const {
+inline ::google::protobuf::uint64 LockInvalidReply::count() const {
   // @@protoc_insertion_point(field_get:dbx1000.LockInvalidReply.count)
-  return count_.GetNoArena();
+  return count_;
 }
-inline void LockInvalidReply::set_count(const ::std::string& value) {
+inline void LockInvalidReply::set_count(::google::protobuf::uint64 value) {
   
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  count_ = value;
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidReply.count)
-}
-#if LANG_CXX11
-inline void LockInvalidReply::set_count(::std::string&& value) {
-  
-  count_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:dbx1000.LockInvalidReply.count)
-}
-#endif
-inline void LockInvalidReply::set_count(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:dbx1000.LockInvalidReply.count)
-}
-inline void LockInvalidReply::set_count(const void* value, size_t size) {
-  
-  count_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:dbx1000.LockInvalidReply.count)
-}
-inline ::std::string* LockInvalidReply::mutable_count() {
-  
-  // @@protoc_insertion_point(field_mutable:dbx1000.LockInvalidReply.count)
-  return count_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* LockInvalidReply::release_count() {
-  // @@protoc_insertion_point(field_release:dbx1000.LockInvalidReply.count)
-  
-  return count_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void LockInvalidReply::set_allocated_count(::std::string* count) {
-  if (count != NULL) {
-    
-  } else {
-    
-  }
-  count_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), count);
-  // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidReply.count)
 }
 
 #ifdef __GNUC__

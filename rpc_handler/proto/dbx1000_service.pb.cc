@@ -185,13 +185,13 @@ void AddDescriptorsImpl() {
       "kRemoteRequest\022\023\n\013instance_id\030\001 \001(\005\022\017\n\007p"
       "age_id\030\002 \001(\004\022*\n\014request_mode\030\003 \001(\0162\024.dbx"
       "1000.RpcLockMode\022\020\n\010page_buf\030\004 \001(\014\022\r\n\005co"
-      "unt\030\005 \001(\003\">\n\017LockRemoteReply\022\n\n\002rc\030\001 \001(\010"
-      "\022\020\n\010page_buf\030\002 \001(\014\022\r\n\005count\030\003 \001(\014\"\207\001\n\022Lo"
+      "unt\030\005 \001(\004\">\n\017LockRemoteReply\022\n\n\002rc\030\001 \001(\010"
+      "\022\020\n\010page_buf\030\002 \001(\014\022\r\n\005count\030\003 \001(\004\"\207\001\n\022Lo"
       "ckInvalidRequest\022\023\n\013instance_id\030\001 \001(\005\022\017\n"
       "\007page_id\030\002 \001(\004\022*\n\014request_mode\030\003 \001(\0162\024.d"
       "bx1000.RpcLockMode\022\020\n\010page_buf\030\004 \001(\014\022\r\n\005"
-      "count\030\005 \001(\003\"\?\n\020LockInvalidReply\022\n\n\002rc\030\001 "
-      "\001(\010\022\020\n\010page_buf\030\002 \001(\014\022\r\n\005count\030\003 \001(\014*)\n\013"
+      "count\030\005 \001(\004\"\?\n\020LockInvalidReply\022\n\n\002rc\030\001 "
+      "\001(\010\022\020\n\010page_buf\030\002 \001(\014\022\r\n\005count\030\003 \001(\004*)\n\013"
       "RpcLockMode\022\005\n\001O\020\000\022\005\n\001P\020\001\022\005\n\001S\020\002\022\005\n\001X\020\0032"
       "\237\001\n\016DBx1000Service\022D\n\nLockRemote\022\032.dbx10"
       "00.LockRemoteRequest\032\030.dbx1000.LockRemot"
@@ -375,13 +375,13 @@ bool LockRemoteRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // int64 count = 5;
+      // uint64 count = 5;
       case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &count_)));
         } else {
           goto handle_unusual;
@@ -437,9 +437,9 @@ void LockRemoteRequest::SerializeWithCachedSizes(
       4, this->page_buf(), output);
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->count(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->count(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -479,9 +479,9 @@ void LockRemoteRequest::SerializeWithCachedSizes(
         4, this->page_buf(), target);
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->count(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -528,10 +528,10 @@ size_t LockRemoteRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->request_mode());
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->count());
   }
 
@@ -644,18 +644,17 @@ LockRemoteReply::LockRemoteReply(const LockRemoteReply& from)
   if (from.page_buf().size() > 0) {
     page_buf_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.page_buf_);
   }
-  count_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.count().size() > 0) {
-    count_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.count_);
-  }
-  rc_ = from.rc_;
+  ::memcpy(&count_, &from.count_,
+    static_cast<size_t>(reinterpret_cast<char*>(&rc_) -
+    reinterpret_cast<char*>(&count_)) + sizeof(rc_));
   // @@protoc_insertion_point(copy_constructor:dbx1000.LockRemoteReply)
 }
 
 void LockRemoteReply::SharedCtor() {
   page_buf_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rc_ = false;
+  ::memset(&count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&rc_) -
+      reinterpret_cast<char*>(&count_)) + sizeof(rc_));
 }
 
 LockRemoteReply::~LockRemoteReply() {
@@ -665,7 +664,6 @@ LockRemoteReply::~LockRemoteReply() {
 
 void LockRemoteReply::SharedDtor() {
   page_buf_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void LockRemoteReply::SetCachedSize(int size) const {
@@ -689,8 +687,9 @@ void LockRemoteReply::Clear() {
   (void) cached_has_bits;
 
   page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rc_ = false;
+  ::memset(&count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&rc_) -
+      reinterpret_cast<char*>(&count_)) + sizeof(rc_));
   _internal_metadata_.Clear();
 }
 
@@ -730,12 +729,14 @@ bool LockRemoteReply::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes count = 3;
+      // uint64 count = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_count()));
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &count_)));
         } else {
           goto handle_unusual;
         }
@@ -779,10 +780,9 @@ void LockRemoteReply::SerializeWithCachedSizes(
       2, this->page_buf(), output);
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->count(), output);
+  // uint64 count = 3;
+  if (this->count() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->count(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -811,11 +811,9 @@ void LockRemoteReply::SerializeWithCachedSizes(
         2, this->page_buf(), target);
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->count(), target);
+  // uint64 count = 3;
+  if (this->count() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -842,10 +840,10 @@ size_t LockRemoteReply::ByteSizeLong() const {
         this->page_buf());
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
+  // uint64 count = 3;
+  if (this->count() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->count());
   }
 
@@ -885,9 +883,8 @@ void LockRemoteReply::MergeFrom(const LockRemoteReply& from) {
 
     page_buf_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.page_buf_);
   }
-  if (from.count().size() > 0) {
-
-    count_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.count_);
+  if (from.count() != 0) {
+    set_count(from.count());
   }
   if (from.rc() != 0) {
     set_rc(from.rc());
@@ -920,8 +917,7 @@ void LockRemoteReply::InternalSwap(LockRemoteReply* other) {
   using std::swap;
   page_buf_.Swap(&other->page_buf_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  count_.Swap(&other->count_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  swap(count_, other->count_);
   swap(rc_, other->rc_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
@@ -1073,13 +1069,13 @@ bool LockInvalidRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // int64 count = 5;
+      // uint64 count = 5;
       case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
                  input, &count_)));
         } else {
           goto handle_unusual;
@@ -1135,9 +1131,9 @@ void LockInvalidRequest::SerializeWithCachedSizes(
       4, this->page_buf(), output);
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->count(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->count(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1177,9 +1173,9 @@ void LockInvalidRequest::SerializeWithCachedSizes(
         4, this->page_buf(), target);
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->count(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1226,10 +1222,10 @@ size_t LockInvalidRequest::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormatLite::EnumSize(this->request_mode());
   }
 
-  // int64 count = 5;
+  // uint64 count = 5;
   if (this->count() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int64Size(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->count());
   }
 
@@ -1342,18 +1338,17 @@ LockInvalidReply::LockInvalidReply(const LockInvalidReply& from)
   if (from.page_buf().size() > 0) {
     page_buf_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.page_buf_);
   }
-  count_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.count().size() > 0) {
-    count_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.count_);
-  }
-  rc_ = from.rc_;
+  ::memcpy(&count_, &from.count_,
+    static_cast<size_t>(reinterpret_cast<char*>(&rc_) -
+    reinterpret_cast<char*>(&count_)) + sizeof(rc_));
   // @@protoc_insertion_point(copy_constructor:dbx1000.LockInvalidReply)
 }
 
 void LockInvalidReply::SharedCtor() {
   page_buf_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rc_ = false;
+  ::memset(&count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&rc_) -
+      reinterpret_cast<char*>(&count_)) + sizeof(rc_));
 }
 
 LockInvalidReply::~LockInvalidReply() {
@@ -1363,7 +1358,6 @@ LockInvalidReply::~LockInvalidReply() {
 
 void LockInvalidReply::SharedDtor() {
   page_buf_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void LockInvalidReply::SetCachedSize(int size) const {
@@ -1387,8 +1381,9 @@ void LockInvalidReply::Clear() {
   (void) cached_has_bits;
 
   page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  count_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rc_ = false;
+  ::memset(&count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&rc_) -
+      reinterpret_cast<char*>(&count_)) + sizeof(rc_));
   _internal_metadata_.Clear();
 }
 
@@ -1428,12 +1423,14 @@ bool LockInvalidReply::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes count = 3;
+      // uint64 count = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_count()));
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &count_)));
         } else {
           goto handle_unusual;
         }
@@ -1477,10 +1474,9 @@ void LockInvalidReply::SerializeWithCachedSizes(
       2, this->page_buf(), output);
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->count(), output);
+  // uint64 count = 3;
+  if (this->count() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(3, this->count(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1509,11 +1505,9 @@ void LockInvalidReply::SerializeWithCachedSizes(
         2, this->page_buf(), target);
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->count(), target);
+  // uint64 count = 3;
+  if (this->count() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(3, this->count(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1540,10 +1534,10 @@ size_t LockInvalidReply::ByteSizeLong() const {
         this->page_buf());
   }
 
-  // bytes count = 3;
-  if (this->count().size() > 0) {
+  // uint64 count = 3;
+  if (this->count() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
         this->count());
   }
 
@@ -1583,9 +1577,8 @@ void LockInvalidReply::MergeFrom(const LockInvalidReply& from) {
 
     page_buf_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.page_buf_);
   }
-  if (from.count().size() > 0) {
-
-    count_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.count_);
+  if (from.count() != 0) {
+    set_count(from.count());
   }
   if (from.rc() != 0) {
     set_rc(from.rc());
@@ -1618,8 +1611,7 @@ void LockInvalidReply::InternalSwap(LockInvalidReply* other) {
   using std::swap;
   page_buf_.Swap(&other->page_buf_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  count_.Swap(&other->count_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  swap(count_, other->count_);
   swap(rc_, other->rc_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
