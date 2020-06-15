@@ -175,6 +175,7 @@ namespace dbx1000 {
 //            assert(row->key_ == temp_key);
 //        }
         assert(true == this->lock_table_->UnLock(indexItem.page_id_));
+        return true;
     }
     bool ManagerInstance::RowToDB(RowItem *row) {
         dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
@@ -189,6 +190,7 @@ namespace dbx1000 {
         memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
         this->buffer_->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
         assert(true == this->lock_table_->UnLock(indexItem.page_id_));
+        return true;
     }
 
 

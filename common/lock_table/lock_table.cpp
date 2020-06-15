@@ -120,20 +120,20 @@ namespace dbx1000 {
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
         if(LockMode::X == mode){
-            while(iter->second->lock_mode != LockMode::O || iter->second->lock_mode != LockMode::P){
+            while(iter->second->lock_mode != LockMode::P){
                 iter->second->cv.wait(lck);
             }
             assert(iter->second->count == 0);
-            iter->second->lock_mode == LockMode::X;
+            iter->second->lock_mode = LockMode::X;
             iter->second->count++;
             return true;
         }
         if(LockMode::S == mode) {
-            while(iter->second->lock_mode != LockMode::O && iter->second->lock_mode == LockMode::X){
+            while(iter->second->lock_mode == LockMode::X){
                 iter->second->cv.wait(lck);
             }
             assert(iter->second->count >=  0);
-            iter->second->lock_mode == LockMode::S;
+            iter->second->lock_mode = LockMode::S;
             iter->second->count++;
             return true;
         }
@@ -154,15 +154,15 @@ namespace dbx1000 {
             return true;
         }
         if (LockMode::S == iter->second->lock_mode) {
+            assert(iter->second->count > 0);
             iter->second->count--;
-            assert(iter->second->count >= 0);
             iter->second->lock_mode = LockMode::S;
             if (iter->second->count == 0) {
                 iter->second->lock_mode = LockMode::P;
             }
             iter->second->cv.notify_all();
             return true;
-    }
+        }
     }
 
 //    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}

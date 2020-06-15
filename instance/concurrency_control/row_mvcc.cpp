@@ -51,6 +51,8 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 	latch = (pthread_mutex_t *) _mm_malloc(sizeof(pthread_mutex_t), 64);
 	pthread_mutex_init(latch, NULL);
 	 */
+
+	flush_req_ = false;
 }
 
 //! 从 _requests 中选出一个空的 ReqEntry，并给该 ReqEntry 赋上相应的数据
@@ -123,6 +125,7 @@ Row_mvcc::double_list(uint32_t list)
 
 void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(nullptr == _latest_row);
+    assert(_num_versions == 0);
     assert(nullptr == row_);
     this->row_ = new dbx1000::RowItem(this->key_, this->size_);
     assert(txn->h_thd->manager_client_->RowFromDB(this->row_));
@@ -146,7 +149,7 @@ void Row_mvcc::CheckLatestRow(){
     assert(_write_history[idx].valid);
     assert(_write_history[idx].reserved);
 }
-bool Row_mvcc::Recycle() {
+bool Row_mvcc::RecycleALL() {
     while (!ATOM_CAS(this->recycle_latch, false, true))
         PAUSE
 	ts_t max_ts = 0;
@@ -274,7 +277,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			buffer_req(P_REQ, txn, false);
 			txn->ts_ready = false;
 		} else {
-			rc =RC:: RCOK;
+			rc = RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
 			/* assert(res_row);
 			res_row->copy(_latest_row); */
@@ -303,6 +306,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
         }
 		_exists_prewrite = false;
 		_num_versions ++;
+//		if(flush_req_){
+//            RecycleALL();
+//		}
 		update_buffer(txn, W_REQ);
 //		recycle_latch = false;
 	} else if (type == XP_REQ) {
@@ -314,6 +320,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 //            _write_history[_prewrite_his_id].row = nullptr; // test
 //        } // test
 		_exists_prewrite = false;
+//		if(flush_req_){
+//            RecycleALL();
+//		}
 		update_buffer(txn, XP_REQ);
 //		recycle_latch = false;
 	} else 
@@ -389,6 +398,9 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                     {
                         /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
                         if(_latest_row == _write_history[i].row) {
+                            if(_latest_row != nullptr) {
+                                assert(txn->h_thd->manager_client_->RowToDB(_latest_row));
+                            }
                             _latest_row = nullptr;
                         }
 //                        delete _write_history[i].row;

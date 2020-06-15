@@ -78,9 +78,12 @@ private:
 	void double_list(uint32_t list);
 	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
 
+	bool flush_req_;
+//	bool
+	bool Invalid();
 	void GetLatestRow(txn_man * txn);
 	void CheckLatestRow();
-	bool Recycle();
+	bool RecycleALL();
 	void PrintWriteHistory(ts_t ts);
 };
 
