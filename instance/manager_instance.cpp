@@ -20,14 +20,15 @@
 #include "common/global.h"
 #include "common/myhelper.h"
 #include "common/mystats.h"
+#include "json/json.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/query.h"
 #include "instance/concurrency_control/row_mvcc.h"
 #include "instance/txn/ycsb_txn.h"
 #include "instance/txn/txn.h"
 #include "instance/thread.h"
+#include "rpc_handler/instance_handler.h"
 #include "shared_disk/shared_disk_service.h"
-#include "json/json.h"
 #include "config.h"
 
 
@@ -49,7 +50,14 @@ namespace dbx1000 {
 //        delete buffer_manager_rpc_handler_;
     }
 
-    ManagerInstance::ManagerInstance(const std::string &shared_disk_host) {
+    ManagerInstance::ManagerInstance() {
+        /**
+         * for test
+         */
+
+    }
+
+    void ManagerInstance::Init(const std::string &shared_disk_host) {
         this->init_done_ = false;
 
         this->timestamp_ = 1;
@@ -78,8 +86,6 @@ namespace dbx1000 {
         this->lock_table_ = new LockTable();
         lock_table_->Init(0, table_space_->GetLastPageId() + 1);
         InitLockTable();
-        // TODO :
-//        server_rpc_handler_ = new Server
     }
 
     void ManagerInstance::InitBufferForTest() {
@@ -207,6 +213,7 @@ namespace dbx1000 {
     LockTable* ManagerInstance::lock_table() { return this->lock_table_; }
 
     InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
+    void ManagerInstance::set_instance_rpc_handler(InstanceClient* instanceClient) { this->instance_rpc_handler_ = instanceClient; }
 
     std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
 

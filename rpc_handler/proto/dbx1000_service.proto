@@ -4,6 +4,8 @@ package dbx1000;
 
 service DBx1000Service {
   rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
+  rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
+  rpc BufferManagerInitDone(BufferManagerInitDoneRequest) returns (BufferManagerInitDonReplye) {}
 
   rpc LockInvalid(LockInvalidRequest) returns (LockInvalidReply) {}
 }
@@ -25,6 +27,17 @@ message LockRemoteReply{
   bytes page_buf = 2;
   uint64 count = 3;
 }
+
+message InstanceInitDoneRequest{
+  int32 instance_id = 1;
+}
+message InstanceInitDoneReply{}
+
+message BufferManagerInitDoneRequest{}
+message BufferManagerInitDonReplye{
+  bool init_done = 1;
+}
+
 message LockInvalidRequest{
   int32 instance_id = 1;
   uint64 page_id = 2;

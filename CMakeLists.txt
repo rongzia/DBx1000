@@ -50,8 +50,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 # lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
-
-set(SRC_FILES
+set(COMMON_FILES
         common/buffer/buffer.cpp
         common/buffer/lru.cpp
         common/buffer/lru_index.cpp
@@ -78,7 +77,8 @@ set(SRC_FILES
         common/parser_host.cpp
         util/arena.cpp
         config.cpp
-
+        )
+set(INSTANCE_FILES
         instance/benchmarks/ycsb_query.cpp
         instance/benchmarks/query.cpp
         instance/concurrency_control/row_mvcc.cpp
@@ -86,39 +86,44 @@ set(SRC_FILES
         instance/txn/txn.cpp
         instance/manager_instance.cpp
         instance/thread.cpp
-
-        buffer_manager/server_lock_table/server_lock_table.cpp
-        buffer_manager/manager_server.cpp
         )
-set(SRC_FILES
-        ${SRC_FILES}
+set(LOCK_SERVER_FILES
+        lock_server/lock_server_table/lock_server_table.cpp
+        lock_server/manager_lock_server.cpp
+        )
+set(RPC_HANDLER_FILES
         rpc_handler/proto/dbx1000_service.grpc.pb.cc
         rpc_handler/proto/dbx1000_service.pb.cc
-        rpc_handler/buffer_manager_handler.cpp
         rpc_handler/dbx1000_service_helper.cpp
         rpc_handler/instance_handler.cpp
+        rpc_handler/lock_service_handler.cpp)
+set(SHARED_DISK_FILES
+        common/storage/disk/file_io.cpp
         shared_disk/proto/shared_disk_service.grpc.pb.cc
         shared_disk/proto/shared_disk_service.pb.cc
         shared_disk/shared_disk_service.cpp)
 
-add_executable(main_test_bm test/main_test_bm.cpp ${SRC_FILES})
-add_executable(main_test_instance test/main_test_instance.cpp ${SRC_FILES})
-target_link_libraries(main_test_bm ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
-target_link_libraries(main_test_instance ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+add_executable(main_lock_service test/main_lock_service.cpp
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES}  ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+target_link_libraries(main_lock_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+
+add_executable(main_instance test/main_instance.cpp
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+
+add_executable(main_instance_test test/main_instance_test.cpp
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+target_link_libraries(main_instance_test ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+
+add_executable(disk_service test/disk_service.cpp ${SHARED_DISK_FILES})
+target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
 
 ### ******************************* other test *******************************
 add_executable(other_test test/other_test.cpp)
 target_link_libraries(other_test pthread)
 
-add_executable(parser_host common/parser_host.cpp)
-target_link_libraries(parser_host libjsoncpp.a)
+#add_executable(parser_host common/parser_host.cpp)
+#target_link_libraries(parser_host libjsoncpp.a)
 
-add_executable(gen_db test/gen_db.cpp ${SRC_FILES})
+add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
-
-
-add_executable(disk_service test/disk_service.cpp shared_disk/shared_disk_service.cpp
-        shared_disk/proto/shared_disk_service.grpc.pb.cc
-        shared_disk/proto/shared_disk_service.pb.cc
-        common/storage/disk/file_io.cpp)
-target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)

@@ -241,7 +241,8 @@ extern TestCases					g_test_case;
 //#define ITEM_NUM_PER_FILE (10)
 
 #define SHARED_DISK
-#define SHARED_DISK_HOST "10.11.6.120:5000"
+#define SHARED_DISK_HOST "10.11.6.120:500050"
+#define BUFFER_MANAGER_HOST "10.11.6.120:50051"
 
 
 #endif

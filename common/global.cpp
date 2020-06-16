@@ -2,8 +2,8 @@
 
 //#include "stats.h"
 //#include "manager.h"
-#include "buffer_manager/manager_server.h"
-#include "instance/manager_instance.h"
+//#include "lock_server/lock_server_table.h"
+//#include "instance/manager_instance.h"
 //#include "query.h"
 //#include "dl_detect.h"
 //#include "plock.h"
@@ -23,7 +23,7 @@ namespace dbx1000_instance {
 //dbx1000::Stats stats;
 //DL_detect dl_detector;
 //Manager * glob_manager;
-dbx1000::ManagerServer * glob_manager_server;
+//dbx1000::ManagerServer * glob_manager_server;
 //dbx1000::ManagerClient * glob_manager_client;
 //dbx1000::ApiTxnClient* api_txn_client;
 //dbx1000::ApiConCtlClient* api_con_ctl_client;

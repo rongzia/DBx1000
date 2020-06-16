@@ -30,7 +30,7 @@ namespace dbx1000 {
             lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
         }
     }
-/*
+
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -39,55 +39,42 @@ namespace dbx1000 {
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
         if(LockMode::X == mode) {
-            if(LockMode::O == iter->second->lock_mode) {
-                char page_buf[MY_PAGE_SIZE];
-                assert(manager_instance_->instance_rpc_handler()->LockGet(manager_instance_->instance_id()
-                        , page_id, LockMode::X, page_buf, MY_PAGE_SIZE));
-                assert(iter->second->count == 0);
-                iter->second->lock_mode = LockMode::X;
-                iter->second->count++;
-                return true;
-            }
-            if(LockMode::P == iter->second->lock_mode){
-                assert(iter->second->count == 0);
-                iter->second->lock_mode = LockMode::X;
-                iter->second->count++;
-                return true;
-            }
-            while(LockMode::S == iter->second->lock_mode){
-                iter->second->cv.wait(lck);
-            }
             assert(iter->second->count == 0);
-            manager_instance_->instance_rpc_handler()->LockGet()
+            if(LockMode::O == iter->second->lock_mode) {
+                // TODO 缓存更新不应该在这里，或者说需要更多操作
+                char page_buf[MY_PAGE_SIZE];
+                manager_instance_->instance_rpc_handler()->LockRemote(manager_instance_->instance_id()
+                                                                      , page_id, LockMode::X, page_buf, MY_PAGE_SIZE);
+            } else if(LockMode::O != iter->second->lock_mode) {
+                while (iter->second->lock_mode != LockMode::P) {
+                    iter->second->cv.wait(lck);
+                }
+                manager_instance_->instance_rpc_handler()->LockRemote(manager_instance_->instance_id()
+                                                                      , page_id, LockMode::X, nullptr, 0);
+
+            }
             iter->second->lock_mode = LockMode::X;
-            iter->second->count ++;
+            iter->second->count++;
             return true;
         }
         if(LockMode::S == mode) {
             if(LockMode::O == iter->second->lock_mode) {
+                assert(iter->second->count == 0);
+                // TODO 缓存更新不应该在这里，或者说需要更多操作
                 char page_buf[MY_PAGE_SIZE];
-                assert(manager_instance_->instance_rpc_handler()->LockGet(manager_instance_->instance_id()
-                        , page_id, LockMode::S, page_buf, MY_PAGE_SIZE));
-                assert(iter->second->count == 0);
-                iter->second->lock_mode = LockMode::S;
-                iter->second->count++;
-                return true;
-            }
-            if(LockMode::P == iter->second->lock_mode){
-                assert(iter->second->count == 0);
-                iter->second->lock_mode = LockMode::S;
-                iter->second->count++;
-                return true;
-            }
-            while (LockMode::X == iter->second->lock_mode) {
-                iter->second->cv.wait(lck);
+                manager_instance_->instance_rpc_handler()->LockRemote(manager_instance_->instance_id()
+                                                                      , page_id, LockMode::S, page_buf, MY_PAGE_SIZE);
+            } else if(LockMode::O != iter->second->lock_mode) {
+                while(iter->second->lock_mode == LockMode::X){
+                    iter->second->cv.wait(lck);
+                }
+                assert(iter->second->count >= 0);
             }
             iter->second->lock_mode = LockMode::S;
-            iter->second->count ++;
+            iter->second->count++;
             return true;
         }
         assert(false);
-        return false;
     }
 
     bool LockTable::UnLock(uint64_t page_id) {
@@ -112,10 +99,28 @@ namespace dbx1000 {
             return true;
         }
     }
-*/
+
+    bool LockTable::LockInvalid(uint64_t page_id, LockMode req_mode){
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            assert(false);
+            return false;
+        }
+        std::unique_lock <std::mutex> lck(iter->second->mtx);
+        if(LockMode::X == req_mode) {
+            while(iter->second->lock_mode != LockMode::P){
+                iter->second->cv.wait(lck);
+            }
+            assert(iter->second->count == 0);
+            iter->second->lock_mode = LockMode::O;
+            return true;
+        }
+    }
+/*
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
+            assert(false);
             return false;
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
@@ -143,6 +148,7 @@ namespace dbx1000 {
     bool LockTable::UnLock(uint64_t page_id) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
+            assert(false);
             return false;
         }
         std::unique_lock<std::mutex> lck(iter->second->mtx);
@@ -164,7 +170,7 @@ namespace dbx1000 {
             return true;
         }
     }
-
+*/
 //    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
 //    bool LockTable::LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode) {}
 //    bool LockTable::LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}

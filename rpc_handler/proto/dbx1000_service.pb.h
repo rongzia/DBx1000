@@ -39,7 +39,7 @@ namespace protobuf_dbx1000_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[4];
+  static const ::google::protobuf::internal::ParseTable schema[8];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -47,6 +47,18 @@ struct TableStruct {
 void AddDescriptors();
 }  // namespace protobuf_dbx1000_5fservice_2eproto
 namespace dbx1000 {
+class BufferManagerInitDonReplye;
+class BufferManagerInitDonReplyeDefaultTypeInternal;
+extern BufferManagerInitDonReplyeDefaultTypeInternal _BufferManagerInitDonReplye_default_instance_;
+class BufferManagerInitDoneRequest;
+class BufferManagerInitDoneRequestDefaultTypeInternal;
+extern BufferManagerInitDoneRequestDefaultTypeInternal _BufferManagerInitDoneRequest_default_instance_;
+class InstanceInitDoneReply;
+class InstanceInitDoneReplyDefaultTypeInternal;
+extern InstanceInitDoneReplyDefaultTypeInternal _InstanceInitDoneReply_default_instance_;
+class InstanceInitDoneRequest;
+class InstanceInitDoneRequestDefaultTypeInternal;
+extern InstanceInitDoneRequestDefaultTypeInternal _InstanceInitDoneRequest_default_instance_;
 class LockInvalidReply;
 class LockInvalidReplyDefaultTypeInternal;
 extern LockInvalidReplyDefaultTypeInternal _LockInvalidReply_default_instance_;
@@ -62,6 +74,10 @@ extern LockRemoteRequestDefaultTypeInternal _LockRemoteRequest_default_instance_
 }  // namespace dbx1000
 namespace google {
 namespace protobuf {
+template<> ::dbx1000::BufferManagerInitDonReplye* Arena::CreateMaybeMessage<::dbx1000::BufferManagerInitDonReplye>(Arena*);
+template<> ::dbx1000::BufferManagerInitDoneRequest* Arena::CreateMaybeMessage<::dbx1000::BufferManagerInitDoneRequest>(Arena*);
+template<> ::dbx1000::InstanceInitDoneReply* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneReply>(Arena*);
+template<> ::dbx1000::InstanceInitDoneRequest* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneRequest>(Arena*);
 template<> ::dbx1000::LockInvalidReply* Arena::CreateMaybeMessage<::dbx1000::LockInvalidReply>(Arena*);
 template<> ::dbx1000::LockInvalidRequest* Arena::CreateMaybeMessage<::dbx1000::LockInvalidRequest>(Arena*);
 template<> ::dbx1000::LockRemoteReply* Arena::CreateMaybeMessage<::dbx1000::LockRemoteReply>(Arena*);
@@ -359,6 +375,404 @@ class LockRemoteReply : public ::google::protobuf::Message /* @@protoc_insertion
 };
 // -------------------------------------------------------------------
 
+class InstanceInitDoneRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.InstanceInitDoneRequest) */ {
+ public:
+  InstanceInitDoneRequest();
+  virtual ~InstanceInitDoneRequest();
+
+  InstanceInitDoneRequest(const InstanceInitDoneRequest& from);
+
+  inline InstanceInitDoneRequest& operator=(const InstanceInitDoneRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  InstanceInitDoneRequest(InstanceInitDoneRequest&& from) noexcept
+    : InstanceInitDoneRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline InstanceInitDoneRequest& operator=(InstanceInitDoneRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const InstanceInitDoneRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const InstanceInitDoneRequest* internal_default_instance() {
+    return reinterpret_cast<const InstanceInitDoneRequest*>(
+               &_InstanceInitDoneRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  void Swap(InstanceInitDoneRequest* other);
+  friend void swap(InstanceInitDoneRequest& a, InstanceInitDoneRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline InstanceInitDoneRequest* New() const final {
+    return CreateMaybeMessage<InstanceInitDoneRequest>(NULL);
+  }
+
+  InstanceInitDoneRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<InstanceInitDoneRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const InstanceInitDoneRequest& from);
+  void MergeFrom(const InstanceInitDoneRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(InstanceInitDoneRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // int32 instance_id = 1;
+  void clear_instance_id();
+  static const int kInstanceIdFieldNumber = 1;
+  ::google::protobuf::int32 instance_id() const;
+  void set_instance_id(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.InstanceInitDoneRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::int32 instance_id_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class InstanceInitDoneReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.InstanceInitDoneReply) */ {
+ public:
+  InstanceInitDoneReply();
+  virtual ~InstanceInitDoneReply();
+
+  InstanceInitDoneReply(const InstanceInitDoneReply& from);
+
+  inline InstanceInitDoneReply& operator=(const InstanceInitDoneReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  InstanceInitDoneReply(InstanceInitDoneReply&& from) noexcept
+    : InstanceInitDoneReply() {
+    *this = ::std::move(from);
+  }
+
+  inline InstanceInitDoneReply& operator=(InstanceInitDoneReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const InstanceInitDoneReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const InstanceInitDoneReply* internal_default_instance() {
+    return reinterpret_cast<const InstanceInitDoneReply*>(
+               &_InstanceInitDoneReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  void Swap(InstanceInitDoneReply* other);
+  friend void swap(InstanceInitDoneReply& a, InstanceInitDoneReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline InstanceInitDoneReply* New() const final {
+    return CreateMaybeMessage<InstanceInitDoneReply>(NULL);
+  }
+
+  InstanceInitDoneReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<InstanceInitDoneReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const InstanceInitDoneReply& from);
+  void MergeFrom(const InstanceInitDoneReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(InstanceInitDoneReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.InstanceInitDoneReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class BufferManagerInitDoneRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.BufferManagerInitDoneRequest) */ {
+ public:
+  BufferManagerInitDoneRequest();
+  virtual ~BufferManagerInitDoneRequest();
+
+  BufferManagerInitDoneRequest(const BufferManagerInitDoneRequest& from);
+
+  inline BufferManagerInitDoneRequest& operator=(const BufferManagerInitDoneRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  BufferManagerInitDoneRequest(BufferManagerInitDoneRequest&& from) noexcept
+    : BufferManagerInitDoneRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline BufferManagerInitDoneRequest& operator=(BufferManagerInitDoneRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const BufferManagerInitDoneRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const BufferManagerInitDoneRequest* internal_default_instance() {
+    return reinterpret_cast<const BufferManagerInitDoneRequest*>(
+               &_BufferManagerInitDoneRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    4;
+
+  void Swap(BufferManagerInitDoneRequest* other);
+  friend void swap(BufferManagerInitDoneRequest& a, BufferManagerInitDoneRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline BufferManagerInitDoneRequest* New() const final {
+    return CreateMaybeMessage<BufferManagerInitDoneRequest>(NULL);
+  }
+
+  BufferManagerInitDoneRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<BufferManagerInitDoneRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const BufferManagerInitDoneRequest& from);
+  void MergeFrom(const BufferManagerInitDoneRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(BufferManagerInitDoneRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.BufferManagerInitDoneRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class BufferManagerInitDonReplye : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.BufferManagerInitDonReplye) */ {
+ public:
+  BufferManagerInitDonReplye();
+  virtual ~BufferManagerInitDonReplye();
+
+  BufferManagerInitDonReplye(const BufferManagerInitDonReplye& from);
+
+  inline BufferManagerInitDonReplye& operator=(const BufferManagerInitDonReplye& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  BufferManagerInitDonReplye(BufferManagerInitDonReplye&& from) noexcept
+    : BufferManagerInitDonReplye() {
+    *this = ::std::move(from);
+  }
+
+  inline BufferManagerInitDonReplye& operator=(BufferManagerInitDonReplye&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const BufferManagerInitDonReplye& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const BufferManagerInitDonReplye* internal_default_instance() {
+    return reinterpret_cast<const BufferManagerInitDonReplye*>(
+               &_BufferManagerInitDonReplye_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    5;
+
+  void Swap(BufferManagerInitDonReplye* other);
+  friend void swap(BufferManagerInitDonReplye& a, BufferManagerInitDonReplye& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline BufferManagerInitDonReplye* New() const final {
+    return CreateMaybeMessage<BufferManagerInitDonReplye>(NULL);
+  }
+
+  BufferManagerInitDonReplye* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<BufferManagerInitDonReplye>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const BufferManagerInitDonReplye& from);
+  void MergeFrom(const BufferManagerInitDonReplye& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(BufferManagerInitDonReplye* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // bool init_done = 1;
+  void clear_init_done();
+  static const int kInitDoneFieldNumber = 1;
+  bool init_done() const;
+  void set_init_done(bool value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.BufferManagerInitDonReplye)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  bool init_done_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.LockInvalidRequest) */ {
  public:
   LockInvalidRequest();
@@ -394,7 +808,7 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
                &_LockInvalidRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    6;
 
   void Swap(LockInvalidRequest* other);
   friend void swap(LockInvalidRequest& a, LockInvalidRequest& b) {
@@ -533,7 +947,7 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
                &_LockInvalidReply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    7;
 
   void Swap(LockInvalidReply* other);
   friend void swap(LockInvalidReply& a, LockInvalidReply& b) {
@@ -828,6 +1242,50 @@ inline void LockRemoteReply::set_count(::google::protobuf::uint64 value) {
 
 // -------------------------------------------------------------------
 
+// InstanceInitDoneRequest
+
+// int32 instance_id = 1;
+inline void InstanceInitDoneRequest::clear_instance_id() {
+  instance_id_ = 0;
+}
+inline ::google::protobuf::int32 InstanceInitDoneRequest::instance_id() const {
+  // @@protoc_insertion_point(field_get:dbx1000.InstanceInitDoneRequest.instance_id)
+  return instance_id_;
+}
+inline void InstanceInitDoneRequest::set_instance_id(::google::protobuf::int32 value) {
+  
+  instance_id_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.InstanceInitDoneRequest.instance_id)
+}
+
+// -------------------------------------------------------------------
+
+// InstanceInitDoneReply
+
+// -------------------------------------------------------------------
+
+// BufferManagerInitDoneRequest
+
+// -------------------------------------------------------------------
+
+// BufferManagerInitDonReplye
+
+// bool init_done = 1;
+inline void BufferManagerInitDonReplye::clear_init_done() {
+  init_done_ = false;
+}
+inline bool BufferManagerInitDonReplye::init_done() const {
+  // @@protoc_insertion_point(field_get:dbx1000.BufferManagerInitDonReplye.init_done)
+  return init_done_;
+}
+inline void BufferManagerInitDonReplye::set_init_done(bool value) {
+  
+  init_done_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.BufferManagerInitDonReplye.init_done)
+}
+
+// -------------------------------------------------------------------
+
 // LockInvalidRequest
 
 // int32 instance_id = 1;
@@ -1027,6 +1485,14 @@ inline void LockInvalidReply::set_count(::google::protobuf::uint64 value) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

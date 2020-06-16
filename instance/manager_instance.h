@@ -30,10 +30,10 @@ namespace dbx1000 {
 
     class ManagerInstance {
     public:
-        ManagerInstance(const std::string &);
+        ManagerInstance();
         ~ManagerInstance();
 
-        void Init();
+        void Init(const std::string &shared_disk_host);
         void InitBufferForTest();
         void InitMvccs();
         void InitLockTable();
@@ -61,6 +61,7 @@ namespace dbx1000 {
         Index* index();
         LockTable* lock_table();
         InstanceClient *instance_rpc_handler();
+        void set_instance_rpc_handler(InstanceClient*);
         SharedDiskClient * shared_disk_client();
     private:
         bool init_done_;

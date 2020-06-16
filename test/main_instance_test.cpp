@@ -1,5 +1,5 @@
 //
-// Created by rrzhang on 2020/5/4.
+// Created by rrzhang on 2020/6/16.
 //
 
 #include <iostream>
@@ -21,6 +21,7 @@
 #include "common/global.h"
 #include "common/myhelper.h"
 #include "common/mystats.h"
+#include "json/json.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/query.h"
 #include "instance/concurrency_control/row_mvcc.h"
@@ -28,57 +29,23 @@
 #include "instance/txn/txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "json/json.h"
+#include "rpc_handler/instance_handler.h"
 #include "config.h"
-
 using namespace std;
 
-void f(thread_t* thread) {
-    thread->run();
-}
-
-extern void parser(int argc, char * argv[]);
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
-extern void Gen_DB_single_thread();
-extern void Check_DB();
 
 int main(int argc, char* argv[]) {
     assert(argc >= 2);
 
-//    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
-//    Gen_DB_single_thread();
-//    Check_DB();
-//    dbx1000::FileIO::Close();
-
-    parser(argc, argv);
-    cout << "mian test txn thread" << endl;
-
     dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance(SHARED_DISK_HOST);
     managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
+    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
+
+    dbx1000::InstanceServer* instanceServer = new dbx1000::InstanceServer();
+    instanceServer->manager_instance_ = managerInstance;
+    instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
     managerInstance->set_init_done(true);
-    cout << "this pid :" << managerInstance->instance_id() << endl;
-//    managerInstance->shared_disk_client()
 
-	warmup_finish = true;
-
-    thread_t *thread_t_s = new thread_t[g_thread_cnt]();
-    std::vector<std::thread> v_thread;
-    for(int i = 0; i < g_thread_cnt; i++) {
-        thread_t_s[i].init(i, managerInstance->m_workload());
-        thread_t_s[i].manager_client_ = managerInstance;
-        v_thread.emplace_back(f, &thread_t_s[i]);
-    }
-    for(int i = 0; i < g_thread_cnt; i++) {
-        v_thread[i].join();
-    }
-
-    managerInstance->stats().print();
-//    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
-//    stats.print_rpc();
-
-    delete managerInstance;
-    dbx1000::FileIO::Close();
-
-    cout << "exit main." << endl;
     return 0;
-};
+}

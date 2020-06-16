@@ -30,6 +30,7 @@ namespace dbx1000 {
     };
 
     class ManagerInstance;
+    class InstanceClient;
     class LockTable {
     public:
         ~LockTable();
@@ -38,7 +39,7 @@ namespace dbx1000 {
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
 
-        bool LockInvalid(uint64_t page_id, LockMode from, LockMode to);
+        bool LockInvalid(uint64_t page_id, LockMode req_mode);
 
 //        bool LockGet(uint64_t page_id, uint16_t node_i, LockMode mode);
 //        bool LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode);
