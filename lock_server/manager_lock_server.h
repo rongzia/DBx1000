@@ -30,7 +30,7 @@ namespace dbx1000 {
         ManagerServer &operator=(const ManagerServer&) = delete;
 
         struct InstanceInfo {
-            uint16_t instance_id;
+            int instance_id;
             std::string host;
             bool init_done;
             BufferManagerClient* buffer_manager_client;
@@ -43,6 +43,9 @@ namespace dbx1000 {
         InstanceInfo* instances();
         void set_instance_i(int instance_id);
         ServerLockTable* lock_table();
+
+
+        int test_num;
 
     private:
         bool init_done_;

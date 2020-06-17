@@ -39,7 +39,7 @@ namespace protobuf_dbx1000_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[8];
+  static const ::google::protobuf::internal::ParseTable schema[10];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -53,6 +53,12 @@ extern BufferManagerInitDonReplyeDefaultTypeInternal _BufferManagerInitDonReplye
 class BufferManagerInitDoneRequest;
 class BufferManagerInitDoneRequestDefaultTypeInternal;
 extern BufferManagerInitDoneRequestDefaultTypeInternal _BufferManagerInitDoneRequest_default_instance_;
+class GetTestNumReply;
+class GetTestNumReplyDefaultTypeInternal;
+extern GetTestNumReplyDefaultTypeInternal _GetTestNumReply_default_instance_;
+class GetTestNumRequest;
+class GetTestNumRequestDefaultTypeInternal;
+extern GetTestNumRequestDefaultTypeInternal _GetTestNumRequest_default_instance_;
 class InstanceInitDoneReply;
 class InstanceInitDoneReplyDefaultTypeInternal;
 extern InstanceInitDoneReplyDefaultTypeInternal _InstanceInitDoneReply_default_instance_;
@@ -76,6 +82,8 @@ namespace google {
 namespace protobuf {
 template<> ::dbx1000::BufferManagerInitDonReplye* Arena::CreateMaybeMessage<::dbx1000::BufferManagerInitDonReplye>(Arena*);
 template<> ::dbx1000::BufferManagerInitDoneRequest* Arena::CreateMaybeMessage<::dbx1000::BufferManagerInitDoneRequest>(Arena*);
+template<> ::dbx1000::GetTestNumReply* Arena::CreateMaybeMessage<::dbx1000::GetTestNumReply>(Arena*);
+template<> ::dbx1000::GetTestNumRequest* Arena::CreateMaybeMessage<::dbx1000::GetTestNumRequest>(Arena*);
 template<> ::dbx1000::InstanceInitDoneReply* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneReply>(Arena*);
 template<> ::dbx1000::InstanceInitDoneRequest* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneRequest>(Arena*);
 template<> ::dbx1000::LockInvalidReply* Arena::CreateMaybeMessage<::dbx1000::LockInvalidReply>(Arena*);
@@ -860,9 +868,9 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
 
   // accessors -------------------------------------------------------
 
-  // bytes page_buf = 4;
+  // bytes page_buf = 2;
   void clear_page_buf();
-  static const int kPageBufFieldNumber = 4;
+  static const int kPageBufFieldNumber = 2;
   const ::std::string& page_buf() const;
   void set_page_buf(const ::std::string& value);
   #if LANG_CXX11
@@ -874,27 +882,15 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::std::string* release_page_buf();
   void set_allocated_page_buf(::std::string* page_buf);
 
-  // uint64 page_id = 2;
+  // uint64 page_id = 1;
   void clear_page_id();
-  static const int kPageIdFieldNumber = 2;
+  static const int kPageIdFieldNumber = 1;
   ::google::protobuf::uint64 page_id() const;
   void set_page_id(::google::protobuf::uint64 value);
 
-  // int32 instance_id = 1;
-  void clear_instance_id();
-  static const int kInstanceIdFieldNumber = 1;
-  ::google::protobuf::int32 instance_id() const;
-  void set_instance_id(::google::protobuf::int32 value);
-
-  // .dbx1000.RpcLockMode request_mode = 3;
-  void clear_request_mode();
-  static const int kRequestModeFieldNumber = 3;
-  ::dbx1000::RpcLockMode request_mode() const;
-  void set_request_mode(::dbx1000::RpcLockMode value);
-
-  // uint64 count = 5;
+  // uint64 count = 3;
   void clear_count();
-  static const int kCountFieldNumber = 5;
+  static const int kCountFieldNumber = 3;
   ::google::protobuf::uint64 count() const;
   void set_count(::google::protobuf::uint64 value);
 
@@ -904,8 +900,6 @@ class LockInvalidRequest : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr page_buf_;
   ::google::protobuf::uint64 page_id_;
-  ::google::protobuf::int32 instance_id_;
-  int request_mode_;
   ::google::protobuf::uint64 count_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
@@ -1032,6 +1026,205 @@ class LockInvalidReply : public ::google::protobuf::Message /* @@protoc_insertio
   ::google::protobuf::internal::ArenaStringPtr page_buf_;
   ::google::protobuf::uint64 count_;
   bool rc_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GetTestNumRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetTestNumRequest) */ {
+ public:
+  GetTestNumRequest();
+  virtual ~GetTestNumRequest();
+
+  GetTestNumRequest(const GetTestNumRequest& from);
+
+  inline GetTestNumRequest& operator=(const GetTestNumRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetTestNumRequest(GetTestNumRequest&& from) noexcept
+    : GetTestNumRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline GetTestNumRequest& operator=(GetTestNumRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetTestNumRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetTestNumRequest* internal_default_instance() {
+    return reinterpret_cast<const GetTestNumRequest*>(
+               &_GetTestNumRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  void Swap(GetTestNumRequest* other);
+  friend void swap(GetTestNumRequest& a, GetTestNumRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetTestNumRequest* New() const final {
+    return CreateMaybeMessage<GetTestNumRequest>(NULL);
+  }
+
+  GetTestNumRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetTestNumRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetTestNumRequest& from);
+  void MergeFrom(const GetTestNumRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetTestNumRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetTestNumRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GetTestNumReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetTestNumReply) */ {
+ public:
+  GetTestNumReply();
+  virtual ~GetTestNumReply();
+
+  GetTestNumReply(const GetTestNumReply& from);
+
+  inline GetTestNumReply& operator=(const GetTestNumReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetTestNumReply(GetTestNumReply&& from) noexcept
+    : GetTestNumReply() {
+    *this = ::std::move(from);
+  }
+
+  inline GetTestNumReply& operator=(GetTestNumReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetTestNumReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetTestNumReply* internal_default_instance() {
+    return reinterpret_cast<const GetTestNumReply*>(
+               &_GetTestNumReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  void Swap(GetTestNumReply* other);
+  friend void swap(GetTestNumReply& a, GetTestNumReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetTestNumReply* New() const final {
+    return CreateMaybeMessage<GetTestNumReply>(NULL);
+  }
+
+  GetTestNumReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetTestNumReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetTestNumReply& from);
+  void MergeFrom(const GetTestNumReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetTestNumReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // int32 num = 1;
+  void clear_num();
+  static const int kNumFieldNumber = 1;
+  ::google::protobuf::int32 num() const;
+  void set_num(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetTestNumReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::int32 num_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
@@ -1288,21 +1481,7 @@ inline void BufferManagerInitDonReplye::set_init_done(bool value) {
 
 // LockInvalidRequest
 
-// int32 instance_id = 1;
-inline void LockInvalidRequest::clear_instance_id() {
-  instance_id_ = 0;
-}
-inline ::google::protobuf::int32 LockInvalidRequest::instance_id() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.instance_id)
-  return instance_id_;
-}
-inline void LockInvalidRequest::set_instance_id(::google::protobuf::int32 value) {
-  
-  instance_id_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.instance_id)
-}
-
-// uint64 page_id = 2;
+// uint64 page_id = 1;
 inline void LockInvalidRequest::clear_page_id() {
   page_id_ = GOOGLE_ULONGLONG(0);
 }
@@ -1316,21 +1495,7 @@ inline void LockInvalidRequest::set_page_id(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.page_id)
 }
 
-// .dbx1000.RpcLockMode request_mode = 3;
-inline void LockInvalidRequest::clear_request_mode() {
-  request_mode_ = 0;
-}
-inline ::dbx1000::RpcLockMode LockInvalidRequest::request_mode() const {
-  // @@protoc_insertion_point(field_get:dbx1000.LockInvalidRequest.request_mode)
-  return static_cast< ::dbx1000::RpcLockMode >(request_mode_);
-}
-inline void LockInvalidRequest::set_request_mode(::dbx1000::RpcLockMode value) {
-  
-  request_mode_ = value;
-  // @@protoc_insertion_point(field_set:dbx1000.LockInvalidRequest.request_mode)
-}
-
-// bytes page_buf = 4;
+// bytes page_buf = 2;
 inline void LockInvalidRequest::clear_page_buf() {
   page_buf_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1383,7 +1548,7 @@ inline void LockInvalidRequest::set_allocated_page_buf(::std::string* page_buf) 
   // @@protoc_insertion_point(field_set_allocated:dbx1000.LockInvalidRequest.page_buf)
 }
 
-// uint64 count = 5;
+// uint64 count = 3;
 inline void LockInvalidRequest::clear_count() {
   count_ = GOOGLE_ULONGLONG(0);
 }
@@ -1482,9 +1647,35 @@ inline void LockInvalidReply::set_count(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:dbx1000.LockInvalidReply.count)
 }
 
+// -------------------------------------------------------------------
+
+// GetTestNumRequest
+
+// -------------------------------------------------------------------
+
+// GetTestNumReply
+
+// int32 num = 1;
+inline void GetTestNumReply::clear_num() {
+  num_ = 0;
+}
+inline ::google::protobuf::int32 GetTestNumReply::num() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetTestNumReply.num)
+  return num_;
+}
+inline void GetTestNumReply::set_num(::google::protobuf::int32 value) {
+  
+  num_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetTestNumReply.num)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

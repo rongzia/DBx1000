@@ -19,7 +19,7 @@ namespace dbx1000 {
     };
 
     struct LockNode {
-        LockNode(int instanceid, bool val = false, LockMode mode = LockMode::P, int count = 0);
+        LockNode(int instanceid, bool val = false, LockMode mode = LockMode::O, int count = 0);
         int instance_id;
         int count;
 //        bool valid;
@@ -27,6 +27,7 @@ namespace dbx1000 {
 //        std::atomic_flag lock;
         std::mutex mtx;
         std::condition_variable cv;
+        bool invalid_req;
     };
 
     class ManagerInstance;
@@ -35,16 +36,19 @@ namespace dbx1000 {
     public:
         ~LockTable();
         LockTable();
-        void Init(uint64_t start_page, uint64_t end_page);
+        void Init(uint64_t start_page, uint64_t end_page, int instance_id);
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
 
-        bool LockInvalid(uint64_t page_id, LockMode req_mode);
+        bool LockInvalid(uint64_t page_id);
 
 //        bool LockGet(uint64_t page_id, uint16_t node_i, LockMode mode);
 //        bool LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode);
 //        bool LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode);
 //        bool LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode);
+
+void Print();
+char LockModeToChar(LockMode mode);
 
         /// getter and setter
         std::unordered_map<uint64_t, LockNode*> lock_table();

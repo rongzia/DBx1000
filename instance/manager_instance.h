@@ -59,7 +59,7 @@ namespace dbx1000 {
         Buffer* buffer();
         TableSpace* table_space();
         Index* index();
-        LockTable* lock_table();
+        LockTable* &lock_table();
         InstanceClient *instance_rpc_handler();
         void set_instance_rpc_handler(InstanceClient*);
         SharedDiskClient * shared_disk_client();

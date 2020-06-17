@@ -84,7 +84,8 @@ namespace dbx1000 {
 //        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->buffer_ = new Buffer(g_synth_table_size/204/10 * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         this->lock_table_ = new LockTable();
-        lock_table_->Init(0, table_space_->GetLastPageId() + 1);
+        /// 在 set_instance_id 后再初始化 lock_table_
+//        lock_table_->Init(0, table_space_->GetLastPageId() + 1);
         InitLockTable();
     }
 
@@ -210,7 +211,7 @@ namespace dbx1000 {
     Buffer* ManagerInstance::buffer() { return this->buffer_; }
     TableSpace* ManagerInstance::table_space() { return this->table_space_; }
     Index* ManagerInstance::index() { return this->index_; }
-    LockTable* ManagerInstance::lock_table() { return this->lock_table_; }
+    LockTable* &ManagerInstance::lock_table() { return this->lock_table_; }
 
     InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
     void ManagerInstance::set_instance_rpc_handler(InstanceClient* instanceClient) { this->instance_rpc_handler_ = instanceClient; }

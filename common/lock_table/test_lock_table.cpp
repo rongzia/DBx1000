@@ -18,7 +18,7 @@ using namespace std;
 /// 定义一个全为 0 的数组，几个线程并发对所有的位置都加 ++，最后验证是否所有的值都为线程数
 void Test_Lock_Table() {
     dbx1000::LockTable *lockTable = new dbx1000::LockTable();
-    lockTable->Init(0, lock_table_test_num);
+    lockTable->Init(0, lock_table_test_num, 0);
     dbx1000::Profiler profiler;
 
     int a[lock_table_test_num];

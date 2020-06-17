@@ -31,21 +31,66 @@
 #include "instance/thread.h"
 #include "rpc_handler/instance_handler.h"
 #include "config.h"
+
 using namespace std;
 
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
 
-int main(int argc, char* argv[]) {
+void RunInstanceServer(dbx1000::InstanceServer *instanceServer, dbx1000::ManagerInstance *managerInstance) {
+    instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
+}
+
+int main(int argc, char *argv[]) {
     assert(argc >= 2);
 
-    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance(SHARED_DISK_HOST);
-    managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
+    dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
+//    managerInstance->Init(SHARED_DISK_HOST);
+
+    int ins_id = parser_host(argc, argv, managerInstance->host_map());
+    managerInstance->set_instance_id(ins_id);
+    managerInstance->lock_table() = new dbx1000::LockTable();
+    managerInstance->lock_table()->Init(0, 1, ins_id);
+    managerInstance->lock_table()->manager_instance_ = managerInstance;
+    cout << "managerInstance->host_map()[-1] : " << managerInstance->host_map()[-1] << endl;
     managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
 
-    dbx1000::InstanceServer* instanceServer = new dbx1000::InstanceServer();
+    dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
     instanceServer->manager_instance_ = managerInstance;
-    instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
+
+    thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
+    instance_service_server.detach();
+
     managerInstance->set_init_done(true);
+    managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
+
+    int a = managerInstance->instance_rpc_handler()->GetTestNum();
+    vector<thread> write_threads;
+    for(int i = 0; i< g_thread_cnt; i++) {
+        write_threads.emplace_back(thread([&](){
+            managerInstance->lock_table()->Lock(0, dbx1000::LockMode::X);
+            a++;
+            if(managerInstance->lock_table()->lock_table()[0]->invalid_req == true){
+            managerInstance->lock_table()->UnLock(0);
+                return;
+            }
+            managerInstance->lock_table()->UnLock(0);
+        }));
+    }
+//    for(int i = 0; i< g_thread_cnt; i++) {
+//        write_threads.emplace_back(thread([&](){
+//            managerInstance->lock_table()->Lock(0, dbx1000::LockMode::S);
+////            a++;
+//
+//            managerInstance->lock_table()->UnLock(0);
+//        }));
+//    }
+    for(int i = 0; i< g_thread_cnt; i++) {
+        write_threads[i].join();
+    }
+    cout << a << endl;
+
+//    while(1) {};
+
 
     return 0;
 }

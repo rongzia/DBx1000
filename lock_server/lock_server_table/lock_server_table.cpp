@@ -40,29 +40,34 @@ namespace dbx1000 {
         }
         std::unique_lock <std::mutex> lck(iter->second->mtx);
         if(req_mode == LockMode::X) {
-            if(count == 0) {    // 请求者拥有非 O 锁，申请 X 锁
+            if(count == 0) {    // 请求者拥有非 O 锁，申请锁
                 bool flag = true;
-                assert(iter->second->write_ids < 0);
+//                iter->second->mtx.lock();
+                assert(iter->second->write_ids == instance_id);
+//                iter->second->mtx.unlock();
                 // 使拥有读锁的节点失效
-                for(auto item : iter->second->read_ids) {
-                    flag = manager_server_->instances()[item].buffer_manager_client->LockInvalid(instance_id, page_id, req_mode, nullptr, 0);
-                    assert(flag == true);
-                }
-                for(auto item : iter->second->read_ids) {
-                    // 删掉读节点集合
-                    iter->second->read_ids.erase(item);
-                }
-                iter->second->write_ids = instance_id;
+//                for(auto item : iter->second->read_ids) {
+//                    flag = manager_server_->instances()[item].buffer_manager_client->LockInvalid(page_id, nullptr, 0);
+//                    assert(flag == true);
+//                }
+//                for(auto item : iter->second->read_ids) {
+//                    // 删掉读节点集合
+//                    iter->second->read_ids.erase(item);
+//                }
                 return flag;
             }
             if(count == MY_PAGE_SIZE){
                 bool flag = true;
-                assert(iter->second->write_ids >= 0);
                 char page_buf[count];
-                flag = manager_server_->instances()[iter->second->write_ids].buffer_manager_client->LockInvalid(instance_id, page_id, req_mode, page_buf, count);
+                if(iter->second->write_ids >= 0){
+                    flag = manager_server_->instances()[iter->second->write_ids].buffer_manager_client->LockInvalid( page_id,  page_buf, count);
+                } else {
+                    // TODO 从磁盘读
+                    memset(page_buf, 0, count);
+                }
                 assert(flag == true);
                 for(auto item : iter->second->read_ids) {
-                    flag = manager_server_->instances()[item].buffer_manager_client->LockInvalid(instance_id, page_id, req_mode, nullptr, 0);
+                    flag = manager_server_->instances()[item].buffer_manager_client->LockInvalid( page_id,  nullptr, 0);
                     assert(flag == true);
                 }
                 for(auto item : iter->second->read_ids) {
@@ -79,11 +84,14 @@ namespace dbx1000 {
             assert(count == MY_PAGE_SIZE);
             bool flag = true;
             char page_buf[count];
-            flag = manager_server_->instances()[iter->second->write_ids].buffer_manager_client->LockInvalid(instance_id, page_id, req_mode, page_buf, count);
+            flag = manager_server_->instances()[iter->second->write_ids].buffer_manager_client->LockInvalid( page_id, page_buf, count);
             assert(flag == true);
             iter->second->write_ids = -1;
             iter->second->read_ids.insert(instance_id);
             return flag;
         }
     }
+
+
+    std::unordered_map<uint64_t, ServerLockNode*> ServerLockTable::lock_table() { return this->lock_table_; }
 }

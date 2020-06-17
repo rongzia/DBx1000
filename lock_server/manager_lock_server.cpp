@@ -21,10 +21,10 @@
 #include "common/myhelper.h"
 #include "common/mystats.h"
 #include "json/json.h"
+#include "lock_server/lock_server_table/lock_server_table.h"
 #include "rpc_handler/lock_service_handler.h"
 #include "config.h"
 
-#include "lock_server/lock_server_table/lock_server_table.h"
 
 namespace dbx1000 {
     ManagerServer::~ManagerServer() {
@@ -34,7 +34,8 @@ namespace dbx1000 {
 
     ManagerServer::ManagerServer() {
         this->init_done_ = false;
-        this->instances_ = new InstanceInfo[2]();
+        this->instances_ = new InstanceInfo[PROCESS_CNT]();
+        for(int i = 0; i< PROCESS_CNT; i++) { instances_[i].instance_id = -1; instances_[i].init_done = false; }
 
 //        this->m_workload_ = new ycsb_wl();
 //        m_workload_->init();
@@ -44,15 +45,20 @@ namespace dbx1000 {
 //        index_->DeSerialize();
 //        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE);
         this->lock_table_ = new ServerLockTable(this);
-        lock_table_->Init(0, 10);    // test
+//        lock_table_->Init(0, 10);    // test
+
+
+test_num = 0;
     }
 
     void ManagerServer::set_instance_i(int instance_id){
+        cout << "ManagerServer::set_instance_i, instance_id : " << instance_id << endl;
         assert(instance_id >= 0 && instance_id < PROCESS_CNT);
-        assert(instances_[instance_id].init_done = false);
+        assert(instances_[instance_id].init_done == false);
         instances_[instance_id].init_done = true;
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
+        cout << "ManagerServer::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
         instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
     }
 

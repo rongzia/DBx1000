@@ -74,6 +74,13 @@ class DBx1000Service final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::LockInvalidReply>> PrepareAsyncLockInvalid(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::LockInvalidReply>>(PrepareAsyncLockInvalidRaw(context, request, cq));
     }
+    virtual ::grpc::Status GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::dbx1000::GetTestNumReply* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>> AsyncGetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>>(AsyncGetTestNumRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>> PrepareAsyncGetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>>(PrepareAsyncGetTestNumRaw(context, request, cq));
+    }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
@@ -93,6 +100,10 @@ class DBx1000Service final {
       virtual void LockInvalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockInvalidReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void LockInvalid(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       virtual void LockInvalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockInvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      virtual void GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
     };
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
@@ -104,6 +115,8 @@ class DBx1000Service final {
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::BufferManagerInitDonReplye>* PrepareAsyncBufferManagerInitDoneRaw(::grpc::ClientContext* context, const ::dbx1000::BufferManagerInitDoneRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::LockInvalidReply>* AsyncLockInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::LockInvalidReply>* PrepareAsyncLockInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>* AsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::GetTestNumReply>* PrepareAsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -136,6 +149,13 @@ class DBx1000Service final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::LockInvalidReply>> PrepareAsyncLockInvalid(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::LockInvalidReply>>(PrepareAsyncLockInvalidRaw(context, request, cq));
     }
+    ::grpc::Status GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::dbx1000::GetTestNumReply* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>> AsyncGetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>>(AsyncGetTestNumRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>> PrepareAsyncGetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>>(PrepareAsyncGetTestNumRaw(context, request, cq));
+    }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
      public:
@@ -155,6 +175,10 @@ class DBx1000Service final {
       void LockInvalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockInvalidReply* response, std::function<void(::grpc::Status)>) override;
       void LockInvalid(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       void LockInvalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::LockInvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)>) override;
+      void GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)>) override;
+      void GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      void GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
      private:
       friend class Stub;
       explicit experimental_async(Stub* stub): stub_(stub) { }
@@ -174,10 +198,13 @@ class DBx1000Service final {
     ::grpc::ClientAsyncResponseReader< ::dbx1000::BufferManagerInitDonReplye>* PrepareAsyncBufferManagerInitDoneRaw(::grpc::ClientContext* context, const ::dbx1000::BufferManagerInitDoneRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::LockInvalidReply>* AsyncLockInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::dbx1000::LockInvalidReply>* PrepareAsyncLockInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::LockInvalidRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>* AsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>* PrepareAsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_LockRemote_;
     const ::grpc::internal::RpcMethod rpcmethod_InstanceInitDone_;
     const ::grpc::internal::RpcMethod rpcmethod_BufferManagerInitDone_;
     const ::grpc::internal::RpcMethod rpcmethod_LockInvalid_;
+    const ::grpc::internal::RpcMethod rpcmethod_GetTestNum_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -189,6 +216,7 @@ class DBx1000Service final {
     virtual ::grpc::Status InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request, ::dbx1000::InstanceInitDoneReply* response);
     virtual ::grpc::Status BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReplye* response);
     virtual ::grpc::Status LockInvalid(::grpc::ServerContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response);
+    virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_LockRemote : public BaseClass {
@@ -270,7 +298,27 @@ class DBx1000Service final {
       ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_LockRemote<WithAsyncMethod_InstanceInitDone<WithAsyncMethod_BufferManagerInitDone<WithAsyncMethod_LockInvalid<Service > > > > AsyncService;
+  template <class BaseClass>
+  class WithAsyncMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithAsyncMethod_GetTestNum() {
+      ::grpc::Service::MarkMethodAsync(4);
+    }
+    ~WithAsyncMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTestNum(::grpc::ServerContext* context, ::dbx1000::GetTestNumRequest* request, ::grpc::ServerAsyncResponseWriter< ::dbx1000::GetTestNumReply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_LockRemote<WithAsyncMethod_InstanceInitDone<WithAsyncMethod_BufferManagerInitDone<WithAsyncMethod_LockInvalid<WithAsyncMethod_GetTestNum<Service > > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_LockRemote : public BaseClass {
    private:
@@ -395,7 +443,38 @@ class DBx1000Service final {
     }
     virtual void LockInvalid(::grpc::ServerContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
-  typedef ExperimentalWithCallbackMethod_LockRemote<ExperimentalWithCallbackMethod_InstanceInitDone<ExperimentalWithCallbackMethod_BufferManagerInitDone<ExperimentalWithCallbackMethod_LockInvalid<Service > > > > ExperimentalCallbackService;
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    ExperimentalWithCallbackMethod_GetTestNum() {
+      ::grpc::Service::experimental().MarkMethodCallback(4,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>(
+          [this](::grpc::ServerContext* context,
+                 const ::dbx1000::GetTestNumRequest* request,
+                 ::dbx1000::GetTestNumReply* response,
+                 ::grpc::experimental::ServerCallbackRpcController* controller) {
+                   return this->GetTestNum(context, request, response, controller);
+                 }));
+    }
+    void SetMessageAllocatorFor_GetTestNum(
+        ::grpc::experimental::MessageAllocator< ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>* allocator) {
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>*>(
+          ::grpc::Service::experimental().GetHandler(4))
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual void GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+  };
+  typedef ExperimentalWithCallbackMethod_LockRemote<ExperimentalWithCallbackMethod_InstanceInitDone<ExperimentalWithCallbackMethod_BufferManagerInitDone<ExperimentalWithCallbackMethod_LockInvalid<ExperimentalWithCallbackMethod_GetTestNum<Service > > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_LockRemote : public BaseClass {
    private:
@@ -460,6 +539,23 @@ class DBx1000Service final {
     }
     // disable synchronous version of this method
     ::grpc::Status LockInvalid(::grpc::ServerContext* context, const ::dbx1000::LockInvalidRequest* request, ::dbx1000::LockInvalidReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithGenericMethod_GetTestNum() {
+      ::grpc::Service::MarkMethodGeneric(4);
+    }
+    ~WithGenericMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -542,6 +638,26 @@ class DBx1000Service final {
     }
     void RequestLockInvalid(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithRawMethod_GetTestNum() {
+      ::grpc::Service::MarkMethodRaw(4);
+    }
+    ~WithRawMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestGetTestNum(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -645,6 +761,31 @@ class DBx1000Service final {
     virtual void LockInvalid(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
   };
   template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    ExperimentalWithRawCallbackMethod_GetTestNum() {
+      ::grpc::Service::experimental().MarkMethodRawCallback(4,
+        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          [this](::grpc::ServerContext* context,
+                 const ::grpc::ByteBuffer* request,
+                 ::grpc::ByteBuffer* response,
+                 ::grpc::experimental::ServerCallbackRpcController* controller) {
+                   this->GetTestNum(context, request, response, controller);
+                 }));
+    }
+    ~ExperimentalWithRawCallbackMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    virtual void GetTestNum(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+  };
+  template <class BaseClass>
   class WithStreamedUnaryMethod_LockRemote : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
@@ -724,9 +865,29 @@ class DBx1000Service final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedLockInvalid(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::dbx1000::LockInvalidRequest,::dbx1000::LockInvalidReply>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_LockRemote<WithStreamedUnaryMethod_InstanceInitDone<WithStreamedUnaryMethod_BufferManagerInitDone<WithStreamedUnaryMethod_LockInvalid<Service > > > > StreamedUnaryService;
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_GetTestNum : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithStreamedUnaryMethod_GetTestNum() {
+      ::grpc::Service::MarkMethodStreamed(4,
+        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>(std::bind(&WithStreamedUnaryMethod_GetTestNum<BaseClass>::StreamedGetTestNum, this, std::placeholders::_1, std::placeholders::_2)));
+    }
+    ~WithStreamedUnaryMethod_GetTestNum() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedGetTestNum(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::dbx1000::GetTestNumRequest,::dbx1000::GetTestNumReply>* server_unary_streamer) = 0;
+  };
+  typedef WithStreamedUnaryMethod_LockRemote<WithStreamedUnaryMethod_InstanceInitDone<WithStreamedUnaryMethod_BufferManagerInitDone<WithStreamedUnaryMethod_LockInvalid<WithStreamedUnaryMethod_GetTestNum<Service > > > > > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_LockRemote<WithStreamedUnaryMethod_InstanceInitDone<WithStreamedUnaryMethod_BufferManagerInitDone<WithStreamedUnaryMethod_LockInvalid<Service > > > > StreamedService;
+  typedef WithStreamedUnaryMethod_LockRemote<WithStreamedUnaryMethod_InstanceInitDone<WithStreamedUnaryMethod_BufferManagerInitDone<WithStreamedUnaryMethod_LockInvalid<WithStreamedUnaryMethod_GetTestNum<Service > > > > > StreamedService;
 };
 
 }  // namespace dbx1000

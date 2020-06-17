@@ -31,6 +31,7 @@ namespace dbx1000 {
         bool LockRemote(int instance_id, uint64_t page_id, dbx1000::LockMode mode, char *page_buf, size_t count);
         void InstanceInitDone(int instance_id);
         bool BufferManagerInitDone();
+        int GetTestNum();
 
         ManagerInstance* manager_instance();
 
