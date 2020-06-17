@@ -12,13 +12,9 @@
 namespace dbx1000 {
 
     ::grpc::Status BufferManagerServer::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
-        char a;
-        if (DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()) == LockMode::X) { a = 'X'; }
-        else if (DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()) == LockMode::S) { a = 'S'; }
-        else if (DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()) == LockMode::P) { a = 'P'; }
-        else if (DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()) == LockMode::O) { a = 'O'; }
-        std::cout << "BufferManagerServer::LockRemote, instance_id:" << request->instance_id() << ", page_id:" << request->page_id()
-        << ", mode:" << a << ", count:" << request->count() << std::endl;
+
+//        std::cout << "BufferManagerServer::LockRemote, instance_id:" << request->instance_id() << ", page_id:" << request->page_id()
+//        << ", mode:" << a << ", count:" << request->count() << std::endl;
         size_t size = request->count();
 
         if(size > 0) {
@@ -37,6 +33,10 @@ namespace dbx1000 {
         }
 
         assert(false);
+    }
+
+    ::grpc::Status UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
+
     }
 
     ::grpc::Status BufferManagerServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
@@ -91,5 +91,12 @@ namespace dbx1000 {
             memcpy(page_buf, reply.page_buf().data(), count);
         }
         return reply.rc();
+    }
+
+    bool LockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, bool &update) {
+
+    }
+    bool UnLockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char* page_buf, size_t count) {
+
     }
 }

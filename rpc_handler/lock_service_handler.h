@@ -16,6 +16,7 @@ namespace dbx1000 {
     class BufferManagerServer : DBx1000Service::Service {
     public:
         virtual ::grpc::Status LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response);
+        virtual ::grpc::Status UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response);
         virtual ::grpc::Status InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request, ::dbx1000::InstanceInitDoneReply* response);
         virtual ::grpc::Status BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReplye* response);
         virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
@@ -33,7 +34,6 @@ namespace dbx1000 {
         BufferManagerClient &operator=(const BufferManagerClient&) = delete;
         ManagerServer* manager_server();
 
-        bool LockInvalid(uint64_t page_id, char *page_buf, size_t count);
 
      private:
         std::unique_ptr<dbx1000::DBx1000Service::Stub> stub_;

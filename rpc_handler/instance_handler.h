@@ -14,7 +14,7 @@ namespace dbx1000 {
 
     class InstanceServer : DBx1000Service::Service {
     public:
-        virtual ::grpc::Status LockInvalid(::grpc::ServerContext *context, const ::dbx1000::LockInvalidRequest *request , ::dbx1000::LockInvalidReply *response);
+//        virtual ::grpc::Status LockInvalid(::grpc::ServerContext *context, const ::dbx1000::LockInvalidRequest *request , ::dbx1000::LockInvalidReply *response);
         void Start(const std::string& host);
 
         ManagerInstance *manager_instance_;
@@ -28,7 +28,8 @@ namespace dbx1000 {
         InstanceClient(const InstanceClient&) = delete;
         InstanceClient &operator=(const InstanceClient&) = delete;
 
-        bool LockRemote(int instance_id, uint64_t page_id, dbx1000::LockMode mode, char *page_buf, size_t count);
+        bool LockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char *page_buf, size_t count);
+        bool UnLockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char* page_buf, size_t count);
         void InstanceInitDone(int instance_id);
         bool BufferManagerInitDone();
         int GetTestNum();

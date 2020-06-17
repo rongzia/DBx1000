@@ -3,12 +3,11 @@ syntax = "proto3";
 package dbx1000;
 
 service DBx1000Service {
+  // for instance
   rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
+  rpc UnLockRemote(UnLockRemoteRequest) returns (UnLockRemoteReply) {}
   rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
-  rpc BufferManagerInitDone(BufferManagerInitDoneRequest) returns (BufferManagerInitDonReplye) {}
-
-  rpc LockInvalid(LockInvalidRequest) returns (LockInvalidReply) {}
-
+  rpc BufferManagerInitDone(BufferManagerInitDoneRequest) returns (BufferManagerInitDonReply) {}
 
   rpc GetTestNum(GetTestNumRequest) returns (GetTestNumReply) {}
 }
@@ -21,11 +20,28 @@ enum RpcLockMode {
 message LockRemoteRequest{
   int32 instance_id = 1;
   uint64 page_id = 2;
-  RpcLockMode request_mode = 3;
-  bytes page_buf = 4;
-  uint64 count = 5;
+  uint64 page_version = 3;
+  uint64 key = 4;
+  uint64 key_version = 5;
+  bytes page_buf = 6;
+  uint64 count = 7;
 }
 message LockRemoteReply{
+  bool rc = 1;
+  bytes page_buf = 2;
+  uint64 count = 3;
+}
+
+message UnLockRemoteRequest{
+  int32 instance_id = 1;
+  uint64 page_id = 2;
+  uint64 page_version = 3;
+  uint64 key = 4;
+  uint64 key_version = 5;
+  bytes page_buf = 6;
+  uint64 count = 7;
+}
+message UnLockRemoteReply{
   bool rc = 1;
   bytes page_buf = 2;
   uint64 count = 3;
@@ -37,20 +53,8 @@ message InstanceInitDoneRequest{
 message InstanceInitDoneReply{}
 
 message BufferManagerInitDoneRequest{}
-message BufferManagerInitDonReplye{
+message BufferManagerInitDonReply{
   bool init_done = 1;
 }
-
-message LockInvalidRequest{
-  uint64 page_id = 1;
-  bytes page_buf = 2;
-  uint64 count = 3;
-}
-message LockInvalidReply{
-  bool rc = 1;
-  bytes page_buf = 2;
-  uint64 count = 3;
-}
-
 message  GetTestNumRequest{}
 message GetTestNumReply{int32 num = 1;}
