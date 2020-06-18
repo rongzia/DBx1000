@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <atomic>
 
 class workload;
 
@@ -17,9 +18,13 @@ namespace dbx1000 {
     class Index;
     class Page;
     class TableSpace;
-    class ServerLockTable;
+//    class ServerLockTable;
+    class LockTable;
 //    class Stats;
     class BufferManagerClient;
+    class Buffer;
+    class SharedDiskClient;
+
 
 
     class ManagerServer {
@@ -28,6 +33,8 @@ namespace dbx1000 {
         ~ManagerServer();
         ManagerServer(const ManagerServer&) = delete;
         ManagerServer &operator=(const ManagerServer&) = delete;
+
+        uint64_t GetNextTs(uint64_t thread_id);
 
         struct InstanceInfo {
             int instance_id;
@@ -42,7 +49,9 @@ namespace dbx1000 {
         std::map<int, std::string> &hosts_map();
         InstanceInfo* instances();
         void set_instance_i(int instance_id);
-        ServerLockTable* lock_table();
+        LockTable* lock_table();
+        Buffer* buffer() { return this->buffer_; };
+        Index* index() { return this->index_; };
 
 
         int test_num;
@@ -53,11 +62,19 @@ namespace dbx1000 {
         std::map<int, std::string> hosts_map_;
         InstanceInfo* instances_;
 
+        std::atomic<uint64_t> timestamp_;
+
 //        workload* m_workload_;
 //        Buffer * buffer_;
 //        TableSpace* table_space_;
 //        Index* index_;
-        ServerLockTable* lock_table_;
+//        ServerLockTable* lock_table_;
+        workload* m_workload_;
+        Buffer * buffer_;
+        TableSpace* table_space_;
+        Index* index_;
+        LockTable* lock_table_;
+        SharedDiskClient * shared_disk_client_;
 //        Stats* stats_;
     };
 }

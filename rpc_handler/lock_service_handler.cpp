@@ -5,8 +5,11 @@
 #include "lock_service_handler.h"
 #include "dbx1000_service_helper.h"
 
+#include "common/buffer/buffer.h"
+#include "common/index/index.h"
 #include "lock_server/manager_lock_server.h"
 #include "lock_server/lock_server_table/lock_server_table.h"
+#include "common/storage/tablespace/page.h"
 #include "config.h"
 
 namespace dbx1000 {
@@ -17,26 +20,50 @@ namespace dbx1000 {
 //        << ", mode:" << a << ", count:" << request->count() << std::endl;
         size_t size = request->count();
 
-        if(size > 0) {
-            assert(MY_PAGE_SIZE == size);
-            char page_buf[size];
-            manager_server_->lock_table()->Lock(request->instance_id(), request->page_id(), DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()), page_buf, size);
-            response->set_count(size);
-            response->set_page_buf(page_buf, size);
-        std::cout << "BufferManagerServer::LockRemote, instance_id:" << request->instance_id() << " get " << a << " lock on page:" << request->page_id() << " succ"", page_id:" << std::endl;
-            return ::grpc::Status::OK;
-        }
-        if(size == 0) {
-            manager_server_->lock_table()->Lock(request->instance_id(), request->page_id(), DBx1000ServiceHelper::DeSerializeLockMode(request->request_mode()), nullptr, 0);
+
+        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+        dbx1000::IndexItem indexItem;
+        manager_server_->index()->IndexGet(request->key(), &indexItem);
+        bool rc = manager_server_->lock_table()->Lock(indexItem.page_id_, DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()));
+        assert(true == rc);
+        manager_server_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        page->Deserialize();
+        // TODO 校验row长度
+//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
+        uint64_t key_version;
+        // TODO 72 要修改
+        memcpy(&key_version, &page->page_buf()[indexItem.page_location_ + 72], sizeof(uint64_t));
+
+        if(page->version() > request->page_version() && key_version > request->key_version()) {
+            assert(request->count() == MY_PAGE_SIZE);
+            response->set_page_buf(page->page_buf(), request->count());
+            response->set_count(MY_PAGE_SIZE);
+        } else {
             response->set_count(0);
-            return ::grpc::Status::OK;
+        }
+        if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::X) {
+            manager_server_->test_num++;
         }
 
-        assert(false);
+        return ::grpc::Status::OK;
     }
 
-    ::grpc::Status UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
+    ::grpc::Status BufferManagerServer::UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
 
+        if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::S){
+            assert(manager_server_->lock_table()->UnLock(request->page_id()));
+            return ::grpc::Status::OK;
+        }
+        if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::X) {
+            dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+            dbx1000::IndexItem indexItem;
+            manager_server_->index()->IndexGet(request->key(), &indexItem);
+            assert(request->count() == MY_PAGE_SIZE);
+            assert(0 == manager_server_->buffer()->BufferPut(indexItem.page_id_, request->page_buf().data(), request->count()));
+
+            assert(manager_server_->lock_table()->UnLock(request->page_id()));
+            return ::grpc::Status::OK;
+        }
     }
 
     ::grpc::Status BufferManagerServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
@@ -45,8 +72,13 @@ namespace dbx1000 {
         return ::grpc::Status::OK;
     }
 
-    ::grpc::Status BufferManagerServer::BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReplye* response) {
+    ::grpc::Status BufferManagerServer::BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReply* response) {
         response->set_init_done(manager_server_->init_done());
+        return ::grpc::Status::OK;
+    }
+
+    ::grpc::Status BufferManagerServer::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
+        response->set_ts(manager_server_->GetNextTs(-1));
         return ::grpc::Status::OK;
     }
 
@@ -71,32 +103,4 @@ namespace dbx1000 {
     BufferManagerClient::BufferManagerClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
     )) {}
-
-    bool BufferManagerClient::LockInvalid(uint64_t page_id, char *page_buf, size_t count) {
-        std::cout << "BufferManagerClient::LockInvalid, page_id:" << page_id << ", count:" << count << std::endl;
-        dbx1000::LockInvalidRequest request;
-        ::grpc::ClientContext context;
-        dbx1000::LockInvalidReply reply;
-
-//        request.set_instance_id(instance_id);
-//        request.set_request_mode(DBx1000ServiceHelper::SerializeLockMode(req_mode));
-        request.set_page_id(page_id);
-        request.set_count(count);
-
-        ::grpc::Status status = stub_->LockInvalid(&context, request, &reply);
-        assert(status.ok());
-        assert(reply.rc() == true);
-        if(count > 0){
-            assert(count == MY_PAGE_SIZE);
-            memcpy(page_buf, reply.page_buf().data(), count);
-        }
-        return reply.rc();
-    }
-
-    bool LockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, bool &update) {
-
-    }
-    bool UnLockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char* page_buf, size_t count) {
-
-    }
 }

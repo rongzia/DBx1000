@@ -43,7 +43,7 @@ void Gen_DB_single_thread() {
     page->set_page_id(tableSpace->GetNextPageId());
     char row[row_size];
     uint64_t version = 0;
-    memset(row, 'a', row_size);
+    memset(row, '0', row_size);
     for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
         if (row_size > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();

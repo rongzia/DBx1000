@@ -18,9 +18,8 @@ void RunBufferManagerServer(dbx1000::BufferManagerServer * bufferManagerServer, 
 int main(int argc, char* argv[]){
     dbx1000::ManagerServer* managerServer = new dbx1000::ManagerServer();
     managerServer->set_buffer_manager_id(parser_host(argc, argv, managerServer->hosts_map()));
-    managerServer->lock_table()->lock_table().clear();
-
-    managerServer->lock_table()->Init(0, 10);
+//    managerServer->lock_table()->lock_table().clear();
+//    managerServer->lock_table()->Init(0, 10);
 
     dbx1000::BufferManagerServer * bufferManagerServer = new dbx1000::BufferManagerServer();
     bufferManagerServer->manager_server_ = managerServer;

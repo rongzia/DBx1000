@@ -27,11 +27,11 @@ this->invalid_req = false;
 
     void LockTable::Init(uint64_t start_page, uint64_t end_page, int instance_id) {
         for (uint64_t page_id = start_page; page_id < end_page; page_id++) {
-            LockNode* lock_node = new LockNode(instance_id, true);
+            LockNode* lock_node = new LockNode(instance_id, true, LockMode::P);
             lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
         }
     }
-
+/*
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -115,7 +115,6 @@ this->invalid_req = false;
             return true;
         }
     }
-
 //    bool LockTable::LockInvalid(uint64_t page_id, LockMode req_mode){
     bool LockTable::LockInvalid(uint64_t page_id){
         auto iter = lock_table_.find(page_id);
@@ -135,7 +134,8 @@ this->invalid_req = false;
             std::cout << manager_instance_->instance_id() << " LockInvalid succ." << std::endl;
         return true;
     }
-/*
+*/
+/**/
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -189,7 +189,7 @@ this->invalid_req = false;
             return true;
         }
     }
-*/
+
 //    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
 //    bool LockTable::LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode) {}
 //    bool LockTable::LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
@@ -200,6 +200,7 @@ this->invalid_req = false;
         else if (mode == LockMode::S) { a = 'S'; }
         else if (mode == LockMode::P) { a = 'P'; }
         else if (mode == LockMode::O) { a = 'O'; }
+        return a;
     }
 
     void LockTable::Print(){
@@ -208,5 +209,5 @@ this->invalid_req = false;
         }
     }
 
-    std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() { return this->lock_table_; }
+//    std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() { return this->lock_table_; }
 }

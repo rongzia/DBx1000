@@ -38,37 +38,36 @@ namespace dbx1000 {
         void InitMvccs();
         void InitLockTable();
 
-        uint64_t GetNextTs(uint64_t thread_id);
         RC GetRow(uint64_t key, access_t type, txn_man * txn, RowItem *&);
         void ReturnRow(uint64_t key, access_t type, txn_man * txn, RowItem *);
         void SetTxnMan(txn_man* m_txn);
+        uint64_t GetNextTs(uint64_t thread_id);
         void AddTs(uint64_t, uint64_t);
         uint64_t GetMinTs(uint64_t);
         bool RowFromDB(RowItem* row);
         bool RowToDB(RowItem* row);
 
         /// getter and setter
-        int instance_id();
-        void set_init_done(bool init_done);
-        void set_instance_id(int);
-        std::map<int, std::string>& host_map();
-        Stats stats();
-        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map();
-        Query_queue* query_queue();
-        workload* m_workload();
-        Buffer* buffer();
-        TableSpace* table_space();
-        Index* index();
-        LockTable* &lock_table();
-        InstanceClient *instance_rpc_handler();
-        void set_instance_rpc_handler(InstanceClient*);
-        SharedDiskClient * shared_disk_client();
+        int instance_id()                                               { return this->instance_id_; }
+        void set_instance_id(int instance_id)                           { this->instance_id_ = instance_id; }
+        void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
+        std::map<int, std::string>& host_map()                          { return this->host_map_; }
+        Stats stats()                                                   { return this->stats_; }
+        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map()              { return this->mvcc_map_; }
+        Query_queue* query_queue()                                      { return this->query_queue_; }
+        workload* m_workload()                                          { return this->m_workload_; }
+        Buffer* buffer()                                                { return this->buffer_; }
+        TableSpace* table_space()                                       { return this->table_space_; }
+        Index* index()                                                  { return this->index_; }
+        LockTable* &lock_table()                                        { return this->lock_table_; }
+        InstanceClient *instance_rpc_handler()                          { return this->instance_rpc_handler_; }
+        void set_instance_rpc_handler(InstanceClient* instanceClient)   { this->instance_rpc_handler_ = instanceClient; }
+        SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
     private:
-        bool init_done_;
         int instance_id_;
         std::map<int, std::string> host_map_;
+        bool init_done_;
 
-        std::atomic<uint64_t> timestamp_;
         uint64_t*   all_ts_;
         std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
         txn_man** txn_man_;

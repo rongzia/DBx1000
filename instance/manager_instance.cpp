@@ -56,16 +56,29 @@ namespace dbx1000 {
          */
 
     }
+//        int instance_id_;
+//        std::map<int, std::string> host_map_;
+//        bool init_done_;
 
+//        uint64_t*   all_ts_;
+//        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
+//        txn_man** txn_man_;
+//        dbx1000::Stats stats_;
+//
+//        Query_queue* query_queue_;
+//        workload* m_workload_;
+//        Buffer * buffer_;
+//        TableSpace* table_space_;
+//        Index* index_;
+//        LockTable* lock_table_;
+//        InstanceClient *instance_rpc_handler_;
+//        SharedDiskClient * shared_disk_client_;
+    // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {
         this->init_done_ = false;
-
-        this->timestamp_ = 1;
         this->all_ts_ = new uint64_t[g_thread_cnt]();
+        for (int i = 0; i < g_thread_cnt; i++) { all_ts_[i] = UINT64_MAX; }
         this->txn_man_ = new txn_man *[g_thread_cnt]();
-        for (int i = 0; i < g_thread_cnt; i++) {
-            all_ts_[i] = UINT64_MAX;
-        }
         stats_.init();
 
         this->query_queue_ = new Query_queue();
@@ -73,20 +86,21 @@ namespace dbx1000 {
         this->m_workload_ = new ycsb_wl();
         m_workload_->init();
 
-        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
 
-        InitMvccs();
+        InitMvccs();    // mvcc_map_ 在 m_workload_ 初始化后才能初始化
+
         this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
         this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
         table_space_->DeSerialize();
         index_->DeSerialize();
 
-//        this->buffer_ = new Buffer(table_space_->GetLastPageId() * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
-        this->buffer_ = new Buffer(g_synth_table_size/204/10 * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
+
+        // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
+        // 应该把缓存调大，避免缓存不够时刷旧版本
+//        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
+        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, nullptr);
         this->lock_table_ = new LockTable();
-        /// 在 set_instance_id 后再初始化 lock_table_
-//        lock_table_->Init(0, table_space_->GetLastPageId() + 1);
-        InitLockTable();
+        lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
     }
 
     void ManagerInstance::InitBufferForTest() {
@@ -107,16 +121,11 @@ namespace dbx1000 {
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }
-    void ManagerInstance::InitLockTable() {
-        std::cout << "ManagerInstance::InitLockTable" << std::endl;
-        for(auto &iter : lock_table_->lock_table()) {
-            iter.second->instance_id = this->instance_id_;
-//            iter.second->valid = true;
-        }
-        std::cout << "ManagerInstance::InitLockTable done." << std::endl;
-    }
 
-    uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
+    uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) {
+//        return timestamp_.fetch_add(1);
+        return instance_rpc_handler_->GetNextTs();
+    }
 
     RC ManagerInstance::GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&row) {
         RC rc = RC::RCOK;
@@ -175,12 +184,12 @@ namespace dbx1000 {
 
         assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
         memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
-//        {
-//            /// 验证 key
-//            uint64_t temp_key;
-//            memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
-//            assert(row->key_ == temp_key);
-//        }
+        {
+            /// 验证 key
+            uint64_t temp_key;
+            memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
+            assert(row->key_ == temp_key);
+        }
         assert(true == this->lock_table_->UnLock(indexItem.page_id_));
         return true;
     }
@@ -201,24 +210,21 @@ namespace dbx1000 {
     }
 
 
-    int ManagerInstance::instance_id() { return this->instance_id_; }
-    void ManagerInstance::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }
-    void ManagerInstance::set_init_done(bool init_done) { this->init_done_ = init_done; }
-    std::map<int, std::string> &ManagerInstance::host_map() { return this->host_map_; }
-    Stats ManagerInstance::stats() { return this->stats_; }
-    Query_queue *ManagerInstance::query_queue() { return this->query_queue_; }
-    workload* ManagerInstance::m_workload() { return this->m_workload_; }
-    Buffer* ManagerInstance::buffer() { return this->buffer_; }
-    TableSpace* ManagerInstance::table_space() { return this->table_space_; }
-    Index* ManagerInstance::index() { return this->index_; }
-    LockTable* &ManagerInstance::lock_table() { return this->lock_table_; }
-
-    InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
-    void ManagerInstance::set_instance_rpc_handler(InstanceClient* instanceClient) { this->instance_rpc_handler_ = instanceClient; }
-
-    std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
-
-    SharedDiskClient * ManagerInstance::shared_disk_client() { return this->shared_disk_client_; }
+//    int ManagerInstance::instance_id() { return this->instance_id_; }
+//    void ManagerInstance::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }
+//    void ManagerInstance::set_init_done(bool init_done) { this->init_done_ = init_done; }
+//    std::map<int, std::string> &ManagerInstance::host_map() { return this->host_map_; }
+//    Stats ManagerInstance::stats() { return this->stats_; }
+//    Query_queue *ManagerInstance::query_queue() { return this->query_queue_; }
+//    workload* ManagerInstance::m_workload() { return this->m_workload_; }
+//    Buffer* ManagerInstance::buffer() { return this->buffer_; }
+//    TableSpace* ManagerInstance::table_space() { return this->table_space_; }
+//    Index* ManagerInstance::index() { return this->index_; }
+//    LockTable* &ManagerInstance::lock_table() { return this->lock_table_; }
+//    InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
+//    void ManagerInstance::set_instance_rpc_handler(InstanceClient* instanceClient) { this->instance_rpc_handler_ = instanceClient; }
+//    std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
+//    SharedDiskClient * ManagerInstance::shared_disk_client() { return this->shared_disk_client_; }
 
 
 }

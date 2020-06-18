@@ -44,7 +44,8 @@ namespace dbx1000 {
         // 要是 server 版本比当前新，返回最新的版本
         if(reply.count() > 0) {
             assert(reply.count() == MY_PAGE_SIZE);
-            memcpy(page_buf, reply.page_buf().data(), MY_PAGE_SIZE);
+            assert(count == MY_PAGE_SIZE);
+            memcpy(page_buf, reply.page_buf().data(), count);
         }
         return reply.rc();
     }
@@ -94,11 +95,21 @@ namespace dbx1000 {
     bool InstanceClient::BufferManagerInitDone() {
         dbx1000::BufferManagerInitDoneRequest request;
         ::grpc::ClientContext context;
-        dbx1000::BufferManagerInitDonReplye reply;
+        dbx1000::BufferManagerInitDonReply reply;
 
         ::grpc::Status status = stub_->BufferManagerInitDone(&context, request, &reply);
         assert(status.ok());
         return reply.init_done();
+    }
+
+    uint64_t InstanceClient::GetNextTs() {
+        dbx1000::GetNextTsRequest request;
+        ::grpc::ClientContext context;
+        dbx1000::GetNextTsReply reply;
+
+        ::grpc::Status status = stub_->GetNextTs(&context, request, &reply);
+        assert(status.ok());
+        return reply.ts();
     }
 
     int InstanceClient::GetTestNum(){
