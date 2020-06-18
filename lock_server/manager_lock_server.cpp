@@ -75,7 +75,7 @@ namespace dbx1000 {
 
     bool ManagerServer::init_done() {
 //        for(int i = 0; i < PROCESS_CNT; i++) {
-        for(int i = 0; i < 2; i++) {
+        for(int i = 0; i < PROCESS_CNT; i++) {
             if(instances_[i].init_done == false){
                 return false;
             }

@@ -1,6 +1,10 @@
+#include <cstring>
 #include "ycsb_txn.h"
 
 #include "common/storage/tablespace/row_item.h"
+#include "common/storage/catalog.h"
+#include "common/storage/table.h"
+#include "common/workload/ycsb_wl.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/thread.h"
 
@@ -49,6 +53,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 				rc = RC::Abort;
 				goto final;
 			}
+			size_t size = _wl->the_table->get_schema()->tuple_size;
+			assert(row_local->size_ == size);
 
 			// Computation //
 			// Only do computation when there are more than 1 requests.
@@ -64,7 +70,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 //					for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
 						int fid = 0;
 						char * data = row_local->row_;
-						*(uint64_t *)(&data[fid * 10]) = 0;
+//						*(uint64_t *)(&data[fid * 10]) = 0;
+                        memcpy(&data[size - sizeof(uint64_t)], &timestamp, sizeof(uint64_t));
 //					}
                 } 
             }
