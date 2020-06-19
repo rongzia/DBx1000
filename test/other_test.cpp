@@ -29,7 +29,7 @@ map<uint64_t, char *> GetMap() {
 
 void Test_map() {
     map<uint64_t, char *> map_2 = GetMap();
-    map_2.insert(std::pair<uint64_t, char *>(1, "sdf"));
+    map_2.insert(std::pair<uint64_t, char *>(1, const_cast<char *>("sdf")));
 }
 
 enum class LockMode {
@@ -134,37 +134,82 @@ void TestLock() {
     cout << "exe time : " << profiler.Seconds() << endl;
 }
 
+void Test_sizeof() {
+    cout << "INT32_MAX : " << INT32_MAX << endl;
+    cout << "UINT32_MAX : " << UINT32_MAX << endl;
+    cout << "INT64_MAX : " << INT64_MAX << endl;
+    cout << "UINT64_MAX : " << UINT64_MAX << endl;
+    {
+        // off_t 为 int64
+        off_t offset = UINT64_MAX;
+        assert(-1 == offset);
+    }
+    {
+        // size_t 为 uint64
+        size_t size = -1;
+        assert(size == UINT64_MAX);
+    }
+}
+
+void Test_cv_wait_for() {
+    mutex mtx;
+//    mtx.unlock();
+    condition_variable cv;
+
+    int a = 0;
+    bool flag = false;
+
+//    std::thread thread1([&]() {
+//        std::unique_lock<std::mutex> lck(mtx);
+//        cout << "thread1 start" << endl;
+//        this_thread::sleep_for(chrono::seconds(2));
+//        flag = true;
+//        cout << "thread1 end" << endl;
+//        std::notify_all_at_thread_exit(cv, std::move(lck));
+//        return;
+//    });
+//    this_thread::sleep_for(chrono::seconds(1));
+
+    cout << "start threads" << endl;
+    vector<thread> threads;
+    for (int i = 0; i < 5; i++) {
+        threads.emplace_back(thread([&]() {
+            std::unique_lock<std::mutex> lck(mtx);
+/*
+            std::cv_status status = cv.wait_for(lck, chrono::seconds(3));
+            if (std::cv_status::timeout == status) {
+                cout << "timeout" << endl;
+                cv.notify_all();
+                return;
+            }
+            if (std::cv_status::no_timeout == status) {
+                a++;
+                return;
+            }*/
+            bool f = cv.wait_for(lck, chrono::seconds(3), [&](){ return flag; });
+            if (!f) {
+                cout << "timeout" << endl;
+                return;
+            }
+            if (f) {
+                a++;
+                return;
+            }
+        }));
+    }
+//    thread1.join();
+flag = true;
+    for (int i = 0; i < 5; i++) {
+        threads[i].join();
+    }
+    cout << a << endl;
+}
 
 int main() {
 //    Test_access();
 //    Test_map();
 //    TestLock();
-
-    int a = INT32_MAX;
-    unsigned int ui = 2;
-    off_t offset = UINT64_MAX;
-//    size_type
-    long l = 4;
-    long long ll = 3;
-    long long int lli = 3;
-    unsigned long ul = 4;
-    unsigned long long ull = 3;
-    unsigned long long int ulli = 3;
-    int64_t i64 = 7;
-    size_t s = UINT64_MAX;
-    cout << typeid(a).name() << endl;
-    cout << typeid(ui).name() << endl;
-    cout << typeid(offset).name() << endl;
-    cout << typeid(l).name() << endl;
-    cout << typeid(ll).name() << endl;
-    cout << typeid(lli).name() << endl;
-    cout << typeid(ull).name() << endl;
-    cout << typeid(ulli).name() << endl;
-    cout << typeid(ulli).name() << endl;
-    cout << typeid(i64).name() << endl;
-    cout << typeid(s).name() << endl;
-    cout << s << endl;
-    cout << offset << endl;
-    cout << a << endl;
+//    Test_sizeof();
+    Test_cv_wait_for();
     return 0;
 }
