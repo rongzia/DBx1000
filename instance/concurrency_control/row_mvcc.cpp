@@ -290,6 +290,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		}
 	} else if (type == W_REQ) {
 		rc = RC::RCOK;
+		if(ts <= _latest_wts) {
+		    cout <<"ts:" <<ts << ", _latest_wts:" << _latest_wts << endl;
+		}
 		assert(ts > _latest_wts);
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = true;

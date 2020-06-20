@@ -144,6 +144,7 @@ namespace dbx1000 {
         ReadPageRequest request;
         ::grpc::ClientContext context;
         ReadPageReply reply;
+        request.set_page_id(page_id);
 
         ::grpc::Status status = stub_->ReadPage(&context, request, &reply);
         assert(status.ok());

@@ -97,10 +97,21 @@ namespace dbx1000 {
 
         // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
         // 应该把缓存调大，避免缓存不够时刷旧版本
-//        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
-        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, nullptr);
+    cout <<__LINE__ << endl;
+        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
+//        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, nullptr);
+        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client());
+    cout <<__LINE__ << endl;
         this->lock_table_ = new LockTable();
+    cout <<__LINE__ << endl;
         lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
+    cout <<__LINE__ << endl;
+        uint64_t start_page = g_synth_table_size/32 * this->instance_id_;
+    cout <<__LINE__ << endl;
+        uint64_t end_page = g_synth_table_size/32 * (this->instance_id_ + 1);
+    cout <<__LINE__ << endl;
+//        for(uint64_t i = start_page; i < end_page; i++) { lock_table_->lock_table()[i]->lock_mode = LockMode::P; }
+    cout <<__LINE__ << endl;
     }
 
     void ManagerInstance::InitBufferForTest() {
@@ -114,9 +125,10 @@ namespace dbx1000 {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
         Profiler profiler;
         profiler.Start();
+        uint32_t tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
         for (uint64_t  key = 0; key < g_synth_table_size; key++) {
             mvcc_map_.insert(std::pair<uint64_t, Row_mvcc *>(key, new Row_mvcc()));
-            mvcc_map_[key]->init(key, ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size, this);
+            mvcc_map_[key]->init(key, tuple_size, this);
         }
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;

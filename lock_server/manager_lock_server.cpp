@@ -38,6 +38,8 @@ namespace dbx1000 {
         this->instances_ = new InstanceInfo[PROCESS_CNT]();
         for(int i = 0; i< PROCESS_CNT; i++) { instances_[i].instance_id = -1; instances_[i].init_done = false; }
 
+        timestamp_ = ATOMIC_VAR_INIT(1);
+
         this->m_workload_ = new ycsb_wl();
         m_workload_->init();
         this->shared_disk_client_ = new SharedDiskClient(SHARED_DISK_HOST);
@@ -69,22 +71,23 @@ namespace dbx1000 {
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
         cout << "ManagerServer::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
-        instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
+//        instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
     }
 
 
     bool ManagerServer::init_done() {
-//        for(int i = 0; i < PROCESS_CNT; i++) {
+        cout << "ManagerServer::init_done" << endl;
         for(int i = 0; i < PROCESS_CNT; i++) {
             if(instances_[i].init_done == false){
                 return false;
             }
         }
         init_done_ = true;
+        cout << "ManagerServer init done." << endl;
         return init_done_;
     }
-    void ManagerServer::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
-    std::map<int, std::string> &ManagerServer::hosts_map() { return this->hosts_map_; }
-    ManagerServer::InstanceInfo* ManagerServer::instances(){ return this->instances_; }
-    LockTable* ManagerServer::lock_table() { return this->lock_table_; }
+//    void ManagerServer::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
+//    std::map<int, std::string> &ManagerServer::hosts_map() { return this->hosts_map_; }
+//    ManagerServer::InstanceInfo* ManagerServer::instances(){ return this->instances_; }
+//    LockTable* ManagerServer::lock_table() { return this->lock_table_; }
 }

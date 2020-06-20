@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
     bufferManagerServer->manager_server_ = managerServer;
 
     thread lock_service_server(RunBufferManagerServer, bufferManagerServer, managerServer);
-    lock_service_server.detach();
+//    lock_service_server.detach();
 
 
 

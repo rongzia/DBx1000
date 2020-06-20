@@ -43,7 +43,7 @@ void Gen_DB_single_thread() {
     page->set_page_id(tableSpace->GetNextPageId());
     char row[row_size];
     uint64_t version = 0;
-    memset(row, '0', row_size);
+    memset(row, 0, row_size);
     for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
         if (row_size > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
@@ -87,7 +87,7 @@ void Gen_DB() {
                     page->set_page_id(tableSpace->GetNextPageId());
                     char row[row_size];
                     uint64_t version = 0;
-                    memset(row, 'a', row_size);
+                    memset(row, 0, row_size);
                     for (uint64_t key = (SYNTH_TABLE_SIZE / 10) * thd;          /// for multi threads
                          key < (SYNTH_TABLE_SIZE / 10) * (thd + 1); key++) {    /// for multi threads
 //                    for (uint64_t key = 0; key < num_item; key++) {
@@ -155,7 +155,7 @@ void Check_DB() {
                         memcpy(&version, &row[row_size - 8], sizeof(uint64_t));
                         assert(key == temp_key);
                         assert(version == 0);
-                        for (int i = 8; i < 72; i++) { assert('a' == row[i]); }
+                        for (int i = 8; i < 72; i++) { assert(0 == row[i]); }
                     }
                     delete page2;
                 }                         /// for multi threads

@@ -45,14 +45,13 @@ namespace dbx1000 {
 
         /// getter and setter
         bool init_done();
-        void set_buffer_manager_id(int id);
-        std::map<int, std::string> &hosts_map();
-        InstanceInfo* instances();
+        void set_buffer_manager_id(int id)      { this->buffer_manager_id_ = id; }
+        std::map<int, std::string> &hosts_map() { return this->hosts_map_; }
+        InstanceInfo* instances()               { return this->instances_; }
         void set_instance_i(int instance_id);
-        LockTable* lock_table();
-        Buffer* buffer() { return this->buffer_; };
-        Index* index() { return this->index_; };
-
+        LockTable* lock_table()                 { return this->lock_table_; }
+        Buffer* buffer()                        { return this->buffer_; };
+        Index* index()                          { return this->index_; };
 
         int test_num;
 
