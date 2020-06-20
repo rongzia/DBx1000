@@ -135,7 +135,7 @@ this->invalid_req = false;
         return true;
     }
 */
-/**/
+/*
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -162,7 +162,7 @@ this->invalid_req = false;
             return true;
         }
         assert(false);
-    }
+    }*/
 
     bool LockTable::UnLock(uint64_t page_id) {
         auto iter = lock_table_.find(page_id);
@@ -179,21 +179,60 @@ this->invalid_req = false;
             return true;
         }
         if (LockMode::S == iter->second->lock_mode) {
-            assert(iter->second->count > 0);
-            iter->second->count--;
-            iter->second->lock_mode = LockMode::S;
-            if (iter->second->count == 0) {
-                iter->second->lock_mode = LockMode::P;
+            // 仅非 LockMode::O 才需要更改锁表项状态
+            if(LockMode::O != iter->second->lock_mode) {
+                assert(iter->second->count > 0);
+                iter->second->count--;
+                if (iter->second->count == 0) {
+                    iter->second->lock_mode = LockMode::P;
+                }
             }
             iter->second->cv.notify_all();
             return true;
         }
     }
 
-//    bool LockTable::LockGet(uint64_t page_id, uint16_t node_i, LockMode mode) {}
-//    bool LockTable::LockRelease(uint64_t page_id, uint16_t node_i, LockMode mode) {}
-//    bool LockTable::LockGetBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
-//    bool LockTable::LockReleaseBatch(uint64_t start, uint64_t end, uint16_t node_i, LockMode mode) {}
+    bool LockTable::Lock(uint64_t page_id, LockMode mode) {
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            assert(false);
+            return false;
+        }
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        bool rc = false;
+        if(LockMode::X == mode) {
+            // Test_Lock_Table 中 30 个线程大概需要 1500 - 1600 微秒
+//            if(iter->second->cv.wait_for(lck, chrono::microseconds (1500), [iter](){ return (LockMode::P == iter->second->lock_mode); }) {
+            if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (LockMode::P == iter->second->lock_mode); })) {
+                assert(iter->second->count == 0);
+                iter->second->lock_mode = LockMode::X;
+                iter->second->count++;
+                rc = true;
+            } else {
+                assert(false);
+                rc = false;
+            }
+            return rc;
+        }
+        if(LockMode::S == mode) {
+            if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (LockMode::X != iter->second->lock_mode); })) {
+                if(LockMode::O == iter->second->lock_mode) {
+                    // LockMode::O 状态下，仅可读旧版本，这是候不会有写请求，也就不会有冲突
+                    rc = true;
+                } else {
+                    assert(iter->second->count >= 0);
+                    iter->second->lock_mode = LockMode::S;
+                    iter->second->count++;
+                    rc = true;
+                }
+            } else {
+                assert(false);
+                rc = false;
+            }
+            return rc;
+        }
+    }
+
     char LockTable::LockModeToChar(LockMode mode) {
         char a;
         if (mode == LockMode::X) { a = 'X'; }

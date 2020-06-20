@@ -40,6 +40,9 @@ namespace dbx1000 {
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
 
+//        bool CanRead(std::unordered_map<uint64_t, LockNode*>::iterator iter);
+//        bool CanWrite(std::unordered_map<uint64_t, LockNode*>::iterator iter);
+
         bool LockInvalid(uint64_t page_id);
 
         char LockModeToChar(LockMode mode);

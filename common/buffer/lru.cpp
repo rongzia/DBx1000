@@ -35,7 +35,7 @@ namespace dbx1000 {
 //            delete page_node;
 //            page_node = page_node->next_;
 //        }
-        delete head_->page_;
+        delete head_;
     }
 
     void LRU::Prepend(PageNode* page_node) {

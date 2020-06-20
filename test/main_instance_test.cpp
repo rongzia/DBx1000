@@ -35,6 +35,7 @@
 using namespace std;
 
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
+extern void Test_Lock_Table();
 
 void RunInstanceServer(dbx1000::InstanceServer *instanceServer, dbx1000::ManagerInstance *managerInstance) {
     instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
@@ -45,17 +46,20 @@ void f(thread_t* thread) {
 
 
 int main(int argc, char *argv[]) {
+//    Test_Lock_Table();
+
+    /**/
     assert(argc >= 2);
 
     dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
     int ins_id = parser_host(argc, argv, managerInstance->host_map());
     managerInstance->set_instance_id(ins_id);
-    cout <<__LINE__ << endl;
+//    cout <<__LINE__ << endl;
     managerInstance->Init(SHARED_DISK_HOST);
-    cout <<__LINE__ << endl;
+//    cout <<__LINE__ << endl;
     // 连接集中锁管理器
     managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
-    cout <<__LINE__ << endl;
+//    cout <<__LINE__ << endl;
     {   // instanc 服务端
 //        dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
 //        instanceServer->manager_instance_ = managerInstance;
@@ -63,11 +67,11 @@ int main(int argc, char *argv[]) {
 //        instance_service_server.detach();
     }
 
-    cout <<__LINE__ << endl;
+//    cout <<__LINE__ << endl;
     managerInstance->set_init_done(true);
     managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
 
-    cout <<__LINE__ << endl;
+//    cout <<__LINE__ << endl;
 
     while(!managerInstance->instance_rpc_handler()->BufferManagerInitDone()) PAUSE
 //    while(!managerInstance->instance_rpc_handler()->BufferManagerInitDone()) { std::this_thread::yield();}

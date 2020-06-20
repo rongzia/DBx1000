@@ -153,22 +153,20 @@ void Test_sizeof() {
 
 void Test_cv_wait_for() {
     mutex mtx;
-//    mtx.unlock();
     condition_variable cv;
-
     int a = 0;
     bool flag = false;
 
-//    std::thread thread1([&]() {
-//        std::unique_lock<std::mutex> lck(mtx);
-//        cout << "thread1 start" << endl;
-//        this_thread::sleep_for(chrono::seconds(2));
-//        flag = true;
-//        cout << "thread1 end" << endl;
+    std::thread thread1([&]() {
+        std::unique_lock<std::mutex> lck(mtx);
+        cout << "thread1 start" << endl;
+        this_thread::sleep_for(chrono::seconds(5));
+        flag = true;
+        cout << "thread1 end" << endl;
 //        std::notify_all_at_thread_exit(cv, std::move(lck));
-//        return;
-//    });
-//    this_thread::sleep_for(chrono::seconds(1));
+        cv.notify_all();
+    });
+//    this_thread::sleep_for(chrono::seconds(2));
 
     cout << "start threads" << endl;
     vector<thread> threads;
@@ -186,22 +184,18 @@ void Test_cv_wait_for() {
                 a++;
                 return;
             }*/
-            bool f = cv.wait_for(lck, chrono::seconds(3), [&](){ return flag; });
-            if (!f) {
-                cout << "timeout" << endl;
-                return;
-            }
-            if (f) {
+//            if (cv.wait_for(lck, chrono::seconds(0), [flag]() { return flag; })) {
+            if (cv.wait_until(lck, chrono::steady_clock::now() + chrono::seconds(1), [flag]() { return flag; })) {
                 a++;
-                return;
+            } else {
+                cout << "timeout" << endl;
             }
         }));
     }
-//    thread1.join();
-flag = true;
     for (int i = 0; i < 5; i++) {
         threads[i].join();
     }
+    thread1.join();
     cout << a << endl;
 }
 

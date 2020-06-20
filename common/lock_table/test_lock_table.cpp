@@ -13,7 +13,7 @@
 using namespace std;
 
 #define lock_table_test_num (10000)
-#define test_thread_num (100)
+#define test_thread_num (30)
 
 /// 定义一个全为 0 的数组，几个线程并发对所有的位置都加 ++，最后验证是否所有的值都为线程数
 void Test_Lock_Table() {
@@ -25,7 +25,7 @@ void Test_Lock_Table() {
     for (int i = 0; i < lock_table_test_num; i++) { a[i] = 0; }
 
     vector<thread> threads_write;
-    /// write
+    /// write && read
     profiler.Start();
     for (int i = 0; i < test_thread_num; i++) {
         threads_write.emplace_back(thread(
@@ -38,11 +38,22 @@ void Test_Lock_Table() {
                 }
         ));
     }
-    for (int i = 0; i < test_thread_num; i++) {
+    for (int i = 0; i < 20; i++) {
+        threads_write.emplace_back(thread(
+                [&]() {
+                    for (uint64_t j = 0; j < lock_table_test_num; j++) {
+                        assert(true == lockTable->Lock(j, dbx1000::LockMode::S));
+                        assert(true == lockTable->UnLock(j));
+                    }
+                }
+        ));
+    }
+    for (int i = 0; i < test_thread_num + 20; i++) {
         threads_write[i].join();
     }
     profiler.End();
-    cout << "10 threads write time : " << profiler.Nanos() << " nanos." << endl;
+    cout << test_thread_num << " threads write time : " << profiler.Nanos() << " nanos." << endl;
+
     /// read
     profiler.Clear();
     profiler.Start();
@@ -52,7 +63,7 @@ void Test_Lock_Table() {
                 [&]() {
                     for (uint64_t j = 0; j < lock_table_test_num; j++) {
                         assert(true == lockTable->Lock(j, dbx1000::LockMode::S));
-//                        assert(a[j] == 100);
+                        assert(a[j] == test_thread_num);
                         assert(true == lockTable->UnLock(j));
                     }
                 }
@@ -62,7 +73,7 @@ void Test_Lock_Table() {
         threads_read[i].join();
     }
     profiler.End();
-    cout << "10 threads write time : " << profiler.Nanos() << " nanos." << endl;
+    cout << test_thread_num << " threads write time : " << profiler.Nanos() << " nanos." << endl;
 
     delete lockTable;
 }
