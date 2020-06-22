@@ -5,11 +5,12 @@ package dbx1000;
 service DBx1000Service {
   // for instance
   rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
-  rpc UnLockRemote(UnLockRemoteRequest) returns (UnLockRemoteReply) {}
   rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc BufferManagerInitDone(BufferManagerInitDoneRequest) returns (BufferManagerInitDonReply) {}
   rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
 
+  // for lock_server
+  rpc Invalid(InvalidRequest) returns (InvalidReply) {}
   rpc GetTestNum(GetTestNumRequest) returns (GetTestNumReply) {}
 }
 enum RpcLockMode {
@@ -18,22 +19,30 @@ enum RpcLockMode {
   S = 2;
   X = 3;
 }
+
+enum RpcRC {
+  RCOK = 0;
+  Commit = 1;
+  Abort = 2;
+  WAIT = 3;
+  ERROR = 4;
+  FINISH = 5;
+  TIME_OUT = 6;
+}
+
 message LockRemoteRequest{
   int32 instance_id = 1;
-  RpcLockMode req_mode = 2;
-  uint64 page_id = 3;
-  uint64 page_version = 4;
-  uint64 key = 5;
-  uint64 key_version = 6;
-  bytes page_buf = 7;
-  uint64 count = 8;
+  uint64 page_id = 2;
+  RpcLockMode req_mode = 3;
+  bytes page_buf = 4;
+  uint64 count = 5;
 }
 message LockRemoteReply{
-  bool rc = 1;
+  RpcRC rc = 1;
   bytes page_buf = 2;
   uint64 count = 3;
 }
-
+/*
 message UnLockRemoteRequest{
   int32 instance_id = 1;
   RpcLockMode req_mode = 2;
@@ -49,7 +58,7 @@ message UnLockRemoteReply{
   bytes page_buf = 2;
   uint64 count = 3;
 }
-
+*/
 message InstanceInitDoneRequest{
   int32 instance_id = 1;
 }
@@ -60,6 +69,17 @@ message BufferManagerInitDonReply{
   bool init_done = 1;
 }
 
+message InvalidRequest{
+  uint64 page_id = 1;
+  bytes page_buf = 2;
+  uint64 count = 3;
+}
+
+message InvalidReply{
+  RpcRC rc = 1;
+  bytes page_buf = 2;
+  uint64 count = 3;
+}
 message GetNextTsRequest{}
 message GetNextTsReply{
   uint64 ts = 1;

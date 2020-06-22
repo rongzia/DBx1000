@@ -7,6 +7,7 @@
 
 //#include "proto/dbx1000_service.grpc.pb.h"
 #include "common/lock_table/lock_table.h"
+#include "common/global.h"
 #include "proto/dbx1000_service.pb.h"
 
 namespace dbx1000 {
@@ -14,6 +15,8 @@ namespace dbx1000 {
     public:
         static RpcLockMode SerializeLockMode(LockMode);
         static LockMode DeSerializeLockMode(RpcLockMode);
+        static RpcRC SerializeRC(RC rc);
+        static RC DeSerializeRC(RpcRC rpcRc);
     };
 }
 

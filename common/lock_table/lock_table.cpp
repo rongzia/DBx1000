@@ -178,6 +178,7 @@ this->invalid_req = false;
             iter->second->cv.notify_all();
             return true;
         }
+        /*
         if (LockMode::S == iter->second->lock_mode) {
             // 仅非 LockMode::O 才需要更改锁表项状态
             if(LockMode::O != iter->second->lock_mode) {
@@ -188,6 +189,10 @@ this->invalid_req = false;
                 }
             }
             iter->second->cv.notify_all();
+            return true;
+        }
+         */
+        if (LockMode::S == iter->second->lock_mode) {
             return true;
         }
     }
@@ -201,9 +206,10 @@ this->invalid_req = false;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         bool rc = false;
         if(LockMode::X == mode) {
+            /*
             // Test_Lock_Table 中 30 个线程大概需要 1500 - 1600 微秒
 //            if(iter->second->cv.wait_for(lck, chrono::microseconds (1500), [iter](){ return (LockMode::P == iter->second->lock_mode); }) {
-            if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (LockMode::P == iter->second->lock_mode); })) {
+            if(iter->second->cv.wait_for(lck, chrono::milliseconds(1000), [iter](){ return (LockMode::P == iter->second->lock_mode); })) {
                 assert(iter->second->count == 0);
                 iter->second->lock_mode = LockMode::X;
                 iter->second->count++;
@@ -212,8 +218,15 @@ this->invalid_req = false;
                 assert(false);
                 rc = false;
             }
+            return rc; */
+            iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
+            assert(iter->second->count == 0);
+            iter->second->lock_mode = LockMode::X;
+            iter->second->count++;
+            rc = true;
             return rc;
         }
+        /*
         if(LockMode::S == mode) {
             if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (LockMode::X != iter->second->lock_mode); })) {
                 if(LockMode::O == iter->second->lock_mode) {
@@ -225,6 +238,16 @@ this->invalid_req = false;
                     iter->second->count++;
                     rc = true;
                 }
+            } else {
+                assert(false);
+                rc = false;
+            }
+            return rc;
+        }
+         */
+        if(LockMode::S == mode) {
+            if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return true; })) {
+                rc = true;
             } else {
                 assert(false);
                 rc = false;

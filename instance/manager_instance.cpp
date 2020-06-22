@@ -221,6 +221,19 @@ namespace dbx1000 {
         return true;
     }
 
+    bool ManagerInstance::Lock(uint64_t key, LockMode mode){
+        dbx1000::IndexItem indexItem;
+        this->index_->IndexGet(key, &indexItem);
+        bool rc = this->lock_table_->Lock(indexItem.page_id_, mode);
+        assert(true == rc);
+    }
+    bool ManagerInstance::UnLock(uint64_t key){
+        dbx1000::IndexItem indexItem;
+        this->index_->IndexGet(key, &indexItem);
+        bool rc = this->lock_table_->UnLock(indexItem.page_id_);
+        assert(true == rc);
+    }
+
 
 //    int ManagerInstance::instance_id() { return this->instance_id_; }
 //    void ManagerInstance::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }

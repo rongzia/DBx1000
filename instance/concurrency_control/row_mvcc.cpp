@@ -149,6 +149,7 @@ void Row_mvcc::CheckLatestRow(){
     assert(_write_history[idx].valid);
     assert(_write_history[idx].reserved);
 }
+/*
 bool Row_mvcc::RecycleALL() {
     while (!ATOM_CAS(this->recycle_latch, false, true))
         PAUSE
@@ -178,7 +179,7 @@ bool Row_mvcc::RecycleALL() {
     recycle_latch = false;
     return true;
 }
-
+*/
 RC Row_mvcc::access(txn_man * txn, TsType type, dbx1000::RowItem * row) {
 	RC rc = RC::RCOK;
 	ts_t ts = txn->get_ts();
@@ -287,6 +288,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
                 memcpy(res_row->row_, _latest_row->row_, this->size_);
             }
 			txn->cur_row = res_row;
+			txn->h_thd->manager_client_->Lock(this->key_);
 		}
 	} else if (type == W_REQ) {
 		rc = RC::RCOK;
@@ -312,6 +314,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 //		if(flush_req_){
 //            RecycleALL();
 //		}
+			txn->h_thd->manager_client_->UnLock(this->key_);
 		update_buffer(txn, W_REQ);
 //		recycle_latch = false;
 	} else if (type == XP_REQ) {
@@ -326,6 +329,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 //		if(flush_req_){
 //            RecycleALL();
 //		}
+			txn->h_thd->manager_client_->UnLock(this->key_);
 		update_buffer(txn, XP_REQ);
 //		recycle_latch = false;
 	} else 
@@ -402,7 +406,7 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                         /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
                         if(_latest_row == _write_history[i].row) {
                             if(_latest_row != nullptr) {
-                                assert(txn->h_thd->manager_client_->RowToDB(_latest_row));
+//                                assert(txn->h_thd->manager_client_->RowToDB(_latest_row));
                             }
                             _latest_row = nullptr;
                         }
@@ -537,6 +541,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			_requests[i].valid = false;
 			_requests[i].txn->cur_row = res_row;
 			_requests[i].txn->ts_ready = true;
+			txn->h_thd->manager_client_->Lock(this->key_);
 		}
 	}
 }

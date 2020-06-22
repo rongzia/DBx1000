@@ -18,36 +18,23 @@ namespace dbx1000 {
 
 //        std::cout << "BufferManagerServer::LockRemote, instance_id:" << request->instance_id() << ", page_id:" << request->page_id()
 //        << ", mode:" << a << ", count:" << request->count() << std::endl;
-        size_t size = request->count();
+        if(request->count() > 0) { assert(MY_PAGE_SIZE == request->count()); }
+        char page_buf[MY_PAGE_SIZE];
+        RC rc = manager_server_->instances()[request->instance_id()].buffer_manager_client->Invalid(request->page_id(), page_buf, request->count());
 
-
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        dbx1000::IndexItem indexItem;
-        manager_server_->index()->IndexGet(request->key(), &indexItem);
-        bool rc = manager_server_->lock_table()->Lock(indexItem.page_id_, DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()));
-        assert(true == rc);
-        manager_server_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-        page->Deserialize();
-        // TODO 校验row长度
-//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
-        uint64_t key_version;
-        // TODO 72 要修改
-        memcpy(&key_version, &page->page_buf()[indexItem.page_location_ + 72], sizeof(uint64_t));
-
-        if(page->version() > request->page_version() && key_version > request->key_version()) {
-            assert(request->count() == MY_PAGE_SIZE);
-            response->set_page_buf(page->page_buf(), request->count());
-            response->set_count(MY_PAGE_SIZE);
-        } else {
-            response->set_count(0);
+        if(RC::TIME_OUT  == rc) {
+            response->set_rc(RpcRC::TIME_OUT);
         }
-        if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::X) {
-            manager_server_->test_num++;
+        assert(RC::RCOK == rc);
+        response->set_rc(RpcRC::RCOK);
+        if(response->count() > 0) {
+            response->set_page_buf(page_buf, response->count());
         }
 
         return ::grpc::Status::OK;
     }
 
+    /*
     ::grpc::Status BufferManagerServer::UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
 
         if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::S){
@@ -64,7 +51,7 @@ namespace dbx1000 {
             assert(manager_server_->lock_table()->UnLock(request->page_id()));
             return ::grpc::Status::OK;
         }
-    }
+    }*/
 
     ::grpc::Status BufferManagerServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
             , ::dbx1000::InstanceInitDoneReply* response) {
@@ -100,7 +87,34 @@ namespace dbx1000 {
 
 
 
+
+
+
+
     BufferManagerClient::BufferManagerClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
     )) {}
+
+    RC BufferManagerClient::Invalid(uint64_t page_id, char *page_buf, size_t count){
+        InvalidRequest request;
+        ::grpc::ClientContext context;
+        InvalidReply reply;
+
+        request.set_page_id(page_id);
+        request.set_count(count);
+
+        ::grpc::Status status = stub_->Invalid(&context, request, &reply);
+        assert(status.ok());
+
+        if(RC::TIME_OUT == DBx1000ServiceHelper::DeSerializeRC(reply.rc())) {
+            return RC::TIME_OUT;
+        }
+        assert(RC::RCOK == DBx1000ServiceHelper::DeSerializeRC(reply.rc()));
+        if(count > 0) {
+            assert(MY_PAGE_SIZE == count);
+            assert(reply.count() == count);
+            memcpy(page_buf, reply.page_buf().data(), count);
+        }
+        return RC::RCOK ;
+    }
 }

@@ -9,6 +9,10 @@
 #include "config.h"
 
 namespace dbx1000 {
+    ::grpc::Status InstanceServer::Invalid(::grpc::ServerContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response) {
+
+        return ::grpc::Status::OK;
+    }
 
     void InstanceServer::Start(const std::string& host){
         grpc::ServerBuilder builder;
@@ -22,33 +26,39 @@ namespace dbx1000 {
 
 
 
+
+
+
     InstanceClient::InstanceClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
     )) {}
 
-    bool InstanceClient::LockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char *page_buf, size_t count) {
+    RC InstanceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
         dbx1000::LockRemoteRequest request;
         ::grpc::ClientContext context;
         dbx1000::LockRemoteReply reply;
 
         request.set_instance_id(instance_id);
         request.set_page_id(page_id);
-        request.set_page_version(page_version);
-        request.set_key(key);
-        request.set_key_version(key_version);
+        request.set_req_mode(DBx1000ServiceHelper::SerializeLockMode(req_mode));
+        request.set_count(count);
 
         ::grpc::Status status = stub_->LockRemote(&context, request, &reply);
         assert(status.ok());
 
-        assert(reply.rc());
+        if(RC::TIME_OUT == DBx1000ServiceHelper::DeSerializeRC(reply.rc())) {
+            return RC::TIME_OUT;
+        }
+        assert(RC::RCOK == DBx1000ServiceHelper::DeSerializeRC(reply.rc()));
         // 要是 server 版本比当前新，返回最新的版本
-        if(reply.count() > 0) {
-            assert(reply.count() == MY_PAGE_SIZE);
-            assert(count == MY_PAGE_SIZE);
+        if(count > 0) {
+            assert(MY_PAGE_SIZE == count);
+            assert(reply.count() == count);
             memcpy(page_buf, reply.page_buf().data(), count);
         }
-        return reply.rc();
+        return RC::RCOK ;
     }
+    /*
     bool InstanceClient::UnLockRemote(int instance_id, uint64_t page_id, uint64_t page_version, uint64_t key, uint64_t key_version, char* page_buf, size_t count) {
         dbx1000::UnLockRemoteRequest request;
         ::grpc::ClientContext context;
@@ -79,7 +89,7 @@ namespace dbx1000 {
             memcpy(page_buf, reply.page_buf().data(), MY_PAGE_SIZE);
         }
         return reply.rc();
-    }
+    }*/
 
     void InstanceClient::InstanceInitDone(int instance_id) {
         dbx1000::InstanceInitDoneRequest request;

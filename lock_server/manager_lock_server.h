@@ -60,6 +60,7 @@ namespace dbx1000 {
         int buffer_manager_id_;
         std::map<int, std::string> hosts_map_;
         InstanceInfo* instances_;
+        std::map<uint64_t, int > lock_in_instance_;
 
         std::atomic<uint64_t> timestamp_;
 

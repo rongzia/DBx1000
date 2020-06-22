@@ -20,10 +20,10 @@ namespace dbx1000 {
 
 static const char* DBx1000Service_method_names[] = {
   "/dbx1000.DBx1000Service/LockRemote",
-  "/dbx1000.DBx1000Service/UnLockRemote",
   "/dbx1000.DBx1000Service/InstanceInitDone",
   "/dbx1000.DBx1000Service/BufferManagerInitDone",
   "/dbx1000.DBx1000Service/GetNextTs",
+  "/dbx1000.DBx1000Service/Invalid",
   "/dbx1000.DBx1000Service/GetTestNum",
 };
 
@@ -35,10 +35,10 @@ std::unique_ptr< DBx1000Service::Stub> DBx1000Service::NewStub(const std::shared
 
 DBx1000Service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel), rpcmethod_LockRemote_(DBx1000Service_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_UnLockRemote_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_InstanceInitDone_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_BufferManagerInitDone_(DBx1000Service_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_GetNextTs_(DBx1000Service_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_InstanceInitDone_(DBx1000Service_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_BufferManagerInitDone_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetNextTs_(DBx1000Service_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Invalid_(DBx1000Service_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetTestNum_(DBx1000Service_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
@@ -68,34 +68,6 @@ void DBx1000Service::Stub::experimental_async::LockRemote(::grpc::ClientContext*
 
 ::grpc::ClientAsyncResponseReader< ::dbx1000::LockRemoteReply>* DBx1000Service::Stub::PrepareAsyncLockRemoteRaw(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest& request, ::grpc::CompletionQueue* cq) {
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::LockRemoteReply>::Create(channel_.get(), cq, rpcmethod_LockRemote_, context, request, false);
-}
-
-::grpc::Status DBx1000Service::Stub::UnLockRemote(::grpc::ClientContext* context, const ::dbx1000::UnLockRemoteRequest& request, ::dbx1000::UnLockRemoteReply* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_UnLockRemote_, context, request, response);
-}
-
-void DBx1000Service::Stub::experimental_async::UnLockRemote(::grpc::ClientContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_UnLockRemote_, context, request, response, std::move(f));
-}
-
-void DBx1000Service::Stub::experimental_async::UnLockRemote(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::UnLockRemoteReply* response, std::function<void(::grpc::Status)> f) {
-  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_UnLockRemote_, context, request, response, std::move(f));
-}
-
-void DBx1000Service::Stub::experimental_async::UnLockRemote(::grpc::ClientContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_UnLockRemote_, context, request, response, reactor);
-}
-
-void DBx1000Service::Stub::experimental_async::UnLockRemote(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::UnLockRemoteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
-  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_UnLockRemote_, context, request, response, reactor);
-}
-
-::grpc::ClientAsyncResponseReader< ::dbx1000::UnLockRemoteReply>* DBx1000Service::Stub::AsyncUnLockRemoteRaw(::grpc::ClientContext* context, const ::dbx1000::UnLockRemoteRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::UnLockRemoteReply>::Create(channel_.get(), cq, rpcmethod_UnLockRemote_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::dbx1000::UnLockRemoteReply>* DBx1000Service::Stub::PrepareAsyncUnLockRemoteRaw(::grpc::ClientContext* context, const ::dbx1000::UnLockRemoteRequest& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::UnLockRemoteReply>::Create(channel_.get(), cq, rpcmethod_UnLockRemote_, context, request, false);
 }
 
 ::grpc::Status DBx1000Service::Stub::InstanceInitDone(::grpc::ClientContext* context, const ::dbx1000::InstanceInitDoneRequest& request, ::dbx1000::InstanceInitDoneReply* response) {
@@ -182,6 +154,34 @@ void DBx1000Service::Stub::experimental_async::GetNextTs(::grpc::ClientContext* 
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::GetNextTsReply>::Create(channel_.get(), cq, rpcmethod_GetNextTs_, context, request, false);
 }
 
+::grpc::Status DBx1000Service::Stub::Invalid(::grpc::ClientContext* context, const ::dbx1000::InvalidRequest& request, ::dbx1000::InvalidReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Invalid_, context, request, response);
+}
+
+void DBx1000Service::Stub::experimental_async::Invalid(::grpc::ClientContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Invalid_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::Invalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InvalidReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_Invalid_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::Invalid(::grpc::ClientContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Invalid_, context, request, response, reactor);
+}
+
+void DBx1000Service::Stub::experimental_async::Invalid(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::InvalidReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_Invalid_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::InvalidReply>* DBx1000Service::Stub::AsyncInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::InvalidRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::InvalidReply>::Create(channel_.get(), cq, rpcmethod_Invalid_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::InvalidReply>* DBx1000Service::Stub::PrepareAsyncInvalidRaw(::grpc::ClientContext* context, const ::dbx1000::InvalidRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::InvalidReply>::Create(channel_.get(), cq, rpcmethod_Invalid_, context, request, false);
+}
+
 ::grpc::Status DBx1000Service::Stub::GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::dbx1000::GetTestNumReply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetTestNum_, context, request, response);
 }
@@ -219,23 +219,23 @@ DBx1000Service::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::UnLockRemoteRequest, ::dbx1000::UnLockRemoteReply>(
-          std::mem_fn(&DBx1000Service::Service::UnLockRemote), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[2],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InstanceInitDoneRequest, ::dbx1000::InstanceInitDoneReply>(
           std::mem_fn(&DBx1000Service::Service::InstanceInitDone), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[3],
+      DBx1000Service_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::BufferManagerInitDoneRequest, ::dbx1000::BufferManagerInitDonReply>(
           std::mem_fn(&DBx1000Service::Service::BufferManagerInitDone), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      DBx1000Service_method_names[4],
+      DBx1000Service_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>(
           std::mem_fn(&DBx1000Service::Service::GetNextTs), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DBx1000Service_method_names[4],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InvalidRequest, ::dbx1000::InvalidReply>(
+          std::mem_fn(&DBx1000Service::Service::Invalid), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
@@ -247,13 +247,6 @@ DBx1000Service::Service::~Service() {
 }
 
 ::grpc::Status DBx1000Service::Service::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
-  (void) context;
-  (void) request;
-  (void) response;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status DBx1000Service::Service::UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
   (void) context;
   (void) request;
   (void) response;
@@ -275,6 +268,13 @@ DBx1000Service::Service::~Service() {
 }
 
 ::grpc::Status DBx1000Service::Service::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DBx1000Service::Service::Invalid(::grpc::ServerContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response) {
   (void) context;
   (void) request;
   (void) response;
