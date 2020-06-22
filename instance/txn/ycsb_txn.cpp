@@ -1,12 +1,19 @@
 #include <cstring>
+#include <set>
+#include <vector>
+#include <thread>
 #include "ycsb_txn.h"
 
+#include "common/buffer/buffer.h"
+#include "common/index/index.h"
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb_wl.h"
+#include "common/myhelper.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/thread.h"
+#include "rpc_handler/instance_handler.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -15,6 +22,8 @@ void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 RC ycsb_txn_man::run_txn(base_query * query) {
 	RC rc;
+	rc = CheckWriteLockSet(query);
+	if(rc == RC::Abort) { return rc; }
 	ycsb_query * m_query = (ycsb_query *) query;
 	/* ycsb_wl * wl = (ycsb_wl *) h_wl;
 	itemid_t * m_item = NULL; */
@@ -86,5 +95,49 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 final:
 	rc = finish(rc);
 	return rc;
+}
+
+RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
+	ycsb_query * m_query = (ycsb_query *) query;
+	std::set<uint64_t> write_page_set;
+    for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
+		ycsb_request * req = &m_query->requests[rid];
+        dbx1000::IndexItem indexItem;
+        this->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id(), &indexItem);
+        if(req->rtype == WR){
+            write_page_set.insert(indexItem.page_id_);
+        }
+    }
+
+    auto has_invalid_req = [&](){
+        for(auto iter : write_page_set) {
+            if(this->h_thd->manager_client_->lock_table()->lock_table()[iter]->invalid_req){ return true; }
+        }
+        return false;
+    };
+    while(has_invalid_req()) { PAUSE }
+
+/*
+    std::vector<thread> lock_remote_thread;
+    for(auto iter : write_page_set) {
+        if (this->h_thd->manager_client_->lock_table()->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+            lock_remote_thread.emplace_back(thread([&]() {
+                                                       char page_buf[MY_PAGE_SIZE];
+                                                       RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
+                                                               this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf
+                                                               , MY_PAGE_SIZE);
+                                                       assert(rc == RC::RCOK);
+                                                       this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
+                                                   }
+            ));
+        }
+    }
+
+    for(auto &iter : lock_remote_thread){
+        iter.join();
+    }*/
+    RC rc = RC::RCOK;
+
+    return rc;
 }
 

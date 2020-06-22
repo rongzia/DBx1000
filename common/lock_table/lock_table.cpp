@@ -16,7 +16,8 @@ namespace dbx1000 {
         this->lock_mode = mode;
         this->count = count;
 //        this->lock.clear();
-this->invalid_req = false;
+        this->invalid_req = false;
+        this->lock_remoting = false;
     }
     LockTable::~LockTable() {
         for(auto &iter : lock_table_){
@@ -254,6 +255,31 @@ this->invalid_req = false;
             }
             return rc;
         }
+    }
+
+    bool LockTable::AddThread(uint64_t page_id, uint64_t thd_id){
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            assert(false);
+            return false;
+        }
+        iter->second->mtx.lock();
+        iter->second->thread_set.insert(thd_id);
+        iter->second->mtx.unlock();
+        return true;
+    }
+    bool LockTable::RemoveThread(uint64_t page_id, uint64_t thd_id){
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) {
+            assert(false);
+            return false;
+        }
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        if(iter->second->thread_set.find(thd_id) != iter->second->thread_set.end()){
+            iter->second->thread_set.erase(thd_id);
+        }
+        iter->second->cv.notify_all();
+        return true;
     }
 
     char LockTable::LockModeToChar(LockMode mode) {

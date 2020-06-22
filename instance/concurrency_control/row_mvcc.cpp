@@ -268,15 +268,17 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
             }
 		}
 	} else if (type == P_REQ) {
-//    while (!ATOM_CAS(this->recycle_latch, false, true))
-//        PAUSE
-
 		if (ts < _latest_wts || ts < _max_served_rts || (_exists_prewrite && _prewrite_ts > ts))
 			rc = RC::Abort;
 		else if (_exists_prewrite) {  // _prewrite_ts < ts
 			rc = RC::WAIT;
 			buffer_req(P_REQ, txn, false);
 			txn->ts_ready = false;
+//            {
+//                dbx1000::IndexItem indexItem;
+//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
+//                txn->h_thd->manager_client_->lock_table()->AddThread(indexItem.page_id_, txn->h_thd->get_thd_id());
+//            }
 		} else {
 			rc = RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
@@ -288,7 +290,6 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
                 memcpy(res_row->row_, _latest_row->row_, this->size_);
             }
 			txn->cur_row = res_row;
-			txn->h_thd->manager_client_->Lock(this->key_);
 		}
 	} else if (type == W_REQ) {
 		rc = RC::RCOK;
@@ -301,6 +302,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
 		_latest_row = row;
+		txn->h_thd->manager_client_->RowToDB(_latest_row);
 //		assert(row);        // test
 //		assert(row->row_);  // test
         {
@@ -311,12 +313,12 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
         }
 		_exists_prewrite = false;
 		_num_versions ++;
-//		if(flush_req_){
-//            RecycleALL();
-//		}
-			txn->h_thd->manager_client_->UnLock(this->key_);
+//            {
+//                dbx1000::IndexItem indexItem;
+//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
+//                txn->h_thd->manager_client_->lock_table()->RemoveThread(indexItem.page_id_, txn->h_thd->get_thd_id());
+//            }
 		update_buffer(txn, W_REQ);
-//		recycle_latch = false;
 	} else if (type == XP_REQ) {
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = false;
@@ -326,12 +328,12 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 //            _write_history[_prewrite_his_id].row = nullptr; // test
 //        } // test
 		_exists_prewrite = false;
-//		if(flush_req_){
-//            RecycleALL();
-//		}
-			txn->h_thd->manager_client_->UnLock(this->key_);
+//            {
+//                dbx1000::IndexItem indexItem;
+//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
+//                txn->h_thd->manager_client_->lock_table()->RemoveThread(indexItem.page_id_, txn->h_thd->get_thd_id());
+//            }
 		update_buffer(txn, XP_REQ);
-//		recycle_latch = false;
 	} else 
 		assert(false);
 	profiler.End();
@@ -541,7 +543,6 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			_requests[i].valid = false;
 			_requests[i].txn->cur_row = res_row;
 			_requests[i].txn->ts_ready = true;
-			txn->h_thd->manager_client_->Lock(this->key_);
 		}
 	}
 }

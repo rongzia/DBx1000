@@ -9,6 +9,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <set>
 
 namespace dbx1000 {
     enum class LockMode{
@@ -28,6 +29,8 @@ namespace dbx1000 {
         std::mutex mtx;
         std::condition_variable cv;
         bool invalid_req;
+        bool lock_remoting;
+        std::set<uint64_t> thread_set;
     };
 
     class ManagerInstance;
@@ -39,6 +42,8 @@ namespace dbx1000 {
         void Init(uint64_t start_page, uint64_t end_page, int instance_id);
         bool Lock(uint64_t page_id, LockMode mode);
         bool UnLock(uint64_t page_id);
+        bool AddThread(uint64_t page_id, uint64_t thd_id);
+        bool RemoveThread(uint64_t page_id, uint64_t thd_id);
 
 //        bool CanRead(std::unordered_map<uint64_t, LockNode*>::iterator iter);
 //        bool CanWrite(std::unordered_map<uint64_t, LockNode*>::iterator iter);
