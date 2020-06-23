@@ -146,6 +146,7 @@ void Check_DB() {
                         index2->IndexGet(key, &indexItem);
                         dbx1000::FileIO::ReadPage(indexItem.page_id_, page2->page_buf());
                         page2->Deserialize();
+                        assert(page2->page_id() == indexItem.page_id_);
 //                        assert((((MY_PAGE_SIZE - 64) / row_size * row_size) + 64) ==
 //                               page2->used_size());  /// 检查 use_size
                         memcpy(row, &page2->page_buf()[indexItem.page_location_], row_size);
@@ -153,7 +154,6 @@ void Check_DB() {
                         uint64_t version;
                         memcpy(&temp_key, &row[0], sizeof(uint64_t));
                         memcpy(&version, &row[row_size - 8], sizeof(uint64_t));
-                        if(key == 6293) { cout << "temp_key : " <<temp_key  << endl;}
                         assert(key == temp_key);
                         assert(version == 1);
                         for (int i = 8; i < 72; i++) { assert(0 == row[i]); }

@@ -11,10 +11,12 @@
 #include "config.h"
 
 namespace dbx1000 {
-    LockNode::LockNode(int instanceid, bool val, LockMode mode, int count) {
+    LockNode::LockNode(int instanceid) {
         this->instance_id = instanceid;
-        this->lock_mode = mode;
-        this->count = count;
+//        this->lock_mode = LockMode::P;
+        this->lock_mode = LockMode::O;
+        this->count = 0;
+        this->thread_count = ATOMIC_VAR_INIT(0);
         this->invalid_req = false;
         this->lock_remoting = false;
     }
@@ -27,7 +29,7 @@ namespace dbx1000 {
 
     void LockTable::Init(uint64_t start_page, uint64_t end_page, int instance_id) {
         for (uint64_t page_id = start_page; page_id < end_page; page_id++) {
-            LockNode* lock_node = new LockNode(instance_id, true, LockMode::P);
+            LockNode* lock_node = new LockNode(instance_id);
             lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
         }
     }
@@ -63,14 +65,10 @@ namespace dbx1000 {
 
 
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) {
-//            assert(false);
-//            return false;
-//        }
-        LockNode *lockNode = lock_table_[page_id];
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) { assert(false); }
 
-        std::unique_lock<std::mutex> lck(lockNode->mtx);
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
         bool rc = false;
         if(LockMode::X == mode) {
             /*
@@ -86,10 +84,10 @@ namespace dbx1000 {
                 rc = false;
             }
             return rc; */
-            lockNode->cv.wait(lck, [lockNode](){ return (LockMode::P == lockNode->lock_mode);});
-            assert(lockNode->count == 0);
-            lockNode->lock_mode = LockMode::X;
-            lockNode->count++;
+            iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
+            assert(iter->second->count == 0);
+            iter->second->lock_mode = LockMode::X;
+            iter->second->count++;
             rc = true;
             return rc;
         }
@@ -113,30 +111,32 @@ namespace dbx1000 {
         }
          */
         if(LockMode::S == mode) {
-            if(lockNode->cv.wait_for(lck, chrono::milliseconds(10), [lockNode](){ return true; })) {
+            /*
+            if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return true; })) {
                 rc = true;
             } else {
                 assert(false);
                 rc = false;
             }
-            return rc;
+            return rc;*/
+            iter->second->cv.wait(lck, [iter](){ return (LockMode::X != iter->second->lock_mode); });
+//            iter->second->cv.wait(lck, [iter](){ return true; });
+            rc = true;
+            return true;
         }
     }
 
 
     bool LockTable::UnLock(uint64_t page_id) {
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) {
-//            assert(false);
-//            return false;
-//        }
-        LockNode *lockNode = lock_table_[page_id];
-        std::unique_lock<std::mutex> lck(lockNode->mtx);
-        if (LockMode::X == lockNode->lock_mode) {
-            assert(lockNode->count == 1);
-            lockNode->count--;
-            lockNode->lock_mode = LockMode::P;
-            lockNode->cv.notify_all();
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) { assert(false); }
+
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        if (LockMode::X == iter->second->lock_mode) {
+            assert(iter->second->count == 1);
+            iter->second->count--;
+            iter->second->lock_mode = LockMode::P;
+            iter->second->cv.notify_all();
             return true;
         }
         /*
@@ -153,54 +153,43 @@ namespace dbx1000 {
             return true;
         }
          */
-        if (LockMode::S == lockNode->lock_mode) {
+        if (LockMode::S == iter->second->lock_mode) {
             return true;
         }
-        if (LockMode::P == lockNode->lock_mode) {
+        if (LockMode::P == iter->second->lock_mode) {
             return true;
         }
-        if (LockMode::O == lockNode->lock_mode) {
+        if (LockMode::O == iter->second->lock_mode) {
+            assert(iter->second->count == 0);
             return true;
         }
         assert(false);
     }
 
     bool LockTable::AddThread(uint64_t page_id, uint64_t thd_id){
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) {
-//            assert(false);
-//            return false;
-//        }
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) { assert(false); }
+
         assert(lock_table_[page_id]->lock_mode != LockMode::O);
-        lock_table_[page_id]->thread_count++;
+        lock_table_[page_id]->thread_count.fetch_add(1);
         return true;
     }
     bool LockTable::RemoveThread(uint64_t page_id, uint64_t thd_id){
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) {
-//            assert(false);
-//            return false;
-//        }
-        LockNode *lockNode = lock_table_[page_id];
-        assert(lockNode->lock_mode != LockMode::O);
-        std::unique_lock<std::mutex> lck(lockNode->mtx);
-//        if(lockNode->thread_set.find(thd_id) != lockNode->thread_set.end()){
-//            lockNode->thread_set.erase(thd_id);
-//        }
-        lockNode->thread_count--;
-        assert(lockNode->thread_count >= 0);
-//        std::notify_all_at_thread_exit(lockNode->cv, std::move(lck));
-        lockNode->cv.notify_all();
+        auto iter = lock_table_.find(page_id);
+        if (lock_table_.end() == iter) { assert(false); }
+
+        assert(iter->second->lock_mode != LockMode::O);
+//        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        assert(iter->second->thread_count.fetch_sub(1) > 0);
+//        std::notify_all_at_thread_exit(iter->second->cv, std::move(lck));
+        iter->second->cv.notify_all();
         return true;
     }
 
 
     bool LockTable::LockInvalid(uint64_t page_id, char *page_buf, size_t count){
         auto iter = lock_table_.find(page_id);
-        if (lock_table_.end() == iter) {
-            assert(false);
-            return false;
-        }
+        if (lock_table_.end() == iter) { assert(false); }
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count == 0); });
@@ -228,6 +217,4 @@ namespace dbx1000 {
             cout << "page_id : " << iter.first << ", lock mode : " << LockModeToChar(iter.second->lock_mode) << endl;
         }
     }
-
-//    std::unordered_map<uint64_t, LockNode*> LockTable::lock_table() { return this->lock_table_; }
 }

@@ -165,7 +165,7 @@ namespace dbx1000 {
         if (type == XP) {
             mvcc_map_[key]->access(txn, XP_REQ, row);
         } else if (type == WR) {
-            assert (type == WR && row != NULL);
+            assert (type == WR && row != nullptr);
             mvcc_map_[key]->access(txn, W_REQ, row);
             assert(rc == RC::RCOK);
         }
@@ -187,13 +187,14 @@ namespace dbx1000 {
     }
 
     bool ManagerInstance::RowFromDB(RowItem* row) {
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+        auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
         this->index_->IndexGet(row->key_, &indexItem);
         bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::S);
-        assert(true == rc);
-        assert(0 == this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
+        assert(rc);
+        assert(0 == this->buffer_->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
         page->Deserialize();
+        assert(page->page_id() == indexItem.page_id_);
 
 //        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
         memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
@@ -203,15 +204,16 @@ namespace dbx1000 {
             memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
             assert(row->key_ == temp_key);
         }
-        assert(true == this->lock_table_->UnLock(indexItem.page_id_));
+        assert(this->lock_table_->UnLock(indexItem.page_id_));
         return true;
     }
     bool ManagerInstance::RowToDB(RowItem *row) {
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+        auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
         this->index_->IndexGet(row->key_, &indexItem);
+        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::O);
         bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::X);
-        assert(true == rc);
+        assert(rc);
         this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         page->Deserialize();
 
@@ -224,7 +226,7 @@ namespace dbx1000 {
 //        }
         memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
         this->buffer_->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
-        assert(true == this->lock_table_->UnLock(indexItem.page_id_));
+        assert(this->lock_table_->UnLock(indexItem.page_id_));
         return true;
     }
 
@@ -232,13 +234,13 @@ namespace dbx1000 {
         dbx1000::IndexItem indexItem;
         this->index_->IndexGet(key, &indexItem);
         bool rc = this->lock_table_->Lock(indexItem.page_id_, mode);
-        assert(true == rc);
+        assert(rc);
     }
     bool ManagerInstance::UnLock(uint64_t key){
         dbx1000::IndexItem indexItem;
         this->index_->IndexGet(key, &indexItem);
         bool rc = this->lock_table_->UnLock(indexItem.page_id_);
-        assert(true == rc);
+        assert(rc);
     }
 
 

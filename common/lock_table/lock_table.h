@@ -20,15 +20,15 @@ namespace dbx1000 {
     };
 
     struct LockNode {
-        LockNode(int instanceid, bool val = false, LockMode mode = LockMode::O, int count = 0);
+        LockNode(int instanceid);
         int instance_id;
-        int count;
         LockMode lock_mode;
-        std::mutex mtx;
-        std::condition_variable cv;
+        int count;                      // 正在获取该 locknode 的调用数
+        std::atomic_int thread_count;   // 本地对该 locknode 有写意向的线程数
         bool invalid_req;
         bool lock_remoting;
-        std::atomic_int thread_count;
+        std::mutex mtx;
+        std::condition_variable cv;
     };
 
     class ManagerInstance;
@@ -43,9 +43,6 @@ namespace dbx1000 {
         bool AddThread(uint64_t page_id, uint64_t thd_id);
         bool RemoveThread(uint64_t page_id, uint64_t thd_id);
 
-//        bool CanRead(std::unordered_map<uint64_t, LockNode*>::iterator iter);
-//        bool CanWrite(std::unordered_map<uint64_t, LockNode*>::iterator iter);
-
         bool LockInvalid(uint64_t page_id, char *buf, size_t count);
 
         char LockModeToChar(LockMode mode);
@@ -54,12 +51,13 @@ namespace dbx1000 {
 
 
 
-        std::unordered_map<uint64_t, LockNode*> lock_table_;
         /// getter and setter
+        std::unordered_map<uint64_t, LockNode*> &lock_table()        { return this->lock_table_; }
         ManagerInstance* manager_instance()                         { return this->manager_instance_; }
         void set_manager_instance(ManagerInstance* managerInstance) {this->manager_instance_ = managerInstance; }
 
     private:
+        std::unordered_map<uint64_t, LockNode*> lock_table_;
         ManagerInstance* manager_instance_;
     };
 }
