@@ -131,17 +131,14 @@ profiler.Start();
     dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
     std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
-        if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O) {
-            lockTable->AddThread(iter, this->get_thd_id());
-        }
-        else if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+        if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
             bool flag = ATOM_CAS(lockTable->lock_table()[iter]->lock_remoting, false, true);
             if(flag) {
                 lock_remote_thread.emplace_back(thread([&]() {
                     char page_buf[MY_PAGE_SIZE];
-                    RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
-                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
-                    assert(rc == RC::RCOK);
+//                    RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
+//                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
+//                    assert(rc == RC::RCOK);
                     lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
 //                                                       this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
                     lockTable->lock_table()[iter]->lock_remoting = false;
@@ -155,6 +152,13 @@ profiler.Start();
 
     for(auto &iter : lock_remote_thread){
         iter.join();
+    }
+    for(auto iter : write_page_set) {
+        lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
+        assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::P);
+        if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O) {
+            lockTable->AddThread(iter, this->get_thd_id());
+        }
     }
     profiler.End();
     this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->debug6 += profiler.Nanos();

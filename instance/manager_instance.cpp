@@ -192,6 +192,10 @@ namespace dbx1000 {
         this->index_->IndexGet(row->key_, &indexItem);
         bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::S);
         assert(rc);
+        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::O
+                || this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::S);
+        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::P
+        && this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::X);
         assert(0 == this->buffer_->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
         page->Deserialize();
         assert(page->page_id() == indexItem.page_id_);

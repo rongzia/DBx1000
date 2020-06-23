@@ -85,10 +85,12 @@ namespace dbx1000 {
             }
             return rc; */
             iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
-            assert(iter->second->count == 0);
             iter->second->lock_mode = LockMode::X;
-            iter->second->count++;
+                assert(iter->second->count == 0);
+                iter->second->count++;
+//            assert(0 == iter->second->count.fetch_add(1));
             rc = true;
+            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
             return rc;
         }
         /*
@@ -119,11 +121,26 @@ namespace dbx1000 {
                 rc = false;
             }
             return rc;*/
-            iter->second->cv.wait(lck, [iter](){ return (LockMode::X != iter->second->lock_mode); });
+
 //            iter->second->cv.wait(lck, [iter](){ return true; });
+            iter->second->cv.wait(lck, [iter](){ return (LockMode::X != iter->second->lock_mode); });
+            if(LockMode::O == iter->second->lock_mode) { }
+            else if(LockMode::P == iter->second->lock_mode) {
+                assert(iter->second->count == 0);
+                iter->second->count++;
+//                assert(0 == iter->second->count.fetch_add(1));
+                iter->second->lock_mode = LockMode::S;
+            } else if(LockMode::S == iter->second->lock_mode) {
+                assert(iter->second->count > 0);
+                iter->second->count++;
+//                assert(0 < iter->second->count.fetch_add(1));
+                assert(iter->second->lock_mode == LockMode::S);
+            } else { assert(false); }
+            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
             rc = true;
             return true;
         }
+        if(mode == LockMode::P || mode == LockMode::O) { assert(false); }
     }
 
 
@@ -133,35 +150,37 @@ namespace dbx1000 {
 
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         if (LockMode::X == iter->second->lock_mode) {
-            assert(iter->second->count == 1);
+            assert(iter->second->count > 0);
             iter->second->count--;
+//            assert(1 == iter->second->count.fetch_sub(1));
             iter->second->lock_mode = LockMode::P;
+        cout << "lock : " << LockModeToChar(LockMode::X) << ", page id : " << page_id << endl;
             iter->second->cv.notify_all();
             return true;
         }
-        /*
+        /* */
         if (LockMode::S == iter->second->lock_mode) {
             // 仅非 LockMode::O 才需要更改锁表项状态
-            if(LockMode::O != iter->second->lock_mode) {
-                assert(iter->second->count > 0);
-                iter->second->count--;
-                if (iter->second->count == 0) {
-                    iter->second->lock_mode = LockMode::P;
-                }
+            assert(iter->second->count >= 0);
+            iter->second->count--;
+//            assert(0 < iter->second->count.fetch_sub(1));
+            if (0 == iter->second->count) {
+                iter->second->lock_mode = LockMode::P;
             }
+        cout << "unlock : " << LockModeToChar(LockMode::S) << ", page id : " << page_id << endl;
             iter->second->cv.notify_all();
-            return true;
-        }
-         */
-        if (LockMode::S == iter->second->lock_mode) {
-            return true;
-        }
-        if (LockMode::P == iter->second->lock_mode) {
             return true;
         }
         if (LockMode::O == iter->second->lock_mode) {
-            assert(iter->second->count == 0);
+            assert(iter->second->count== 0);
+        cout << "unlock : " << LockModeToChar(LockMode::O) << ", page id : " << page_id << endl;
             return true;
+        }
+        if (LockMode::P == iter->second->lock_mode) {
+        cout << "unlock : " << LockModeToChar(LockMode::P) << ", page id : " << page_id << ", count : " << iter->second->count << endl;
+            assert(iter->second->count == 0);
+            assert(false);
+//            return true;
         }
         assert(false);
     }

@@ -23,6 +23,7 @@ namespace dbx1000 {
         LockNode(int instanceid);
         int instance_id;
         LockMode lock_mode;
+//        std::atomic_int count;                      // 正在获取该 locknode 的调用数
         int count;                      // 正在获取该 locknode 的调用数
         std::atomic_int thread_count;   // 本地对该 locknode 有写意向的线程数
         bool invalid_req;
