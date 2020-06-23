@@ -28,9 +28,15 @@
 
 
 namespace dbx1000 {
+    LockServerNode::LockServerNode(){
+        write_ins_id = -1;
+    }
+
+
+
     ManagerServer::~ManagerServer() {
 //        delete buffer_;
-        delete lock_table_;
+//        delete lock_table_;
     }
 
     ManagerServer::ManagerServer() {
@@ -50,19 +56,47 @@ namespace dbx1000 {
 
 
         this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
-        this->lock_table_ = new LockTable();
+//        this->lock_table_ = new LockTable();
 
-        lock_table_->Init(0, table_space_->GetLastPageId() + 1, -1);
+//        lock_table_->Init(0, table_space_->GetLastPageId() + 1, -1);
 
-        for(auto iter : lock_table_->lock_table() ){ iter.second->lock_mode = LockMode::P; }
+//        for(auto iter : lock_table_->lock_table() ){ iter.second->lock_mode = LockMode::P; }
         for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id ++){
             char page_buf[MY_PAGE_SIZE];
             buffer_->BufferGet(page_id, page_buf, MY_PAGE_SIZE);
         }
+
+        for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++){
+            lock_server_table_.insert(std::pair<uint64_t , LockServerNode*>(page_id, new LockServerNode()));
+        }
         test_num = 0;
     }
 
+    RC ManagerServer::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
+        auto iter = lock_server_table_.find(page_id);
+        if (lock_server_table_.end() == iter) {
+            assert(false);
+            return RC::Abort;
+        }
+        RC rc = RC::RCOK;
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        if(iter->second->write_ins_id >= 0) {
+            if(count > 0) {
+                rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, page_buf, count);
+            } else {
+                rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, nullptr, 0);
+            }
+        } else {
+            iter->second->write_ins_id = ins_id;
+        }
+
+        return rc;
+    }
+
     uint64_t ManagerServer::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
+
+
+
     void ManagerServer::set_instance_i(int instance_id){
         cout << "ManagerServer::set_instance_i, instance_id : " << instance_id << endl;
         assert(instance_id >= 0 && instance_id < PROCESS_CNT);
@@ -71,7 +105,7 @@ namespace dbx1000 {
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
         cout << "ManagerServer::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
-//        instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
+        instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
     }
 
 

@@ -13,6 +13,7 @@
 #include "common/myhelper.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/thread.h"
+#include "shared_disk/shared_disk_service.h"
 #include "rpc_handler/instance_handler.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
@@ -97,6 +98,13 @@ final:
 	return rc;
 }
 
+bool has_invalid_req(std::set<uint64_t> write_page_set, dbx1000::ManagerInstance* manager_client){
+        for(auto iter : write_page_set) {
+            if(manager_client->lock_table()->lock_table_[iter]->invalid_req){ return true; }
+        }
+        return false;
+}
+
 RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
 	ycsb_query * m_query = (ycsb_query *) query;
 	std::set<uint64_t> write_page_set;
@@ -109,33 +117,48 @@ RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
         }
     }
 
-    auto has_invalid_req = [&](){
-        for(auto iter : write_page_set) {
-            if(this->h_thd->manager_client_->lock_table()->lock_table()[iter]->invalid_req){ return true; }
-        }
-        return false;
-    };
-    while(has_invalid_req()) { PAUSE }
+//    auto has_invalid_req = [&](){
+//        for(auto iter : write_page_set) {
+//            if(this->h_thd->manager_client_->lock_table()->lock_table()[iter]->invalid_req){ return true; }
+//        }
+//        return false;
+//    };
+//    while(has_invalid_req(write_page_set,this->h_thd->manager_client_ )) { std::this_thread::yield(); }
 
-/*
+/**/
+dbx1000::Profiler profiler;
+profiler.Start();
+    dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
     std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
-        if (this->h_thd->manager_client_->lock_table()->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
-            lock_remote_thread.emplace_back(thread([&]() {
-                                                       char page_buf[MY_PAGE_SIZE];
-                                                       RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
-                                                               this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf
-                                                               , MY_PAGE_SIZE);
-                                                       assert(rc == RC::RCOK);
-                                                       this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
-                                                   }
-            ));
+        if(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O) {
+            lockTable->AddThread(iter, this->get_thd_id());
+        }
+        else if(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
+            bool flag = ATOM_CAS(lockTable->lock_table_[iter]->lock_remoting, false, true);
+            if(flag) {
+////                lock_remote_thread.emplace_back(thread([&]() {
+//////                                                       char page_buf[MY_PAGE_SIZE];
+////                                                           RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
+////                                                                   this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr
+////                                                                   , 0);
+////                                                           assert(rc == RC::RCOK);
+////                                                           lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
+//////                                                       this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
+////                                                           lockTable->lock_table()[iter]->lock_remoting = false;
+////                                                       }
+//                ));
+            } else {
+                while(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) { std::this_thread::yield(); }
+            }
         }
     }
 
     for(auto &iter : lock_remote_thread){
         iter.join();
-    }*/
+    }
+    profiler.End();
+    this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->debug6 += profiler.Nanos();
     RC rc = RC::RCOK;
 
     return rc;

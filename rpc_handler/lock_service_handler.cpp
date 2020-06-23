@@ -18,17 +18,21 @@ namespace dbx1000 {
 
 //        std::cout << "BufferManagerServer::LockRemote, instance_id:" << request->instance_id() << ", page_id:" << request->page_id()
 //        << ", mode:" << a << ", count:" << request->count() << std::endl;
-        if(request->count() > 0) { assert(MY_PAGE_SIZE == request->count()); }
+        RC rc;
         char page_buf[MY_PAGE_SIZE];
-        RC rc = manager_server_->instances()[request->instance_id()].buffer_manager_client->Invalid(request->page_id(), page_buf, request->count());
+        size_t count = request->count();
+        if(count > 0) { assert(MY_PAGE_SIZE == count); }
+        else {assert(0 == count);}
+
+        rc = manager_server_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
 
         if(RC::TIME_OUT  == rc) {
             response->set_rc(RpcRC::TIME_OUT);
         }
         assert(RC::RCOK == rc);
         response->set_rc(RpcRC::RCOK);
-        if(response->count() > 0) {
-            response->set_page_buf(page_buf, response->count());
+        if(count > 0) {
+            response->set_page_buf(page_buf, count);
         }
 
         return ::grpc::Status::OK;

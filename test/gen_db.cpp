@@ -42,7 +42,7 @@ void Gen_DB_single_thread() {
     dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
     page->set_page_id(tableSpace->GetNextPageId());
     char row[row_size];
-    uint64_t version = 0;
+    uint64_t version = 1;
     memset(row, 0, row_size);
     for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
         if (row_size > (MY_PAGE_SIZE - page->used_size())) {
@@ -86,7 +86,7 @@ void Gen_DB() {
                     dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
                     page->set_page_id(tableSpace->GetNextPageId());
                     char row[row_size];
-                    uint64_t version = 0;
+                    uint64_t version = 1;
                     memset(row, 0, row_size);
                     for (uint64_t key = (SYNTH_TABLE_SIZE / 10) * thd;          /// for multi threads
                          key < (SYNTH_TABLE_SIZE / 10) * (thd + 1); key++) {    /// for multi threads
@@ -153,8 +153,9 @@ void Check_DB() {
                         uint64_t version;
                         memcpy(&temp_key, &row[0], sizeof(uint64_t));
                         memcpy(&version, &row[row_size - 8], sizeof(uint64_t));
+                        if(key == 6293) { cout << "temp_key : " <<temp_key  << endl;}
                         assert(key == temp_key);
-                        assert(version == 0);
+                        assert(version == 1);
                         for (int i = 8; i < 72; i++) { assert(0 == row[i]); }
                     }
                     delete page2;

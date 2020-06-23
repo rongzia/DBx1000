@@ -61,10 +61,10 @@ int main(int argc, char *argv[]) {
     managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
 //    cout <<__LINE__ << endl;
     {   // instanc 服务端
-//        dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
-//        instanceServer->manager_instance_ = managerInstance;
-//        thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
-//        instance_service_server.detach();
+        dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
+        instanceServer->manager_instance_ = managerInstance;
+        thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
+        instance_service_server.detach();
     }
 
 //    cout <<__LINE__ << endl;

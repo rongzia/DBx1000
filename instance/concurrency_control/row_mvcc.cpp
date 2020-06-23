@@ -302,6 +302,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
 		_latest_row = row;
+		assert(_latest_row->key_ == this->key_);
 		txn->h_thd->manager_client_->RowToDB(_latest_row);
 //		assert(row);        // test
 //		assert(row->row_);  // test

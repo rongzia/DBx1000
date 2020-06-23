@@ -23,14 +23,12 @@ namespace dbx1000 {
         LockNode(int instanceid, bool val = false, LockMode mode = LockMode::O, int count = 0);
         int instance_id;
         int count;
-//        bool valid;
         LockMode lock_mode;
-//        std::atomic_flag lock;
         std::mutex mtx;
         std::condition_variable cv;
         bool invalid_req;
         bool lock_remoting;
-        std::set<uint64_t> thread_set;
+        std::atomic_int thread_count;
     };
 
     class ManagerInstance;
@@ -48,17 +46,20 @@ namespace dbx1000 {
 //        bool CanRead(std::unordered_map<uint64_t, LockNode*>::iterator iter);
 //        bool CanWrite(std::unordered_map<uint64_t, LockNode*>::iterator iter);
 
-        bool LockInvalid(uint64_t page_id);
+        bool LockInvalid(uint64_t page_id, char *buf, size_t count);
 
         char LockModeToChar(LockMode mode);
         void Print();
 
+
+
+
+        std::unordered_map<uint64_t, LockNode*> lock_table_;
         /// getter and setter
-        std::unordered_map<uint64_t, LockNode*> lock_table() { return this->lock_table_; }
-        ManagerInstance* manager_instance() { return this->manager_instance_; }
+        ManagerInstance* manager_instance()                         { return this->manager_instance_; }
+        void set_manager_instance(ManagerInstance* managerInstance) {this->manager_instance_ = managerInstance; }
 
     private:
-        std::unordered_map<uint64_t, LockNode*> lock_table_;
         ManagerInstance* manager_instance_;
     };
 }

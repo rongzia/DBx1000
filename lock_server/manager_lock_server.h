@@ -9,6 +9,9 @@
 #include <string>
 #include <map>
 #include <atomic>
+#include <mutex>
+#include <unordered_map>
+#include "common/global.h"
 
 class workload;
 
@@ -25,7 +28,12 @@ namespace dbx1000 {
     class Buffer;
     class SharedDiskClient;
 
-
+    class LockServerNode{
+    public:
+        LockServerNode();
+        int write_ins_id;
+        std::mutex mtx;
+    };
 
     class ManagerServer {
     public:
@@ -33,6 +41,8 @@ namespace dbx1000 {
         ~ManagerServer();
         ManagerServer(const ManagerServer&) = delete;
         ManagerServer &operator=(const ManagerServer&) = delete;
+
+        RC LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count);
 
         uint64_t GetNextTs(uint64_t thread_id);
 
@@ -49,9 +59,9 @@ namespace dbx1000 {
         std::map<int, std::string> &hosts_map() { return this->hosts_map_; }
         InstanceInfo* instances()               { return this->instances_; }
         void set_instance_i(int instance_id);
-        LockTable* lock_table()                 { return this->lock_table_; }
-        Buffer* buffer()                        { return this->buffer_; };
-        Index* index()                          { return this->index_; };
+//        LockTable* lock_table()                 { return this->lock_table_; }
+        Buffer* buffer()                        { return this->buffer_; }
+        Index* index()                          { return this->index_; }
 
         int test_num;
 
@@ -60,20 +70,16 @@ namespace dbx1000 {
         int buffer_manager_id_;
         std::map<int, std::string> hosts_map_;
         InstanceInfo* instances_;
-        std::map<uint64_t, int > lock_in_instance_;
+        std::unordered_map<uint64_t , LockServerNode*> lock_server_table_;
+//        std::map<uint64_t, int > lock_in_instance_;
 
         std::atomic<uint64_t> timestamp_;
 
-//        workload* m_workload_;
-//        Buffer * buffer_;
-//        TableSpace* table_space_;
-//        Index* index_;
-//        ServerLockTable* lock_table_;
         workload* m_workload_;
         Buffer * buffer_;
         TableSpace* table_space_;
         Index* index_;
-        LockTable* lock_table_;
+//        LockTable* lock_table_;
         SharedDiskClient * shared_disk_client_;
 //        Stats* stats_;
     };

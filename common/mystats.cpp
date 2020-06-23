@@ -149,6 +149,7 @@ namespace dbx1000 {
         double total_time_man_latency = 0;
         double total_time_man_count = 0;
         double total_time_ts_alloc_latency = 0;
+        double total_debug6 = 0;
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
@@ -170,6 +171,8 @@ namespace dbx1000 {
             total_time_man_latency += _stats[tid]->time_man_rpc_time;
             total_time_man_count += _stats[tid]->time_man_rpc_count;
             total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_rpc_time;
+
+            total_debug6 += _stats[tid]->debug6;
 
             printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
                 tid,
@@ -212,7 +215,7 @@ namespace dbx1000 {
             ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
             ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 //            ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-            ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f"
+            ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f, debug6=%f"
             ", time_man_latency=%f, time_man_count=%ld"
             ", time_ts_alloc_latency=%f\n",
             total_txn_cnt,
@@ -235,6 +238,7 @@ namespace dbx1000 {
             total_debug3, // / BILLION,
             total_debug4, // / BILLION,
             total_debug5,  // / BILLION
+            total_debug6,
 
             total_time_man_latency / BILLION,
             total_time_man_count,

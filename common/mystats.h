@@ -52,6 +52,8 @@ namespace dbx1000 {
         uint64_t time_abort_rpc_time;
         uint64_t time_abort_rpc_count;
 
+        uint64_t debug6;
+
 //        std::unique_ptr<dbx1000::Profiler> profiler;
     };
 

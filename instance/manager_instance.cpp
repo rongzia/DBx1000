@@ -105,21 +105,22 @@ namespace dbx1000 {
         this->lock_table_ = new LockTable();
 //    cout <<__LINE__ << endl;
         lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
+        lock_table_->set_manager_instance(this);
 //    cout <<__LINE__ << endl;
-        uint64_t start_page = g_synth_table_size/32 * this->instance_id_;
+//        uint64_t start_page = g_synth_table_size/32 * this->instance_id_;
 //    cout <<__LINE__ << endl;
-        uint64_t end_page = g_synth_table_size/32 * (this->instance_id_ + 1);
+//        uint64_t end_page = g_synth_table_size/32 * (this->instance_id_ + 1);
 //    cout <<__LINE__ << endl;
 //        for(uint64_t i = start_page; i < end_page; i++) { lock_table_->lock_table()[i]->lock_mode = LockMode::P; }
 //    cout <<__LINE__ << endl;
     }
 
-    void ManagerInstance::InitBufferForTest() {
-        char buf[PAGE_SIZE];
-        for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId(); page_id++) {
-            buffer_->BufferGet(page_id, buf, PAGE_SIZE);
-        }
-    }
+//    void ManagerInstance::InitBufferForTest() {
+//        char buf[PAGE_SIZE];
+//        for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId(); page_id++) {
+//            buffer_->BufferGet(page_id, buf, PAGE_SIZE);
+//        }
+//    }
 
     void ManagerInstance::InitMvccs() {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
@@ -191,10 +192,10 @@ namespace dbx1000 {
         this->index_->IndexGet(row->key_, &indexItem);
         bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::S);
         assert(true == rc);
-        this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        assert(0 == this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
         page->Deserialize();
 
-        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
+//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
         memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
         {
             /// 验证 key
@@ -214,7 +215,13 @@ namespace dbx1000 {
         this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         page->Deserialize();
 
-        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
+//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
+//        {   // some check
+//            uint64_t temp_key1, temp_key2;
+//            memcpy(&temp_key1, &page->page_buf()[indexItem.page_location_], sizeof(uint64_t));
+//            memcpy(&temp_key2, row->row_, sizeof(uint64_t));
+//            assert(temp_key1 == temp_key2);
+//        }
         memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
         this->buffer_->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
         assert(true == this->lock_table_->UnLock(indexItem.page_id_));
