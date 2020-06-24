@@ -98,13 +98,6 @@ final:
 	return rc;
 }
 
-//bool has_invalid_req(std::set<uint64_t> write_page_set, dbx1000::ManagerInstance* manager_client){
-//        for(auto iter : write_page_set) {
-//            if(manager_client->lock_table()->lock_table()[iter]->invalid_req){ return true; }
-//        }
-//        return false;
-//}
-
 RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
 	ycsb_query * m_query = (ycsb_query *) query;
 	std::set<uint64_t> write_page_set;
@@ -116,6 +109,13 @@ RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
             write_page_set.insert(indexItem.page_id_);
         }
     }
+
+    auto print_set = [&](){
+        for(auto iter : write_page_set) {
+           cout << "page_id : " << iter << " ";
+        }cout << endl;
+    };
+//    print_set();
 
     auto has_invalid_req = [&](){
         for(auto iter : write_page_set) {
@@ -134,18 +134,30 @@ profiler.Start();
         if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
             bool flag = ATOM_CAS(lockTable->lock_table()[iter]->lock_remoting, false, true);
             if(flag) {
-                lock_remote_thread.emplace_back(thread([&]() {
+                assert(true == lockTable->lock_table()[iter]->lock_remoting);
+//                lock_remote_thread.emplace_back(thread([iter, lockTable, this]() {
                     char page_buf[MY_PAGE_SIZE];
-//                    RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
-//                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
-//                    assert(rc == RC::RCOK);
+                    RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
+                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
+                    assert(rc == RC::RCOK);
+//                    lockTable->lock_table()[iter]->mtx.lock();
+//                    if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O){
+//                      cout << "thread : " << get_thd_id() << " change lock : " << iter << " lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O" << endl;
+//                    }
+                    assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O);
                     lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
-//                                                       this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
+//                    cout << "thread : " << get_thd_id() << " change lock : " << iter << " to P" << endl;
+//                    lockTable->lock_table()[iter]->mtx.unlock();
+//                  this->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
                     lockTable->lock_table()[iter]->lock_remoting = false;
-                }
-                ));
+//                }
+//                ));
             } else {
-                while(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) { std::this_thread::yield(); }
+                assert(true == lockTable->lock_table()[iter]->lock_remoting);
+                while(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+//                    cout << "thread waiting..." << endl; std::this_thread::yield();
+                    }
+                assert(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O);
             }
         }
     }
@@ -153,9 +165,9 @@ profiler.Start();
     for(auto &iter : lock_remote_thread){
         iter.join();
     }
+    /// some check
     for(auto iter : write_page_set) {
-        lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
-        assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::P);
+        assert(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O);
         if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O) {
             lockTable->AddThread(iter, this->get_thd_id());
         }
