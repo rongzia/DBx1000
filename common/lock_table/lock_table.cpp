@@ -13,8 +13,8 @@
 namespace dbx1000 {
     LockNode::LockNode(int instanceid) {
         this->instance_id = instanceid;
-//        this->lock_mode = LockMode::P;
-        this->lock_mode = LockMode::O;
+        this->lock_mode = LockMode::P;
+//        this->lock_mode = LockMode::O;
         this->count = ATOMIC_VAR_INIT(0);
         this->thread_count = ATOMIC_VAR_INIT(0);
         this->invalid_req = false;
