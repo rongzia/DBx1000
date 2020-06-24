@@ -174,12 +174,15 @@ void Check_DB() {
 }
 
 int main() {
-    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
+    std::string cmd = "rm -rf ";
+    cmd += DB_PREFIX;
+    cmd += "*";
+    system(cmd.data());
 
     Gen_DB_single_thread();
     Check_DB();
 
     dbx1000::FileIO::Close();
-    system("scp -r /home/zhangrongrong/CLionProjects/DBx1000/db/ zhangrongrong@10.11.6.121:/home/zhangrongrong/CLionProjects/DBx1000/");
+//    system("scp -r /home/zhangrongrong/CLionProjects/DBx1000/db/ zhangrongrong@10.11.6.121:/home/zhangrongrong/CLionProjects/DBx1000/");
     return 0;
 }

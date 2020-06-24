@@ -20,7 +20,7 @@ namespace dbx1000 {
     }
 
     Arena::~Arena() {
-        std::cout << "Arena::~Areana(), id : " << id_ <<std::endl;
+//        std::cout << "Arena::~Areana(), id : " << id_ <<std::endl;
         for (size_t i = 0; i < blocks_.size(); i++) {
             delete[] blocks_[i];
         }

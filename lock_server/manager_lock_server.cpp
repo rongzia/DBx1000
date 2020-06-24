@@ -110,14 +110,14 @@ namespace dbx1000 {
 
 
     bool ManagerServer::init_done() {
-        cout << "ManagerServer::init_done" << endl;
+//        cout << "ManagerServer::init_done" << endl;
         for(int i = 0; i < PROCESS_CNT; i++) {
             if(instances_[i].init_done == false){
                 return false;
             }
         }
         init_done_ = true;
-        cout << "ManagerServer init done." << endl;
+//        cout << "ManagerServer init done." << endl;
         return init_done_;
     }
 //    void ManagerServer::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
