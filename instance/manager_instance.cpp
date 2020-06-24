@@ -101,11 +101,16 @@ namespace dbx1000 {
 //        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, nullptr);
         this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client());
         this->lock_table_ = new LockTable();
-        lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
+
+
+        uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
+        uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
+        lock_table_->Init(start, end, this->instance_id_);
+//        lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
         lock_table_->set_manager_instance(this);
         {
             char buf[MY_PAGE_SIZE];
-            for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId(); page_id++) {
+            for (uint64_t page_id = start; page_id < end; page_id++) {
                 buffer_->BufferGet(page_id, buf, MY_PAGE_SIZE);
             }
         }
