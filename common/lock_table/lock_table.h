@@ -25,6 +25,7 @@ namespace dbx1000 {
         LockMode lock_mode;
         std::atomic_int count;                      // 正在获取该 locknode 的调用数
         std::atomic_int thread_count;   // 本地对该 locknode 有写意向的线程数
+        std::set<uint64_t> thread_set;   // 本地对该 locknode 有写意向的线程数
         bool invalid_req;
         volatile bool lock_remoting;
         std::mutex mtx;

@@ -103,10 +103,11 @@ namespace dbx1000 {
         this->lock_table_ = new LockTable();
 
 
-        uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
-        uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
+//        uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
+//        uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
+        uint64_t start = 0;
+        uint64_t end = (table_space_->GetLastPageId() + 1);
         lock_table_->Init(start, end, this->instance_id_);
-//        lock_table_->Init(0, table_space_->GetLastPageId() + 1, this->instance_id_);
         lock_table_->set_manager_instance(this);
         {
             char buf[MY_PAGE_SIZE];

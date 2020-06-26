@@ -41,6 +41,7 @@ namespace dbx1000 {
     )) {}
 
     RC InstanceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
+        cout << "InstanceClient::LockRemote page_id : " << page_id << ", count : " << count << endl;
         dbx1000::LockRemoteRequest request;
         ::grpc::ClientContext context;
         dbx1000::LockRemoteReply reply;

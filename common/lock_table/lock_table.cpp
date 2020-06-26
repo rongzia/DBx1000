@@ -13,8 +13,8 @@
 namespace dbx1000 {
     LockNode::LockNode(int instanceid) {
         this->instance_id = instanceid;
-        this->lock_mode = LockMode::P;
-//        this->lock_mode = LockMode::O;
+//        this->lock_mode = LockMode::P;
+        this->lock_mode = LockMode::O;
         this->count = ATOMIC_VAR_INIT(0);
         this->thread_count = ATOMIC_VAR_INIT(0);
         this->invalid_req = false;
@@ -140,8 +140,14 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
-        assert(lock_table_[page_id]->lock_mode != LockMode::O);
-        lock_table_[page_id]->thread_count.fetch_add(1);
+//        assert(lock_table_[page_id]->lock_mode != LockMode::O);
+
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        auto thread_iter = iter->second->thread_set.find(thd_id);
+        if(thread_iter == iter->second->thread_set.end()){
+            iter->second->thread_set.insert(thd_id);
+            lock_table_[page_id]->thread_count.fetch_add(1);
+        }
         return true;
     }
     bool LockTable::RemoveThread(uint64_t page_id, uint64_t thd_id){
@@ -149,8 +155,13 @@ namespace dbx1000 {
         if (lock_table_.end() == iter) { assert(false); }
 
         assert(iter->second->lock_mode != LockMode::O);
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-        assert(iter->second->thread_count.fetch_sub(1) > 0);
+        std::unique_lock<std::mutex> lck(iter->second->mtx);
+        auto thread_iter = iter->second->thread_set.find(thd_id);
+        if(thread_iter != iter->second->thread_set.end()){
+            assert(iter->second->thread_count.fetch_sub(1) > 0);
+            iter->second->thread_set.erase(thd_id);
+        }
+        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
 //        std::notify_all_at_thread_exit(iter->second->cv, std::move(lck));
         iter->second->cv.notify_all();
         return true;
@@ -162,7 +173,7 @@ namespace dbx1000 {
         if (lock_table_.end() == iter) { assert(false); }
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
-        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count == 0); });
+        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
         assert(iter->second->thread_count == 0);
         assert(iter->second->count == 0);
         iter->second->lock_mode = LockMode::O;

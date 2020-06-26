@@ -25,9 +25,9 @@ void ycsb_query::calculateDenom()
 		 * 为了实现多个进程访问的数据没有重叠，每个进程只访问 g_synth_table_size/32 * this->process_id 范围内的数据
 		 * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/32]
 		 * 在事务执行时，应该加上 + g_synth_table_size / 32 * process_id;
-//	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
 		 */
-		 uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / 32;
+	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
+//		 uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / 32;
 	the_n = table_size - 1;
 	denom = zeta(the_n, g_zipf_theta);
 	//! denom = 1605.65, when n = 1024*1024*10 and theta = 0.6
@@ -130,9 +130,9 @@ void ycsb_query::gen_requests(int thd_id) {
 		 * 为了实现多个进程访问的数据没有重叠，每个进程只访问 g_synth_table_size/32 * this->process_id 范围内的数据
 		 * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/32]
 		 * 在事务执行时，应该加上 + g_synth_table_size / 32 * process_id;
-//		uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		 */
-		 uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / 32;
+		uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
+//		 uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / 32 ;
 		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);   //! g_zipf_theta == 0.6
 		assert(row_id < table_size);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;

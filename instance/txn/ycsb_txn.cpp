@@ -21,11 +21,24 @@ void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	_wl = (ycsb_wl *) h_wl;
 }
 
+ycsb_query* gen_query(){
+    ycsb_query * m_query = new ycsb_query();
+    m_query->requests = new ycsb_request[g_req_per_query]();
+    m_query->request_cnt = 4;
+    for(int i = 0; i< 4; i++) {
+        m_query->requests[i].key = i*203;
+        m_query->requests[i].rtype = WR;
+    }
+    return m_query;
+}
+
 RC ycsb_txn_man::run_txn(base_query * query) {
+    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
 	RC rc;
-	rc = CheckWriteLockSet(query);
+	/* ycsb_query * m_query = (ycsb_query *) query; */
+	ycsb_query * m_query = gen_query();
+	rc = CheckWriteLockSet(m_query);
 	if(rc == RC::Abort) { return rc; }
-	ycsb_query * m_query = (ycsb_query *) query;
 	/* ycsb_wl * wl = (ycsb_wl *) h_wl;
 	itemid_t * m_item = NULL; */
   	row_cnt = 0;
@@ -55,11 +68,14 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			access_t type = req->rtype;
 			
 //			row_local = get_row(req->key, type);
-            assert(h_thd->manager_client_->instance_id() < PROCESS_CNT);
-            assert(req->key < g_synth_table_size/32);
-            uint64_t read_key = req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id();
-            assert(read_key < g_synth_table_size);
-			row_local = get_row(read_key , type);
+//            assert(h_thd->manager_client_->instance_id() < PROCESS_CNT);
+//            assert(req->key < g_synth_table_size/32);
+//            uint64_t read_key = req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id();
+//            assert(read_key < g_synth_table_size);
+//			row_local = get_row(read_key , type);
+
+
+			row_local = get_row(req->key , type);
 			if (row_local == NULL) {
 				rc = RC::Abort;
 				goto final;
@@ -96,40 +112,69 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 	rc = RC::RCOK;
 final:
 	rc = finish(rc);
-	return rc;
-}
 
-RC ycsb_txn_man::CheckWriteLockSet(base_query * query){
-	ycsb_query * m_query = (ycsb_query *) query;
+
+
+
+//	ycsb_query * m_query = (ycsb_query *) query;
 	std::set<uint64_t> write_page_set;
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
 		ycsb_request * req = &m_query->requests[rid];
         dbx1000::IndexItem indexItem;
-        this->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id(), &indexItem);
+//        this->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id(), &indexItem);
+        this->h_thd->manager_client_->index()->IndexGet(req->key, &indexItem);
+        if(req->rtype == WR){
+            write_page_set.insert(indexItem.page_id_);
+        }
+    }
+
+    dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
+    for(auto iter:write_page_set) {
+        lockTable->RemoveThread(iter, this->get_thd_id());
+    }
+    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " end." << endl;
+
+
+	return rc;
+}
+
+RC ycsb_txn_man::CheckWriteLockSet(ycsb_query * m_query){
+//	ycsb_query * m_query = (ycsb_query *) query;
+	std::set<uint64_t> write_page_set;
+    for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
+		ycsb_request * req = &m_query->requests[rid];
+        dbx1000::IndexItem indexItem;
+//        this->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id(), &indexItem);
+        this->h_thd->manager_client_->index()->IndexGet(req->key, &indexItem);
         if(req->rtype == WR){
             write_page_set.insert(indexItem.page_id_);
         }
     }
 
     auto print_set = [&](){
+        cout << "instance " << h_thd->manager_client_->instance_id() << ", page_id : ";
         for(auto iter : write_page_set) {
-           cout << "page_id : " << iter << " ";
+           cout << iter << " ";
         }cout << endl;
     };
-//    print_set();
+    print_set();
+
+
+    dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
 
     auto has_invalid_req = [&](){
         for(auto iter : write_page_set) {
             if(this->h_thd->manager_client_->lock_table()->lock_table()[iter]->invalid_req){ return true; }
+            else { lockTable->AddThread(iter, this->get_thd_id()); }
         }
         return false;
     };
     while(has_invalid_req()) { std::this_thread::yield(); }
 
+    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " get lock." << endl;
 /**/
 dbx1000::Profiler profiler;
 profiler.Start();
-    dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
     std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
         if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
@@ -139,7 +184,7 @@ profiler.Start();
 //                lock_remote_thread.emplace_back(thread([iter, lockTable, this]() {
                     char page_buf[MY_PAGE_SIZE];
                     RC rc = this->h_thd->manager_client_->instance_rpc_handler()->LockRemote(
-                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
+                            this->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
                     assert(rc == RC::RCOK);
 //                    lockTable->lock_table()[iter]->mtx.lock();
 //                    if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O){
@@ -169,9 +214,9 @@ profiler.Start();
     /// some check
     for(auto iter : write_page_set) {
         assert(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O);
-        if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O) {
-            lockTable->AddThread(iter, this->get_thd_id());
-        }
+//        if(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O) {
+//            lockTable->AddThread(iter, this->get_thd_id());
+//        }
     }
     profiler.End();
     this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->debug6 += profiler.Nanos();

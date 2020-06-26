@@ -16,7 +16,7 @@ namespace dbx1000 {
 
     ::grpc::Status BufferManagerServer::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
 
-//        std::cout << "BufferManagerServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
+        std::cout << "BufferManagerServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
         RC rc;
         char page_buf[MY_PAGE_SIZE];
         size_t count = request->count();
@@ -33,6 +33,7 @@ namespace dbx1000 {
         if(count > 0) {
             response->set_page_buf(page_buf, count);
         }
+        response->set_count(count);
 
         return ::grpc::Status::OK;
     }
