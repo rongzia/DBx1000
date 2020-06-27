@@ -10,6 +10,7 @@
 
 namespace dbx1000 {
     ::grpc::Status InstanceServer::Invalid(::grpc::ServerContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response) {
+//        cout << "other want to invalid page " << request->page_id() << ", count : " << request->count() << endl;
         size_t count = request->count();
         if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
         else { assert(0 == count); }
@@ -41,7 +42,7 @@ namespace dbx1000 {
     )) {}
 
     RC InstanceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
-        cout << "InstanceClient::LockRemote page_id : " << page_id << ", count : " << count << endl;
+//        cout << "InstanceClient::LockRemote page_id : " << page_id << ", count : " << count << endl;
         dbx1000::LockRemoteRequest request;
         ::grpc::ClientContext context;
         dbx1000::LockRemoteReply reply;

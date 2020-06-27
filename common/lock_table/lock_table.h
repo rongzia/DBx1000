@@ -27,6 +27,7 @@ namespace dbx1000 {
         std::atomic_int thread_count;   // 本地对该 locknode 有写意向的线程数
         std::set<uint64_t> thread_set;   // 本地对该 locknode 有写意向的线程数
         bool invalid_req;
+//        std::condition_variable invalid_cv;
         volatile bool lock_remoting;
         std::mutex mtx;
         std::condition_variable cv;

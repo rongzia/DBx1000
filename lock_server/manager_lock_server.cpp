@@ -81,20 +81,20 @@ namespace dbx1000 {
         RC rc = RC::RCOK;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         if(iter->second->write_ins_id >= 0) {
-            cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+//            cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
             if(count > 0) {
                 rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, page_buf, count);
             } else {
                 rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, nullptr, 0);
             }
-            cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
+//            cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
             iter->second->write_ins_id = ins_id;
         } else {
             iter->second->write_ins_id = ins_id;
             if(count > 0) {
                 this->buffer_->BufferGet(page_id, page_buf, count);
             }
-            cout << ins_id << " get page id : " << page_id << " success" << endl;
+//            cout << ins_id << " get page id : " << page_id << " success" << endl;
         }
 
         return rc;

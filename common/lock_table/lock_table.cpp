@@ -161,7 +161,7 @@ namespace dbx1000 {
             assert(iter->second->thread_count.fetch_sub(1) > 0);
             iter->second->thread_set.erase(thd_id);
         }
-        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
+//        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
 //        std::notify_all_at_thread_exit(iter->second->cv, std::move(lck));
         iter->second->cv.notify_all();
         return true;
@@ -173,7 +173,9 @@ namespace dbx1000 {
         if (lock_table_.end() == iter) { assert(false); }
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
+//        cout << "LockTable::LockInvalid waiting." << endl;
         iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
+//        cout << "LockTable::LockInvalid wait success." << endl;
         assert(iter->second->thread_count == 0);
         assert(iter->second->count == 0);
         iter->second->lock_mode = LockMode::O;
