@@ -10,18 +10,18 @@ using namespace std;
 
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
 
-void RunBufferManagerServer(dbx1000::BufferManagerServer * bufferManagerServer, dbx1000::ManagerService* managerService) {
-    bufferManagerServer->Start(managerService->hosts_map()[-1]);
+void RunLockServiceServer(dbx1000::LockServiceServer * bufferManagerServer, dbx1000::ManagerLockService* managerLockService) {
+    bufferManagerServer->Start(managerLockService->hosts_map()[-1]);
 }
 
 int main(int argc, char* argv[]){
-    dbx1000::ManagerService* managerService = new dbx1000::ManagerService();
-    managerService->set_buffer_manager_id(parser_host(argc, argv, managerService->hosts_map()));
+    dbx1000::ManagerLockService* managerLockService = new dbx1000::ManagerLockService();
+    managerLockService->set_buffer_manager_id(parser_host(argc, argv, managerLockService->hosts_map()));
 
-    dbx1000::BufferManagerServer * bufferManagerServer = new dbx1000::BufferManagerServer();
-    bufferManagerServer->manager_service_ = managerService;
+    dbx1000::LockServiceServer * lockServiceServer = new dbx1000::LockServiceServer();
+    lockServiceServer->manager_lock_service_ = managerLockService;
 
-    thread lock_service_server(RunBufferManagerServer, bufferManagerServer, managerService);
+    thread lock_service_server(RunLockServiceServer, lockServiceServer, managerLockService);
 //    lock_service_server.detach();
 
 

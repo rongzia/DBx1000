@@ -12,36 +12,36 @@
 #include "config.h"
 
 namespace dbx1000 {
-    class ManagerService;
+    class ManagerLockService;
 
-    class BufferManagerServer : DBx1000Service::Service {
+    class LockServiceServer : DBx1000Service::Service {
     public:
         virtual ::grpc::Status LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response);
 //        virtual ::grpc::Status UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response);
         virtual ::grpc::Status InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request, ::dbx1000::InstanceInitDoneReply* response);
-        virtual ::grpc::Status BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReply* response);
+        virtual ::grpc::Status LockServiceInitDone(::grpc::ServerContext* context, const ::dbx1000::LockServiceInitDoneRequest* request, ::dbx1000::LockServiceInitDoneReply* response);
         virtual ::grpc::Status GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response);
 //        virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
         void Start(const std::string& host);
 
-        ManagerService* manager_service_;
+        ManagerLockService* manager_lock_service_;
     };
 
-    class ManagerService;
-    class BufferManagerClient {
+    class ManagerLockService;
+    class LockServiceClient {
     public:
-        BufferManagerClient(const std::string&);
-        BufferManagerClient() = delete;
-        BufferManagerClient(const BufferManagerClient&) = delete;
-        BufferManagerClient &operator=(const BufferManagerClient&) = delete;
+        LockServiceClient(const std::string&);
+        LockServiceClient() = delete;
+        LockServiceClient(const LockServiceClient&) = delete;
+        LockServiceClient &operator=(const LockServiceClient&) = delete;
 
         RC Invalid(uint64_t page_id, char *page_buf, size_t count);
 
         // getter and setter
-        ManagerService* manager_service() { return this->manager_service_; };
+        ManagerLockService* manager_lock_service() { return this->manager_lock_service_; };
      private:
         std::unique_ptr<dbx1000::DBx1000Service::Stub> stub_;
-        ManagerService* manager_service_;
+        ManagerLockService* manager_lock_service_;
     };
 }
 

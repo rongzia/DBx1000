@@ -23,7 +23,7 @@ namespace dbx1000 {
     class TableSpace;
     class LockTable;
 //    class Stats;
-    class BufferManagerClient;
+    class LockServiceClient;
     class Buffer;
     class SharedDiskClient;
 
@@ -37,12 +37,12 @@ namespace dbx1000 {
     };
 
     /// lock service 仅作为锁的协调，不缓存锁
-    class ManagerService {
+    class ManagerLockService {
     public:
-        ManagerService();
-        ~ManagerService();
-        ManagerService(const ManagerService&) = delete;
-        ManagerService &operator=(const ManagerService&) = delete;
+        ManagerLockService();
+        ~ManagerLockService();
+        ManagerLockService(const ManagerLockService&) = delete;
+        ManagerLockService &operator=(const ManagerLockService&) = delete;
 
         RC LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count);
 
@@ -52,7 +52,7 @@ namespace dbx1000 {
             int instance_id;
             std::string host;
             bool init_done;
-            BufferManagerClient* buffer_manager_client;
+            LockServiceClient* lock_service_client;
         };
 
         /// getter and setter

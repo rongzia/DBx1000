@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
 
     /// 等待所有 instance 初始化完成
-    while(!managerInstance->instance_rpc_handler()->BufferManagerInitDone()) { std::this_thread::yield();}
+    while(!managerInstance->instance_rpc_handler()->LockServiceInitDone()) { std::this_thread::yield();}
     cout << "instance start." <<endl;
 
 	warmup_finish = true;

@@ -15,10 +15,10 @@ echo "end   : $end"
 
 for i in $(seq $start $end)
 do
-cp main_test_instance main_test_instance$i
+cp main_instance main_instance$i
 done
 
 for i in $(seq $start $end)
 do
-./main_test_instance$i -instance_id=$i &
+./main_instance$i -instance_id=$i &
 done

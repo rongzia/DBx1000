@@ -31,7 +31,7 @@ namespace dbx1000 {
 
         RC LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count);
         void InstanceInitDone(int instance_id);
-        bool BufferManagerInitDone();
+        bool LockServiceInitDone();
         uint64_t GetNextTs();
 //        int GetTestNum();
 

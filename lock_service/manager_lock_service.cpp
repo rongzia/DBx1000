@@ -33,12 +33,12 @@ namespace dbx1000 {
 
 
 
-    ManagerService::~ManagerService() {
+    ManagerLockService::~ManagerLockService() {
 //        delete buffer_;
 //        delete lock_table_;
     }
 
-    ManagerService::ManagerService() {
+    ManagerLockService::ManagerLockService() {
         this->init_done_ = false;
         this->instances_ = new InstanceInfo[PROCESS_CNT]();
         for(int i = 0; i< PROCESS_CNT; i++) { instances_[i].instance_id = -1; instances_[i].init_done = false; }
@@ -55,22 +55,29 @@ namespace dbx1000 {
 
 
         this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
-//        this->lock_table_ = new LockTable();
+        /// 初始化 lock_service_table_
+        for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++){
+            this->lock_service_table_.insert(std::pair<uint64_t , LockNode_Service*>(page_id, new LockNode_Service()));
+        }
 
-//        lock_table_->Init(0, table_space_->GetLastPageId() + 1, -1);
-
-//        for(auto iter : lock_table_->lock_table() ){ iter.second->lock_mode = LockMode::P; }
+        /// 预热 buffer
         for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id ++){
             char page_buf[MY_PAGE_SIZE];
             buffer_->BufferGet(page_id, page_buf, MY_PAGE_SIZE);
         }
-
-        for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++){
-            lock_service_table_.insert(std::pair<uint64_t , LockNode_Service*>(page_id, new LockNode_Service()));
-        }
     }
 
-    RC ManagerService::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
+    /**
+     * 线程 ins_id 需要获取 page_id 的锁，本地 lock_service_table_ 记录了拥有该 page 锁的节点，需要先时其他节点的锁失效，
+     * 同时把其他节点最新的 page_buf 拿过来，然后返回锁权限和 page_buf 给 ins_id
+     * ， 当然，也有可能 lock_service_table_[page_id] = -1，即没有任何其他节点拥有该锁权限
+     * @param ins_id
+     * @param page_id
+     * @param page_buf
+     * @param count
+     * @return
+     */
+    RC ManagerLockService::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
         auto iter = lock_service_table_.find(page_id);
         if (lock_service_table_.end() == iter) {
             assert(false);
@@ -79,54 +86,47 @@ namespace dbx1000 {
         RC rc = RC::RCOK;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         if(iter->second->write_ins_id >= 0) {
-//            cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+            // cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
             if(count > 0) {
-                rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, page_buf, count);
+                rc = instances_[ins_id].lock_service_client->Invalid(page_id, page_buf, count);
             } else {
-                rc = instances_[ins_id].buffer_manager_client->Invalid(page_id, nullptr, 0);
-            }
-//            cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
+                rc = instances_[ins_id].lock_service_client->Invalid(page_id, nullptr, 0);
+            } // cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
             iter->second->write_ins_id = ins_id;
         } else {
             iter->second->write_ins_id = ins_id;
             if(count > 0) {
                 this->buffer_->BufferGet(page_id, page_buf, count);
-            }
-//            cout << ins_id << " get page id : " << page_id << " success" << endl;
+            } // cout << ins_id << " get page id : " << page_id << " success" << endl;
         }
 
         return rc;
     }
 
-    uint64_t ManagerService::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
+    uint64_t ManagerLockService::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
 
 
-
-    void ManagerService::set_instance_i(int instance_id){
-        cout << "ManagerService::set_instance_i, instance_id : " << instance_id << endl;
+    void ManagerLockService::set_instance_i(int instance_id) {
+        cout << "ManagerLockService::set_instance_i, instance_id : " << instance_id << endl;
         assert(instance_id >= 0 && instance_id < PROCESS_CNT);
         assert(instances_[instance_id].init_done == false);
         instances_[instance_id].init_done = true;
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
-        cout << "ManagerService::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
-        instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
+        cout << "ManagerLockService::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
+        instances_[instance_id].lock_service_client = new LockServiceClient(instances_[instance_id].host);
     }
 
 
-    bool ManagerService::init_done() {
-//        cout << "ManagerService::init_done" << endl;
-        for(int i = 0; i < PROCESS_CNT; i++) {
-            if(instances_[i].init_done == false){
-                return false;
-            }
+    bool ManagerLockService::init_done() {
+        for (int i = 0; i < PROCESS_CNT; i++) {
+            if (instances_[i].init_done == false) { return false; }
         }
         init_done_ = true;
-//        cout << "ManagerService init done." << endl;
         return init_done_;
     }
-//    void ManagerService::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
-//    std::map<int, std::string> &ManagerService::hosts_map() { return this->hosts_map_; }
-//    ManagerService::InstanceInfo* ManagerService::instances(){ return this->instances_; }
-//    LockTable* ManagerService::lock_table() { return this->lock_table_; }
+//    void ManagerLockService::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
+//    std::map<int, std::string> &ManagerLockService::hosts_map() { return this->hosts_map_; }
+//    ManagerLockService::InstanceInfo* ManagerLockService::instances(){ return this->instances_; }
+//    LockTable* ManagerLockService::lock_table() { return this->lock_table_; }
 }

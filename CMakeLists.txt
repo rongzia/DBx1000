@@ -110,10 +110,6 @@ add_executable(main_instance test/main_instance.cpp
          ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
-add_executable(main_instance_test test/main_instance.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(main_instance_test ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
-
 add_executable(disk_service test/disk_service.cpp ${SHARED_DISK_FILES})
 target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
 

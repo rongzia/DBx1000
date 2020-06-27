@@ -13,7 +13,7 @@
 
 namespace dbx1000 {
 
-    ::grpc::Status BufferManagerServer::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
+    ::grpc::Status LockServiceServer::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
 
 //        std::cout << "BufferManagerServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
         RC rc;
@@ -22,7 +22,7 @@ namespace dbx1000 {
         if(count > 0) { assert(MY_PAGE_SIZE == count); }
         else {assert(0 == count);}
 
-        rc = manager_service_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
+        rc = manager_lock_service_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
 
         if(RC::TIME_OUT  == rc) {
             response->set_rc(RpcRC::TIME_OUT);
@@ -56,19 +56,19 @@ namespace dbx1000 {
         }
     }*/
 
-    ::grpc::Status BufferManagerServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
+    ::grpc::Status LockServiceServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
             , ::dbx1000::InstanceInitDoneReply* response) {
-        manager_service_->set_instance_i(request->instance_id());
+        manager_lock_service_->set_instance_i(request->instance_id());
         return ::grpc::Status::OK;
     }
 
-    ::grpc::Status BufferManagerServer::BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReply* response) {
-        response->set_init_done(manager_service_->init_done());
+    ::grpc::Status LockServiceServer::LockServiceInitDone(::grpc::ServerContext* context, const ::dbx1000::LockServiceInitDoneRequest* request, ::dbx1000::LockServiceInitDoneReply* response) {
+        response->set_init_done(manager_lock_service_->init_done());
         return ::grpc::Status::OK;
     }
 
-    ::grpc::Status BufferManagerServer::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
-        response->set_ts(manager_service_->GetNextTs(-1));
+    ::grpc::Status LockServiceServer::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
+        response->set_ts(manager_lock_service_->GetNextTs(-1));
         return ::grpc::Status::OK;
     }
 
@@ -77,7 +77,7 @@ namespace dbx1000 {
 //        return ::grpc::Status::OK;
 //    }
 
-    void BufferManagerServer::Start(const std::string& host) {
+    void LockServiceServer::Start(const std::string& host) {
         grpc::ServerBuilder builder;
         builder.AddListeningPort(host, grpc::InsecureServerCredentials());
         builder.RegisterService(this);
@@ -94,11 +94,11 @@ namespace dbx1000 {
 
 
 
-    BufferManagerClient::BufferManagerClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
+    LockServiceClient::LockServiceClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
     )) {}
 
-    RC BufferManagerClient::Invalid(uint64_t page_id, char *page_buf, size_t count){
+    RC LockServiceClient::Invalid(uint64_t page_id, char *page_buf, size_t count){
         InvalidRequest request;
         ::grpc::ClientContext context;
         InvalidReply reply;

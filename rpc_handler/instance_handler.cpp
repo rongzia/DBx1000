@@ -111,12 +111,12 @@ namespace dbx1000 {
         assert(status.ok());
     }
 
-    bool InstanceClient::BufferManagerInitDone() {
-        dbx1000::BufferManagerInitDoneRequest request;
+    bool InstanceClient::LockServiceInitDone() {
+        dbx1000::LockServiceInitDoneRequest request;
         ::grpc::ClientContext context;
-        dbx1000::BufferManagerInitDonReply reply;
+        dbx1000::LockServiceInitDoneReply reply;
 
-        ::grpc::Status status = stub_->BufferManagerInitDone(&context, request, &reply);
+        ::grpc::Status status = stub_->LockServiceInitDone(&context, request, &reply);
         assert(status.ok());
         return reply.init_done();
     }
