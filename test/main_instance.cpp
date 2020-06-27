@@ -1,5 +1,5 @@
 //
-// Created by rrzhang on 2020/5/4.
+// Created by rrzhang on 2020/6/16.
 //
 
 #include <iostream>
@@ -21,6 +21,7 @@
 #include "common/global.h"
 #include "common/myhelper.h"
 #include "common/mystats.h"
+#include "json/json.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/query.h"
 #include "instance/concurrency_control/row_mvcc.h"
@@ -28,40 +29,50 @@
 #include "instance/txn/txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "json/json.h"
+#include "rpc_handler/instance_handler.h"
 #include "config.h"
 
 using namespace std;
 
+extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
+extern void Test_Lock_Table();
+
+void RunInstanceServer(dbx1000::InstanceServer *instanceServer, dbx1000::ManagerInstance *managerInstance) {
+    instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
+}
 void f(thread_t* thread) {
     thread->run();
 }
 
-extern void parser(int argc, char * argv[]);
-extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
-extern void Gen_DB_single_thread();
-extern void Check_DB();
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
+//    Test_Lock_Table();
+
+    /**/
     assert(argc >= 2);
 
-//    system("rm -rf /home/zhangrongrong/CLionProjects/DBx1000/db/*");
-//    Gen_DB_single_thread();
-//    Check_DB();
-//    dbx1000::FileIO::Close();
-
-    parser(argc, argv);
-    cout << "mian test txn thread" << endl;
-
-    dbx1000::ManagerInstance* managerInstance = new dbx1000::ManagerInstance();
+    dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
+    int ins_id = parser_host(argc, argv, managerInstance->host_map());
+    managerInstance->set_instance_id(ins_id);
     managerInstance->Init(SHARED_DISK_HOST);
-    managerInstance->set_instance_id(parser_host(argc, argv, managerInstance->host_map()));
+
+    // 连接集中锁管理器
+    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
+    {   // instance 服务端
+        dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
+        instanceServer->manager_instance_ = managerInstance;
+        thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
+        instance_service_server.detach();
+    }
+
     managerInstance->set_init_done(true);
-    cout << "this pid :" << managerInstance->instance_id() << endl;
-//    managerInstance->shared_disk_client()
+    managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
+
+    /// 等待所有 instance 初始化完成
+    while(!managerInstance->instance_rpc_handler()->BufferManagerInitDone()) { std::this_thread::yield();}
+    cout << "instance start." <<endl;
 
 	warmup_finish = true;
-
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
     for(int i = 0; i < g_thread_cnt; i++) {
@@ -74,12 +85,9 @@ int main(int argc, char* argv[]) {
     }
 
     managerInstance->stats().print();
-//    glob_manager_client->api_txn_client()->ThreadDone(txn_thread_id);
-//    stats.print_rpc();
 
     delete managerInstance;
-    dbx1000::FileIO::Close();
 
-    cout << "exit main." << endl;
+//    while(1) {};
     return 0;
-};
+}

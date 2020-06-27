@@ -24,10 +24,9 @@ namespace dbx1000 {
         int instance_id;
         LockMode lock_mode;
         std::atomic_int count;                      // 正在获取该 locknode 的调用数
-        std::atomic_int thread_count;   // 本地对该 locknode 有写意向的线程数
-        std::set<uint64_t> thread_set;   // 本地对该 locknode 有写意向的线程数
-        bool invalid_req;
-//        std::condition_variable invalid_cv;
+        std::atomic_int thread_count;               // 本地对该 locknode 有写意向的线程数
+        std::set<uint64_t> thread_set;              // 本地对该 locknode 有写意向的线程
+        bool invalid_req;                           // 其他进程想要获取当前 page 的锁，在事务执行过程中只能置 invalid_req=true, 然后等待该机器的事务结束
         volatile bool lock_remoting;
         std::mutex mtx;
         std::condition_variable cv;

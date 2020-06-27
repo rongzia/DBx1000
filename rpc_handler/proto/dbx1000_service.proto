@@ -11,7 +11,7 @@ service DBx1000Service {
 
   // for lock_server
   rpc Invalid(InvalidRequest) returns (InvalidReply) {}
-  rpc GetTestNum(GetTestNumRequest) returns (GetTestNumReply) {}
+//  rpc GetTestNum(GetTestNumRequest) returns (GetTestNumReply) {}
 }
 enum RpcLockMode {
   O = 0;

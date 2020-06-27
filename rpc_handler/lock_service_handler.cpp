@@ -7,8 +7,7 @@
 
 #include "common/buffer/buffer.h"
 #include "common/index/index.h"
-#include "lock_server/manager_lock_server.h"
-#include "lock_server/lock_server_table/lock_server_table.h"
+#include "lock_service/manager_lock_service.h"
 #include "common/storage/tablespace/page.h"
 #include "config.h"
 
@@ -23,7 +22,7 @@ namespace dbx1000 {
         if(count > 0) { assert(MY_PAGE_SIZE == count); }
         else {assert(0 == count);}
 
-        rc = manager_server_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
+        rc = manager_service_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
 
         if(RC::TIME_OUT  == rc) {
             response->set_rc(RpcRC::TIME_OUT);
@@ -59,24 +58,24 @@ namespace dbx1000 {
 
     ::grpc::Status BufferManagerServer::InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request
             , ::dbx1000::InstanceInitDoneReply* response) {
-        manager_server_->set_instance_i(request->instance_id());
+        manager_service_->set_instance_i(request->instance_id());
         return ::grpc::Status::OK;
     }
 
     ::grpc::Status BufferManagerServer::BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReply* response) {
-        response->set_init_done(manager_server_->init_done());
+        response->set_init_done(manager_service_->init_done());
         return ::grpc::Status::OK;
     }
 
     ::grpc::Status BufferManagerServer::GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response) {
-        response->set_ts(manager_server_->GetNextTs(-1));
+        response->set_ts(manager_service_->GetNextTs(-1));
         return ::grpc::Status::OK;
     }
 
-    ::grpc::Status BufferManagerServer::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
-        response->set_num(manager_server_->test_num);
-        return ::grpc::Status::OK;
-    }
+//    ::grpc::Status BufferManagerServer::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
+//        response->set_num(manager_service_->test_num);
+//        return ::grpc::Status::OK;
+//    }
 
     void BufferManagerServer::Start(const std::string& host) {
         grpc::ServerBuilder builder;

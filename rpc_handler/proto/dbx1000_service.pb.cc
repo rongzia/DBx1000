@@ -418,7 +418,7 @@ void AddDescriptorsImpl() {
       "\030\001 \001(\005*)\n\013RpcLockMode\022\005\n\001O\020\000\022\005\n\001P\020\001\022\005\n\001S"
       "\020\002\022\005\n\001X\020\003*W\n\005RpcRC\022\010\n\004RCOK\020\000\022\n\n\006Commit\020\001"
       "\022\t\n\005Abort\020\002\022\010\n\004WAIT\020\003\022\t\n\005ERROR\020\004\022\n\n\006FINI"
-      "SH\020\005\022\014\n\010TIME_OUT\020\0062\332\003\n\016DBx1000Service\022D\n"
+      "SH\020\005\022\014\n\010TIME_OUT\020\0062\224\003\n\016DBx1000Service\022D\n"
       "\nLockRemote\022\032.dbx1000.LockRemoteRequest\032"
       "\030.dbx1000.LockRemoteReply\"\000\022V\n\020InstanceI"
       "nitDone\022 .dbx1000.InstanceInitDoneReques"
@@ -428,12 +428,10 @@ void AddDescriptorsImpl() {
       "gerInitDonReply\"\000\022A\n\tGetNextTs\022\031.dbx1000"
       ".GetNextTsRequest\032\027.dbx1000.GetNextTsRep"
       "ly\"\000\022;\n\007Invalid\022\027.dbx1000.InvalidRequest"
-      "\032\025.dbx1000.InvalidReply\"\000\022D\n\nGetTestNum\022"
-      "\032.dbx1000.GetTestNumRequest\032\030.dbx1000.Ge"
-      "tTestNumReply\"\000b\006proto3"
+      "\032\025.dbx1000.InvalidReply\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1263);
+      descriptor, 1193);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dbx1000_service.proto", &protobuf_RegisterTypes);
 }

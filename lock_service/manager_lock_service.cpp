@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <cassert>
-#include "manager_lock_server.h"
+#include "manager_lock_service.h"
 
 #include "common/buffer/buffer.h"
 #include "common/index/index.h"
@@ -21,25 +21,24 @@
 #include "common/myhelper.h"
 #include "common/mystats.h"
 #include "json/json.h"
-#include "lock_server/lock_server_table/lock_server_table.h"
 #include "rpc_handler/lock_service_handler.h"
 #include "shared_disk/shared_disk_service.h"
 #include "config.h"
 
 
 namespace dbx1000 {
-    LockServerNode::LockServerNode(){
+    LockNode_Service::LockNode_Service(){
         write_ins_id = -1;
     }
 
 
 
-    ManagerServer::~ManagerServer() {
+    ManagerService::~ManagerService() {
 //        delete buffer_;
 //        delete lock_table_;
     }
 
-    ManagerServer::ManagerServer() {
+    ManagerService::ManagerService() {
         this->init_done_ = false;
         this->instances_ = new InstanceInfo[PROCESS_CNT]();
         for(int i = 0; i< PROCESS_CNT; i++) { instances_[i].instance_id = -1; instances_[i].init_done = false; }
@@ -67,14 +66,13 @@ namespace dbx1000 {
         }
 
         for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++){
-            lock_server_table_.insert(std::pair<uint64_t , LockServerNode*>(page_id, new LockServerNode()));
+            lock_service_table_.insert(std::pair<uint64_t , LockNode_Service*>(page_id, new LockNode_Service()));
         }
-        test_num = 0;
     }
 
-    RC ManagerServer::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
-        auto iter = lock_server_table_.find(page_id);
-        if (lock_server_table_.end() == iter) {
+    RC ManagerService::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
+        auto iter = lock_service_table_.find(page_id);
+        if (lock_service_table_.end() == iter) {
             assert(false);
             return RC::Abort;
         }
@@ -100,35 +98,35 @@ namespace dbx1000 {
         return rc;
     }
 
-    uint64_t ManagerServer::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
+    uint64_t ManagerService::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
 
 
 
-    void ManagerServer::set_instance_i(int instance_id){
-        cout << "ManagerServer::set_instance_i, instance_id : " << instance_id << endl;
+    void ManagerService::set_instance_i(int instance_id){
+        cout << "ManagerService::set_instance_i, instance_id : " << instance_id << endl;
         assert(instance_id >= 0 && instance_id < PROCESS_CNT);
         assert(instances_[instance_id].init_done == false);
         instances_[instance_id].init_done = true;
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
-        cout << "ManagerServer::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
+        cout << "ManagerService::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
         instances_[instance_id].buffer_manager_client = new BufferManagerClient(instances_[instance_id].host);
     }
 
 
-    bool ManagerServer::init_done() {
-//        cout << "ManagerServer::init_done" << endl;
+    bool ManagerService::init_done() {
+//        cout << "ManagerService::init_done" << endl;
         for(int i = 0; i < PROCESS_CNT; i++) {
             if(instances_[i].init_done == false){
                 return false;
             }
         }
         init_done_ = true;
-//        cout << "ManagerServer init done." << endl;
+//        cout << "ManagerService init done." << endl;
         return init_done_;
     }
-//    void ManagerServer::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
-//    std::map<int, std::string> &ManagerServer::hosts_map() { return this->hosts_map_; }
-//    ManagerServer::InstanceInfo* ManagerServer::instances(){ return this->instances_; }
-//    LockTable* ManagerServer::lock_table() { return this->lock_table_; }
+//    void ManagerService::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
+//    std::map<int, std::string> &ManagerService::hosts_map() { return this->hosts_map_; }
+//    ManagerService::InstanceInfo* ManagerService::instances(){ return this->instances_; }
+//    LockTable* ManagerService::lock_table() { return this->lock_table_; }
 }

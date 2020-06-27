@@ -47,8 +47,6 @@ namespace dbx1000 {
         uint64_t GetMinTs(uint64_t);
         bool RowFromDB(RowItem* row);
         bool RowToDB(RowItem* row);
-        bool Lock(uint64_t key, LockMode mode = LockMode::X);
-        bool UnLock(uint64_t key);
 
         /// getter and setter
         int instance_id()                                               { return this->instance_id_; }

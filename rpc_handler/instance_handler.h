@@ -30,11 +30,10 @@ namespace dbx1000 {
         InstanceClient &operator=(const InstanceClient&) = delete;
 
         RC LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count);
-
         void InstanceInitDone(int instance_id);
         bool BufferManagerInitDone();
         uint64_t GetNextTs();
-        int GetTestNum();
+//        int GetTestNum();
 
         ManagerInstance* manager_instance();
 

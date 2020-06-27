@@ -50,29 +50,8 @@ namespace dbx1000 {
 //        delete buffer_manager_rpc_handler_;
     }
 
-    ManagerInstance::ManagerInstance() {
-        /**
-         * for test
-         */
+    ManagerInstance::ManagerInstance() { }
 
-    }
-//        int instance_id_;
-//        std::map<int, std::string> host_map_;
-//        bool init_done_;
-
-//        uint64_t*   all_ts_;
-//        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
-//        txn_man** txn_man_;
-//        dbx1000::Stats stats_;
-//
-//        Query_queue* query_queue_;
-//        workload* m_workload_;
-//        Buffer * buffer_;
-//        TableSpace* table_space_;
-//        Index* index_;
-//        LockTable* lock_table_;
-//        InstanceClient *instance_rpc_handler_;
-//        SharedDiskClient * shared_disk_client_;
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {
         this->init_done_ = false;
@@ -98,31 +77,23 @@ namespace dbx1000 {
         // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
         // 应该把缓存调大，避免缓存不够时刷旧版本
         this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
-//        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, nullptr);
         this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client());
         this->lock_table_ = new LockTable();
 
-
-//        uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
-//        uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
+        // 无冲突时，start end ,时分区的
+        // uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
+        // uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
         uint64_t start = 0;
         uint64_t end = (table_space_->GetLastPageId() + 1);
         lock_table_->Init(start, end, this->instance_id_);
         lock_table_->set_manager_instance(this);
-        {
+        {   /// 预热缓存
             char buf[MY_PAGE_SIZE];
             for (uint64_t page_id = start; page_id < end; page_id++) {
                 buffer_->BufferGet(page_id, buf, MY_PAGE_SIZE);
             }
         }
     }
-
-//    void ManagerInstance::InitBufferForTest() {
-//        char buf[PAGE_SIZE];
-//        for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId(); page_id++) {
-//            buffer_->BufferGet(page_id, buf, PAGE_SIZE);
-//        }
-//    }
 
     void ManagerInstance::InitMvccs() {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
@@ -138,10 +109,17 @@ namespace dbx1000 {
     }
 
     uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) {
-//        return timestamp_.fetch_add(1);
         return instance_rpc_handler_->GetNextTs();
     }
 
+    /**
+     * GetRow 和 ReturnRow 在原本 dbx1000 里是属于 row_t 的函数，但是采用刷盘机制，row_t 类被去掉了
+     * @param key
+     * @param type
+     * @param txn
+     * @param row
+     * @return
+     */
     RC ManagerInstance::GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&row) {
         RC rc = RC::RCOK;
         uint64_t thd_id = txn->get_thd_id();
@@ -188,6 +166,11 @@ namespace dbx1000 {
         return min_ts;
     }
 
+    /**
+     * 读一行数据到 DB（这里 DB 是缓存+磁盘）
+     * @param row
+     * @return
+     */
     bool ManagerInstance::RowFromDB(RowItem* row) {
         auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
@@ -213,6 +196,11 @@ namespace dbx1000 {
         assert(this->lock_table_->UnLock(indexItem.page_id_));
         return true;
     }
+    /**
+     * 写一行数据到 DB（这里 DB 是缓存+磁盘）
+     * @param row
+     * @return
+     */
     bool ManagerInstance::RowToDB(RowItem *row) {
         auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
@@ -234,19 +222,6 @@ namespace dbx1000 {
         this->buffer_->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
         assert(this->lock_table_->UnLock(indexItem.page_id_));
         return true;
-    }
-
-    bool ManagerInstance::Lock(uint64_t key, LockMode mode){
-        dbx1000::IndexItem indexItem;
-        this->index_->IndexGet(key, &indexItem);
-        bool rc = this->lock_table_->Lock(indexItem.page_id_, mode);
-        assert(rc);
-    }
-    bool ManagerInstance::UnLock(uint64_t key){
-        dbx1000::IndexItem indexItem;
-        this->index_->IndexGet(key, &indexItem);
-        bool rc = this->lock_table_->UnLock(indexItem.page_id_);
-        assert(rc);
     }
 
 

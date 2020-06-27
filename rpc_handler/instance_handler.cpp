@@ -131,15 +131,15 @@ namespace dbx1000 {
         return reply.ts();
     }
 
-    int InstanceClient::GetTestNum(){
-        dbx1000::GetTestNumRequest request;
-        ::grpc::ClientContext context;
-        dbx1000::GetTestNumReply reply;
-
-        ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
-        assert(status.ok());
-        return reply.num();
-    }
+//    int InstanceClient::GetTestNum(){
+//        dbx1000::GetTestNumRequest request;
+//        ::grpc::ClientContext context;
+//        dbx1000::GetTestNumReply reply;
+//
+//        ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
+//        assert(status.ok());
+//        return reply.num();
+//    }
 
     ManagerInstance *InstanceClient::manager_instance() { return this->manager_instance_; }
 }

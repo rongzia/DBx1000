@@ -34,7 +34,11 @@ namespace dbx1000 {
         }
     }
 
-/*
+/**
+ * 单进程时的读写锁函数，读写不能同时，但是能同时读
+ * @param page_id
+ * @param mode
+ * @return
     bool LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) {
@@ -103,7 +107,7 @@ namespace dbx1000 {
             } else { assert(false); }
 //            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
             rc = true;
-            return true;
+            return rc;
         }
         if(mode == LockMode::P || mode == LockMode::O) { assert(false); }
     }
@@ -140,8 +144,6 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
-//        assert(lock_table_[page_id]->lock_mode != LockMode::O);
-
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         auto thread_iter = iter->second->thread_set.find(thd_id);
         if(thread_iter == iter->second->thread_set.end()){
@@ -162,7 +164,6 @@ namespace dbx1000 {
             iter->second->thread_set.erase(thd_id);
         }
 //        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
-//        std::notify_all_at_thread_exit(iter->second->cv, std::move(lck));
         iter->second->cv.notify_all();
         return true;
     }
@@ -171,18 +172,19 @@ namespace dbx1000 {
     bool LockTable::LockInvalid(uint64_t page_id, char *page_buf, size_t count){
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
+
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        cout << "LockTable::LockInvalid waiting." << endl;
+        // cout << "LockTable::LockInvalid waiting." << endl;
         iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
-//        cout << "LockTable::LockInvalid wait success." << endl;
-        assert(iter->second->thread_count == 0);
-        assert(iter->second->count == 0);
-        iter->second->lock_mode = LockMode::O;
-        manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
+        // cout << "LockTable::LockInvalid wait success." << endl;
+        {
+            assert(iter->second->thread_count == 0);
+            assert(iter->second->count == 0);
+            iter->second->lock_mode = LockMode::O;
+            manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
+        }
         iter->second->invalid_req = false;
-//        std::notify_all_at_thread_exit(iter->second->cv, std::move(lck));
-//        iter->second->cv.notify_all();
         return true;
     }
 

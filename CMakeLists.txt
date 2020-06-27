@@ -87,9 +87,8 @@ set(INSTANCE_FILES
         instance/manager_instance.cpp
         instance/thread.cpp
         )
-set(LOCK_SERVER_FILES
-        lock_server/lock_server_table/lock_server_table.cpp
-        lock_server/manager_lock_server.cpp
+set(LOCK_SERVICE_FILES
+        lock_service/manager_lock_service.cpp
         )
 set(RPC_HANDLER_FILES
         rpc_handler/proto/dbx1000_service.grpc.pb.cc
@@ -104,15 +103,15 @@ set(SHARED_DISK_FILES
         shared_disk/shared_disk_service.cpp)
 
 add_executable(main_lock_service test/main_lock_service.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES}  ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES}  ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(main_lock_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
 add_executable(main_instance test/main_instance.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
-add_executable(main_instance_test test/main_instance_test.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+add_executable(main_instance_test test/main_instance.cpp
+         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(main_instance_test ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
 
 add_executable(disk_service test/disk_service.cpp ${SHARED_DISK_FILES})
@@ -125,5 +124,5 @@ target_link_libraries(other_test pthread)
 #add_executable(parser_host common/parser_host.cpp)
 #target_link_libraries(parser_host libjsoncpp.a)
 
-add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVER_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
+add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)

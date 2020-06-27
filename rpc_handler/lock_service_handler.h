@@ -12,7 +12,7 @@
 #include "config.h"
 
 namespace dbx1000 {
-    class ManagerServer;
+    class ManagerService;
 
     class BufferManagerServer : DBx1000Service::Service {
     public:
@@ -21,13 +21,13 @@ namespace dbx1000 {
         virtual ::grpc::Status InstanceInitDone(::grpc::ServerContext* context, const ::dbx1000::InstanceInitDoneRequest* request, ::dbx1000::InstanceInitDoneReply* response);
         virtual ::grpc::Status BufferManagerInitDone(::grpc::ServerContext* context, const ::dbx1000::BufferManagerInitDoneRequest* request, ::dbx1000::BufferManagerInitDonReply* response);
         virtual ::grpc::Status GetNextTs(::grpc::ServerContext* context, const ::dbx1000::GetNextTsRequest* request, ::dbx1000::GetNextTsReply* response);
-        virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
+//        virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
         void Start(const std::string& host);
 
-        ManagerServer* manager_server_;
+        ManagerService* manager_service_;
     };
 
-    class ManagerServer;
+    class ManagerService;
     class BufferManagerClient {
     public:
         BufferManagerClient(const std::string&);
@@ -38,10 +38,10 @@ namespace dbx1000 {
         RC Invalid(uint64_t page_id, char *page_buf, size_t count);
 
         // getter and setter
-        ManagerServer* manager_server() { return this->manager_server_; };
+        ManagerService* manager_service() { return this->manager_service_; };
      private:
         std::unique_ptr<dbx1000::DBx1000Service::Stub> stub_;
-        ManagerServer* manager_server_;
+        ManagerService* manager_service_;
     };
 }
 
