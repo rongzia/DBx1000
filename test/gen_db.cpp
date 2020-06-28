@@ -178,6 +178,7 @@ int main() {
     cmd += DB_PREFIX;
     cmd += "*";
     system(cmd.data());
+    system((std::string("mkdir ") + DB_PREFIX).data());
 
     Gen_DB_single_thread();
     Check_DB();
