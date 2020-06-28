@@ -54,7 +54,7 @@ namespace dbx1000 {
         index_->DeSerialize();
 
 
-        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
+        this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
         /// 初始化 lock_service_table_
         for(uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++){
             this->lock_service_table_.insert(std::pair<uint64_t , LockNode_Service*>(page_id, new LockNode_Service()));

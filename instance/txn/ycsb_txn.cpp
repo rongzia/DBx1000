@@ -46,8 +46,11 @@ std::set<uint64_t> GetQueryWriteSet(ycsb_query * m_query, ycsb_txn_man *ycsb){
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
 		ycsb_request * req = &m_query->requests[rid];
         dbx1000::IndexItem indexItem;
-//        this->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id(), &indexItem);
+#ifdef DB2_WITH_NO_CONFLICT
+        ycsb->h_thd->manager_client_->index()->IndexGet(req->key + g_synth_table_size / MAX_PROCESS_CNT * ycsb->h_thd->manager_client_->instance_id(), &indexItem);
+#else
         ycsb->h_thd->manager_client_->index()->IndexGet(req->key, &indexItem);
+#endif
         if(req->rtype == WR){
             write_page_set.insert(indexItem.page_id_);
         }
@@ -95,12 +98,19 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 //lock_remote_thread.emplace_back(thread([iter, lockTable, this]() {
                     char page_buf[MY_PAGE_SIZE];
 //                    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " remote get lock." << endl;
+#ifdef DB2_WITH_NO_CONFLICT
+                    RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
+#else
                     RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
+#endif
                     assert(rc == RC::RCOK);
                     assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O);
                     lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
 //                    cout << "thread : " << get_thd_id() << " change lock : " << iter << " to P" << endl;
+#ifdef DB2_WITH_NO_CONFLICT
+#else
                     ycsb->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
+#endif
                     lockTable->lock_table()[iter]->lock_remoting = false;
 //}
 //));
@@ -169,17 +179,24 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			dbx1000::RowItem * row_local;
 			access_t type = req->rtype;
 
-			/**
-			 * 在做没有冲突的实验时，每个 instance 生成的请求 key ，范围都在 [0, g_synth_table_size/32] 中
-			 * ，想要控制每个 instance 没有冲突，可以使 key = key + instance_id * (g_synth_table_size/32)
-			 */
-//            assert(h_thd->manager_client_->instance_id() < PROCESS_CNT);
-//            assert(req->key < g_synth_table_size/32);
-//            uint64_t read_key = req->key + g_synth_table_size/32*h_thd->manager_client_->instance_id();
-//            assert(read_key < g_synth_table_size);
-//			row_local = get_row(read_key , type);
-
+		/**
+		 * 为了实现多个进程访问的数据没有重叠，没有冲突时，每个进程只访问 key:[g_synth_table_size/64*this->process_id, g_synth_table_size/MAX_PROCESS_CNT*(this->process_id+1)] 范围内的数据
+		 * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/64]
+		 * 在事务执行时，应该加上 : g_synth_table_size / MAX_PROCESS_CNT * process_id;
+		 *
+		 * 为什么是 MAX_PROCESS_CNT，而不是 PROCESS_CNT？
+		 * PROCESS_CNT 下，随着 PROCESS_CNT 增大， key 范围缩小，会导致每个节点内事务同时访问的 page_id  的概率增大
+		 * MAX_PROCESS_CNT 是预估最大达到的实例数
+		 */
+#ifdef DB2_WITH_NO_CONFLICT
+            assert(h_thd->manager_client_->instance_id() < MAX_PROCESS_CNT);
+            assert(req->key < g_synth_table_size / MAX_PROCESS_CNT);
+            uint64_t real_key = req->key + g_synth_table_size / MAX_PROCESS_CNT * h_thd->manager_client_->instance_id();
+            assert(real_key < g_synth_table_size);
+			row_local = get_row(real_key , type);
+#else
 			row_local = get_row(req->key , type);
+#endif
 			if (row_local == NULL) {
 				rc = RC::Abort;
 				goto final;

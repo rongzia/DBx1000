@@ -77,7 +77,7 @@ namespace dbx1000 {
         // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
         // 应该把缓存调大，避免缓存不够时刷旧版本
         this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
-        this->buffer_ = new Buffer(ITEM_NUM_PER_FILE * MY_PAGE_SIZE, MY_PAGE_SIZE, shared_disk_client());
+        this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client());
         this->lock_table_ = new LockTable();
 
         // 无冲突时，start end ,时分区的
