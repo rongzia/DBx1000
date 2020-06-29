@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
     int ins_id = parser_host(argc, argv, managerInstance->host_map());
     managerInstance->set_instance_id(ins_id);
+    cout << "this instane id : " << managerInstance->instance_id() << ", host : " << managerInstance->host_map()[managerInstance->instance_id()] << endl << "server id : " << managerInstance->host_map()[-1] << endl;
     managerInstance->Init(SHARED_DISK_HOST);
 
     // 连接集中锁管理器

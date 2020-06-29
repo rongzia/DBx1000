@@ -64,6 +64,8 @@ namespace dbx1000 {
         InstanceClient *instance_rpc_handler()                          { return this->instance_rpc_handler_; }
         void set_instance_rpc_handler(InstanceClient* instanceClient)   { this->instance_rpc_handler_ = instanceClient; }
         SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
+
+        int test_num_;
     private:
         int instance_id_;
         std::map<int, std::string> host_map_;

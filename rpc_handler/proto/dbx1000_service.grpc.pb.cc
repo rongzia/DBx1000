@@ -24,6 +24,7 @@ static const char* DBx1000Service_method_names[] = {
   "/dbx1000.DBx1000Service/LockServiceInitDone",
   "/dbx1000.DBx1000Service/GetNextTs",
   "/dbx1000.DBx1000Service/Invalid",
+  "/dbx1000.DBx1000Service/GetTestNum",
 };
 
 std::unique_ptr< DBx1000Service::Stub> DBx1000Service::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -38,6 +39,7 @@ DBx1000Service::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& cha
   , rpcmethod_LockServiceInitDone_(DBx1000Service_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_GetNextTs_(DBx1000Service_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_Invalid_(DBx1000Service_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_GetTestNum_(DBx1000Service_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status DBx1000Service::Stub::LockRemote(::grpc::ClientContext* context, const ::dbx1000::LockRemoteRequest& request, ::dbx1000::LockRemoteReply* response) {
@@ -180,6 +182,34 @@ void DBx1000Service::Stub::experimental_async::Invalid(::grpc::ClientContext* co
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::InvalidReply>::Create(channel_.get(), cq, rpcmethod_Invalid_, context, request, false);
 }
 
+::grpc::Status DBx1000Service::Stub::GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::dbx1000::GetTestNumReply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_GetTestNum_, context, request, response);
+}
+
+void DBx1000Service::Stub::experimental_async::GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_GetTestNum_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_GetTestNum_, context, request, response, std::move(f));
+}
+
+void DBx1000Service::Stub::experimental_async::GetTestNum(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_GetTestNum_, context, request, response, reactor);
+}
+
+void DBx1000Service::Stub::experimental_async::GetTestNum(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::GetTestNumReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_GetTestNum_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>* DBx1000Service::Stub::AsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::GetTestNumReply>::Create(channel_.get(), cq, rpcmethod_GetTestNum_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::dbx1000::GetTestNumReply>* DBx1000Service::Stub::PrepareAsyncGetTestNumRaw(::grpc::ClientContext* context, const ::dbx1000::GetTestNumRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::dbx1000::GetTestNumReply>::Create(channel_.get(), cq, rpcmethod_GetTestNum_, context, request, false);
+}
+
 DBx1000Service::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[0],
@@ -206,6 +236,11 @@ DBx1000Service::Service::Service() {
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InvalidRequest, ::dbx1000::InvalidReply>(
           std::mem_fn(&DBx1000Service::Service::Invalid), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DBx1000Service_method_names[5],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>(
+          std::mem_fn(&DBx1000Service::Service::GetTestNum), this)));
 }
 
 DBx1000Service::Service::~Service() {
@@ -240,6 +275,13 @@ DBx1000Service::Service::~Service() {
 }
 
 ::grpc::Status DBx1000Service::Service::Invalid(::grpc::ServerContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DBx1000Service::Service::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
   (void) context;
   (void) request;
   (void) response;

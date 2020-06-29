@@ -39,7 +39,7 @@ namespace protobuf_dbx1000_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[10];
+  static const ::google::protobuf::internal::ParseTable schema[12];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -53,6 +53,12 @@ extern GetNextTsReplyDefaultTypeInternal _GetNextTsReply_default_instance_;
 class GetNextTsRequest;
 class GetNextTsRequestDefaultTypeInternal;
 extern GetNextTsRequestDefaultTypeInternal _GetNextTsRequest_default_instance_;
+class GetTestNumReply;
+class GetTestNumReplyDefaultTypeInternal;
+extern GetTestNumReplyDefaultTypeInternal _GetTestNumReply_default_instance_;
+class GetTestNumRequest;
+class GetTestNumRequestDefaultTypeInternal;
+extern GetTestNumRequestDefaultTypeInternal _GetTestNumRequest_default_instance_;
 class InstanceInitDoneReply;
 class InstanceInitDoneReplyDefaultTypeInternal;
 extern InstanceInitDoneReplyDefaultTypeInternal _InstanceInitDoneReply_default_instance_;
@@ -82,6 +88,8 @@ namespace google {
 namespace protobuf {
 template<> ::dbx1000::GetNextTsReply* Arena::CreateMaybeMessage<::dbx1000::GetNextTsReply>(Arena*);
 template<> ::dbx1000::GetNextTsRequest* Arena::CreateMaybeMessage<::dbx1000::GetNextTsRequest>(Arena*);
+template<> ::dbx1000::GetTestNumReply* Arena::CreateMaybeMessage<::dbx1000::GetTestNumReply>(Arena*);
+template<> ::dbx1000::GetTestNumRequest* Arena::CreateMaybeMessage<::dbx1000::GetTestNumRequest>(Arena*);
 template<> ::dbx1000::InstanceInitDoneReply* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneReply>(Arena*);
 template<> ::dbx1000::InstanceInitDoneRequest* Arena::CreateMaybeMessage<::dbx1000::InstanceInitDoneRequest>(Arena*);
 template<> ::dbx1000::InvalidReply* Arena::CreateMaybeMessage<::dbx1000::InvalidReply>(Arena*);
@@ -1254,6 +1262,205 @@ class GetNextTsReply : public ::google::protobuf::Message /* @@protoc_insertion_
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class GetTestNumRequest : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetTestNumRequest) */ {
+ public:
+  GetTestNumRequest();
+  virtual ~GetTestNumRequest();
+
+  GetTestNumRequest(const GetTestNumRequest& from);
+
+  inline GetTestNumRequest& operator=(const GetTestNumRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetTestNumRequest(GetTestNumRequest&& from) noexcept
+    : GetTestNumRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline GetTestNumRequest& operator=(GetTestNumRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetTestNumRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetTestNumRequest* internal_default_instance() {
+    return reinterpret_cast<const GetTestNumRequest*>(
+               &_GetTestNumRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    10;
+
+  void Swap(GetTestNumRequest* other);
+  friend void swap(GetTestNumRequest& a, GetTestNumRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetTestNumRequest* New() const final {
+    return CreateMaybeMessage<GetTestNumRequest>(NULL);
+  }
+
+  GetTestNumRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetTestNumRequest>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetTestNumRequest& from);
+  void MergeFrom(const GetTestNumRequest& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetTestNumRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetTestNumRequest)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class GetTestNumReply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:dbx1000.GetTestNumReply) */ {
+ public:
+  GetTestNumReply();
+  virtual ~GetTestNumReply();
+
+  GetTestNumReply(const GetTestNumReply& from);
+
+  inline GetTestNumReply& operator=(const GetTestNumReply& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  GetTestNumReply(GetTestNumReply&& from) noexcept
+    : GetTestNumReply() {
+    *this = ::std::move(from);
+  }
+
+  inline GetTestNumReply& operator=(GetTestNumReply&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const GetTestNumReply& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const GetTestNumReply* internal_default_instance() {
+    return reinterpret_cast<const GetTestNumReply*>(
+               &_GetTestNumReply_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    11;
+
+  void Swap(GetTestNumReply* other);
+  friend void swap(GetTestNumReply& a, GetTestNumReply& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline GetTestNumReply* New() const final {
+    return CreateMaybeMessage<GetTestNumReply>(NULL);
+  }
+
+  GetTestNumReply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<GetTestNumReply>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const GetTestNumReply& from);
+  void MergeFrom(const GetTestNumReply& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(GetTestNumReply* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // int32 num = 1;
+  void clear_num();
+  static const int kNumFieldNumber = 1;
+  ::google::protobuf::int32 num() const;
+  void set_num(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:dbx1000.GetTestNumReply)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::int32 num_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_dbx1000_5fservice_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -1695,9 +1902,35 @@ inline void GetNextTsReply::set_ts(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:dbx1000.GetNextTsReply.ts)
 }
 
+// -------------------------------------------------------------------
+
+// GetTestNumRequest
+
+// -------------------------------------------------------------------
+
+// GetTestNumReply
+
+// int32 num = 1;
+inline void GetTestNumReply::clear_num() {
+  num_ = 0;
+}
+inline ::google::protobuf::int32 GetTestNumReply::num() const {
+  // @@protoc_insertion_point(field_get:dbx1000.GetTestNumReply.num)
+  return num_;
+}
+inline void GetTestNumReply::set_num(::google::protobuf::int32 value) {
+  
+  num_ = value;
+  // @@protoc_insertion_point(field_set:dbx1000.GetTestNumReply.num)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -10,13 +10,15 @@ using namespace std;
 
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
 
-void RunLockServiceServer(dbx1000::LockServiceServer * bufferManagerServer, dbx1000::ManagerLockService* managerLockService) {
-    bufferManagerServer->Start(managerLockService->hosts_map()[-1]);
+void RunLockServiceServer(dbx1000::LockServiceServer * lockServiceServer, dbx1000::ManagerLockService* managerLockService) {
+    std::string port = managerLockService->hosts_map()[managerLockService->lock_service_id()].substr(managerLockService->hosts_map()[-1].find(':'));
+    lockServiceServer->Start("0.0.0.0" + port);
 }
 
 int main(int argc, char* argv[]){
     dbx1000::ManagerLockService* managerLockService = new dbx1000::ManagerLockService();
-    managerLockService->set_buffer_manager_id(parser_host(argc, argv, managerLockService->hosts_map()));
+    parser_host(argc, argv, managerLockService->hosts_map());
+    managerLockService->set_lock_service_id(-1);
 
     dbx1000::LockServiceServer * lockServiceServer = new dbx1000::LockServiceServer();
     lockServiceServer->manager_lock_service_ = managerLockService;

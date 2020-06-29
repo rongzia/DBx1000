@@ -15,7 +15,7 @@ namespace dbx1000 {
 
     ::grpc::Status LockServiceServer::LockRemote(::grpc::ServerContext* context, const ::dbx1000::LockRemoteRequest* request, ::dbx1000::LockRemoteReply* response) {
 
-//        std::cout << "BufferManagerServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
+//        std::cout << "LockServiceServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
         RC rc;
         char page_buf[MY_PAGE_SIZE];
         size_t count = request->count();
@@ -38,7 +38,7 @@ namespace dbx1000 {
     }
 
     /*
-    ::grpc::Status BufferManagerServer::UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
+    ::grpc::Status LockServiceServer::UnLockRemote(::grpc::ServerContext* context, const ::dbx1000::UnLockRemoteRequest* request, ::dbx1000::UnLockRemoteReply* response) {
 
         if(DBx1000ServiceHelper::DeSerializeLockMode(request->req_mode()) == LockMode::S){
             assert(manager_server_->lock_table()->UnLock(request->page_id()));
@@ -72,17 +72,17 @@ namespace dbx1000 {
         return ::grpc::Status::OK;
     }
 
-//    ::grpc::Status BufferManagerServer::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
-//        response->set_num(manager_service_->test_num);
-//        return ::grpc::Status::OK;
-//    }
+    ::grpc::Status LockServiceServer::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
+        response->set_num(manager_lock_service_->test_num_);
+        return ::grpc::Status::OK;
+    }
 
     void LockServiceServer::Start(const std::string& host) {
         grpc::ServerBuilder builder;
         builder.AddListeningPort(host, grpc::InsecureServerCredentials());
         builder.RegisterService(this);
         std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-        std::cout << "BufferManagerServer listening on : " << host << std::endl;
+        std::cout << "LockServiceServer listening on : " << host << std::endl;
         server->Wait();
     }
 
@@ -96,7 +96,21 @@ namespace dbx1000 {
 
     LockServiceClient::LockServiceClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
             grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
-    )) {}
+    )) {
+        auto channel = ::grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+        stub_ = dbx1000::DBx1000Service::NewStub(channel);
+
+        ::grpc::ClientContext context;
+        dbx1000::GetTestNumRequest request;
+        dbx1000::GetTestNumReply reply;
+
+        ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
+        if(!status.ok()) {
+             std::cerr << "request failed: " << status.error_message() << std::endl;;
+        }
+        assert(status.ok());
+
+    }
 
     RC LockServiceClient::Invalid(uint64_t page_id, char *page_buf, size_t count){
         InvalidRequest request;

@@ -57,7 +57,8 @@ namespace dbx1000 {
 
         /// getter and setter
         bool init_done();
-        void set_buffer_manager_id(int id)      { this->buffer_manager_id_ = id; }
+        int lock_service_id()                  { return this->lock_service_id_; }
+        void set_lock_service_id(int id)        { this->lock_service_id_ = id; }
         std::map<int, std::string> &hosts_map() { return this->hosts_map_; }
         InstanceInfo* instances()               { return this->instances_; }
         void set_instance_i(int instance_id);
@@ -65,9 +66,11 @@ namespace dbx1000 {
         Buffer* buffer()                        { return this->buffer_; }
         Index* index()                          { return this->index_; }
 
+        int test_num_;
+
     private:
         bool init_done_;
-        int buffer_manager_id_;
+        int lock_service_id_;
         std::map<int, std::string> hosts_map_;
         InstanceInfo* instances_;                                               /// 记录各个 instance 的信息
         std::unordered_map<uint64_t , LockNode_Service*> lock_service_table_;     /// 该 table 并不是真正的锁表，而是记录哪个 page 锁被哪个节点持有

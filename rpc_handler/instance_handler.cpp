@@ -22,6 +22,12 @@ namespace dbx1000 {
         return ::grpc::Status::OK;
     }
 
+
+    ::grpc::Status InstanceServer::GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response) {
+        response->set_num(manager_instance_->test_num_);
+        return ::grpc::Status::OK;
+    }
+
     void InstanceServer::Start(const std::string& host){
         grpc::ServerBuilder builder;
         builder.AddListeningPort(host, grpc::InsecureServerCredentials());
@@ -37,9 +43,21 @@ namespace dbx1000 {
 
 
 
-    InstanceClient::InstanceClient(const std::string &addr) : stub_(dbx1000::DBx1000Service::NewStub(
-            grpc::CreateChannel(addr, grpc::InsecureChannelCredentials())
-    )) {}
+    InstanceClient::InstanceClient(const std::string &addr) {
+        std::cout << "InstanceClient::InstanceClient addr : " << addr << std::endl;
+        auto channel = ::grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
+        stub_ = dbx1000::DBx1000Service::NewStub(channel);
+
+        ::grpc::ClientContext context;
+        dbx1000::GetTestNumRequest request;
+        dbx1000::GetTestNumReply reply;
+
+        ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
+        if(!status.ok()) {
+             std::cerr << "request failed: " << status.error_message() << std::endl;;
+        }
+        assert(status.ok());
+    }
 
     RC InstanceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
 //        cout << "InstanceClient::LockRemote page_id : " << page_id << ", count : " << count << endl;

@@ -16,6 +16,8 @@ namespace dbx1000 {
     class InstanceServer : DBx1000Service::Service {
     public:
         virtual ::grpc::Status Invalid(::grpc::ServerContext* context, const ::dbx1000::InvalidRequest* request, ::dbx1000::InvalidReply* response);
+        virtual ::grpc::Status GetTestNum(::grpc::ServerContext* context, const ::dbx1000::GetTestNumRequest* request, ::dbx1000::GetTestNumReply* response);
+
         void Start(const std::string& host);
 
         ManagerInstance *manager_instance_;
@@ -33,7 +35,7 @@ namespace dbx1000 {
         void InstanceInitDone(int instance_id);
         bool LockServiceInitDone();
         uint64_t GetNextTs();
-//        int GetTestNum();
+        int GetTestNum();
 
         ManagerInstance* manager_instance();
 
