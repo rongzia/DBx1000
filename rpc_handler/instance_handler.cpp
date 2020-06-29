@@ -44,7 +44,6 @@ namespace dbx1000 {
 
 
     InstanceClient::InstanceClient(const std::string &addr) {
-        std::cout << "InstanceClient::InstanceClient addr : " << addr << std::endl;
         auto channel = ::grpc::CreateChannel(addr, grpc::InsecureChannelCredentials());
         stub_ = dbx1000::DBx1000Service::NewStub(channel);
 
@@ -54,7 +53,7 @@ namespace dbx1000 {
 
         ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
         if(!status.ok()) {
-             std::cerr << "request failed: " << status.error_message() << std::endl;;
+             std::cerr << "try connet to " << addr << ", request failed: " << status.error_message() << std::endl;;
         }
         assert(status.ok());
     }
