@@ -99,6 +99,13 @@ namespace dbx1000 {
         void print();
         void print_rpc();
         void print_lat_distr();
+
+
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+         uint64_t total_run_time_;
+         uint64_t total_latency_;
     };
 }
 

@@ -132,6 +132,7 @@ namespace dbx1000 {
     void Stats::print() {
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
+        /*
         double total_run_time = 0;
         double total_time_man = 0;
         double total_debug1 = 0;
@@ -150,6 +151,25 @@ namespace dbx1000 {
         double total_time_man_count = 0;
         double total_time_ts_alloc_latency = 0;
         double total_debug6 = 0;
+         */
+        uint64_t total_run_time = 0;
+        uint64_t total_time_man = 0;
+        uint64_t total_debug1 = 0;
+        uint64_t total_debug2 = 0;
+        uint64_t total_debug3 = 0;
+        uint64_t total_debug4 = 0;
+        uint64_t total_debug5 = 0;
+        uint64_t total_time_index = 0;
+        uint64_t total_time_abort = 0;
+        uint64_t total_time_cleanup = 0;
+        uint64_t total_time_wait = 0;
+        uint64_t total_time_ts_alloc = 0;
+        uint64_t total_latency = 0;
+        uint64_t total_time_query = 0;
+        uint64_t total_time_man_latency = 0;
+        uint64_t total_time_man_count = 0;
+        uint64_t total_time_ts_alloc_latency = 0;
+        uint64_t total_debug6 = 0;
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
@@ -179,13 +199,18 @@ namespace dbx1000 {
                 _stats[tid]->txn_cnt,
                 _stats[tid]->abort_cnt
             );
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+            this->total_run_time_ = total_run_time;
+            this->total_latency_ = total_latency;
         }
         FILE * outf;
         if (output_file != NULL) {
             outf = fopen(output_file, "w");
             fprintf(outf, "[summary] txn_cnt=%ld, abort_cnt=%ld"
-                ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
-                ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
+                ", run_time=%ld, time_wait=%f, time_ts_alloc=%f"
+                ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%ld"
                 ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
                 ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n",
                 total_txn_cnt,

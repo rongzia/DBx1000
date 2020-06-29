@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
+    dbx1000::Profiler profiler;
+    profiler.Start();
     for(int i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i, managerInstance->m_workload());
         thread_t_s[i].manager_client_ = managerInstance;
@@ -84,8 +86,12 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
+    profiler.End();
 
     managerInstance->stats().print();
+    cout << "throughtput : " << g_thread_cnt * MAX_TXN_PER_PART * 1000000000L / profiler.Nanos() << " tps." << endl;
+    cout << managerInstance->stats().total_run_time_ << endl;
+    cout << "throughtput2 : " << g_thread_cnt * MAX_TXN_PER_PART * 1000000000L / managerInstance->stats().total_run_time_ << " tps." << endl;
 
     delete managerInstance;
 
