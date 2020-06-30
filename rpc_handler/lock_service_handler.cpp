@@ -106,7 +106,7 @@ namespace dbx1000 {
 
         ::grpc::Status status = stub_->GetTestNum(&context, request, &reply);
         if(!status.ok()) {
-             std::cerr << "request failed: " << status.error_message() << std::endl;;
+             std::cerr << "try connet to " << addr << ", request failed: " << status.error_message() << std::endl;;
         }
         assert(status.ok());
 
