@@ -133,7 +133,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
         lockTable->AddThread(iter, ycsb->get_thd_id());
     }
     profiler.End();
-    ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->debug6 += profiler.Nanos();
+	ycsb->h_thd->manager_client_->stats().tmp_stats[ycsb->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
     RC rc = RC::RCOK;
 
     return rc;

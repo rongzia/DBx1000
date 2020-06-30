@@ -53,7 +53,7 @@ namespace dbx1000 {
         void set_instance_id(int instance_id)                           { this->instance_id_ = instance_id; }
         void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
         std::map<int, std::string>& host_map()                          { return this->host_map_; }
-        Stats stats()                                                   { return this->stats_; }
+        Stats &stats()                                                  { return this->stats_; }
         std::unordered_map<uint64_t, Row_mvcc*> mvcc_map()              { return this->mvcc_map_; }
         Query_queue* query_queue()                                      { return this->query_queue_; }
         workload* m_workload()                                          { return this->m_workload_; }

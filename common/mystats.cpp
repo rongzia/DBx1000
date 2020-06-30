@@ -16,7 +16,6 @@ namespace dbx1000 {
         clear();
         all_debug1 = new uint64_t[MAX_TXN_PER_PART]();
         all_debug2 = new uint64_t[MAX_TXN_PER_PART]();
-//        profiler = make_unique<dbx1000::Profiler>();
     }
 
     void Stats_thd::clear() {
@@ -38,16 +37,13 @@ namespace dbx1000 {
         debug5 = 0;
         latency = 0;
 
-        time_ts_alloc_rpc_time = 0;
-        time_ts_alloc_rpc_count = 0;
-        time_man_rpc_time = 0;
-        time_man_rpc_count = 0;
-        time_abort_rpc_time = 0;
-        time_abort_rpc_count = 0;
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+         time_remote_lock_ = 0;
     }
 
     void Stats_tmp::init() {
-//        profiler = make_unique<dbx1000::Profiler>();
         clear();
     }
 
@@ -55,11 +51,7 @@ namespace dbx1000 {
         time_man = 0;
         time_index = 0;
         time_wait = 0;
-
-        time_man_get_row_rpc_count = 0;
-        time_man_get_row_rpc_time = 0;
-        time_man_return_row_rpc_count = 0;
-        time_man_return_row_rpc_time = 0;
+        time_remote_lock_ = 0;
     }
 
     void Stats::init() {
@@ -71,6 +63,11 @@ namespace dbx1000 {
         dl_wait_time = 0;
         cycle_detect = 0;
         deadlock = 0;
+
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+        txn_cnt = 0;
     }
 
 //! 为成员变量分配空间
@@ -109,22 +106,16 @@ namespace dbx1000 {
     void Stats::commit(uint64_t thd_id) {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_man += tmp_stats[thd_id]->time_man;
-            _stats[thd_id]->time_man_rpc_time += (tmp_stats[thd_id]->time_man_get_row_rpc_time + tmp_stats[thd_id]->time_man_return_row_rpc_time);
-            _stats[thd_id]->time_man_rpc_count += (tmp_stats[thd_id]->time_man_get_row_rpc_count + tmp_stats[thd_id]->time_man_return_row_rpc_count);
             _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
             _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
+            _stats[thd_id]->time_remote_lock_ += tmp_stats[thd_id]->time_remote_lock_;
             tmp_stats[thd_id]->clear();
-
         }
     }
 
     void Stats::abort(uint64_t thd_id) {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_abort += tmp_stats[thd_id]->time_man;
-            _stats[thd_id]->time_abort_rpc_time += (tmp_stats[thd_id]->time_man_get_row_rpc_time + tmp_stats[thd_id]->time_man_return_row_rpc_time);
-            _stats[thd_id]->time_abort_rpc_count += (tmp_stats[thd_id]->time_man_get_row_rpc_count + tmp_stats[thd_id]->time_man_return_row_rpc_count);
-//            _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
-//            _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
             tmp_stats[thd_id]->clear();
         }
     }
@@ -132,7 +123,54 @@ namespace dbx1000 {
     void Stats::print() {
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
-        /*
+        uint64_t total_run_time = 0;
+        uint64_t total_latency = 0;
+        uint64_t total_time_man = 0;
+        uint64_t total_debug1 = 0;
+        uint64_t total_debug2 = 0;
+        uint64_t total_debug3 = 0;
+        uint64_t total_debug4 = 0;
+        uint64_t total_debug5 = 0;
+        uint64_t total_time_index = 0;
+        uint64_t total_time_abort = 0;
+        uint64_t total_time_cleanup = 0;
+        uint64_t total_time_wait = 0;
+        uint64_t total_time_ts_alloc = 0;
+        uint64_t total_time_query = 0;
+        uint64_t total_time_remote_lock = 0;
+        for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
+            total_txn_cnt += _stats[tid]->txn_cnt;
+            total_abort_cnt += _stats[tid]->abort_cnt;
+            total_run_time += _stats[tid]->run_time;
+            total_latency += _stats[tid]->latency;
+            total_time_man += _stats[tid]->time_man;
+            total_debug1 += _stats[tid]->debug1;
+            total_debug2 += _stats[tid]->debug2;
+            total_debug3 += _stats[tid]->debug3;
+            total_debug4 += _stats[tid]->debug4;
+            total_debug5 += _stats[tid]->debug5;
+            total_time_index += _stats[tid]->time_index;
+            total_time_abort += _stats[tid]->time_abort;
+            total_time_cleanup += _stats[tid]->time_cleanup;
+            total_time_wait += _stats[tid]->time_wait;
+            total_time_ts_alloc += _stats[tid]->time_ts_alloc;
+            total_time_query += _stats[tid]->time_query;
+            total_time_remote_lock += _stats[tid]->time_remote_lock_;
+
+            printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
+                tid,
+                _stats[tid]->txn_cnt,
+                _stats[tid]->abort_cnt
+            );
+        }
+        this->txn_cnt = total_txn_cnt;
+        cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us, all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
+    }
+/*
+    void Stats::print() {
+
+        uint64_t total_txn_cnt = 0;
+        uint64_t total_abort_cnt = 0;
         double total_run_time = 0;
         double total_time_man = 0;
         double total_debug1 = 0;
@@ -147,29 +185,6 @@ namespace dbx1000 {
         double total_time_ts_alloc = 0;
         double total_latency = 0;
         double total_time_query = 0;
-        double total_time_man_latency = 0;
-        double total_time_man_count = 0;
-        double total_time_ts_alloc_latency = 0;
-        double total_debug6 = 0;
-         */
-        uint64_t total_run_time = 0;
-        uint64_t total_time_man = 0;
-        uint64_t total_debug1 = 0;
-        uint64_t total_debug2 = 0;
-        uint64_t total_debug3 = 0;
-        uint64_t total_debug4 = 0;
-        uint64_t total_debug5 = 0;
-        uint64_t total_time_index = 0;
-        uint64_t total_time_abort = 0;
-        uint64_t total_time_cleanup = 0;
-        uint64_t total_time_wait = 0;
-        uint64_t total_time_ts_alloc = 0;
-        uint64_t total_latency = 0;
-        uint64_t total_time_query = 0;
-        uint64_t total_time_man_latency = 0;
-        uint64_t total_time_man_count = 0;
-        uint64_t total_time_ts_alloc_latency = 0;
-        uint64_t total_debug6 = 0;
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
@@ -188,29 +203,18 @@ namespace dbx1000 {
             total_latency += _stats[tid]->latency;
             total_time_query += _stats[tid]->time_query;
 
-            total_time_man_latency += _stats[tid]->time_man_rpc_time;
-            total_time_man_count += _stats[tid]->time_man_rpc_count;
-            total_time_ts_alloc_latency += _stats[tid]->time_ts_alloc_rpc_time;
-
-            total_debug6 += _stats[tid]->debug6;
-
             printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
                 tid,
                 _stats[tid]->txn_cnt,
                 _stats[tid]->abort_cnt
             );
-        /**
-         * zhangrongrong, 2020/6/30
-         */
-            this->total_run_time_ = total_run_time;
-            this->total_latency_ = total_latency;
         }
         FILE * outf;
         if (output_file != NULL) {
             outf = fopen(output_file, "w");
             fprintf(outf, "[summary] txn_cnt=%ld, abort_cnt=%ld"
-                ", run_time=%ld, time_wait=%f, time_ts_alloc=%f"
-                ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%ld"
+                ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
+                ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
                 ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
                 ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n",
                 total_txn_cnt,
@@ -239,10 +243,8 @@ namespace dbx1000 {
         printf("[summary] txn_cnt=%ld, abort_cnt=%ld"
             ", run_time=%f, time_wait=%f, time_ts_alloc=%f"
             ", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
-//            ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-            ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f, debug6=%f"
-            ", time_man_latency=%f, time_man_count=%ld"
-            ", time_ts_alloc_latency=%f\n",
+            ", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
+            ", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n",
             total_txn_cnt,
             total_abort_cnt,
             total_run_time / BILLION,
@@ -253,26 +255,22 @@ namespace dbx1000 {
             total_time_abort / BILLION,
             total_time_cleanup / BILLION,
             total_latency / BILLION / total_txn_cnt,
-//            deadlock,
-//            cycle_detect,
-//            dl_detect_time / BILLION,
-//            dl_wait_time / BILLION,
+            deadlock,
+            cycle_detect,
+            dl_detect_time / BILLION,
+            dl_wait_time / BILLION,
             total_time_query / BILLION,
             total_debug1 / BILLION,
             total_debug2, // / BILLION,
             total_debug3, // / BILLION,
             total_debug4, // / BILLION,
-            total_debug5,  // / BILLION
-            total_debug6,
-
-            total_time_man_latency / BILLION,
-            total_time_man_count,
-            total_time_ts_alloc_latency / BILLION
+            total_debug5  // / BILLION
         );
         if (g_prt_lat_distr)
             print_lat_distr();
     }
-
+*/
+/*
     void Stats::print_rpc() {
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
@@ -355,7 +353,7 @@ namespace dbx1000 {
         if (g_prt_lat_distr)
             print_lat_distr();
     }
-
+*/
     void Stats::print_lat_distr() {
         FILE *outf;
         if (output_file != NULL) {

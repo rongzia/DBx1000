@@ -44,17 +44,12 @@ namespace dbx1000 {
         uint64_t latency;
         uint64_t *all_debug1;
         uint64_t *all_debug2;
-
-        uint64_t time_ts_alloc_rpc_time;
-        uint64_t time_ts_alloc_rpc_count;
-        uint64_t time_man_rpc_time;
-        uint64_t time_man_rpc_count;
-        uint64_t time_abort_rpc_time;
-        uint64_t time_abort_rpc_count;
-
-        uint64_t debug6;
-
-//        std::unique_ptr<dbx1000::Profiler> profiler;
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+         uint64_t time_remote_lock_;
+//         uint64_t total_run_time_;
+//         uint64_t total_latency_;
     };
 
     /// 事务执行有 thread -> txn
@@ -66,14 +61,12 @@ namespace dbx1000 {
         void clear();
 
         uint64_t time_man;      /// 对应 ycsb 中 get_row、return_row  时间
-        uint64_t time_man_get_row_rpc_count;
-        uint64_t time_man_get_row_rpc_time;
-        uint64_t time_man_return_row_rpc_count;
-        uint64_t time_man_return_row_rpc_time;
         uint64_t time_index;
         uint64_t time_wait;     /// 对应 ycsb 中 get_row 时等待的时间，time_man 的子集
-
-//        std::unique_ptr<dbx1000::Profiler> profiler;
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+         uint64_t time_remote_lock_;
     };
 
     class Stats {
@@ -89,6 +82,10 @@ namespace dbx1000 {
         uint64_t dl_wait_time;
         uint64_t cycle_detect;
         uint64_t deadlock;
+        /**
+         * zhangrongrong, 2020/6/30
+         */
+        uint64_t txn_cnt;
 
         void init();
         void init(uint64_t thread_id);
@@ -99,13 +96,6 @@ namespace dbx1000 {
         void print();
         void print_rpc();
         void print_lat_distr();
-
-
-        /**
-         * zhangrongrong, 2020/6/30
-         */
-         uint64_t total_run_time_;
-         uint64_t total_latency_;
     };
 }
 

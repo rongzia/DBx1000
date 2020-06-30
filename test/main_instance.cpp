@@ -89,9 +89,8 @@ int main(int argc, char *argv[]) {
     profiler.End();
 
     managerInstance->stats().print();
-    cout << "throughtput : " << g_thread_cnt * MAX_TXN_PER_PART * 1000000000L / profiler.Nanos() << " tps." << endl;
-    cout << managerInstance->stats().total_run_time_ << endl;
-    cout << "throughtput2 : " << g_thread_cnt * MAX_TXN_PER_PART * 1000000000L / managerInstance->stats().total_run_time_ << " tps." << endl;
+    cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
+    cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
 
     delete managerInstance;
 
