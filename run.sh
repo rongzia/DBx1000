@@ -1,5 +1,6 @@
-cd /home/zhangrongrong/CLionProjects/DBx1000/build
 
+cd ./build
+pwd
 # $1 为第 i 个节点的编号
 # ./run 1 8, 表示第 2 个结点，8个进程
 

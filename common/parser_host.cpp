@@ -19,7 +19,7 @@ int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map) {
         }
     }
 
-    std::ifstream in("/home/zhangrongrong/CLionProjects/DBx1000/config.json", std::ios::out | std::ios::binary);
+    std::ifstream in("../config.json", std::ios::out | std::ios::binary);
     assert(in.is_open());
     Json::Value root;
     in >> root;

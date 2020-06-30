@@ -19,7 +19,7 @@
 
 RC tpcc_wl::init() {
 	workload::init();
-	string path = "/home/zhangrongrong/CLionProjects/temp/DBx1000/benchmarks/";
+	string path = "../benchmarks/";
 #if TPCC_SMALL
 	path += "TPCC_short_schema.txt";
 #else

@@ -17,8 +17,8 @@
 using namespace std;
 
 void Test_access() {
-    cout << ((access("/home/zhangrongrong/CLionProjects/DBx1000/db/", F_OK) >= 0) ? "exist" : "not exist") << endl;
-    cout << ((access("/home/zhangrongrong/CLionProjects/DBx1000/db/MAIN_TABLE", F_OK) >= 0) ? "exist" : "not exist")
+    cout << ((access("../db/", F_OK) >= 0) ? "exist" : "not exist") << endl;
+    cout << ((access("../db/MAIN_TABLE", F_OK) >= 0) ? "exist" : "not exist")
          << endl;
 }
 
