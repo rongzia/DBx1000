@@ -110,11 +110,11 @@ namespace dbx1000 {
         cout << "ManagerLockService::set_instance_i, instance_id : " << instance_id << endl;
         assert(instance_id >= 0 && instance_id < PROCESS_CNT);
         assert(instances_[instance_id].init_done == false);
-        instances_[instance_id].init_done = true;
         instances_[instance_id].instance_id = instance_id;
         instances_[instance_id].host = hosts_map_[instance_id];
         cout << "ManagerLockService::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
         instances_[instance_id].lock_service_client = new LockServiceClient(instances_[instance_id].host);
+        instances_[instance_id].init_done = true;
     }
 
 
