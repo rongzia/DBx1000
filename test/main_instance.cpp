@@ -57,14 +57,15 @@ int main(int argc, char *argv[]) {
     cout << "this instane id : " << managerInstance->instance_id() << ", host : " << managerInstance->host_map()[managerInstance->instance_id()] << endl << "server id : " << managerInstance->host_map()[-1] << endl;
     managerInstance->Init(SHARED_DISK_HOST);
 
-    // 连接集中锁管理器
-    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
+
     {   // instance 服务端
         dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
         instanceServer->manager_instance_ = managerInstance;
         thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
         instance_service_server.detach();
     }
+    // 连接集中锁管理器
+    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
 
     managerInstance->set_init_done(true);
     managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
