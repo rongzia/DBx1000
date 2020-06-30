@@ -228,14 +228,14 @@ extern TestCases					g_test_case;
 
 #define g_schame_path "../common/workload/YCSB_schema.txt"
 
-#define DB_PREFIX "../DBx1000/db/"
+#define DB_PREFIX "../db/"
 #define DB_SUFIX ".table"
 #define FILE_SIZE (1024 * 16 * 1024 * 100L)    // 1600 MB
 #define MY_PAGE_SIZE (1024 * 16)
 #define ITEM_NUM_PER_FILE (1024 * 100)
 
 //#define SHARED_DISK
-#define SHARED_DISK_HOST "10.11.6.116:50050"
+#define SHARED_DISK_HOST "10.11.6.119:50050"
 
 #define DB2_WITH_NO_CONFLICT
 #define MAX_PROCESS_CNT 64
