@@ -30,6 +30,7 @@
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
 #include "rpc_handler/instance_handler.h"
+#include "util/parse_result.h"
 #include "config.h"
 
 using namespace std;
@@ -92,6 +93,8 @@ int main(int argc, char *argv[]) {
     managerInstance->stats().print();
     cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
     cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
+    AppendRunTime(profiler.Nanos() / 1000UL);
+    AppendThroughtput(managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos());
 
     delete managerInstance;
 

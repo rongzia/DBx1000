@@ -272,6 +272,11 @@ RC thread_t::run() {
 }
 
 ts_t thread_t::get_next_ts() {
+    dbx1000::Profiler profiler;
+    profiler.Start();
+    uint64_t ts = manager_client_->GetNextTs(_thd_id);
+    profiler.End();
+    manager_client_->stats()._stats[_thd_id]->time_ts_alloc += profiler.Nanos();
     return manager_client_->GetNextTs(_thd_id);
 }
 /*

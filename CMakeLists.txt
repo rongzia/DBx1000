@@ -76,6 +76,7 @@ set(COMMON_FILES
         common/parser.cpp
         common/parser_host.cpp
         util/arena.cpp
+        util/parse_result.cpp
         config.cpp
         )
 set(INSTANCE_FILES
@@ -122,3 +123,6 @@ target_link_libraries(other_test pthread)
 
 add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
 target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+
+
+add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)

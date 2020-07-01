@@ -7,6 +7,7 @@
 
 #include "global.h"
 #include "util/make_unique.h"
+#include "util/parse_result.h"
 
 //#define BILLION 1000000000UL
 #define BILLION 1000UL
@@ -164,7 +165,10 @@ namespace dbx1000 {
             );
         }
         this->txn_cnt = total_txn_cnt;
-        cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us, all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
+        cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
+        cout << " get ts time : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
+        AppendLatency(total_latency / BILLION / total_txn_cnt);
+        AppendRemoteLockTime(total_time_remote_lock / BILLION);
     }
 /*
     void Stats::print() {

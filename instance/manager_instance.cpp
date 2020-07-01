@@ -55,6 +55,7 @@ namespace dbx1000 {
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {
         this->init_done_ = false;
+        timestamp_ = ATOMIC_VAR_INIT(1);
         this->all_ts_ = new uint64_t[g_thread_cnt]();
         for (int i = 0; i < g_thread_cnt; i++) { all_ts_[i] = UINT64_MAX; }
         this->txn_man_ = new txn_man *[g_thread_cnt]();
@@ -109,7 +110,8 @@ namespace dbx1000 {
     }
 
     uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) {
-        return instance_rpc_handler_->GetNextTs();
+//        return instance_rpc_handler_->GetNextTs();
+        return timestamp_.fetch_add(1);
     }
 
     /**

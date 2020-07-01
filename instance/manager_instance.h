@@ -71,6 +71,7 @@ namespace dbx1000 {
         std::map<int, std::string> host_map_;
         bool init_done_;
 
+        atomic_uint64_t timestamp_;
         uint64_t*   all_ts_;
         std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
         txn_man** txn_man_;
