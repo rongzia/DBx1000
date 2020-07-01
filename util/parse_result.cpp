@@ -6,109 +6,119 @@
 #include <iostream>
 #include <sstream>
 #include <mutex>
+#include "unistd.h"
+#include "config.h"
 using namespace std;
 
 #include "parse_result.h"
 
 std::mutex mtx;
 
-void AppendRunTime(uint64_t run_time) {
+void AppendRunTime(uint64_t run_time, uint64_t ins_id) {
     std::lock_guard<std::mutex> lck(mtx);
-    ofstream out("runtime", ios::app | ios::out);
+    ofstream out(std::string("runtime") + "_" + to_string(ins_id), ios::app | ios::out);
     assert(out.is_open());
     out << run_time << endl;
 }
 
-void AppendLatency(uint64_t latency) {
+void AppendLatency(uint64_t latency, uint64_t ins_id) {
     std::lock_guard<std::mutex> lck(mtx);
-    ofstream out("latency", ios::app | ios::out);
+    ofstream out(std::string("latency") + "_" + to_string(ins_id), ios::app | ios::out);
     assert(out.is_open());
     out << latency << endl;
 }
-void AppendThroughtput(uint64_t throughtput) {
+void AppendThroughtput(uint64_t throughtput, uint64_t ins_id) {
     std::lock_guard<std::mutex> lck(mtx);
-    ofstream out("throughtput", ios::app | ios::out);
+    ofstream out(std::string("throughtput") + "_" + to_string(ins_id), ios::app | ios::out);
     assert(out.is_open());
     out << throughtput << endl;
 }
-void AppendRemoteLockTime(uint64_t remoteLockTime) {
+void AppendRemoteLockTime(uint64_t remoteLockTime, uint64_t ins_id) {
     std::lock_guard<std::mutex> lck(mtx);
-    ofstream out("remote_lock_time", ios::app | ios::out);
+    ofstream out(std::string("remote_lock_time") + "_" + to_string(ins_id), ios::app | ios::out);
     assert(out.is_open());
     out << remoteLockTime << endl;
 }
 
 
 void ParseRunTime(){
-    ifstream in("runtime", ios::app | ios::out);
-    assert(in.is_open());
-    std::stringstream ss;
-    ss << in.rdbuf();
-
     uint64_t temp;
-    int count = 0;
+    int ins_count = 0;
     uint64_t run_time = 0;
 
-    while(ss >> temp){
-        count ++;
-//        cout << temp << endl;
-        run_time += temp;
+    for(int i = 0; i < PROCESS_CNT; i++) {
+        if(access((std::string("runtime") + "_" + to_string(i)).data(), F_OK) < 0){ continue; }
+        ins_count++;
+        ifstream in(std::string("runtime") + "_" + to_string(i), ios::app | ios::out);
+        assert(in.is_open());
+        std::stringstream ss;
+        ss << in.rdbuf();
+
+        while (ss >> temp) {
+            run_time += temp;
+        }
+        in.close();
     }
-    in.close();
-    cout << "run_time : " << (double)run_time / count << ", count : " << count << endl;
+    cout << "run_time : " << run_time / ins_count << ", ins_count : " << ins_count << endl;
 }
 void ParseLatency(){
-    ifstream in("latency", ios::app | ios::out);
-    assert(in.is_open());
-    std::stringstream ss;
-    ss << in.rdbuf();
-
     uint64_t temp;
-    int count = 0;
+    int ins_count = 0;
     uint64_t total_latency = 0;
 
-    while(ss >> temp){
-        count ++;
-//        cout << temp << endl;
-        total_latency += temp;
+    for(int i = 0; i < PROCESS_CNT; i++) {
+        if(access((std::string("latency") + "_" + to_string(i)).data(), F_OK) < 0){ continue; }
+        ins_count++;
+        ifstream in(std::string("latency") + "_" + to_string(i), ios::app | ios::out);
+        assert(in.is_open());
+        std::stringstream ss;
+        ss << in.rdbuf();
+
+        while (ss >> temp) {
+            total_latency += temp;
+        }
+        in.close();
     }
-    in.close();
-    cout << "total_latency : " << total_latency << ", count : " << count << endl;
+    cout << "total_latency : " << total_latency / ins_count << ", ins_count : " << ins_count << endl;
 }
 
 void ParseThroughtput(){
-    ifstream in("throughtput", ios::app | ios::out);
-    assert(in.is_open());
-    std::stringstream ss;
-    ss << in.rdbuf();
-
     uint64_t temp;
-    int count = 0;
+    int ins_count = 0;
     uint64_t throughtput = 0;
 
-    while(ss >> temp){
-        count ++;
-//        cout << temp << endl;
-        throughtput += temp;
+    for(int i = 0; i < PROCESS_CNT; i++) {
+        if(access((std::string("throughtput") + "_" + to_string(i)).data(), F_OK) < 0){ continue; }
+        ins_count++;
+        ifstream in(std::string("throughtput") + "_" + to_string(i), ios::app | ios::out);
+        assert(in.is_open());
+        std::stringstream ss;
+        ss << in.rdbuf();
+
+        while (ss >> temp) {
+            throughtput += temp;
+        }
+        in.close();
     }
-    in.close();
-    cout << "total throughtput : " << throughtput << ", count : " << count << endl;
+    cout << "throughtput : " << throughtput / ins_count << ", ins_count : " << ins_count << endl;
 }
 void ParseRemoteLockTime(){
-    ifstream in("remote_lock_time", ios::app | ios::out);
-    assert(in.is_open());
-    std::stringstream ss;
-    ss << in.rdbuf();
-
     uint64_t temp;
-    int count = 0;
-    uint64_t remoteLockTime = 0;
+    int ins_count = 0;
+    uint64_t remote_lock_time = 0;
 
-    while(ss >> temp){
-        count ++;
-//        cout << temp << endl;
-        remoteLockTime += temp;
+    for(int i = 0; i < PROCESS_CNT; i++) {
+        if(access((std::string("throughtput") + "_" + to_string(i)).data(), F_OK) < 0){ continue; }
+        ins_count++;
+        ifstream in(std::string("remote_lock_time") + "_" + to_string(i), ios::app | ios::out);
+        assert(in.is_open());
+        std::stringstream ss;
+        ss << in.rdbuf();
+
+        while (ss >> temp) {
+            remote_lock_time += temp;
+        }
+        in.close();
     }
-    in.close();
-    cout << "total remoteLockTime : " << remoteLockTime << ", count : " << count << endl;
+    cout << "remote_lock_time : " << remote_lock_time / ins_count << ", ins_count : " << ins_count << endl;
 }

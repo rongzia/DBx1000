@@ -121,7 +121,7 @@ namespace dbx1000 {
         }
     }
 
-    void Stats::print() {
+    void Stats::print(uint64_t ins_id) {
         uint64_t total_txn_cnt = 0;
         uint64_t total_abort_cnt = 0;
         uint64_t total_run_time = 0;
@@ -167,8 +167,8 @@ namespace dbx1000 {
         this->txn_cnt = total_txn_cnt;
         cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
         cout << " get ts time : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
-        AppendLatency(total_latency / BILLION / total_txn_cnt);
-        AppendRemoteLockTime(total_time_remote_lock / BILLION);
+        AppendLatency(total_latency / BILLION / total_txn_cnt, ins_id);
+        AppendRemoteLockTime(total_time_remote_lock / BILLION, ins_id);
     }
 /*
     void Stats::print() {

@@ -5,10 +5,10 @@
 #ifndef DBX1000_PARESE_RESULT_H
 #define DBX1000_PARESE_RESULT_H
 
-void AppendRunTime(uint64_t run_time);
-void AppendLatency(uint64_t latency);
-void AppendThroughtput(uint64_t throughtput);
-void AppendRemoteLockTime(uint64_t remoteLockTime);
+void AppendRunTime(uint64_t run_time, uint64_t ins_id);
+void AppendLatency(uint64_t latency, uint64_t ins_id);
+void AppendThroughtput(uint64_t throughtput, uint64_t ins_id);
+void AppendRemoteLockTime(uint64_t remoteLockTime, uint64_t ins_id);
 void ParseRunTime();
 void ParseLatency();
 void ParseThroughtput();

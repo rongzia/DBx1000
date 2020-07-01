@@ -93,7 +93,7 @@ namespace dbx1000 {
         void add_debug(uint64_t thd_id, uint64_t value, uint32_t select);
         void commit(uint64_t thd_id);
         void abort(uint64_t thd_id);
-        void print();
+        void print(uint64_t ins_id);
         void print_rpc();
         void print_lat_distr();
     };

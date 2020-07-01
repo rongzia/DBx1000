@@ -90,11 +90,11 @@ int main(int argc, char *argv[]) {
     }
     profiler.End();
 
-    managerInstance->stats().print();
+    managerInstance->stats().print(managerInstance->instance_id());
     cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
     cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
-    AppendRunTime(profiler.Nanos() / 1000UL);
-    AppendThroughtput(managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos());
+    AppendRunTime(profiler.Nanos() / 1000UL, managerInstance->instance_id());
+    AppendThroughtput(managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
     delete managerInstance;
 

@@ -11,10 +11,10 @@ pwd
 #temp_end=`expr $temp \* $2`
 #end=`expr $temp_end - 1`
 
-rm runtime
-rm latency
-rm throughtput
-rm remote_lock_time
+rm runtime*
+rm latency*
+rm throughtput*
+rm remote_lock_time*
 
 start=$1
 end=`expr $2 - 1`
