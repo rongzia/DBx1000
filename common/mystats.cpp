@@ -139,6 +139,10 @@ namespace dbx1000 {
         uint64_t total_time_ts_alloc = 0;
         uint64_t total_time_query = 0;
         uint64_t total_time_remote_lock = 0;
+        uint64_t total_count_remote_lock = 0;
+        uint64_t total_count_write_request = 0;
+        uint64_t total_count_total_request = 0;
+
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
             total_abort_cnt += _stats[tid]->abort_cnt;
@@ -157,6 +161,9 @@ namespace dbx1000 {
             total_time_ts_alloc += _stats[tid]->time_ts_alloc;
             total_time_query += _stats[tid]->time_query;
             total_time_remote_lock += _stats[tid]->time_remote_lock_;
+            total_count_remote_lock += _stats[tid]->count_remote_lock_;
+            total_count_write_request += _stats[tid]->count_write_request_;
+            total_count_total_request += _stats[tid]->count_total_request_;
 
             printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n",
                 tid,
@@ -167,6 +174,7 @@ namespace dbx1000 {
         this->txn_cnt = total_txn_cnt;
         cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
         cout << " get ts time : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
+        cout << "total_count_remote_lock/total_count_write_request/total_count_total_request : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;
         AppendLatency(total_latency / BILLION / total_txn_cnt, ins_id);
         AppendRemoteLockTime(total_time_remote_lock / BILLION, ins_id);
     }

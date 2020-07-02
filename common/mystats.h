@@ -48,6 +48,9 @@ namespace dbx1000 {
          * zhangrongrong, 2020/6/30
          */
          uint64_t time_remote_lock_;
+         uint64_t count_remote_lock_;
+         uint64_t count_total_request_;
+         uint64_t count_write_request_;
 //         uint64_t total_run_time_;
 //         uint64_t total_latency_;
     };

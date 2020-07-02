@@ -52,6 +52,7 @@ std::set<uint64_t> GetQueryWriteSet(ycsb_query * m_query, ycsb_txn_man *ycsb){
         ycsb->h_thd->manager_client_->index()->IndexGet(req->key, &indexItem);
 #endif
         if(req->rtype == WR){
+	        ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_write_request_++;
             write_page_set.insert(indexItem.page_id_);
         }
     }
@@ -92,6 +93,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 //std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
         if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+	        ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_remote_lock_++;
             bool flag = ATOM_CAS(lockTable->lock_table()[iter]->lock_remoting, false, true);
             if(flag) {
                 assert(true == lockTable->lock_table()[iter]->lock_remoting);
@@ -156,6 +158,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
   	row_cnt = 0;
 
 	for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
+	    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 		ycsb_request * req = &m_query->requests[rid];
 		/* int part_id = wl->key_to_part( req->key ); */      //! 分区数为 1，part_id == 0
 		//! finish_req、iteration 是为 req->rtype==SCAN 准备的，扫描需要读 SCAN_LEN 个 item，
