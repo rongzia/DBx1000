@@ -100,7 +100,7 @@ void ParseThroughtput(){
         }
         in.close();
     }
-    cout << "throughtput : " << throughtput / ins_count << ", ins_count : " << ins_count << endl;
+    cout << "throughtput : " << throughtput << ", ins_count : " << ins_count << endl;
 }
 void ParseRemoteLockTime(){
     uint64_t temp;
@@ -120,5 +120,5 @@ void ParseRemoteLockTime(){
         }
         in.close();
     }
-    cout << "remote_lock_time : " << remote_lock_time / ins_count << ", ins_count : " << ins_count << endl;
+    cout << "remote_lock_time : " << remote_lock_time << ", ins_count : " << ins_count << endl;
 }

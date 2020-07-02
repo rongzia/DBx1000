@@ -96,6 +96,8 @@ int main(int argc, char *argv[]) {
     AppendRunTime(profiler.Nanos() / 1000UL, managerInstance->instance_id());
     AppendThroughtput(managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
+
+    while(1) {};
     delete managerInstance;
 
 //    while(1) {};
