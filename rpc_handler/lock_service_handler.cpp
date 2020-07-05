@@ -27,6 +27,10 @@ namespace dbx1000 {
         if(RC::TIME_OUT  == rc) {
             response->set_rc(RpcRC::TIME_OUT);
         }
+        if(RC::Abort  == rc) {
+            response->set_rc(RpcRC::Abort);
+            return ::grpc::Status::OK;
+        }
         assert(RC::RCOK == rc);
         response->set_rc(RpcRC::RCOK);
         if(count > 0) {
@@ -121,7 +125,11 @@ namespace dbx1000 {
         request.set_count(count);
 
         ::grpc::Status status = stub_->Invalid(&context, request, &reply);
-        assert(status.ok());
+        if(!status.ok()){
+             std::cerr << "Invalid page : " << page_id << status.error_message() << std::endl;;
+            return RC::Abort;
+        }
+//        assert(status.ok());
 
         if(RC::TIME_OUT == DBx1000ServiceHelper::DeSerializeRC(reply.rc())) {
             return RC::TIME_OUT;
