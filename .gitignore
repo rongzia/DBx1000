@@ -2,3 +2,7 @@
 *.d
 **/.idea/
 **/cmake-build-debug/
+
+**/.vscode/
+**/build/
+**/db/
