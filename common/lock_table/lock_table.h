@@ -10,6 +10,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <set>
+#include "common/global.h"
 
 namespace dbx1000 {
     enum class LockMode{
@@ -39,12 +40,12 @@ namespace dbx1000 {
         ~LockTable();
         LockTable();
         void Init(uint64_t start_page, uint64_t end_page, int instance_id);
-        bool Lock(uint64_t page_id, LockMode mode);
-        bool UnLock(uint64_t page_id);
+        RC Lock(uint64_t page_id, LockMode mode);
+        RC UnLock(uint64_t page_id);
         bool AddThread(uint64_t page_id, uint64_t thd_id);
         bool RemoveThread(uint64_t page_id, uint64_t thd_id);
 
-        bool LockInvalid(uint64_t page_id, char *buf, size_t count);
+        RC LockInvalid(uint64_t page_id, char *buf, size_t count);
 
         char LockModeToChar(LockMode mode);
         void Print();

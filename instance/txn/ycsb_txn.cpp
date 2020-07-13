@@ -41,7 +41,7 @@ ycsb_query* gen_test_query(){
  * zhangrongrong, 2020/6/27
  * 对每个 ycsb_query，返回里面涉及到的写 page 集合
  */
-std::set<uint64_t> GetQueryWriteSet(ycsb_query * m_query, ycsb_txn_man *ycsb){
+std::set<uint64_t> GetQueryWritePageSet(ycsb_query * m_query, ycsb_txn_man *ycsb){
 	std::set<uint64_t> write_page_set;
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
 		ycsb_request * req = &m_query->requests[rid];
@@ -105,6 +105,10 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 #else
                     RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
 #endif
+                    if(RC::Abort == rc || RC::TIME_OUT == rc) {
+                        lockTable->lock_table()[iter]->lock_remoting = false;
+                        return RC::Abort;
+                    }
                     assert(rc == RC::RCOK);
                     assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O);
                     lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
@@ -136,9 +140,8 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
     }
     profiler.End();
 	ycsb->h_thd->manager_client_->stats().tmp_stats[ycsb->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
-    RC rc = RC::RCOK;
 
-    return rc;
+    return RC::RCOK;
 }
 
 
@@ -151,7 +154,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 
     /// 事务开始前，记录下写 page 集合，同时确保这些写page的锁在本地（若不在本地，则通过 RemoteLock 获取）
     /// ,然后把线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
-    std::set<uint64_t> write_page_set = GetQueryWriteSet(m_query, this);
+    std::set<uint64_t> write_page_set = GetQueryWritePageSet(m_query, this);
     rc = GetWritePageLock(write_page_set, this);
 	if(rc == RC::Abort) { return rc; }
 	/* ycsb_wl * wl = (ycsb_wl *) h_wl;
@@ -239,7 +242,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 final:
 	rc = finish(rc);
 
-    /// 线程结束后，把对应 page 锁内的相关信息清楚，通知 invalid 函数可以执行
+    /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
     dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();
     for(auto iter : write_page_set) { lockTable->RemoveThread(iter, this->get_thd_id()); }
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " end." << endl;

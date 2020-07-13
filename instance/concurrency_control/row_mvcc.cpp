@@ -8,6 +8,7 @@
 #include "common/storage/tablespace/page.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
+#include "common/storage/row_handler.h"
 #include "common/workload/ycsb_wl.h"
 #include "common/workload/wl.h"
 #include "common/myhelper.h"
@@ -25,8 +26,8 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 	this->size_ = size;
 	this->row_ = nullptr;
 	this->manager_instance_ = managerInstance;
-	/* _his_len = 4 */;
-	_his_len = g_thread_cnt;
+	_his_len = 4;
+//	_his_len = g_thread_cnt;
 	_req_len = _his_len;
 
 	_write_history = new WriteHisEntry[_his_len]();
@@ -128,7 +129,7 @@ void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(_num_versions == 0);
     assert(nullptr == row_);
     this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-    assert(txn->h_thd->manager_client_->RowFromDB(this->row_));
+    assert(txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_));
     _latest_row = row_;
 }
 void Row_mvcc::CheckLatestRow(){
@@ -164,7 +165,7 @@ bool Row_mvcc::RecycleALL() {
         }
     }
     assert(idx < _his_len);
-    assert(this->manager_instance_->RowToDB(_write_history[idx].row));
+    assert(this->manager_instance_->WriteRow(_write_history[idx].row));
     for(uint32_t i = 0; i < _his_len; i++) {
         if(_write_history[i].valid) {
             _num_versions--;
@@ -302,7 +303,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
 		_latest_row = row;
-		txn->h_thd->manager_client_->RowToDB(_latest_row);
+		txn->h_thd->manager_client_->row_handler()->WriteRow(_latest_row);
 //		assert(row);        // test
 //		assert(row->row_);  // test
         {
@@ -408,7 +409,7 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                         /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
                         if(_latest_row == _write_history[i].row) {
                             if(_latest_row != nullptr) {
-//                                assert(txn->h_thd->manager_client_->RowToDB(_latest_row));
+//                                assert(txn->h_thd->manager_client_->WriteRow(_latest_row));
                             }
                             _latest_row = nullptr;
                         }

@@ -11,6 +11,7 @@
 #include "common/storage/catalog.h"
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/page.h"
+#include "common/storage/row_handler.h"
 #include "common/workload/ycsb_wl.h"
 #include "common/workload/wl.h"
 #include "common/mystats.h"
@@ -108,7 +109,8 @@ void txn_man::cleanup(RC rc) {
 			/* orig_r->return_row(type, this, accesses[rid]->orig_data); */
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
-            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
+//            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
+            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
@@ -166,7 +168,7 @@ dbx1000::RowItem * txn_man::get_row(uint64_t key, access_t type) {
 	}
 	/// accesses[i] 不为 RowItem:row_ 申请空间，读写空间都是指向的 row_mvcc_ 里面的 RowItem
 	/* rc = row->get_row(type, this, accesses[ row_cnt ]->data); */
-	rc = this->h_thd->manager_client_->GetRow(key, type, this, accesses[row_cnt]->data);
+	rc = this->h_thd->manager_client_->row_handler()->GetRow(key, type, this, accesses[row_cnt]->data);
 	if (rc == RC::Abort) {
 		return NULL;
 	}

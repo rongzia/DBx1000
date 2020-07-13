@@ -15,7 +15,7 @@ namespace dbx1000 {
         if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
         else { assert(0 == count); }
         char page_buf[MY_PAGE_SIZE];
-        assert(true == manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count));
+        assert(RC::RCOK == manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count));
         response->set_page_buf(page_buf, count);
         response->set_count(count);
         response->set_rc(RpcRC::RCOK);
@@ -74,6 +74,9 @@ namespace dbx1000 {
 
         if(RC::TIME_OUT == DBx1000ServiceHelper::DeSerializeRC(reply.rc())) {
             return RC::TIME_OUT;
+        }
+        if(RC::Abort == DBx1000ServiceHelper::DeSerializeRC(reply.rc())) {
+            return RC::Abort;
         }
         assert(RC::RCOK == DBx1000ServiceHelper::DeSerializeRC(reply.rc()));
         // 要是 server 版本比当前新，返回最新的版本

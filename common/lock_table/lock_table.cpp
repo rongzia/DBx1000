@@ -71,12 +71,12 @@ namespace dbx1000 {
     }*/
 
 
-    bool LockTable::Lock(uint64_t page_id, LockMode mode) {
+    RC LockTable::Lock(uint64_t page_id, LockMode mode) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
         std::unique_lock<std::mutex> lck(iter->second->mtx);
-        bool rc = false;
+        RC rc = RC::Abort;
         if(LockMode::X == mode) {
             /*
             // Test_Lock_Table 中 30 个线程大概需要 1500 - 1600 微秒
@@ -94,7 +94,7 @@ namespace dbx1000 {
             iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
             iter->second->lock_mode = LockMode::X;
             assert(0 == iter->second->count.fetch_add(1));
-            rc = true;
+            rc = RC::RCOK;
 //            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
             return rc;
         }
@@ -109,14 +109,14 @@ namespace dbx1000 {
                 assert(iter->second->lock_mode == LockMode::S);
             } else { assert(false); }
 //            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
-            rc = true;
+            rc = RC::RCOK;
             return rc;
         }
         if(mode == LockMode::P || mode == LockMode::O) { assert(false); }
     }
 
 
-    bool LockTable::UnLock(uint64_t page_id) {
+    RC LockTable::UnLock(uint64_t page_id) {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
@@ -126,7 +126,7 @@ namespace dbx1000 {
             iter->second->lock_mode = LockMode::P;
 //        cout << "lock : " << LockModeToChar(LockMode::X) << ", page id : " << page_id << endl;
             iter->second->cv.notify_all();
-            return true;
+            return RC::RCOK;
         }
         /* */
         if (LockMode::S == iter->second->lock_mode) {
@@ -137,9 +137,9 @@ namespace dbx1000 {
             }
 //        cout << "unlock : " << LockModeToChar(LockMode::S) << ", page id : " << page_id << endl;
             iter->second->cv.notify_all();
-            return true;
+            return RC::RCOK;
         }
-        if (LockMode::O == iter->second->lock_mode || LockMode::P == iter->second->lock_mode) { return true; }
+        if (LockMode::O == iter->second->lock_mode || LockMode::P == iter->second->lock_mode) { return RC::RCOK; }
         assert(false);
     }
 
@@ -172,23 +172,29 @@ namespace dbx1000 {
     }
 
 
-    bool LockTable::LockInvalid(uint64_t page_id, char *page_buf, size_t count){
+    RC LockTable::LockInvalid(uint64_t page_id, char *page_buf, size_t count){
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
+        RC rc;
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         // cout << "LockTable::LockInvalid waiting." << endl;
         iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
-        // cout << "LockTable::LockInvalid wait success." << endl;
+        if(iter->second->cv.wait_for(lck, chrono::milliseconds(3), [iter](){ return (iter->second->thread_count.load() == 0); }))
         {
+        // cout << "LockTable::LockInvalid wait success." << endl;
             assert(iter->second->thread_count == 0);
             assert(iter->second->count == 0);
             iter->second->lock_mode = LockMode::O;
             manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
+            rc = RC::RCOK;
+        } else {
+        // cout << "LockTable::LockInvalid timeout." << endl;
+            rc = RC::TIME_OUT;
         }
         iter->second->invalid_req = false;
-        return true;
+        return rc;
     }
 
     char LockTable::LockModeToChar(LockMode mode) {

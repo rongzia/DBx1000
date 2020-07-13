@@ -14,6 +14,7 @@
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/tablespace.h"
 #include "common/storage/catalog.h"
+#include "common/storage/row_handler.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb_wl.h"
 #include "common/workload/wl.h"
@@ -36,9 +37,8 @@ namespace dbx1000 {
 
     ManagerInstance::~ManagerInstance() {
         delete all_ts_;
-        for(auto &iter:mvcc_map_) {
-            delete iter.second;
-        }
+//        for(auto &iter:mvcc_map_) { delete iter.second; }
+        for(auto &iter:mvcc_array_) { delete iter; }
         delete query_queue_;
         delete m_workload_;
         delete buffer_;
@@ -65,6 +65,7 @@ namespace dbx1000 {
         query_queue_->init();
         this->m_workload_ = new ycsb_wl();
         m_workload_->init();
+        row_handler_ = new RowHandler(this);
 
 
         InitMvccs();    // mvcc_map_ 在 m_workload_ 初始化后才能初始化
@@ -102,8 +103,10 @@ namespace dbx1000 {
         profiler.Start();
         uint32_t tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
         for (uint64_t  key = 0; key < g_synth_table_size; key++) {
-            mvcc_map_.insert(std::pair<uint64_t, Row_mvcc *>(key, new Row_mvcc()));
-            mvcc_map_[key]->init(key, tuple_size, this);
+//            mvcc_map_.insert(std::pair<uint64_t, Row_mvcc *>(key, new Row_mvcc()));
+//            mvcc_map_[key]->init(key, tuple_size, this);
+            mvcc_array_[key] = new Row_mvcc();
+            mvcc_array_[key]->init(key, tuple_size, this);
         }
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
@@ -114,51 +117,11 @@ namespace dbx1000 {
         return timestamp_.fetch_add(1);
     }
 
-    /**
-     * GetRow 和 ReturnRow 在原本 dbx1000 里是属于 row_t 的函数，但是采用刷盘机制，row_t 类被去掉了
-     * @param key
-     * @param type
-     * @param txn
-     * @param row
-     * @return
-     */
-    RC ManagerInstance::GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&row) {
-        RC rc = RC::RCOK;
-        uint64_t thd_id = txn->get_thd_id();
-        TsType ts_type = (type == RD) ? R_REQ : P_REQ;
-        rc = this->mvcc_map_[key]->access(txn, ts_type, row);
-        if (rc == RC::RCOK) {
-            row = txn->cur_row;
-        } else if (rc == RC::WAIT) {
-            dbx1000::Profiler profiler;
-            profiler.Start();
-            while (!txn->ts_ready) {PAUSE}
-            profiler.End();
-            this->stats_.tmp_stats[thd_id]->time_wait += profiler.Nanos();
-            txn->ts_ready = true;
-            row = txn->cur_row;
-        }
-        return rc;
-    }
-
-    void ManagerInstance::ReturnRow(uint64_t key, access_t type, txn_man *txn, RowItem *row) {
-        RC rc = RC::RCOK;
-#if CC_ALG == MVCC
-        if (type == XP) {
-            mvcc_map_[key]->access(txn, XP_REQ, row);
-        } else if (type == WR) {
-            assert (type == WR && row != nullptr);
-            mvcc_map_[key]->access(txn, W_REQ, row);
-            assert(rc == RC::RCOK);
-        }
-#endif
-    }
-
     void ManagerInstance::SetTxnMan(txn_man *m_txn) { txn_man_[m_txn->get_thd_id()] = m_txn; }
 
     void ManagerInstance::AddTs(uint64_t thread_id, uint64_t ts) { all_ts_[thread_id] = ts; }
 
-    uint64_t ManagerInstance::GetMinTs(uint64_t threa_id) {
+    uint64_t ManagerInstance::GetMinTs(uint64_t thread_id) {
         uint64_t min_ts = UINT64_MAX;
         for (uint32_t thd_id = 0; thd_id < g_thread_cnt; thd_id++) {
             if (min_ts > all_ts_[thd_id]) {
@@ -167,81 +130,4 @@ namespace dbx1000 {
         }
         return min_ts;
     }
-
-    /**
-     * 读一行数据到 DB（这里 DB 是缓存+磁盘）
-     * @param row
-     * @return
-     */
-    bool ManagerInstance::RowFromDB(RowItem* row) {
-        auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        dbx1000::IndexItem indexItem;
-        this->index_->IndexGet(row->key_, &indexItem);
-        bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::S);
-        assert(rc);
-        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::O
-                || this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::S);
-        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::P
-        && this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::X);
-        assert(0 == this->buffer_->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
-        page->Deserialize();
-        assert(page->page_id() == indexItem.page_id_);
-
-//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
-        memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
-        {
-            /// 验证 key
-            uint64_t temp_key;
-            memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
-            assert(row->key_ == temp_key);
-        }
-        assert(this->lock_table_->UnLock(indexItem.page_id_));
-        return true;
-    }
-    /**
-     * 写一行数据到 DB（这里 DB 是缓存+磁盘）
-     * @param row
-     * @return
-     */
-    bool ManagerInstance::RowToDB(RowItem *row) {
-        auto* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        dbx1000::IndexItem indexItem;
-        this->index_->IndexGet(row->key_, &indexItem);
-        assert(this->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::O);
-        bool rc = this->lock_table_->Lock(indexItem.page_id_, dbx1000::LockMode::X);
-        assert(rc);
-        this->buffer_->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-        page->Deserialize();
-
-//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
-//        {   // some check
-//            uint64_t temp_key1, temp_key2;
-//            memcpy(&temp_key1, &page->page_buf()[indexItem.page_location_], sizeof(uint64_t));
-//            memcpy(&temp_key2, row->row_, sizeof(uint64_t));
-//            assert(temp_key1 == temp_key2);
-//        }
-        memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
-        this->buffer_->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
-        assert(this->lock_table_->UnLock(indexItem.page_id_));
-        return true;
-    }
-
-
-//    int ManagerInstance::instance_id() { return this->instance_id_; }
-//    void ManagerInstance::set_instance_id(int instance_id) { this->instance_id_ = instance_id; }
-//    void ManagerInstance::set_init_done(bool init_done) { this->init_done_ = init_done; }
-//    std::map<int, std::string> &ManagerInstance::host_map() { return this->host_map_; }
-//    Stats ManagerInstance::stats() { return this->stats_; }
-//    Query_queue *ManagerInstance::query_queue() { return this->query_queue_; }
-//    workload* ManagerInstance::m_workload() { return this->m_workload_; }
-//    Buffer* ManagerInstance::buffer() { return this->buffer_; }
-//    TableSpace* ManagerInstance::table_space() { return this->table_space_; }
-//    Index* ManagerInstance::index() { return this->index_; }
-//    LockTable* &ManagerInstance::lock_table() { return this->lock_table_; }
-//    InstanceClient *ManagerInstance::instance_rpc_handler() { return this->instance_rpc_handler_; }
-//    void ManagerInstance::set_instance_rpc_handler(InstanceClient* instanceClient) { this->instance_rpc_handler_ = instanceClient; }
-//    std::unordered_map<uint64_t, Row_mvcc *> ManagerInstance::mvcc_map() { return this->mvcc_map_; }
-//    SharedDiskClient * ManagerInstance::shared_disk_client() { return this->shared_disk_client_; }
-
-
 }

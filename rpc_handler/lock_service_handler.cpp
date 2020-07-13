@@ -17,9 +17,12 @@ namespace dbx1000 {
 
 //        std::cout << "LockServiceServer::LockRemote, instance_id : " << request->instance_id() << ", page_id : " << request->page_id() << ", count : " << request->count() << std::endl;
         RC rc;
-        char page_buf[MY_PAGE_SIZE];
+        char *page_buf = nullptr;
         size_t count = request->count();
-        if(count > 0) { assert(MY_PAGE_SIZE == count); }
+        if(count > 0) {
+            assert(MY_PAGE_SIZE == count);
+            page_buf = new char [MY_PAGE_SIZE];
+        }
         else {assert(0 == count);}
 
         rc = manager_lock_service_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);

@@ -31,9 +31,9 @@ void Test_Lock_Table() {
         threads_write.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < lock_table_test_num; j++) {
-                        assert(true == lockTable->Lock(j, dbx1000::LockMode::X));
+                        assert(RC::RCOK == lockTable->Lock(j, dbx1000::LockMode::X));
                         a[j]++;
-                        assert(true == lockTable->UnLock(j));
+                        assert(RC::RCOK == lockTable->UnLock(j));
                     }
                 }
         ));
@@ -42,8 +42,8 @@ void Test_Lock_Table() {
         threads_write.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < lock_table_test_num; j++) {
-                        assert(true == lockTable->Lock(j, dbx1000::LockMode::S));
-                        assert(true == lockTable->UnLock(j));
+                        assert(RC::RCOK == lockTable->Lock(j, dbx1000::LockMode::S));
+                        assert(RC::RCOK == lockTable->UnLock(j));
                     }
                 }
         ));
@@ -62,9 +62,9 @@ void Test_Lock_Table() {
         threads_read.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < lock_table_test_num; j++) {
-                        assert(true == lockTable->Lock(j, dbx1000::LockMode::S));
+                        assert(RC::RCOK == lockTable->Lock(j, dbx1000::LockMode::S));
                         assert(a[j] == test_thread_num);
-                        assert(true == lockTable->UnLock(j));
+                        assert(RC::RCOK == lockTable->UnLock(j));
                     }
                 }
         ));

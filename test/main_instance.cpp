@@ -98,8 +98,8 @@ int main(int argc, char *argv[]) {
 
 
     while(1) {};
+//    std::this_thread::sleep_for(chrono::seconds(10));
     delete managerInstance;
 
-//    while(1) {};
     return 0;
 }

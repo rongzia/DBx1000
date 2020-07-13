@@ -67,6 +67,7 @@ set(COMMON_FILES
         common/storage/tablespace/test_page.cpp
         common/storage/tablespace/test_tablespace.cpp
         common/storage/catalog.cpp
+        common/storage/row_handler.cpp
         common/storage/table.cpp
         common/workload/ycsb_wl.cpp
         common/workload/wl.cpp
