@@ -40,26 +40,23 @@ namespace dbx1000 {
         ~LockTable();
         LockTable();
         void Init(uint64_t start_page, uint64_t end_page, int instance_id);
+
         RC Lock(uint64_t page_id, LockMode mode);
         RC UnLock(uint64_t page_id);
         bool AddThread(uint64_t page_id, uint64_t thd_id);
         bool RemoveThread(uint64_t page_id, uint64_t thd_id);
-
         RC LockInvalid(uint64_t page_id, char *buf, size_t count);
 
         char LockModeToChar(LockMode mode);
         void Print();
 
-
-
+        std::unordered_map<uint64_t, LockNode*> lock_table_;
 
         /// getter and setter
-        std::unordered_map<uint64_t, LockNode*> &lock_table()        { return this->lock_table_; }
         ManagerInstance* manager_instance()                         { return this->manager_instance_; }
         void set_manager_instance(ManagerInstance* managerInstance) {this->manager_instance_ = managerInstance; }
 
     private:
-        std::unordered_map<uint64_t, LockNode*> lock_table_;
         ManagerInstance* manager_instance_;
     };
 }

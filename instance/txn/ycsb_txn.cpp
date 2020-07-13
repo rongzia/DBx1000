@@ -80,7 +80,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 
     auto has_invalid_req = [&](){
         for(auto iter : write_page_set) {
-            if(ycsb->h_thd->manager_client_->lock_table()->lock_table()[iter]->invalid_req){ return true; }
+            if(ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req){ return true; }
         }
         return false;
     };
@@ -92,11 +92,11 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
     profiler.Start();
 //std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
-        if(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+        if(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
 	        ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_remote_lock_++;
-            bool flag = ATOM_CAS(lockTable->lock_table()[iter]->lock_remoting, false, true);
+            bool flag = ATOM_CAS(lockTable->lock_table_[iter]->lock_remoting, false, true);
             if(flag) {
-                assert(true == lockTable->lock_table()[iter]->lock_remoting);
+                assert(true == lockTable->lock_table_[iter]->lock_remoting);
 //lock_remote_thread.emplace_back(thread([iter, lockTable, this]() {
                     char page_buf[MY_PAGE_SIZE];
 //                    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " remote get lock." << endl;
@@ -106,26 +106,26 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
                     RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
 #endif
                     if(RC::Abort == rc || RC::TIME_OUT == rc) {
-                        lockTable->lock_table()[iter]->lock_remoting = false;
+                        lockTable->lock_table_[iter]->lock_remoting = false;
                         return RC::Abort;
                     }
                     assert(rc == RC::RCOK);
-                    assert(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O);
-                    lockTable->lock_table()[iter]->lock_mode = dbx1000::LockMode::P;
+                    assert(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O);
+                    lockTable->lock_table_[iter]->lock_mode = dbx1000::LockMode::P;
 //                    cout << "thread : " << get_thd_id() << " change lock : " << iter << " to P" << endl;
 #ifdef DB2_WITH_NO_CONFLICT
 #else
                     ycsb->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
 #endif
-                    lockTable->lock_table()[iter]->lock_remoting = false;
+                    lockTable->lock_table_[iter]->lock_remoting = false;
 //}
 //));
             } else {
-                assert(true == lockTable->lock_table()[iter]->lock_remoting);
-                while(lockTable->lock_table()[iter]->lock_mode == dbx1000::LockMode::O) {
+                assert(true == lockTable->lock_table_[iter]->lock_remoting);
+                while(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
 //                    cout << "thread waiting..." << endl; std::this_thread::yield();
                     }
-                assert(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O);
+                assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
             }
         }
     }
@@ -135,7 +135,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 //}
     /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
     for(auto iter : write_page_set) {
-        assert(lockTable->lock_table()[iter]->lock_mode != dbx1000::LockMode::O);
+        assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
         lockTable->AddThread(iter, ycsb->get_thd_id());
     }
     profiler.End();

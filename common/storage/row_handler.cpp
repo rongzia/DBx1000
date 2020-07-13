@@ -108,10 +108,10 @@ namespace dbx1000 {
         this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
         RC rc = this->manager_instance_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::S);
         assert(RC::RCOK == rc);
-        assert(this->manager_instance_->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::O
-               || this->manager_instance_->lock_table()->lock_table()[indexItem.page_id_]->lock_mode == LockMode::S);
-        assert(this->manager_instance_->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::P
-               && this->manager_instance_->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::X);
+        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O
+               || this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode == LockMode::S);
+        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::P
+               && this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::X);
         assert(0 == this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
         page->Deserialize();
         assert(page->page_id() == indexItem.page_id_);
@@ -137,7 +137,7 @@ namespace dbx1000 {
         auto *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
         this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
-        assert(this->manager_instance_->lock_table()->lock_table()[indexItem.page_id_]->lock_mode != LockMode::O);
+        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::O);
         RC rc = this->manager_instance_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::X);
         assert(RC::RCOK == rc);
         this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
