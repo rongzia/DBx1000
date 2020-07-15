@@ -82,6 +82,7 @@ private:
 //	bool
 	bool Invalid();
 	void GetLatestRow(txn_man * txn);
+	void GetLatestRowForTest(txn_man * txn);
 	void CheckLatestRow();
 	bool RecycleALL();
 	void PrintWriteHistory(ts_t ts);

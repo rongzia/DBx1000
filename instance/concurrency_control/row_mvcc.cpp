@@ -132,6 +132,15 @@ void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_));
     _latest_row = row_;
 }
+void Row_mvcc::GetLatestRowForTest(txn_man * txn) {
+    assert(nullptr == _latest_row);
+    assert(_num_versions == 0);
+    assert(nullptr == row_);
+    this->row_ = new dbx1000::RowItem(this->key_, this->size_);
+//    assert(txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_));
+    _latest_row = row_;
+}
+
 void Row_mvcc::CheckLatestRow(){
     if(nullptr == _latest_row || _latest_row == row_) {
         return;

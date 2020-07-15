@@ -84,6 +84,8 @@ set(INSTANCE_FILES
         instance/benchmarks/ycsb_query.cpp
         instance/benchmarks/query.cpp
         instance/concurrency_control/row_mvcc.cpp
+        instance/concurrency_control/occ.cpp
+        instance/concurrency_control/row_occ.cpp
         instance/txn/ycsb_txn.cpp
         instance/txn/txn.cpp
         instance/manager_instance.cpp
