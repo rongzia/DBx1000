@@ -6,3 +6,5 @@
 **/.vscode/
 **/build/
 **/db/
+
+.clion.source.upload.marker
