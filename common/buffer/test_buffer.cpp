@@ -19,17 +19,24 @@ using namespace std;
 /**
  * 初始化 buffer 为 10000 个 uint64 = 0, 10 个线程同时对每个 item++, 最后验证是否正确
  */
-#define buffer_item_num 10000
+#define buffer_item_num (1024L * 100)
+#define page_size sizeof(uint64_t)
 
 void Test_Buffer() {
-    std::size_t page_size = sizeof(uint64_t);
     dbx1000::Buffer *buffer = new dbx1000::Buffer(page_size * buffer_item_num, page_size);
+    dbx1000::Profiler profiler;
 
+
+    profiler.Start();
     uint64_t a = 0;
     for (uint64_t i = 0; i < buffer_item_num; i++) {
         buffer->BufferPut(i, &a, page_size);
     }/// warmup buffer
+    profiler.End();
+    cout << "warmup time : " << profiler.Micros() << endl;
 
+    profiler.Clear();
+    profiler.Start();
     vector<thread> threads_write;
     mutex mtx;
     /// write
@@ -50,6 +57,12 @@ void Test_Buffer() {
     for (int i = 0; i < 10; i++) {
         threads_write[i].join();
     }
+    profiler.End();
+    cout << "write  time : " << profiler.Micros() << endl;
+
+
+    profiler.Clear();
+    profiler.Start();
     /// read
     vector<thread> threads_read;
     for (int i = 0; i < 10; i++) {
@@ -68,6 +81,12 @@ void Test_Buffer() {
     for (int i = 0; i < 10; i++) {
         threads_read[i].join();
     }
+    profiler.End();
+    cout << "read   time : " << profiler.Micros() << endl;
 
     delete buffer;
+}
+
+int main(){
+    Test_Buffer();
 }
