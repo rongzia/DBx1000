@@ -46,9 +46,11 @@ void Test_Buffer() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
                         mtx.lock();
                         uint64_t a;
-                        assert(0 == buffer->BufferGetWithLock(j, &a, page_size));
+//                        assert(0 == buffer->BufferGetWithLock(j, &a, page_size));
+                        assert(0 == buffer->BufferGet(j, &a, page_size));
                         a++;
-                        assert(0 == buffer->BufferPutWithLock(j, (void*)&a, page_size));
+//                        assert(0 == buffer->BufferPutWithLock(j, (void*)&a, page_size));
+                        assert(0 == buffer->BufferPut(j, (void*)&a, page_size));
                         mtx.unlock();
                     }
                 }
@@ -69,11 +71,12 @@ void Test_Buffer() {
         threads_read.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
-                        mtx.lock();
+//                        mtx.lock();
                         uint64_t a;
-                        buffer->BufferGetWithLock(j, &a, page_size);
+//                        buffer->BufferGetWithLock(j, &a, page_size);
+                        buffer->BufferGet(j, &a, page_size);
                         assert(10 == a);
-                        mtx.unlock();
+//                        mtx.unlock();
                     }
                 }
         ));

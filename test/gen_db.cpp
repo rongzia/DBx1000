@@ -5,31 +5,20 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <cassert>
 
 #include "common/buffer/buffer.h"
 #include "common/index/index.h"
-#include "common/lock_table/lock_table.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
-#include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/tablespace.h"
-#include "common/storage/catalog.h"
-#include "common/storage/table.h"
-#include "common/workload/ycsb_wl.h"
-#include "common/workload/wl.h"
-#include "common/global.h"
-#include "common/myhelper.h"
 #include "common/mystats.h"
-#include "instance/benchmarks/ycsb_query.h"
-#include "instance/benchmarks/query.h"
-#include "instance/concurrency_control/row_mvcc.h"
-#include "instance/txn/ycsb_txn.h"
-#include "instance/txn/txn.h"
-#include "instance/thread.h"
 #include "json/json.h"
 #include "config.h"
 
 #define row_size (80)
+
+using namespace std;
 
 void Gen_DB_single_thread() {
     dbx1000::TableSpace *tableSpace = new dbx1000::TableSpace("MAIN_TABLE");
