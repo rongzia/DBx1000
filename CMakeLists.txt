@@ -17,55 +17,47 @@ set(GRPC_ROOT $ENV{HOME}/.local/grpc-v1.23.x)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc.cmake)
 find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
 
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
-
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
-execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
+#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+#        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+#        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+#        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
+#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+#        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+#        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+#        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
+#        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
+#
+#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+#        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+#        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+#        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
+#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+#        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+#        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+#        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
+#        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
 
 include_directories(${Protobuf_INCLUDE_DIR})
 include_directories(${gRPC_INCLUDE_DIR})
 ### ******************************* grpc *******************************
 
-
 # include header files
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-
 # lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
+
+
+
+
+
 set(COMMON_FILES
-        common/buffer/buffer.cpp
-        common/buffer/lru.cpp
-        common/buffer/lru_index.cpp
-        common/buffer/test_buffer.cpp
         common/index/index.cpp
         common/index/test_index.cpp
         common/lock_table/lock_table.cpp
         common/lock_table/test_lock_table.cpp
-        common/storage/disk/file_io.cpp
-        common/storage/disk/memory_io.cpp
-        common/storage/tablespace/page.cpp
-        common/storage/tablespace/row_item.cpp
-        common/storage/tablespace/tablespace.cpp
-        common/storage/tablespace/test_page.cpp
-        common/storage/tablespace/test_tablespace.cpp
         common/storage/catalog.cpp
         common/storage/row_handler.cpp
         common/storage/table.cpp
@@ -91,41 +83,56 @@ set(INSTANCE_FILES
         instance/manager_instance.cpp
         instance/thread.cpp
         )
-set(LOCK_SERVICE_FILES
-        lock_service/manager_lock_service.cpp
-        )
 set(RPC_HANDLER_FILES
         rpc_handler/proto/dbx1000_service.grpc.pb.cc
         rpc_handler/proto/dbx1000_service.pb.cc
         rpc_handler/dbx1000_service_helper.cpp
         rpc_handler/instance_handler.cpp
         rpc_handler/lock_service_handler.cpp)
-set(SHARED_DISK_FILES
-        common/storage/disk/file_io.cpp
-        shared_disk/proto/shared_disk_service.grpc.pb.cc
-        shared_disk/proto/shared_disk_service.pb.cc
-        shared_disk/shared_disk_service.cpp)
 
-add_executable(main_lock_service test/main_lock_service.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES}  ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(main_lock_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
 
-add_executable(main_instance test/main_instance.cpp
-         ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
 
-add_executable(disk_service test/disk_service.cpp ${SHARED_DISK_FILES})
-target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread tbb)
+add_library(disk SHARED common/storage/disk/file_io.cpp common/storage/disk/memory_io.cpp)
+add_library(tablespace SHARED common/storage/tablespace/page.cpp common/storage/tablespace/row_item.cpp common/storage/tablespace/tablespace.cpp)
+target_link_libraries(tablespace libjsoncpp.a)
+add_library(shared_disk SHARED shared_disk/proto/shared_disk_service.grpc.pb.cc shared_disk/proto/shared_disk_service.pb.cc shared_disk/shared_disk_service.cpp)
+target_link_libraries(shared_disk disk ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY})
+file(GLOB buffer_src ${PROJECT_SOURCE_DIR}/common/buffer/*.cpp)
+foreach(item ${buffer_src})
+    if (${item} MATCHES "test*")
+        list(REMOVE_ITEM buffer_src ${item})
+    endif ()
+endforeach()
+add_library(buffer SHARED common/buffer/buffer.cpp common/buffer/lru_index.cpp common/buffer/lru.cpp)
+target_link_libraries(buffer disk shared_disk tablespace)
+add_library(lock_service lock_service/manager_lock_service.cpp ${COMMON_FILES})
+target_link_libraries(lock_service buffer shared_disk)
+
+# main_lock_service
+add_executable(main_lock_service test/main_lock_service.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${COMMON_FILES})
+target_link_libraries(main_lock_service lock_service buffer shared_disk tablespace libjsoncpp.a pthread tbb)
+# main_instance
+add_executable(main_instance test/main_instance.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${COMMON_FILES})
+target_link_libraries(main_instance lock_service buffer shared_disk tablespace libjsoncpp.a pthread tbb)
+# disk_service
+add_executable(disk_service test/disk_service.cpp)
+target_link_libraries(disk_service shared_disk disk pthread tbb)
+# gen_db
+add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${COMMON_FILES})
+target_link_libraries(gen_db lock_service buffer disk libjsoncpp.a pthread tbb)
 
 ### ******************************* other test *******************************
+# for buffer
+add_executable(test_buffer common/buffer/test_buffer.cpp)
+add_executable(test_lru common/buffer/test_lru.cpp)
+add_executable(test_lru_index common/buffer/test_lru_index.cpp)
+target_link_libraries(test_buffer buffer pthread tbb)
+target_link_libraries(test_lru buffer libjsoncpp.a pthread tbb)
+target_link_libraries(test_lru_index buffer pthread tbb)
+
+add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)
+
 add_executable(other_test test/other_test.cpp)
 target_link_libraries(other_test pthread tbb)
 
-#add_executable(parser_host common/parser_host.cpp)
-#target_link_libraries(parser_host libjsoncpp.a)
 
-add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
-
-
-add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)

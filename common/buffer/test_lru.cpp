@@ -130,9 +130,9 @@ void Test_lru(){
 
     delete lru;
 }
-//int main(){
-//
-//Test_lru();
+int main(){
+
+Test_lru();
 //test ();
-//    return 0;
-//}
+    return 0;
+}

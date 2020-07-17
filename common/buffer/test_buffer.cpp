@@ -67,12 +67,10 @@ void Test_Buffer() {
         threads.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
-//                        mtx.lock();
                         uint64_t a;
 //                        buffer->BufferGetWithLock(j, &a, page_size);
                         buffer->BufferGet(j, &a, page_size);
                         assert(10 == a);
-//                        mtx.unlock();
                     }
                 }
         ));
@@ -84,6 +82,6 @@ void Test_Buffer() {
     delete buffer;
 }
 
-//int main(){
-//    Test_Buffer();
-//}
+int main(){
+    Test_Buffer();
+}

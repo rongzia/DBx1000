@@ -6,6 +6,14 @@
 #define DBX1000_LRU_H
 
 
+#include <atomic>
+#include <mutex>
+
+//#define USE_MUTEX
+#ifndef USE_MUTEX
+//#define USE_CAS
+#endif
+
 namespace dbx1000 {
 
     class LruIndex;
@@ -31,16 +39,25 @@ namespace dbx1000 {
         PageNode* Popback();
         void Get(PageNode* );
 
-        void DebugSize();
-        void Print();
+        void Check();
 
         /// getter and setter
         int size();
 
+        PageNode* head() { return this->head_; }
+        PageNode* tail() { return this->tail_; }
+
     private:
-        PageNode* head_; /// head_ 指针不存数据
+
+#ifdef USE_CAS
+        std::atomic<PageNode*> head_;
+        std::atomic<PageNode*> tail_;
+#else
+        PageNode* head_;
         PageNode* tail_;
-        int size_;      /// length of this list
+#endif
+        std::atomic_int size_;      /// length of this list
+        std::mutex mtx_;
     };
 } // namespace dbx1000
 

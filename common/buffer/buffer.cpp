@@ -12,7 +12,7 @@
 #include "lru.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
-#include "instance/manager_instance.h"
+//#include "instance/manager_instance.h"
 #include "shared_disk/shared_disk_service.h"
 
 namespace dbx1000 {
@@ -26,7 +26,6 @@ namespace dbx1000 {
         page_list_ = new LRU(page_size_);
         free_list_ = new LRU(page_size_);
         lru_index_ = new LruIndex();
-//        manager_client_ = managerClient;
 
         /// initital free list
         for (int i = 0; i < page_num_; i++) {
@@ -224,9 +223,5 @@ namespace dbx1000 {
     void Buffer::Print(){
         std::cout << "total_size:" << total_size_ << ", page_size:" << page_size_ << ", page_num_" << page_num_ << std::endl;
         lru_index_->Print();
-        std::cout << "page_lsit_: " ;
-        page_list_->Print();
-        std::cout << "free_list_: " ;
-        free_list_->Print();
     }
 }

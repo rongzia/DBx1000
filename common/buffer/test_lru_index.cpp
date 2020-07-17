@@ -83,12 +83,12 @@ void Test_lru(){
 
     delete lruIndex;
 }
-//int main(){
-//
-//Test_lru();
-////test ();
-//    return 0;
-//}//
+int main(){
+
+Test_lru();
+//test ();
+    return 0;
+}//
 // Created by rrzhang on 2020/7/16.
 //
 
