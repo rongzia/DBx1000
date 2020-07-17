@@ -84,8 +84,8 @@ set(INSTANCE_FILES
         instance/benchmarks/ycsb_query.cpp
         instance/benchmarks/query.cpp
         instance/concurrency_control/row_mvcc.cpp
-        instance/concurrency_control/occ.cpp
-        instance/concurrency_control/row_occ.cpp
+#        instance/concurrency_control/occ.cpp
+#        instance/concurrency_control/row_occ.cpp
         instance/txn/ycsb_txn.cpp
         instance/txn/txn.cpp
         instance/manager_instance.cpp
@@ -108,24 +108,24 @@ set(SHARED_DISK_FILES
 
 add_executable(main_lock_service test/main_lock_service.cpp
          ${RPC_HANDLER_FILES} ${INSTANCE_FILES}  ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(main_lock_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+target_link_libraries(main_lock_service  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
 
 add_executable(main_instance test/main_instance.cpp
          ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+target_link_libraries(main_instance  ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
 
 add_executable(disk_service test/disk_service.cpp ${SHARED_DISK_FILES})
-target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread)
+target_link_libraries(disk_service ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} pthread tbb)
 
 ### ******************************* other test *******************************
 add_executable(other_test test/other_test.cpp)
-target_link_libraries(other_test pthread)
+target_link_libraries(other_test pthread tbb)
 
 #add_executable(parser_host common/parser_host.cpp)
 #target_link_libraries(parser_host libjsoncpp.a)
 
 add_executable(gen_db test/gen_db.cpp ${RPC_HANDLER_FILES} ${INSTANCE_FILES} ${LOCK_SERVICE_FILES} ${SHARED_DISK_FILES} ${COMMON_FILES})
-target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread)
+target_link_libraries(gen_db ${GRPC_STATIC_LIBRARY} ${PROTOBUF_LIBRARY} ${ZLIB_LIBRARY} libjsoncpp.a pthread tbb)
 
 
 add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)

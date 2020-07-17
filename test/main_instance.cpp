@@ -66,14 +66,14 @@ int main(int argc, char *argv[]) {
         instance_service_server.detach();
     }
     // 连接集中锁管理器
-    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
-
-    managerInstance->set_init_done(true);
-    managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
-
-    /// 等待所有 instance 初始化完成
-    while(!managerInstance->instance_rpc_handler()->LockServiceInitDone()) { std::this_thread::yield();}
-    cout << "instance start." <<endl;
+//    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
+//
+//    managerInstance->set_init_done(true);
+//    managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
+//
+//    /// 等待所有 instance 初始化完成
+//    while(!managerInstance->instance_rpc_handler()->LockServiceInitDone()) { std::this_thread::yield();}
+//    cout << "instance start." <<endl;
 
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();

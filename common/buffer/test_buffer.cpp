@@ -11,7 +11,6 @@
 #include <cassert>
 #include "buffer.h"
 
-#include "config.h"
 #include "util/profiler.h"
 
 using namespace std;
@@ -29,19 +28,18 @@ void Test_Buffer() {
 
     profiler.Start();
     uint64_t a = 0;
-    for (uint64_t i = 0; i < buffer_item_num; i++) {
-        buffer->BufferPut(i, &a, page_size);
-    }/// warmup buffer
+    for (uint64_t i = 0; i < buffer_item_num; i++) { buffer->BufferPut(i, &a, page_size); } /// warmup buffer
     profiler.End();
     cout << "warmup time : " << profiler.Micros() << endl;
 
+    vector<thread> threads;
+    mutex mtx;
+    threads.clear();
     profiler.Clear();
     profiler.Start();
-    vector<thread> threads_write;
-    mutex mtx;
     /// write
     for (int i = 0; i < 10; i++) {
-        threads_write.emplace_back(thread(
+        threads.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
                         mtx.lock();
@@ -56,9 +54,7 @@ void Test_Buffer() {
                 }
         ));
     }
-    for (int i = 0; i < 10; i++) {
-        threads_write[i].join();
-    }
+    for (auto& th:threads) { th.join(); }
     profiler.End();
     cout << "write  time : " << profiler.Micros() << endl;
 
@@ -66,9 +62,9 @@ void Test_Buffer() {
     profiler.Clear();
     profiler.Start();
     /// read
-    vector<thread> threads_read;
+    threads.clear();
     for (int i = 0; i < 10; i++) {
-        threads_read.emplace_back(thread(
+        threads.emplace_back(thread(
                 [&]() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
 //                        mtx.lock();
@@ -81,15 +77,13 @@ void Test_Buffer() {
                 }
         ));
     }
-    for (int i = 0; i < 10; i++) {
-        threads_read[i].join();
-    }
+    for (auto& th:threads) { th.join(); }
     profiler.End();
     cout << "read   time : " << profiler.Micros() << endl;
 
     delete buffer;
 }
 
-int main(){
-    Test_Buffer();
-}
+//int main(){
+//    Test_Buffer();
+//}
