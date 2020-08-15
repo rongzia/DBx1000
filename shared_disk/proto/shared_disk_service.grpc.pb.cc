@@ -11,9 +11,12 @@
 #include <grpcpp/impl/codegen/channel_interface.h>
 #include <grpcpp/impl/codegen/client_unary_call.h>
 #include <grpcpp/impl/codegen/client_callback.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/rpc_service_method.h>
 #include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
+#include <grpcpp/impl/codegen/server_context.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace dbx1000 {
@@ -245,37 +248,72 @@ SharedDiskService::Service::Service() {
       SharedDiskService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::OpenRequest, ::dbx1000::OpenReply>(
-          std::mem_fn(&SharedDiskService::Service::Open), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::OpenRequest* req,
+             ::dbx1000::OpenReply* resp) {
+               return service->Open(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::WriteRequest, ::dbx1000::WriteReply>(
-          std::mem_fn(&SharedDiskService::Service::Write), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::WriteRequest* req,
+             ::dbx1000::WriteReply* resp) {
+               return service->Write(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::ReadRequest, ::dbx1000::ReadReply>(
-          std::mem_fn(&SharedDiskService::Service::Read), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::ReadRequest* req,
+             ::dbx1000::ReadReply* resp) {
+               return service->Read(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>(
-          std::mem_fn(&SharedDiskService::Service::WritePage), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::WritePageRequest* req,
+             ::dbx1000::WritePageReply* resp) {
+               return service->WritePage(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>(
-          std::mem_fn(&SharedDiskService::Service::ReadPage), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::ReadPageRequest* req,
+             ::dbx1000::ReadPageReply* resp) {
+               return service->ReadPage(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>(
-          std::mem_fn(&SharedDiskService::Service::CloseAll), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::CloseAllRequest* req,
+             ::dbx1000::CloseAllReply* resp) {
+               return service->CloseAll(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       SharedDiskService_method_names[6],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< SharedDiskService::Service, ::dbx1000::CloseRequest, ::dbx1000::CloseReply>(
-          std::mem_fn(&SharedDiskService::Service::Close), this)));
+          [](SharedDiskService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::CloseRequest* req,
+             ::dbx1000::CloseReply* resp) {
+               return service->Close(ctx, req, resp);
+             }, this)));
 }
 
 SharedDiskService::Service::~Service() {

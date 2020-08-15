@@ -15,6 +15,16 @@ find_library(Protobuf_PROTOC_LIBRARY_DEBUG libprotoc.a ${PROTOBUF_ROOT}/lib NO_D
 find_library(Protobuf_LITE_LIBRARY libprotobuf-lite.a ${PROTOBUF_ROOT}/lib NO_DEFAULT_PATH)
 find_library(Protobuf_LITE_LIBRARIES libprotobuf-lite.a ${PROTOBUF_ROOT}/lib NO_DEFAULT_PATH)
 find_library(Protobuf_LITE_LIBRARY_DEBUG libprotobuf-lite.a ${PROTOBUF_ROOT}/lib NO_DEFAULT_PATH)
+find_library(Protobuf_LIBRARY libprotobuf.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_LIBRARIES libprotobuf.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_LIBRARY_DEBUG libprotobuf.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_program(Protobuf_PROTOC_EXECUTABLE NAMES protoc PATHS ${PROTOBUF_ROOT}/bin NO_DEFAULT_PATH)
+find_library(Protobuf_PROTOC_LIBRARY libprotoc.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_PROTOC_LIBRARIES libprotoc.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_PROTOC_LIBRARY_DEBUG libprotoc.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_LITE_LIBRARY libprotobuf-lite.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_LITE_LIBRARIES libprotobuf-lite.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
+find_library(Protobuf_LITE_LIBRARY_DEBUG libprotobuf-lite.a ${PROTOBUF_ROOT}/lib64 NO_DEFAULT_PATH)
 
 foreach (Camel
         Protobuf_INCLUDE_DIR

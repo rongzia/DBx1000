@@ -7,34 +7,24 @@
 #include "shared_disk_service.pb.h"
 
 #include <functional>
+#include <grpc/impl/codegen/port_platform.h>
 #include <grpcpp/impl/codegen/async_generic_service.h>
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
 #include <grpcpp/impl/codegen/client_callback.h>
 #include <grpcpp/impl/codegen/client_context.h>
 #include <grpcpp/impl/codegen/completion_queue.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/proto_utils.h>
 #include <grpcpp/impl/codegen/rpc_method.h>
 #include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
 #include <grpcpp/impl/codegen/server_context.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/status.h>
 #include <grpcpp/impl/codegen/stub_options.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
-
-namespace grpc_impl {
-class CompletionQueue;
-class ServerCompletionQueue;
-class ServerContext;
-}  // namespace grpc_impl
-
-namespace grpc {
-namespace experimental {
-template <typename RequestT, typename ResponseT>
-class MessageAllocator;
-}  // namespace experimental
-}  // namespace grpc
 
 namespace dbx1000 {
 
@@ -100,33 +90,95 @@ class SharedDiskService final {
       virtual ~experimental_async_interface() {}
       virtual void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
       virtual void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, std::function<void(::grpc::Status)>) = 0;
       virtual void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
       virtual void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
     };
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    typedef class experimental_async_interface async_interface;
+    #endif
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    async_interface* async() { return experimental_async(); }
+    #endif
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::dbx1000::OpenReply>* AsyncOpenRaw(::grpc::ClientContext* context, const ::dbx1000::OpenRequest& request, ::grpc::CompletionQueue* cq) = 0;
@@ -201,32 +253,88 @@ class SharedDiskService final {
      public:
       void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, std::function<void(::grpc::Status)>) override;
       void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Open(::grpc::ClientContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Open(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::OpenReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, std::function<void(::grpc::Status)>) override;
       void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Write(::grpc::ClientContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Write(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WriteReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, std::function<void(::grpc::Status)>) override;
       void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Read(::grpc::ClientContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Read(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, std::function<void(::grpc::Status)>) override;
       void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void WritePage(::grpc::ClientContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void WritePage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::WritePageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, std::function<void(::grpc::Status)>) override;
       void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void ReadPage(::grpc::ClientContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void ReadPage(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::ReadPageReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, std::function<void(::grpc::Status)>) override;
       void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void CloseAll(::grpc::ClientContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void CloseAll(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseAllReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
       void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, std::function<void(::grpc::Status)>) override;
       void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Close(::grpc::ClientContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
       void Close(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::dbx1000::CloseReply* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
      private:
       friend class Stub;
       explicit experimental_async(Stub* stub): stub_(stub) { }
@@ -277,7 +385,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_Open() {
       ::grpc::Service::MarkMethodAsync(0);
@@ -286,7 +394,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -297,7 +405,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_Write() {
       ::grpc::Service::MarkMethodAsync(1);
@@ -306,7 +414,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -317,7 +425,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_Read() {
       ::grpc::Service::MarkMethodAsync(2);
@@ -326,7 +434,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -337,7 +445,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_WritePage() {
       ::grpc::Service::MarkMethodAsync(3);
@@ -346,7 +454,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -357,7 +465,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_ReadPage() {
       ::grpc::Service::MarkMethodAsync(4);
@@ -366,7 +474,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -377,7 +485,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_CloseAll() {
       ::grpc::Service::MarkMethodAsync(5);
@@ -386,7 +494,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -397,7 +505,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithAsyncMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithAsyncMethod_Close() {
       ::grpc::Service::MarkMethodAsync(6);
@@ -406,7 +514,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -418,225 +526,341 @@ class SharedDiskService final {
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_Open() {
-      ::grpc::Service::experimental().MarkMethodCallback(0,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::OpenRequest* request,
-                 ::dbx1000::OpenReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->Open(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(0,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) { return this->Open(context, request, response); }));}
     void SetMessageAllocatorFor_Open(
         ::grpc::experimental::MessageAllocator< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>*>(
-          ::grpc::Service::experimental().GetHandler(0))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(0);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Open() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Open(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Open(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_Write() {
-      ::grpc::Service::experimental().MarkMethodCallback(1,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::WriteRequest* request,
-                 ::dbx1000::WriteReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->Write(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(1,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) { return this->Write(context, request, response); }));}
     void SetMessageAllocatorFor_Write(
         ::grpc::experimental::MessageAllocator< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>*>(
-          ::grpc::Service::experimental().GetHandler(1))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(1);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Write() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Write(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Write(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_Read() {
-      ::grpc::Service::experimental().MarkMethodCallback(2,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::ReadRequest* request,
-                 ::dbx1000::ReadReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->Read(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(2,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) { return this->Read(context, request, response); }));}
     void SetMessageAllocatorFor_Read(
         ::grpc::experimental::MessageAllocator< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>*>(
-          ::grpc::Service::experimental().GetHandler(2))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(2);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Read() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Read(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Read(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_WritePage() {
-      ::grpc::Service::experimental().MarkMethodCallback(3,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::WritePageRequest* request,
-                 ::dbx1000::WritePageReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->WritePage(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(3,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) { return this->WritePage(context, request, response); }));}
     void SetMessageAllocatorFor_WritePage(
         ::grpc::experimental::MessageAllocator< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>*>(
-          ::grpc::Service::experimental().GetHandler(3))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(3);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_WritePage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* WritePage(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* WritePage(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_ReadPage() {
-      ::grpc::Service::experimental().MarkMethodCallback(4,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::ReadPageRequest* request,
-                 ::dbx1000::ReadPageReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->ReadPage(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(4,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) { return this->ReadPage(context, request, response); }));}
     void SetMessageAllocatorFor_ReadPage(
         ::grpc::experimental::MessageAllocator< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>*>(
-          ::grpc::Service::experimental().GetHandler(4))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(4);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(4);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_ReadPage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* ReadPage(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* ReadPage(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_CloseAll() {
-      ::grpc::Service::experimental().MarkMethodCallback(5,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::CloseAllRequest* request,
-                 ::dbx1000::CloseAllReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->CloseAll(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(5,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) { return this->CloseAll(context, request, response); }));}
     void SetMessageAllocatorFor_CloseAll(
         ::grpc::experimental::MessageAllocator< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>*>(
-          ::grpc::Service::experimental().GetHandler(5))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(5);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(5);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_CloseAll() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* CloseAll(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* CloseAll(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithCallbackMethod_Close() {
-      ::grpc::Service::experimental().MarkMethodCallback(6,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>(
-          [this](::grpc::ServerContext* context,
-                 const ::dbx1000::CloseRequest* request,
-                 ::dbx1000::CloseReply* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   return this->Close(context, request, response, controller);
-                 }));
-    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(6,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) { return this->Close(context, request, response); }));}
     void SetMessageAllocatorFor_Close(
         ::grpc::experimental::MessageAllocator< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>* allocator) {
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>*>(
-          ::grpc::Service::experimental().GetHandler(6))
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(6);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(6);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_Close() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Close(
+      ::grpc::CallbackServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Close(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/)
+    #endif
+      { return nullptr; }
   };
+  #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+  typedef ExperimentalWithCallbackMethod_Open<ExperimentalWithCallbackMethod_Write<ExperimentalWithCallbackMethod_Read<ExperimentalWithCallbackMethod_WritePage<ExperimentalWithCallbackMethod_ReadPage<ExperimentalWithCallbackMethod_CloseAll<ExperimentalWithCallbackMethod_Close<Service > > > > > > > CallbackService;
+  #endif
+
   typedef ExperimentalWithCallbackMethod_Open<ExperimentalWithCallbackMethod_Write<ExperimentalWithCallbackMethod_Read<ExperimentalWithCallbackMethod_WritePage<ExperimentalWithCallbackMethod_ReadPage<ExperimentalWithCallbackMethod_CloseAll<ExperimentalWithCallbackMethod_Close<Service > > > > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_Open() {
       ::grpc::Service::MarkMethodGeneric(0);
@@ -645,7 +869,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -653,7 +877,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_Write() {
       ::grpc::Service::MarkMethodGeneric(1);
@@ -662,7 +886,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -670,7 +894,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_Read() {
       ::grpc::Service::MarkMethodGeneric(2);
@@ -679,7 +903,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -687,7 +911,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_WritePage() {
       ::grpc::Service::MarkMethodGeneric(3);
@@ -696,7 +920,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -704,7 +928,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_ReadPage() {
       ::grpc::Service::MarkMethodGeneric(4);
@@ -713,7 +937,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -721,7 +945,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_CloseAll() {
       ::grpc::Service::MarkMethodGeneric(5);
@@ -730,7 +954,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -738,7 +962,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithGenericMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithGenericMethod_Close() {
       ::grpc::Service::MarkMethodGeneric(6);
@@ -747,7 +971,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -755,7 +979,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_Open() {
       ::grpc::Service::MarkMethodRaw(0);
@@ -764,7 +988,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -775,7 +999,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_Write() {
       ::grpc::Service::MarkMethodRaw(1);
@@ -784,7 +1008,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -795,7 +1019,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_Read() {
       ::grpc::Service::MarkMethodRaw(2);
@@ -804,7 +1028,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -815,7 +1039,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_WritePage() {
       ::grpc::Service::MarkMethodRaw(3);
@@ -824,7 +1048,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -835,7 +1059,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_ReadPage() {
       ::grpc::Service::MarkMethodRaw(4);
@@ -844,7 +1068,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -855,7 +1079,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_CloseAll() {
       ::grpc::Service::MarkMethodRaw(5);
@@ -864,7 +1088,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -875,7 +1099,7 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithRawMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithRawMethod_Close() {
       ::grpc::Service::MarkMethodRaw(6);
@@ -884,7 +1108,7 @@ class SharedDiskService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -895,192 +1119,290 @@ class SharedDiskService final {
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_Open() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(0,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->Open(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(0,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Open(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_Open() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Open(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Open(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Open(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_Write() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(1,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->Write(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(1,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Write(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_Write() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Write(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Write(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Write(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_Read() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(2,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->Read(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(2,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Read(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_Read() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Read(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Read(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Read(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_WritePage() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(3,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->WritePage(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(3,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->WritePage(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_WritePage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void WritePage(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* WritePage(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* WritePage(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_ReadPage() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(4,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->ReadPage(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(4,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->ReadPage(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_ReadPage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void ReadPage(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* ReadPage(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* ReadPage(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_CloseAll() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(5,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->CloseAll(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(5,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->CloseAll(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_CloseAll() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void CloseAll(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* CloseAll(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* CloseAll(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class ExperimentalWithRawCallbackMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     ExperimentalWithRawCallbackMethod_Close() {
-      ::grpc::Service::experimental().MarkMethodRawCallback(6,
-        new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
-          [this](::grpc::ServerContext* context,
-                 const ::grpc::ByteBuffer* request,
-                 ::grpc::ByteBuffer* response,
-                 ::grpc::experimental::ServerCallbackRpcController* controller) {
-                   this->Close(context, request, response, controller);
-                 }));
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(6,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->Close(context, request, response); }));
     }
     ~ExperimentalWithRawCallbackMethod_Close() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    virtual void Close(::grpc::ServerContext* context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response, ::grpc::experimental::ServerCallbackRpcController* controller) { controller->Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "")); }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* Close(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* Close(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_Open : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_Open() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::OpenRequest, ::dbx1000::OpenReply>(std::bind(&WithStreamedUnaryMethod_Open<BaseClass>::StreamedOpen, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::OpenRequest, ::dbx1000::OpenReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::OpenRequest, ::dbx1000::OpenReply>* streamer) {
+                       return this->StreamedOpen(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_Open() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Open(::grpc::ServerContext* context, const ::dbx1000::OpenRequest* request, ::dbx1000::OpenReply* response) override {
+    ::grpc::Status Open(::grpc::ServerContext* /*context*/, const ::dbx1000::OpenRequest* /*request*/, ::dbx1000::OpenReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1090,17 +1412,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_Write : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_Write() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::WriteRequest, ::dbx1000::WriteReply>(std::bind(&WithStreamedUnaryMethod_Write<BaseClass>::StreamedWrite, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::WriteRequest, ::dbx1000::WriteReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::WriteRequest, ::dbx1000::WriteReply>* streamer) {
+                       return this->StreamedWrite(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_Write() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Write(::grpc::ServerContext* context, const ::dbx1000::WriteRequest* request, ::dbx1000::WriteReply* response) override {
+    ::grpc::Status Write(::grpc::ServerContext* /*context*/, const ::dbx1000::WriteRequest* /*request*/, ::dbx1000::WriteReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1110,17 +1439,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_Read : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_Read() {
       ::grpc::Service::MarkMethodStreamed(2,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::ReadRequest, ::dbx1000::ReadReply>(std::bind(&WithStreamedUnaryMethod_Read<BaseClass>::StreamedRead, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::ReadRequest, ::dbx1000::ReadReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::ReadRequest, ::dbx1000::ReadReply>* streamer) {
+                       return this->StreamedRead(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_Read() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Read(::grpc::ServerContext* context, const ::dbx1000::ReadRequest* request, ::dbx1000::ReadReply* response) override {
+    ::grpc::Status Read(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadRequest* /*request*/, ::dbx1000::ReadReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1130,17 +1466,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_WritePage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_WritePage() {
       ::grpc::Service::MarkMethodStreamed(3,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>(std::bind(&WithStreamedUnaryMethod_WritePage<BaseClass>::StreamedWritePage, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::WritePageRequest, ::dbx1000::WritePageReply>* streamer) {
+                       return this->StreamedWritePage(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_WritePage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status WritePage(::grpc::ServerContext* context, const ::dbx1000::WritePageRequest* request, ::dbx1000::WritePageReply* response) override {
+    ::grpc::Status WritePage(::grpc::ServerContext* /*context*/, const ::dbx1000::WritePageRequest* /*request*/, ::dbx1000::WritePageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1150,17 +1493,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_ReadPage : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_ReadPage() {
       ::grpc::Service::MarkMethodStreamed(4,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>(std::bind(&WithStreamedUnaryMethod_ReadPage<BaseClass>::StreamedReadPage, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::ReadPageRequest, ::dbx1000::ReadPageReply>* streamer) {
+                       return this->StreamedReadPage(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_ReadPage() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status ReadPage(::grpc::ServerContext* context, const ::dbx1000::ReadPageRequest* request, ::dbx1000::ReadPageReply* response) override {
+    ::grpc::Status ReadPage(::grpc::ServerContext* /*context*/, const ::dbx1000::ReadPageRequest* /*request*/, ::dbx1000::ReadPageReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1170,17 +1520,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_CloseAll : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_CloseAll() {
       ::grpc::Service::MarkMethodStreamed(5,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>(std::bind(&WithStreamedUnaryMethod_CloseAll<BaseClass>::StreamedCloseAll, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::CloseAllRequest, ::dbx1000::CloseAllReply>* streamer) {
+                       return this->StreamedCloseAll(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_CloseAll() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status CloseAll(::grpc::ServerContext* context, const ::dbx1000::CloseAllRequest* request, ::dbx1000::CloseAllReply* response) override {
+    ::grpc::Status CloseAll(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseAllRequest* /*request*/, ::dbx1000::CloseAllReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1190,17 +1547,24 @@ class SharedDiskService final {
   template <class BaseClass>
   class WithStreamedUnaryMethod_Close : public BaseClass {
    private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_Close() {
       ::grpc::Service::MarkMethodStreamed(6,
-        new ::grpc::internal::StreamedUnaryHandler< ::dbx1000::CloseRequest, ::dbx1000::CloseReply>(std::bind(&WithStreamedUnaryMethod_Close<BaseClass>::StreamedClose, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::dbx1000::CloseRequest, ::dbx1000::CloseReply>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::dbx1000::CloseRequest, ::dbx1000::CloseReply>* streamer) {
+                       return this->StreamedClose(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_Close() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Close(::grpc::ServerContext* context, const ::dbx1000::CloseRequest* request, ::dbx1000::CloseReply* response) override {
+    ::grpc::Status Close(::grpc::ServerContext* /*context*/, const ::dbx1000::CloseRequest* /*request*/, ::dbx1000::CloseReply* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }

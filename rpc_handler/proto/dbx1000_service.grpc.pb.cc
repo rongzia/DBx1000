@@ -11,9 +11,12 @@
 #include <grpcpp/impl/codegen/channel_interface.h>
 #include <grpcpp/impl/codegen/client_unary_call.h>
 #include <grpcpp/impl/codegen/client_callback.h>
-#include <grpcpp/impl/codegen/method_handler_impl.h>
+#include <grpcpp/impl/codegen/message_allocator.h>
+#include <grpcpp/impl/codegen/method_handler.h>
 #include <grpcpp/impl/codegen/rpc_service_method.h>
 #include <grpcpp/impl/codegen/server_callback.h>
+#include <grpcpp/impl/codegen/server_callback_handlers.h>
+#include <grpcpp/impl/codegen/server_context.h>
 #include <grpcpp/impl/codegen/service_type.h>
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace dbx1000 {
@@ -215,32 +218,62 @@ DBx1000Service::Service::Service() {
       DBx1000Service_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockRemoteRequest, ::dbx1000::LockRemoteReply>(
-          std::mem_fn(&DBx1000Service::Service::LockRemote), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::LockRemoteRequest* req,
+             ::dbx1000::LockRemoteReply* resp) {
+               return service->LockRemote(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InstanceInitDoneRequest, ::dbx1000::InstanceInitDoneReply>(
-          std::mem_fn(&DBx1000Service::Service::InstanceInitDone), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::InstanceInitDoneRequest* req,
+             ::dbx1000::InstanceInitDoneReply* resp) {
+               return service->InstanceInitDone(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::LockServiceInitDoneRequest, ::dbx1000::LockServiceInitDoneReply>(
-          std::mem_fn(&DBx1000Service::Service::LockServiceInitDone), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::LockServiceInitDoneRequest* req,
+             ::dbx1000::LockServiceInitDoneReply* resp) {
+               return service->LockServiceInitDone(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetNextTsRequest, ::dbx1000::GetNextTsReply>(
-          std::mem_fn(&DBx1000Service::Service::GetNextTs), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::GetNextTsRequest* req,
+             ::dbx1000::GetNextTsReply* resp) {
+               return service->GetNextTs(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::InvalidRequest, ::dbx1000::InvalidReply>(
-          std::mem_fn(&DBx1000Service::Service::Invalid), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::InvalidRequest* req,
+             ::dbx1000::InvalidReply* resp) {
+               return service->Invalid(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DBx1000Service_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DBx1000Service::Service, ::dbx1000::GetTestNumRequest, ::dbx1000::GetTestNumReply>(
-          std::mem_fn(&DBx1000Service::Service::GetTestNum), this)));
+          [](DBx1000Service::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::dbx1000::GetTestNumRequest* req,
+             ::dbx1000::GetTestNumReply* resp) {
+               return service->GetTestNum(ctx, req, resp);
+             }, this)));
 }
 
 DBx1000Service::Service::~Service() {

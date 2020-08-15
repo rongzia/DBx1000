@@ -11,31 +11,31 @@ add_definitions(-DNOGRAPHITE=1)
 
 
 ### ******************************* grpc *******************************:
-set(PROTOBUF_ROOT $ENV{HOME}/.local/protobuf-3.6.1)
+set(PROTOBUF_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf.cmake)
-set(GRPC_ROOT $ENV{HOME}/.local/grpc-v1.23.x)
+set(GRPC_ROOT $ENV{HOME}/.local/grpc)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc.cmake)
 find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
 
-#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-#        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-#        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-#        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
-#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-#        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-#        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
-#        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
-#        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
-#
-#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-#        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-#        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-#        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
-#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-#        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-#        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
-#        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
-#        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
+execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
+execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto
+        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/rpc_handler/proto/dbx1000_service.proto)
+
+execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+        --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
+execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+        -I ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+        --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto
+        --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
 
 include_directories(${Protobuf_INCLUDE_DIR})
 include_directories(${gRPC_INCLUDE_DIR})
