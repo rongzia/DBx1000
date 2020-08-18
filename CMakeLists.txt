@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.14)
 project(Dbx1000)
 
 SET(CMAKE_C_COMPILER "gcc")
@@ -9,22 +9,23 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 
 add_definitions(-DNOGRAPHITE=1)
 
-### ******************************* grpc *******************************:
-set(PROTOBUF_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf.cmake)
-set(GRPC_ROOT $ENV{HOME}/.local/grpc-v1.23.x)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc.cmake)
+### ******************************* grpc && protobuf *******************************:
+set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
+set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
 find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
 include_directories(${Protobuf_INCLUDE_DIR})
 include_directories(${gRPC_INCLUDE_DIR})
 ### ******************************* grpc *******************************
 
 
-# include header files
+### include header files
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-# lib files
+
+### lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
 set(COMMON_FILES
@@ -62,9 +63,9 @@ set(LOCK_SERVICE_FILES lock_service/manager_lock_service.cpp)
 #[[
 编译模块：disk、tablespace、shared_disk、buffer、rpc_handler、lock_service
 模块间的依赖关系：
-        tablespace -> libjsoncpp.a
-        shared_disk -> grpc,protobuf
-        buffer -> disk,tablespace,shared_disk
+        tablespace   -> libjsoncpp.a
+        shared_disk  -> grpc,protobuf
+        buffer       -> disk,tablespace,shared_disk
         rpc_handler 和 lock_service 本来是相互依赖的关系，但是后面编译时，会产生循环依赖，导致 rpc_handler 找不到 lock_service 的方法，
         所以在编译 rpc_handler 时，直接把 lock_service/manager_lock_service.cpp 作为库 rpc_handler 的源文件之一
         这样就只存在一个依赖：
@@ -125,5 +126,3 @@ add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cp
 
 add_executable(other_test test/other_test.cpp)
 target_link_libraries(other_test pthread tbb)
-
-
