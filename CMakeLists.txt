@@ -10,15 +10,16 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 add_definitions(-DNOGRAPHITE=1)
 
 ### ******************************* grpc && protobuf *******************************:
-set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
-set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
-find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
-include_directories(${Protobuf_INCLUDE_DIR})
-include_directories(${gRPC_INCLUDE_DIR})
+#set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
+#set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
+#find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
+#include_directories(${Protobuf_INCLUDE_DIR})
+#include_directories(${gRPC_INCLUDE_DIR})
 ### ******************************* grpc *******************************
 
+include(cmake/brpc.cmake)
 
 ### include header files
 include_directories(${PROJECT_SOURCE_DIR})
