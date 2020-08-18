@@ -14,7 +14,7 @@ add_custom_command(
         "${CMAKE_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto"
       DEPENDS "${CMAKE_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto")
 
-#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+#execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} 
 #        -I ${CMAKE_SOURCE_DIR}/shared_disk/proto
 #        --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
 #        ${CMAKE_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
