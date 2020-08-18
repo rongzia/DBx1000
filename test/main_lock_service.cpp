@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 #include "lock_service/manager_lock_service.h"
-#include "rpc_handler/lock_service_handler.h"
+#include "lock_service_handler.h"
 #include "config.h"
 using namespace std;
 

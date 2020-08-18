@@ -29,7 +29,7 @@
 #include "instance/txn/txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "rpc_handler/instance_handler.h"
+#include "instance_handler.h"
 #include "util/parse_result.h"
 #include "config.h"
 

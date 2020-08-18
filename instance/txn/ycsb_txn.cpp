@@ -14,7 +14,7 @@
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/thread.h"
 #include "shared_disk/shared_disk_service.h"
-#include "rpc_handler/instance_handler.h"
+#include "instance_handler.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);

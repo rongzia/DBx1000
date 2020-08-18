@@ -6,7 +6,7 @@
 #define DBX1000_SHARED_DISK_SERVICE_H
 
 #include <grpcpp/grpcpp.h>
-#include "proto/shared_disk_service.grpc.pb.h"
+#include "shared_disk_service.grpc.pb.h"
 
 namespace dbx1000 {
     class SharedDiskServer : public SharedDiskService::Service {

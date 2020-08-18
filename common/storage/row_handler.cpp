@@ -21,7 +21,7 @@
 #include "instance/txn/ycsb_txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "rpc_handler/instance_handler.h"
+#include "instance_handler.h"
 #include "shared_disk/shared_disk_service.h"
 #include "config.h"
 

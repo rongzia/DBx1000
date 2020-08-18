@@ -7,7 +7,7 @@
 
 #include "common/buffer/buffer.h"
 #include "instance/manager_instance.h"
-#include "rpc_handler/instance_handler.h"
+#include "instance_handler.h"
 #include "config.h"
 
 namespace dbx1000 {

@@ -21,7 +21,7 @@
 #include "common/myhelper.h"
 #include "common/mystats.h"
 #include "json/json.h"
-#include "rpc_handler/lock_service_handler.h"
+#include "lock_service_handler.h"
 #include "shared_disk/shared_disk_service.h"
 #include "config.h"
 
