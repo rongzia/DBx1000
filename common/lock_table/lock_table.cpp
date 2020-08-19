@@ -7,7 +7,7 @@
 
 #include "common/buffer/buffer.h"
 #include "instance/manager_instance.h"
-#include "instance_handler.h"
+#include "global_lock_service.h"
 #include "config.h"
 
 namespace dbx1000 {

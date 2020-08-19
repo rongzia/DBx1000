@@ -13,7 +13,7 @@
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
 //#include "instance/manager_instance.h"
-#include "shared_disk/shared_disk_service.h"
+#include "shared_disk_service.h"
 
 namespace dbx1000 {
 

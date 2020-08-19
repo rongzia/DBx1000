@@ -29,16 +29,17 @@
 #include "instance/txn/txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "instance_handler.h"
+#include "global_lock_service.h"
 #include "util/parse_result.h"
 #include "config.h"
 
 using namespace std;
+using namespace dbx1000::global_lock_service;
 
 extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
 extern void Test_Lock_Table();
 
-void RunInstanceServer(dbx1000::InstanceServer *instanceServer, dbx1000::ManagerInstance *managerInstance) {
+void RunInstanceServer(GlobalLockServiceImpl *instanceServer, dbx1000::ManagerInstance *managerInstance) {
     instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
 }
 void f(thread_t* thread) {
@@ -60,9 +61,9 @@ int main(int argc, char *argv[]) {
 
 
     {   // instance 服务端
-        dbx1000::InstanceServer *instanceServer = new dbx1000::InstanceServer();
-        instanceServer->manager_instance_ = managerInstance;
-        thread instance_service_server(RunInstanceServer, instanceServer, managerInstance);
+        GlobalLockServiceImpl *globalLockService = new GlobalLockServiceImpl();
+        globalLockService->manager_instance_ = managerInstance;
+        thread instance_service_server(RunInstanceServer, globalLockService, managerInstance);
         instance_service_server.detach();
     }
     // 连接集中锁管理器

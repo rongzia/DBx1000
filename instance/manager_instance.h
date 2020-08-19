@@ -20,7 +20,10 @@ class Query_queue;
 class Row_mvcc;
 
 namespace dbx1000 {
-    class InstanceClient;
+    namespace global_lock_service {
+        class GlobalLockServiceClient;
+    }
+    using namespace dbx1000::global_lock_service;
     class Buffer;
     class Index;
     class LockTable;
@@ -58,8 +61,8 @@ namespace dbx1000 {
         TableSpace* table_space()                                       { return this->table_space_; }
         Index* index()                                                  { return this->index_; }
         LockTable* &lock_table()                                        { return this->lock_table_; }
-        InstanceClient *instance_rpc_handler()                          { return this->instance_rpc_handler_; }
-        void set_instance_rpc_handler(InstanceClient* instanceClient)   { this->instance_rpc_handler_ = instanceClient; }
+        GlobalLockServiceClient *global_lock_service_client()                 { return this->global_lock_service_client_; }
+        void set_global_lock_service_client(GlobalLockServiceClient* globalLockServiceClient)   { this->global_lock_service_client_ = globalLockServiceClient; }
         SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
 
         int test_num_;
@@ -82,7 +85,7 @@ namespace dbx1000 {
         TableSpace* table_space_;
         Index* index_;
         LockTable* lock_table_;
-        InstanceClient *instance_rpc_handler_;
+        global_lock_service::GlobalLockServiceClient *global_lock_service_client_;
         SharedDiskClient * shared_disk_client_;
     };
 }

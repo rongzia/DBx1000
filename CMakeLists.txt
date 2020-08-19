@@ -59,7 +59,7 @@ set(INSTANCE_FILES
         instance/manager_instance.cpp
         instance/thread.cpp
         )
-set(LOCK_SERVICE_FILES lock_service/manager_lock_service.cpp)
+set(GLOBAL_LOCK_FILES global_lock/global_lock.cpp)
 
 #[[
 编译模块：disk、tablespace、shared_disk、buffer、rpc_handler、lock_service
@@ -80,7 +80,7 @@ add_library(tablespace SHARED common/storage/tablespace/page.cpp common/storage/
 target_link_libraries(tablespace libjsoncpp.a)
 
 ### shared_disk
-include(shared_disk/CMakeLists.cmake)
+include(shared_disk/brpc/shared_disk_service.cmake)
 
 ### buffer
 file(GLOB buffer_src ${PROJECT_SOURCE_DIR}/common/buffer/*.cpp)
@@ -92,27 +92,27 @@ endforeach()
 add_library(buffer SHARED ${buffer_src})
 target_link_libraries(buffer)
 
-### rpc_handler
-include(rpc_handler/grpc/CMakeLists.cmake)
+### global_lock_service
+include(global_lock_service/brpc/global_lock_service.cmake)
 
 ### lock_service
-add_library(lock_service ${LOCK_SERVICE_FILES})
-target_link_libraries(lock_service)
+add_library(global_lock ${GLOBAL_LOCK_FILES})
+target_link_libraries(global_lock)
 
 
 
 # main_lock_service
 add_executable(main_lock_service test/main_lock_service.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(main_lock_service lock_service rpc_handler buffer shared_disk disk tablespace pthread tbb)
+target_link_libraries(main_lock_service global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
 # main_instance
 add_executable(main_instance test/main_instance.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(main_instance     lock_service rpc_handler buffer shared_disk disk tablespace pthread tbb)
+target_link_libraries(main_instance global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
 # disk_service
 add_executable(disk_service test/disk_service.cpp)
 target_link_libraries(disk_service shared_disk disk pthread tbb)
 # gen_db
 add_executable(gen_db test/gen_db.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(gen_db rpc_handler buffer shared_disk disk tablespace pthread tbb)
+target_link_libraries(gen_db global_lock_service buffer shared_disk disk tablespace pthread tbb)
 
 ### ******************************* other test *******************************
 # for buffer

@@ -21,8 +21,8 @@
 #include "instance/txn/ycsb_txn.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
-#include "instance_handler.h"
-#include "shared_disk/shared_disk_service.h"
+#include "global_lock_service.h"
+#include "shared_disk_service.h"
 #include "config.h"
 
 namespace dbx1000 {

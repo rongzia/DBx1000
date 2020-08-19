@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "shared_disk/shared_disk_service.h"
+#include "shared_disk_service.h"
 #include "config.h"
 using namespace std;
 

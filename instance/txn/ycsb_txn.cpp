@@ -13,8 +13,8 @@
 #include "common/myhelper.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/thread.h"
-#include "shared_disk/shared_disk_service.h"
-#include "instance_handler.h"
+#include "shared_disk_service.h"
+#include "global_lock_service.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -101,7 +101,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
                     char page_buf[MY_PAGE_SIZE];
 //                    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " remote get lock." << endl;
 #ifdef DB2_WITH_NO_CONFLICT
-                    RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
+                    RC rc = ycsb->h_thd->manager_client_->global_lock_service_client()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
 #else
                     RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
 #endif
