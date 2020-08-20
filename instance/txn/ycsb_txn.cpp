@@ -103,7 +103,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
 #ifdef DB2_WITH_NO_CONFLICT
                     RC rc = ycsb->h_thd->manager_client_->global_lock_service_client()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
 #else
-                    RC rc = ycsb->h_thd->manager_client_->instance_rpc_handler()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
+                    RC rc = ycsb->h_thd->manager_client_->global_lock_service_client()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf, MY_PAGE_SIZE);
 #endif
                     if(RC::Abort == rc || RC::TIME_OUT == rc) {
                         lockTable->lock_table_[iter]->lock_remoting = false;

@@ -4,6 +4,8 @@
 
 #include <brpc/channel.h>
 #include <butil/time.h>
+#include <brpc/log.h>
+#include <cassert>
 #include "global_lock_service.h"
 
 #include "global_lock_service_helper.h"
@@ -15,10 +17,11 @@ namespace dbx1000 {
             brpc::ChannelOptions options;
             options.use_rdma = false;
             if (channel_.Init(addr.data(), &options) != 0) {
-                LOG(ERROR) << "Fail to initialize channel";
+                LOG(FATAL) << "Fail to initialize channel";
                 assert(false);
             }
             stub_.reset(new dbx1000::GlobalLockService_Stub(&channel_));
+            Test();
         }
 
         RC GlobalLockServiceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
@@ -50,7 +53,7 @@ namespace dbx1000 {
                 }
                 return RC::RCOK ;
             } else {
-                LOG(WARNING) << cntl.ErrorText();
+                LOG(FATAL) << cntl.ErrorText();
                 assert(false);
                 return RC::Abort;
             }
@@ -65,7 +68,7 @@ namespace dbx1000 {
 
             stub_->InstanceInitDone(&cntl, &request, &reply, nullptr);
             if (!cntl.Failed()) { } else {
-                LOG(WARNING) << cntl.ErrorText();
+                LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
         }
@@ -79,7 +82,7 @@ namespace dbx1000 {
             if (!cntl.Failed()) {
                 return reply.init_done();
             } else {
-                LOG(WARNING) << cntl.ErrorText();
+                LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
         }
@@ -93,7 +96,7 @@ namespace dbx1000 {
             if (!cntl.Failed()) {
                 return reply.ts();
             } else {
-                LOG(WARNING) << cntl.ErrorText();
+                LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
         }
@@ -120,9 +123,23 @@ namespace dbx1000 {
                 }
                 return RC::RCOK ;
             } else {
-                LOG(WARNING) << cntl.ErrorText();
+                LOG(FATAL) << cntl.ErrorText();
                 assert(false);
                 return RC::Abort;
+            }
+        }
+
+        int GlobalLockServiceClient::Test() {
+            dbx1000::TestRequest request;
+            dbx1000::TestReply reply;
+            ::brpc::Controller cntl;
+
+            stub_->Test(&cntl, &request, &reply, nullptr);
+            if (!cntl.Failed()) {
+                return 0;
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
+                return -1;
             }
         }
 
@@ -131,20 +148,23 @@ namespace dbx1000 {
 
 
 
-        void GlobalLockServiceImpl::Start(const std::string &host) {
-            brpc::Server server;
 
-            if (server.AddService(this, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
-                LOG(ERROR) << "Fail to add service";
+
+
+        void GlobalLockServiceImpl::Start( const std::string &host) {
+//            brpc::Server server;
+
+            if (this->server.AddService(this, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
+                LOG(FATAL) << "Fail to add service";
                 assert(false);
             }
 
             brpc::ServerOptions options;
-            if (server.Start(host.data(), &options) != 0) {
-                LOG(ERROR) << "Fail to start SharedDiskServer";
+            if (this->server.Start(std::stoi(host.substr(host.find(':')+1)), &options) != 0) {
+                LOG(FATAL) << "Fail to start GlobalLockServiceImpl";
                 assert(false);
             }
-            server.RunUntilAskedToQuit();
+            this->server.RunUntilAskedToQuit();
         }
 
         void GlobalLockServiceImpl::Invalid(::google::protobuf::RpcController* controller,
@@ -244,6 +264,14 @@ namespace dbx1000 {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
             response->set_ts(global_lock_->GetNextTs(-1));
+        }
+
+        void GlobalLockServiceImpl::Test(::google::protobuf::RpcController* controller,
+                       const ::dbx1000::TestRequest* request,
+                       ::dbx1000::TestReply* response,
+                       ::google::protobuf::Closure* done){
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
         }
     }
 }

@@ -60,21 +60,24 @@ int main(int argc, char *argv[]) {
     managerInstance->Init(SHARED_DISK_HOST);
 
 
-    {   // instance 服务端
+//    {   // instance 服务端
         GlobalLockServiceImpl *globalLockService = new GlobalLockServiceImpl();
         globalLockService->manager_instance_ = managerInstance;
         thread instance_service_server(RunInstanceServer, globalLockService, managerInstance);
-        instance_service_server.detach();
-    }
+//        instance_service_server.join();
+//        instance_service_server.detach();
+//    }
+
+    cout << "instance server started." << endl;
     // 连接集中锁管理器
-//    managerInstance->set_instance_rpc_handler(new dbx1000::InstanceClient(managerInstance->host_map()[-1]));
-//
-//    managerInstance->set_init_done(true);
-//    managerInstance->instance_rpc_handler()->InstanceInitDone(managerInstance->instance_id());
-//
-//    /// 等待所有 instance 初始化完成
-//    while(!managerInstance->instance_rpc_handler()->LockServiceInitDone()) { std::this_thread::yield();}
-//    cout << "instance start." <<endl;
+    managerInstance->set_global_lock_service_client(new GlobalLockServiceClient(managerInstance->host_map()[-1]));
+
+    managerInstance->set_init_done(true);
+    managerInstance->global_lock_service_client()->InstanceInitDone(managerInstance->instance_id());
+
+    /// 等待所有 instance 初始化完成
+    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::yield();}
+    cout << "instance start." <<endl;
 
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();

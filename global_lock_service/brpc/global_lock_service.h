@@ -33,7 +33,6 @@ namespace dbx1000 {
             void InstanceInitDone(int instance_id);
             bool GlobalLockInitDone();
             uint64_t GetNextTs();
-            int GetTestNum();
             ManagerInstance* manager_instance() { return this->manager_instance_; }
 
 
@@ -41,6 +40,9 @@ namespace dbx1000 {
             RC Invalid(uint64_t page_id, char *page_buf, size_t count);
             // getter and setter
             global_lock::GlobalLock* global_lock() { return this->global_lock_; };
+
+        public: /// common
+            int Test();
 
          private:
             ManagerInstance* manager_instance_;
@@ -53,7 +55,7 @@ namespace dbx1000 {
         public:
             GlobalLockServiceImpl() {}
             ~GlobalLockServiceImpl() {}
-            void Start(const std::string &host);
+            void Start( const std::string &host);
 
         public: /// for instance
             virtual void Invalid(::google::protobuf::RpcController* controller,
@@ -79,7 +81,15 @@ namespace dbx1000 {
                                const ::dbx1000::GetNextTsRequest* request,
                                ::dbx1000::GetNextTsReply* response,
                                ::google::protobuf::Closure* done);
+
+            public: /// for common
+            virtual void Test(::google::protobuf::RpcController* controller,
+                       const ::dbx1000::TestRequest* request,
+                       ::dbx1000::TestReply* response,
+                       ::google::protobuf::Closure* done);
+
             global_lock::GlobalLock* global_lock_;
+            brpc::Server server;
         };
     }
 }
