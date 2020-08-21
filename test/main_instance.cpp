@@ -60,15 +60,13 @@ int main(int argc, char *argv[]) {
     managerInstance->Init(SHARED_DISK_HOST);
 
 
-//    {   // instance 服务端
+    {   // instance 服务端
         GlobalLockServiceImpl *globalLockService = new GlobalLockServiceImpl();
         globalLockService->manager_instance_ = managerInstance;
         thread instance_service_server(RunInstanceServer, globalLockService, managerInstance);
-//        instance_service_server.join();
-//        instance_service_server.detach();
-//    }
-
-    cout << "instance server started." << endl;
+        instance_service_server.detach();
+    }
+    std::this_thread::sleep_for(chrono::seconds(2));
     // 连接集中锁管理器
     managerInstance->set_global_lock_service_client(new GlobalLockServiceClient(managerInstance->host_map()[-1]));
 

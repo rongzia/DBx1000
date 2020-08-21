@@ -164,7 +164,7 @@ namespace dbx1000 {
                 LOG(FATAL) << "Fail to start GlobalLockServiceImpl";
                 assert(false);
             }
-            this->server.RunUntilAskedToQuit();
+//            this->server.RunUntilAskedToQuit();
         }
 
         void GlobalLockServiceImpl::Invalid(::google::protobuf::RpcController* controller,

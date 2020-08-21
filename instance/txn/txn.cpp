@@ -110,7 +110,9 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
 //            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
+            cout << "txn_man::cleanup ReturnRow before." << endl;
             this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
+		    cout << "txn_man::cleanup ReturnRow after." << endl;
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
