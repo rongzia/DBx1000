@@ -54,6 +54,7 @@ std::set<uint64_t> GetQueryWritePageSet(ycsb_query * m_query, ycsb_txn_man *ycsb
         if(req->rtype == WR){
 	        ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_write_request_++;
             write_page_set.insert(indexItem.page_id_);
+//            cout << "GetQueryWritePageSet:" << indexItem.page_id_ << endl;
         }
     }
 
@@ -76,7 +77,6 @@ std::set<uint64_t> GetQueryWritePageSet(ycsb_query * m_query, ycsb_txn_man *ycsb
  * 然后把当前线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
  */
 RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
-    cout << "GetWritePageLock in" << endl;
     dbx1000::LockTable* lockTable =  ycsb->h_thd->manager_client_->lock_table();
 
     auto has_invalid_req = [&](){
@@ -87,12 +87,13 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
     };
     while(has_invalid_req()) { std::this_thread::yield(); }
 
-    cout << "instance " << ycsb->h_thd->manager_client_->instance_id() << ", thread " << ycsb->get_thd_id() << ", txn " << ycsb->txn_id << " get lock." << endl;
+//    cout << "instance " << ycsb->h_thd->manager_client_->instance_id() << ", thread " << ycsb->get_thd_id() << ", txn " << ycsb->txn_id << " get lock." << endl;
 
     dbx1000::Profiler profiler;
     profiler.Start();
 //std::vector<thread> lock_remote_thread;
     for(auto iter : write_page_set) {
+        if (iter == 0) { cout << "page 0: lock mode: " << lockTable->LockModeToChar(lockTable->lock_table_[iter]->lock_mode) << endl;}
         if(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
 	        ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_remote_lock_++;
             bool flag = ATOM_CAS(lockTable->lock_table_[iter]->lock_remoting, false, true);
@@ -100,7 +101,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
                 assert(true == lockTable->lock_table_[iter]->lock_remoting);
 //lock_remote_thread.emplace_back(thread([iter, lockTable, this]() {
                     char page_buf[MY_PAGE_SIZE];
-                    cout << "instance " << ycsb->h_thd->manager_client_->instance_id() << ", thread " << ycsb->get_thd_id() << ", txn " << ycsb->txn_id << " remote get lock." << endl;
+//                    cout << "instance " << ycsb->h_thd->manager_client_->instance_id() << ", thread " << ycsb->get_thd_id() << ", txn " << ycsb->txn_id << " remote get lock." << endl;
 #ifdef DB2_WITH_NO_CONFLICT
                     RC rc = ycsb->h_thd->manager_client_->global_lock_service_client()->LockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, nullptr, 0);
 #else
@@ -113,7 +114,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
                     assert(rc == RC::RCOK);
                     assert(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O);
                     lockTable->lock_table_[iter]->lock_mode = dbx1000::LockMode::P;
-                    cout << "thread : " << ycsb->get_thd_id() << " change lock : " << iter << " to P" << endl;
+//                    cout << "thread : " << ycsb->get_thd_id() << " change lock : " << iter << " to P" << endl;
 #ifdef DB2_WITH_NO_CONFLICT
 #else
                     ycsb->h_thd->manager_client_->buffer()->BufferPut(iter, page_buf, MY_PAGE_SIZE);
@@ -142,15 +143,13 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb){
     profiler.End();
 	ycsb->h_thd->manager_client_->stats().tmp_stats[ycsb->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
 
-    cout << "GetWritePageLock out" << endl;
     return RC::RCOK;
 }
 
 
 RC ycsb_txn_man::run_txn(base_query * query) {
-    cout << "ycsb_txn_man::run_txn in" << endl;
-    cout << "txn id : " << txn_id << endl;
-    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
+//    cout << "txn id : " << txn_id << endl;
+//    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
 	RC rc;
 	ycsb_query * m_query = (ycsb_query *) query;
 //	ycsb_query * m_query = gen_query();         /// 调试用
@@ -207,6 +206,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			row_local = get_row(real_key , type);
 #else
 			row_local = get_row(req->key , type);
+//			cout << "key: " << req->key << ", type:" << (req->rtype == access_t::WR ? "WR" : "RD") << endl;
 #endif
 			if (row_local == NULL) {
 				rc = RC::Abort;
@@ -244,11 +244,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 	}
 	rc = RC::RCOK;
 
-	cout << "ycsb_txn_man::run_txn finish(rc) before." << endl;
 final:
 	rc = finish(rc);
-
-	cout << "ycsb_txn_man::run_txn finish(rc). after" << endl;
 
     /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
     dbx1000::LockTable* lockTable =  this->h_thd->manager_client_->lock_table();

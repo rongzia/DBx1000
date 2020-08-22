@@ -136,7 +136,6 @@ RC thread_t::run() {
 //#endif
         //! 事务 id 按线程划分，假设当前线程为 1 、总线程数为4，则事务 id 为 1, 5, 9...
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
-		cout << "txn id:" << m_txn->txn_id << endl;
 		thd_txn_id ++;
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)

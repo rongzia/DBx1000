@@ -152,7 +152,9 @@ namespace dbx1000 {
 //        }
         memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
         this->manager_instance_->buffer()->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
-        assert(RC::RCOK == this->manager_instance_->lock_table()->UnLock(indexItem.page_id_));
+//        assert(RC::RCOK == this->manager_instance_->lock_table()->UnLock(indexItem.page_id_));
+rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
+assert(RC::RCOK == rc);
         return true;
     }
 }

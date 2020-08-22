@@ -187,10 +187,11 @@ namespace dbx1000 {
             assert(iter->second->thread_count == 0);
             assert(iter->second->count == 0);
             iter->second->lock_mode = LockMode::O;
+            cout << "LockTable::LockInvalid invalid page: " << page_id << " success." << endl;
             manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
             rc = RC::RCOK;
         } else {
-        // cout << "LockTable::LockInvalid timeout." << endl;
+         cout << "LockTable::LockInvalid timeout." << endl;
             rc = RC::TIME_OUT;
         }
         iter->second->invalid_req = false;

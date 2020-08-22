@@ -78,6 +78,7 @@ ts_t txn_man::get_ts() {
 }
 
 void txn_man::cleanup(RC rc) {
+//    cout << "txn_man::cleanup" << endl;
     /*
 #if CC_ALG == HEKATON
 	row_cnt = 0;
@@ -92,6 +93,8 @@ void txn_man::cleanup(RC rc) {
 		if (type == WR && rc == RC::Abort) {
 			type = XP;
 		}
+//		cout << "key cleanup: " << accesses[rid]->data->key_ << ", type:" << (accesses[rid]->type == access_t::RD ? "RD" : "WR") << endl;
+
     /*
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
 		if (type == RD) {
@@ -110,9 +113,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
 //            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
-            cout << "txn_man::cleanup ReturnRow before." << endl;
             this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
-		    cout << "txn_man::cleanup ReturnRow after." << endl;
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
