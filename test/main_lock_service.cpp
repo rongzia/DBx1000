@@ -26,9 +26,6 @@ int main(int argc, char* argv[]){
     thread lock_service_server(RunLockServiceServer, globalLockService, globalLock);
     lock_service_server.detach();
 
-    cout << "something." << endl;
-
-
     while(1){};
     return 0;
 }
