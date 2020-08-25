@@ -90,7 +90,7 @@ foreach(item ${buffer_src})
     endif ()
 endforeach()
 add_library(buffer SHARED ${buffer_src})
-target_link_libraries(buffer)
+target_link_libraries(buffer ${GFLAGS_LIBRARY})
 
 ### global_lock_service
 include(global_lock_service/brpc/global_lock_service.cmake)

@@ -12,7 +12,6 @@
 #include "lru.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
-//#include "instance/manager_instance.h"
 #include "shared_disk_service.h"
 
 namespace dbx1000 {
@@ -23,8 +22,8 @@ namespace dbx1000 {
               , page_num_(total_size / page_size)
               , shared_disk_client_(sharedDiskClient){
         ptr_ = mmap(NULL, total_size_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-        page_list_ = new LRU(page_size_);
-        free_list_ = new LRU(page_size_);
+        page_list_ = new LRU();
+        free_list_ = new LRU();
         lru_index_ = new LruIndex();
 
         /// initital free list

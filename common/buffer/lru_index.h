@@ -6,8 +6,7 @@
 #define DBX1000_LRU_INDEX_H
 
 #include <vector>
-
-//#define USE_TBB
+#include "buffer_def.h"
 
 #ifdef USE_TBB
 #include <tbb/concurrent_hash_map.h>

@@ -20,11 +20,9 @@ namespace dbx1000 {
 
     PageNode::~PageNode() {
         /// page_ 的空间是由缓存池提供的，不需要在这里释放，交给 buffer
-//        delete page_;
     }
 
-    LRU::LRU(int item_size)
-            : size_(ATOMIC_VAR_INIT(0)) {
+    LRU::LRU() : size_(ATOMIC_VAR_INIT(0)) {
         head_ = nullptr;
         tail_ = nullptr;
     }
@@ -38,131 +36,76 @@ namespace dbx1000 {
     }
 
     void LRU::Prepend(PageNode* page_node) {
-#ifdef USE_MUTEX
-        mtx_.lock();
-        page_node->next_ = head_;
-        if(head_ == nullptr){
-            tail_ = page_node;
-        } else {
-            head_->prev_ = page_node;
-        }
-        head_ = page_node;
-        mtx_.unlock();
-        size_.fetch_add(1);
-#elif defined(USE_CAS)
-//        for(;;){
-//            PageNode* old_head = head_;
-//            if(head_ == nullptr){
-//                if (head_.compare_exchange_weak(old_head, page_node)){
-//                    tail_ = page_node;
-//                    size_.fetch_add(1);
-////                    Check();
-//                    return;
-//                }
-//            } else {
-//                page_node->next_ = old_head;
-//                if(head_.compare_exchange_weak(old_head, page_node)){
-//                    old_head->prev_ = page_node;
-//                    size_.fetch_add(1);
-////                    Check();
-//                    return;
-//                }
-//            }
-//        }
-
-        PageNode* old_head = head_;
+#if defined(USE_CAS)
         for(;;){
-            page_node->next_ = old_head;
-            if(head_.compare_exchange_weak(old_head, page_node)) {
-                if(nullptr == old_head) {tail_ = page_node; }
-                else { old_head->prev_ = page_node; }
+            PageNode* old_head = head_;
+            if(head_ == nullptr){
+                if (head_.compare_exchange_weak(old_head, page_node)){
+                    tail_ = page_node;
                     size_.fetch_add(1);
                     return;
+                }
+            } else {
+                page_node->next_ = old_head;
+                if(head_.compare_exchange_weak(old_head, page_node)){
+                    old_head->prev_ = page_node;
+                    size_.fetch_add(1);
+                    return;
+                }
             }
         }
 #else
-        page_node->next_ = head_;
-        if(head_ == nullptr){
+#if defined(USE_MUTEX)
+        mtx_.lock();
+#endif // USE_MUTEX
+        assert(page_node->next_ == nullptr && page_node->prev_ == nullptr);
+        if(head_ == nullptr) {
+            head_ = page_node;
             tail_ = page_node;
-        } else {
+        } else{
+            page_node->next_ = head_;
             head_->prev_ = page_node;
+            head_ = page_node;
         }
-        head_ = page_node;
         size_.fetch_add(1);
-#endif
+
+#if defined(USE_MUTEX)
+        mtx_.unlock();
+#endif // USE_MUTEX
+#endif // USE_CAS
     }
 
     void LRU::Get(PageNode* page_node) {
-//#ifdef USE_MUTEX
-//        mtx_.lock();
-//        assert(page_node->prev_ != nullptr || page_node->next_ != nullptr || page_node == head_);
-//        if(page_node == head_ && page_node == tail_) {  mtx_.unlock(); return;}
-//        if(page_node == head_) { mtx_.unlock(); return;}
-//        if(page_node == tail_) {
-//            page_node->next_ = head_;
-//            head_->prev_ = page_node;
-//            head_ = head_->prev_;
-//            tail_ = tail_->prev_;
-//            tail_->next_ = nullptr;
-//            page_node->prev_ = nullptr;
-//            mtx_.unlock();
-//            return;
-//        }
-//        else {
-//            page_node->prev_->next_ = page_node->next_;
-//            page_node->next_->prev_ = page_node->prev_;
-//
-//            page_node->next_ = head_;
-//            page_node->prev_ = nullptr;
-//            head_->prev_ = page_node;
-//            head_ = page_node;
-//            mtx_.unlock();
-//            return;
-//        }
-//#elif defined(USE_CAS)
-//#else
-//        assert(page_node->prev_ != nullptr || page_node->next_ != nullptr || page_node == head_);
-//        if(page_node == head_ && page_node == tail_) { return;}
-//        if(page_node == head_) { return;}
-//        if(page_node == tail_) {
-//            page_node->next_ = head_;
-//            head_->prev_ = page_node;
-//            head_ = head_->prev_;
-//            tail_ = tail_->prev_;
-//            tail_->next_ = nullptr;
-//            page_node->prev_ = nullptr;
-//            return;
-//        }
-//        else {
-//            page_node->prev_->next_ = page_node->next_;
-//            page_node->next_->prev_ = page_node->prev_;
-//
-//            page_node->next_ = head_;
-//            page_node->prev_ = nullptr;
-//            head_->prev_ = page_node;
-//            head_ = page_node;
-//            return;
-//        }
-//#endif
+#if defined(USE_MUTEX)
+        mtx_.lock();
+#endif // USE_MUTEX
+        assert(page_node->prev_ != nullptr || page_node->next_ != nullptr || page_node == head_);
+        if(page_node == head_ && page_node == tail_) { }
+        else if(page_node == head_) {}
+        else if(page_node == tail_) {
+            page_node->next_ = head_;
+            head_->prev_ = page_node;
+            head_ = head_->prev_;
+            tail_ = tail_->prev_;
+            tail_->next_ = nullptr;
+            page_node->prev_ = nullptr;
+        } else {
+            page_node->prev_->next_ = page_node->next_;
+            page_node->next_->prev_ = page_node->prev_;
+
+            page_node->next_ = head_;
+            page_node->prev_ = nullptr;
+            head_->prev_ = page_node;
+            head_ = page_node;
+        }
+#if defined(USE_MUTEX)
+        mtx_.unlock();
+#endif // USE_MUTEX
+        return;
     }
 
     PageNode* LRU::Popback() {
-#ifdef USE_MUTEX
-        mtx_.lock();
-        if(tail_ == nullptr) {mtx_.unlock(); return nullptr;}
-        PageNode* pageNode = tail_;
-        if(nullptr != pageNode->prev_){
-            tail_ = pageNode->prev_;
-            tail_->next_ = nullptr;
-            pageNode->prev_ = nullptr;
-        } else {
-            assert(head_ == tail_);
-            head_ = tail_ = nullptr;
-        }
-        size_.fetch_sub(1);
-        mtx_.unlock();
-        return pageNode;
-#elif defined(USE_CAS)
+#if defined(USE_CAS)
         PageNode* old_tail = tail_;
         for(;;){
             if(tail_.compare_exchange_weak(old_tail, old_tail->prev_)) {
@@ -174,6 +117,9 @@ namespace dbx1000 {
             }
         }
 #else
+#if defined(USE_MUTEX)
+        mtx_.lock();
+#endif // USE_MUTEX
         if(tail_ == nullptr) { return nullptr;}
         PageNode* pageNode = tail_;
         if(nullptr != pageNode->prev_){
@@ -185,19 +131,18 @@ namespace dbx1000 {
             head_ = tail_ = nullptr;
         }
         size_.fetch_sub(1);
+#if defined(USE_MUTEX)
+        mtx_.unlock();
+#endif // USE_MUTEX
         return pageNode;
-#endif
+#endif // USE_CAS
     }
 
     int LRU::size() { return size_; };
 
     void LRU::Check(){
  //        std::cout << "size : " << size_ << std::endl;
-#ifdef USE_CAS
-        if(size_ > 0) { assert(nullptr == head_.load()->prev_ && nullptr == tail_.load()->next_); }
-#else
         if(size_ > 0) { assert(nullptr == head_->prev_ && nullptr == tail_->next_); }
-#endif
         else { assert(nullptr == head_ && nullptr == tail_); }
 
         int count = 0;

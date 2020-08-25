@@ -8,11 +8,7 @@
 
 #include <atomic>
 #include <mutex>
-
-//#define USE_MUTEX
-#ifndef USE_MUTEX
-//#define USE_CAS
-#endif
+#include "buffer_def.h"
 
 namespace dbx1000 {
 
@@ -20,9 +16,14 @@ namespace dbx1000 {
     class Page;
 
     class PageNode{
+        /**
+         * 双向链表
+         */
     public:
         PageNode();
+        /// 传入一段空间的地址值，初始化该 PageNode
         PageNode(char *);
+        /// 构造函数的 char * 不在当前 ~PageNode 释放空间，因为并不是由当前 PageNode 申请的空间
         ~PageNode();
 
         Page* page_;
@@ -32,12 +33,12 @@ namespace dbx1000 {
 
     class LRU {
     public:
-        explicit LRU(int item_size);
+        explicit LRU();
         ~LRU();
 
-        void Prepend(PageNode* );
-        PageNode* Popback();
-        void Get(PageNode* );
+        void Prepend(PageNode* );   /// 加入链表头部，然后插入 lru_index
+        PageNode* Popback();        /// 把尾部从链表中取出，返回 PageNode*
+        void Get(PageNode* );       /// PageNode* 从 lru_index 获取，且必须已经在链表中
 
         void Check();
 
@@ -48,14 +49,8 @@ namespace dbx1000 {
         PageNode* tail() { return this->tail_; }
 
     private:
-
-#ifdef USE_CAS
-        std::atomic<PageNode*> head_;
-        std::atomic<PageNode*> tail_;
-#else
         PageNode* head_;
         PageNode* tail_;
-#endif
         std::atomic_int size_;      /// length of this list
         std::mutex mtx_;
     };
