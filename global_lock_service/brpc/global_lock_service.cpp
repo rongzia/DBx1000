@@ -182,7 +182,7 @@ namespace dbx1000 {
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
             assert(RC::RCOK == manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count));
-            if(request->page_id() == 0) { cout << "something."; assert(manager_instance_->lock_table()->lock_table_[request->page_id()]->lock_mode == dbx1000::LockMode::O);}
+//            if(request->page_id() == 0) { cout << "something."; assert(manager_instance_->lock_table()->lock_table_[request->page_id()]->lock_mode == dbx1000::LockMode::O);}
             response->set_page_buf(page_buf, count);
             response->set_count(count);
             response->set_rc(RpcRC::RCOK);
