@@ -14,14 +14,14 @@ workload::workload(){
 }
 workload::~workload(){
     cout << "workload::~workload()" << endl;
-    for(int i = 0; i < g_init_parallelism; i++) {
+    for(uint32_t i = 0; i < g_init_parallelism; i++) {
         delete arenas_[i];
     }
 }
 
 RC workload::init() {
     cout << "workload::init()" << endl;
-    for (int i = 0; i < g_init_parallelism; i++) {
+    for (uint32_t i = 0; i < g_init_parallelism; i++) {
         arenas_.emplace_back(new dbx1000::Arena(i));
     }
 

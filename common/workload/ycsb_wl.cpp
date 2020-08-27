@@ -100,10 +100,10 @@ RC ycsb_wl::init_table() {
 void ycsb_wl::init_table_parallel() {
 
     std::vector<std::thread> v_thread;
-    for(int i = 0; i < g_init_parallelism; i++) {
+    for(uint32_t i = 0; i < g_init_parallelism; i++) {
         v_thread.emplace_back(thread(threadInitTable, this));
     }
-    for(int i = 0; i < g_init_parallelism; i++) {
+    for(uint32_t i = 0; i < g_init_parallelism; i++) {
         v_thread[i].join();
     }
 }

@@ -113,6 +113,7 @@ namespace dbx1000 {
             return rc;
         }
         if(mode == LockMode::P || mode == LockMode::O) { assert(false); }
+        else { assert(false); }
     }
 
 
@@ -204,6 +205,7 @@ namespace dbx1000 {
         else if (mode == LockMode::S) { a = 'S'; }
         else if (mode == LockMode::P) { a = 'P'; }
         else if (mode == LockMode::O) { a = 'O'; }
+        else { assert(false); }
         return a;
     }
 

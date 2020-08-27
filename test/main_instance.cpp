@@ -82,12 +82,12 @@ int main(int argc, char *argv[]) {
     std::vector<std::thread> v_thread;
     dbx1000::Profiler profiler;
     profiler.Start();
-    for(int i = 0; i < g_thread_cnt; i++) {
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i, managerInstance->m_workload());
         thread_t_s[i].manager_client_ = managerInstance;
         v_thread.emplace_back(f, &thread_t_s[i]);
     }
-    for(int i = 0; i < g_thread_cnt; i++) {
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
     profiler.End();

@@ -13,6 +13,7 @@ namespace dbx1000 {
             if (LockMode::S == mode) { return RpcLockMode::S; }
             if (LockMode::P == mode) { return RpcLockMode::P; }
             if (LockMode::X == mode) { return RpcLockMode::X; }
+            else { assert(false); }
         }
 
         RpcRC GlobalLockServiceHelper::SerializeRC(RC rc) {
@@ -23,6 +24,7 @@ namespace dbx1000 {
             if (RC::ERROR == rc) { return RpcRC::ERROR; }
             if (RC::FINISH == rc) { return RpcRC::FINISH; }
             if (RC::TIME_OUT == rc) { return RpcRC::TIME_OUT; }
+            else { assert(false); }
         }
 
         LockMode GlobalLockServiceHelper::DeSerializeLockMode(RpcLockMode mode) {
@@ -30,6 +32,7 @@ namespace dbx1000 {
             if (RpcLockMode::S == mode) { return LockMode::S; }
             if (RpcLockMode::P == mode) { return LockMode::P; }
             if (RpcLockMode::X == mode) { return LockMode::X; }
+            else { assert(false); }
         }
 
         RC GlobalLockServiceHelper::DeSerializeRC(RpcRC rpcRc) {
@@ -40,6 +43,7 @@ namespace dbx1000 {
             if (RpcRC::ERROR == rpcRc) { return RC::ERROR; }
             if (RpcRC::FINISH == rpcRc) { return RC::FINISH; }
             if (RpcRC::TIME_OUT == rpcRc) { return RC::TIME_OUT; }
+            else { assert(false); }
         }
     }
 }

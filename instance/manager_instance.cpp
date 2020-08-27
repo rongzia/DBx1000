@@ -57,7 +57,7 @@ namespace dbx1000 {
         this->init_done_ = false;
         timestamp_ = ATOMIC_VAR_INIT(1);
         this->all_ts_ = new uint64_t[g_thread_cnt]();
-        for (int i = 0; i < g_thread_cnt; i++) { all_ts_[i] = UINT64_MAX; }
+        for (uint32_t i = 0; i < g_thread_cnt; i++) { all_ts_[i] = UINT64_MAX; }
         this->txn_man_ = new txn_man *[g_thread_cnt]();
         stats_.init();
 

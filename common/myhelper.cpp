@@ -1,7 +1,7 @@
 //
 // Created by rrzhang on 2020/4/27.
 //
-
+#include <cassert>
 #include "myhelper.h"
 
 namespace dbx1000 {
@@ -12,6 +12,7 @@ namespace dbx1000 {
         if(RC::WAIT == rc)   { return 3;}
         if(RC::ERROR == rc)  { return 4;}
         if(RC::FINISH == rc) { return 5;}
+        else { assert(false); }
     }
 
     RC MyHelper::IntToRC(int i) {
@@ -21,6 +22,7 @@ namespace dbx1000 {
         if(3 == i) { return RC::WAIT; }
         if(4 == i) { return RC::ERROR; }
         if(5 == i) { return RC::FINISH; }
+        else { assert(false); }
     }
 
     int MyHelper::AccessToInt(access_t type) {
@@ -28,6 +30,7 @@ namespace dbx1000 {
         if(WR == type)   { return 1;}
         if(XP == type)   { return 2;}
         if(SCAN == type) { return 3;}
+        else { assert(false); }
     }
 
     access_t MyHelper::IntToAccess(int i) {
@@ -35,6 +38,7 @@ namespace dbx1000 {
         if(1 == i) { return WR; }
         if(2 == i) { return XP; }
         if(3 == i) { return SCAN; }
+        else { assert(false); }
     }
 
     int MyHelper::TsTypeToInt(TsType ts_type) {
@@ -42,6 +46,7 @@ namespace dbx1000 {
         if(W_REQ == ts_type)  { return 1; }
         if(P_REQ == ts_type)  { return 2; }
         if(XP_REQ == ts_type) { return 3; }
+        else { assert(false); }
     }
 
     TsType MyHelper::IntToTsType(int i) {
@@ -49,6 +54,7 @@ namespace dbx1000 {
         if(1 == i) { return W_REQ; }
         if(2 == i) { return P_REQ; }
         if(3 == i) { return XP_REQ; }
+        else { assert(false); }
     }
 
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> MyHelper::GetSysClock() {

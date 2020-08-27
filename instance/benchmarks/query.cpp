@@ -18,7 +18,7 @@ std::atomic<int> Query_queue::_next_tid;
 void Query_queue::init() {
     std::cout << "Query_queue" << std::endl;
 	all_queries = new Query_thd * [g_thread_cnt]();
-    for (int i = 0; i < g_thread_cnt; i++) {
+    for (uint32_t i = 0; i < g_thread_cnt; i++) {
         arenas_.emplace_back(dbx1000::make_unique<dbx1000::Arena>(i));
     }
 	_next_tid = 0;
@@ -33,10 +33,10 @@ void Query_queue::init() {
     std::unique_ptr<dbx1000::Profiler> profiler(new dbx1000::Profiler());
     profiler->Start();
     std::vector<std::thread> v_thread;
-    for(int i = 0; i < g_thread_cnt; i++) {
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
         v_thread.emplace_back(thread(threadInitQuery, this));
     }
-    for(int i = 0; i < g_thread_cnt; i++) {
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
 	profiler->End();

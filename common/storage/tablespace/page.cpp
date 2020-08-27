@@ -12,8 +12,8 @@ namespace dbx1000 {
 
     Page::Page(char *buf) : page_id_(UINT64_MAX)
                             , page_buf_(buf)
-                            , used_size_(64)
-                            , page_size_(MY_PAGE_SIZE) {}
+                            , page_size_(MY_PAGE_SIZE)
+                            , used_size_(64) {}
 
     Page::~Page() {
         delete page_buf_;
@@ -24,6 +24,8 @@ namespace dbx1000 {
         assert(used_size_ + count <= page_size_);
         memcpy(&page_buf_[this->used_size_], row_buf, count);
         this->used_size_ += count;
+
+        return 0;
     }
 
     Page* Page::Serialize() {

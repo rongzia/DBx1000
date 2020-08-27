@@ -9,17 +9,23 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 
 add_definitions(-DNOGRAPHITE=1)
 
-### ******************************* grpc && protobuf *******************************:
-#set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
-#set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
-#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
-#find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
-#include_directories(${Protobuf_INCLUDE_DIR})
-#include_directories(${gRPC_INCLUDE_DIR})
-### ******************************* grpc *******************************
+option(USE_GRPC "use grpc" OFF)
+option(USE_BRPC "use brpc" ON)
 
+
+if(USE_GRPC)
+set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
+set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
+find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
+include_directories(${Protobuf_INCLUDE_DIR})
+include_directories(${gRPC_INCLUDE_DIR})
+endif()
+
+if(USE_BRPC)
 include(cmake/brpc.cmake)
+endif()
 
 ### include header files
 include_directories(${PROJECT_SOURCE_DIR})
@@ -80,7 +86,11 @@ add_library(tablespace SHARED common/storage/tablespace/page.cpp common/storage/
 target_link_libraries(tablespace libjsoncpp.a)
 
 ### shared_disk
-include(shared_disk/brpc/shared_disk_service.cmake)
+if (USE_GRPC)
+    include(shared_disk/grpc/shared_disk_service.cmake)
+elseif (USE_BRPC)
+    include(shared_disk/brpc/shared_disk_service.cmake)
+endif ()
 
 ### buffer
 file(GLOB buffer_src ${PROJECT_SOURCE_DIR}/common/buffer/*.cpp)
@@ -93,7 +103,12 @@ add_library(buffer SHARED ${buffer_src})
 target_link_libraries(buffer ${GFLAGS_LIBRARY})
 
 ### global_lock_service
-include(global_lock_service/brpc/global_lock_service.cmake)
+if (USE_GRPC)
+    include(global_lock_service/grpc/global_lock_service.cmake)
+elseif (USE_BRPC)
+    include(global_lock_service/brpc/global_lock_service.cmake)
+endif ()
+
 
 ### lock_service
 add_library(global_lock ${GLOBAL_LOCK_FILES})

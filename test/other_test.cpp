@@ -92,6 +92,7 @@ bool UnLock(LockNode *lockNode) {
         return true;
     }
 //    assert(false);
+    return false;
 }
 
 void Write(LockNode *lockNode, int thread_index) {

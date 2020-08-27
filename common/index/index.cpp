@@ -45,6 +45,7 @@ namespace dbx1000 {
             indexItem->page_location_ = iter->second->page_location_;
             return IndexFlag::EXIST;
         }
+        else { assert(false); }
     }
 
     int Index::IndexPut(uint64_t key, IndexItem* indexItem) {
@@ -124,7 +125,7 @@ namespace dbx1000 {
             offset += read_size;
 
             IndexItem* indexItem = new IndexItem();
-            for(int i = 0; i < read_size / (3 * sizeof(uint64_t)); i++) {
+            for(size_t i = 0; i < read_size / (3 * sizeof(uint64_t)); i++) {
                 uint64_t key;
                 memcpy(&key, &buf[3 * i * sizeof(uint64_t) + 0 * sizeof(uint64_t)], sizeof(uint64_t));
                 memcpy(&indexItem->page_id_, &buf[3 * i * sizeof(uint64_t) + 1 * sizeof(uint64_t)], sizeof(uint64_t));

@@ -146,8 +146,8 @@ void Row_mvcc::CheckLatestRow(){
         return;
     }
     bool flag = false;
-    int idx = _his_len;
-    for(int i = 0; i < _his_len; i++){
+    uint32_t idx = _his_len;
+    for(uint32_t i = 0; i < _his_len; i++){
         if(_latest_row == _write_history[i].row){
             idx = i;
             flag = true;
@@ -362,7 +362,7 @@ INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 
 void Row_mvcc::PrintWriteHistory(ts_t ts){
     cout << "min_ts:" << ts << ", _oldest_wts:" << _oldest_wts << endl;
-    for(int i = 0; i< g_thread_cnt; i++) {
+    for(uint32_t i = 0; i< g_thread_cnt; i++) {
         cout << "_write_history[i].row:" << _write_history[i].row;
         cout << ", ts:" << _write_history[i].ts << ", valid:" << _write_history[i].valid << ", rserved:" <<_write_history[i].reserved << endl;
     }

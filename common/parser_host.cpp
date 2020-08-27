@@ -11,7 +11,7 @@ using namespace std;
 #include "json/json.h"
 
 int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map) {
-    int this_instance_id;
+    int this_instance_id = -1;
     for (int i = 1; i < argc; i++) {
         assert(argv[i][0] == '-');
         if (std::string(&argv[i][1], 11) == "instance_id") {
