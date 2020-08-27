@@ -1,7 +1,8 @@
 syntax = "proto3";
 
 package dbx1000;
-option cc_generic_services = true;
+// when use brpc, this should be true;when use grpc, this should be false
+//option cc_generic_services = true;
 
 service SharedDiskService{
   rpc Open(OpenRequest) returns (OpenReply){}
