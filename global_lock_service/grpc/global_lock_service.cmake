@@ -6,14 +6,14 @@ set(ds_grpc_hdrs  "${CMAKE_CURRENT_BINARY_DIR}/global_lock_service.grpc.pb.h")
 
 ### 最保险的做法，该命令会立即被调用。
 execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_SOURCE_DIR}/global_lock_service/proto
+        -I ${CMAKE_SOURCE_DIR}/global_lock_service/grpc
         --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-        ${CMAKE_SOURCE_DIR}/global_lock_service/proto/global_lock_service.proto)
+        ${CMAKE_SOURCE_DIR}/global_lock_service/grpc/global_lock_service.proto)
 execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        -I ${CMAKE_SOURCE_DIR}/global_lock_service/proto
+        -I ${CMAKE_SOURCE_DIR}/global_lock_service/grpc
         --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
         --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN_EXECUTABLE}
-        ${CMAKE_SOURCE_DIR}/global_lock_service/proto/global_lock_service.proto)
+        ${CMAKE_SOURCE_DIR}/global_lock_service/grpc/global_lock_service.proto)
 
 include_directories(${PROJECT_SOURCE_DIR}/global_lock_service/grpc)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

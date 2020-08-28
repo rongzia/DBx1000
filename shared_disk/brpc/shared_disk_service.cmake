@@ -4,9 +4,9 @@ set(sds_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/shared_disk_service.pb.h")
 
 ### 最保险的做法，该命令会立即被调用。
 execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-        -I ${CMAKE_SOURCE_DIR}/shared_disk/proto
+        -I ${CMAKE_SOURCE_DIR}/shared_disk/brpc
         --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-        ${CMAKE_SOURCE_DIR}/shared_disk/proto/shared_disk_service.proto)
+        ${CMAKE_SOURCE_DIR}/shared_disk/brpc/shared_disk_service.proto)
 
 include_directories(${PROJECT_SOURCE_DIR}/shared_disk/brpc)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

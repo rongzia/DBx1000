@@ -104,3 +104,8 @@ tables 并不存数据，最后 row_t 只能通过 indexes 来获取。
 
 
 
+2020/8/28 号发现发现一个bug, 在 ycsb_txn 事务开始前，会搜集所有的 write page 集合，然后对本地没有锁权限的 page，进行远程锁获取。事务执行过程中，有其他机器想要失效本地事务涉及的锁，只能先提交申请，直到这些事务把锁释放。这个过程是通过 remote_request 和 Addthreads 实现的，remote_request 在有其他节点申请时，置为 true，Addthreads remote_request 等待的变量，这里有个计数器，当计数器为 0 时，表示本地没有线程读写该page,非0时表示有线程正在读写该page。所以说，在 remote_locking 之前就应该把调用本地的Addthreads  函数，以确保后续运行中，不会有其他节点让我正在使用的page失效。  
+这个bug是，之前的版本中，我是先获取集合，再remote_locking, 然后 Addthreads，这个顺序看起来没有错，但就是在remote_locking 的过程中，当前事务的page被别人失效了，后面检查时会 assert报错。
+想要正确运行，顺序应该是：先获取集合，再 Addthreads，然后 remote_locking。但是会造成吞吐下降。
+想要提升吞吐，应该使用bug版本，然后编译时加入 -NDEBUG 选项，计时报错也能正确执行。 
+

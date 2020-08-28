@@ -2,9 +2,6 @@
 // Created by rrzhang on 2020/8/19.
 //
 
-#include <brpc/channel.h>
-#include <butil/time.h>
-#include <brpc/log.h>
 #include <cassert>
 #include "global_lock_service.h"
 

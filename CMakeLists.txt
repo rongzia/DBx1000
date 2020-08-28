@@ -9,13 +9,15 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 
 add_definitions(-DNOGRAPHITE=1)
 
-option(USE_GRPC "use grpc" OFF)
-option(USE_BRPC "use brpc" ON)
+option(USE_GRPC "use grpc" ON)
+option(USE_BRPC "use brpc" OFF)
 
 
 if(USE_GRPC)
-set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
-set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
+#set(Protobuf_ROOT $ENV{HOME}/.local/protobuf-4.0.x)
+#set(gRPC_ROOT     $ENV{HOME}/.local/grpc-v1.23.x)
+set(Protobuf_ROOT $ENV{HOME}/.local/grpc)
+set(gRPC_ROOT     $ENV{HOME}/.local/grpc)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/protobuf-shared.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/grpc-shared.cmake)
 find_library(ZLIB_LIBRARY libz.so /usr/lib/x86_64-linux-gnu/)
