@@ -9,8 +9,8 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 
 add_definitions(-DNOGRAPHITE=1)
 
-option(USE_GRPC "use grpc" ON)
-option(USE_BRPC "use brpc" OFF)
+option(USE_GRPC "use grpc" OFF)
+option(USE_BRPC "use brpc" ON)
 
 
 if(USE_GRPC)
