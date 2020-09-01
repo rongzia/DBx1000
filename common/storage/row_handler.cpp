@@ -80,12 +80,15 @@ namespace dbx1000 {
         auto *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         dbx1000::IndexItem indexItem;
         this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
-//        assert(0 == this->manager_instance_->buffer()->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
-        assert(0 == this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
+        int res;
+//        res = this->manager_instance_->buffer()->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        res = this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        assert(0 == res);
         page->Deserialize();
         assert(page->page_id() == indexItem.page_id_);
 
-//        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
+//        std::size_t temp_size = ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size();
+//        assert(row->size_ == temp_size);
         memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
         {
             /// 验证 key
@@ -112,7 +115,8 @@ namespace dbx1000 {
                || this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode == LockMode::S);
         assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::P
                && this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::X);
-        assert(0 == this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE));
+        int res = this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        assert(0 == res);
         page->Deserialize();
         assert(page->page_id() == indexItem.page_id_);
 
@@ -124,7 +128,8 @@ namespace dbx1000 {
             memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
             assert(row->key_ == temp_key);
         }
-        assert(RC::RCOK == this->manager_instance_->lock_table()->UnLock(indexItem.page_id_));
+        rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
+        assert(RC::RCOK == rc);
         return true;
     }
 
@@ -152,9 +157,8 @@ namespace dbx1000 {
 //        }
         memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
         this->manager_instance_->buffer()->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
-//        assert(RC::RCOK == this->manager_instance_->lock_table()->UnLock(indexItem.page_id_));
-rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
-assert(RC::RCOK == rc);
+        rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
+        assert(RC::RCOK == rc);
         return true;
     }
 }

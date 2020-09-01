@@ -93,19 +93,23 @@ namespace dbx1000 {
             return rc; */
             iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
             iter->second->lock_mode = LockMode::X;
-            assert(0 == iter->second->count.fetch_add(1));
+            int temp_count = iter->second->count.fetch_add(1);
+            assert(0 == temp_count);
             rc = RC::RCOK;
 //            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
             return rc;
         }
         if(LockMode::S == mode) {
+            int temp_count;
             iter->second->cv.wait(lck, [iter](){ return (LockMode::X != iter->second->lock_mode); });
             if(LockMode::O == iter->second->lock_mode) { }
             else if(LockMode::P == iter->second->lock_mode) {
-                assert(0 == iter->second->count.fetch_add(1));
+                temp_count = iter->second->count.fetch_add(1);
+                assert(0 == temp_count);
                 iter->second->lock_mode = LockMode::S;
             } else if(LockMode::S == iter->second->lock_mode) {
-                assert(iter->second->count.fetch_add(1) > 0);
+                temp_count = iter->second->count.fetch_add(1);
+                assert(temp_count > 0);
                 assert(iter->second->lock_mode == LockMode::S);
             } else { assert(false); }
 //            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
@@ -121,9 +125,12 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
+
+        int temp_count;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         if (LockMode::X == iter->second->lock_mode) {
-            assert(iter->second->count.fetch_sub(1) == 1);
+            temp_count = iter->second->count.fetch_sub(1);
+            assert(temp_count == 1);
             iter->second->lock_mode = LockMode::P;
 //        cout << "lock : " << LockModeToChar(LockMode::X) << ", page id : " << page_id << endl;
             iter->second->cv.notify_all();
@@ -132,7 +139,8 @@ namespace dbx1000 {
         /* */
         if (LockMode::S == iter->second->lock_mode) {
             // 仅非 LockMode::O 才需要更改锁表项状态
-            assert(iter->second->count.fetch_sub(1) > 0);
+            temp_count = iter->second->count.fetch_sub(1);
+            assert(temp_count > 0);
             if (0 == iter->second->count) {
                 iter->second->lock_mode = LockMode::P;
             }
@@ -164,7 +172,8 @@ namespace dbx1000 {
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         auto thread_iter = iter->second->thread_set.find(thd_id);
         if(thread_iter != iter->second->thread_set.end()){
-            assert(iter->second->thread_count.fetch_sub(1) > 0);
+            int temp_count = iter->second->thread_count.fetch_sub(1);
+            assert(temp_count > 0);
             iter->second->thread_set.erase(thd_id);
         }
 //        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;

@@ -44,11 +44,14 @@ void Test_Buffer() {
                     for (uint64_t j = 0; j < buffer_item_num; j++) {
                         mtx.lock();
                         uint64_t a;
-//                        assert(0 == buffer->BufferGetWithLock(j, &a, page_size));
-                        assert(0 == buffer->BufferGet(j, &a, page_size));
+                        int rc = 0;
+//                        rc = buffer->BufferGetWithLock(j, &a, page_size);
+                        rc = buffer->BufferGet(j, &a, page_size);
+                        assert(0 == rc);
                         a++;
-//                        assert(0 == buffer->BufferPutWithLock(j, (void*)&a, page_size));
-                        assert(0 == buffer->BufferPut(j, (void*)&a, page_size));
+//                        rc = buffer->BufferPutWithLock(j, (void*)&a, page_size);
+                        rc = buffer->BufferPut(j, (void*)&a, page_size);
+                        assert(0 == rc);
                         mtx.unlock();
                     }
                 }
