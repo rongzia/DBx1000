@@ -18,6 +18,8 @@ namespace dbx1000 {
         GlobalLockServiceClient::GlobalLockServiceClient(const std::string &addr) {
             brpc::ChannelOptions options;
             options.use_rdma = false;
+            options.connect_timeout_ms = 60000; // 1 分钟
+            options.timeout_ms = 60000;         // 1 分钟
             if (channel_.Init(addr.data(), &options) != 0) {
                 LOG(FATAL) << "Fail to initialize channel";
                 assert(false);
@@ -27,7 +29,7 @@ namespace dbx1000 {
         }
 
         RC GlobalLockServiceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
-//            cout << "GlobalLockServiceClient::LockRemote page_id : " << page_id << ", count : " << count << endl;
+//            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             dbx1000::LockRemoteReply reply;
             ::brpc::Controller cntl;
@@ -116,6 +118,8 @@ namespace dbx1000 {
                 RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
                 if(RC::TIME_OUT == rc) {
                     return RC::TIME_OUT;
+                } else if(RC::Abort == rc) {
+                    return RC::Abort;
                 }
                 assert(RC::RCOK == rc);
                 if(count > 0) {
@@ -181,11 +185,17 @@ namespace dbx1000 {
             if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
-            assert(RC::RCOK == manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count));
-//            if(request->page_id() == 0) { cout << "something."; assert(manager_instance_->lock_table()->lock_table_[request->page_id()]->lock_mode == dbx1000::LockMode::O);}
-            response->set_page_buf(page_buf, count);
-            response->set_count(count);
-            response->set_rc(RpcRC::RCOK);
+            RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
+            assert(RC::RCOK == rc || RC::TIME_OUT == rc);
+            if(RC::TIME_OUT == rc){
+                response->set_rc(RpcRC::TIME_OUT);
+            } else if(RC::RCOK == rc){
+//              response->set_page_buf(page_buf, count);
+                response->set_count(count);
+                response->set_rc(RpcRC::RCOK);
+            } else {
+                response->set_rc(RpcRC::Abort);
+            }
         }
 
         void GlobalLockServiceImpl::LockRemote(::google::protobuf::RpcController* controller,
@@ -209,6 +219,7 @@ namespace dbx1000 {
 
             if(RC::TIME_OUT  == rc) {
                 response->set_rc(RpcRC::TIME_OUT);
+                return;
             }
             if(RC::Abort  == rc) {
                 response->set_rc(RpcRC::Abort);

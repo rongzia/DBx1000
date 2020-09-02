@@ -83,12 +83,15 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
 
     auto has_invalid_req = [&]() {
         for (auto iter : write_page_set) {
-            if(ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req == false ) {lockTable->AddThread(iter, ycsb->get_thd_id());}
+//            if(ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req == false ) {lockTable->AddThread(iter, ycsb->get_thd_id());}
             if (ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req) { return true; }
         }
         return false;
     };
     while (has_invalid_req()) { std::this_thread::yield(); }
+    for (auto iter : write_page_set) { lockTable->AddThread(iter, ycsb->get_thd_id());}
+//    for (auto iter : write_page_set) { assert(false == ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req); }
+
 
 //    cout << "instance " << ycsb->h_thd->manager_client_->instance_id() << ", thread " << ycsb->get_thd_id() << ", txn " << ycsb->txn_id << " get lock." << endl;
 
@@ -134,7 +137,10 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
     }
 
     /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
-    for (auto iter : write_page_set) { assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O); }
+    for (auto iter : write_page_set) {
+//        lockTable->AddThread(iter, ycsb->get_thd_id());
+        assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
+    }
     profiler.End();
     ycsb->h_thd->manager_client_->stats().tmp_stats[ycsb->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
 
@@ -153,7 +159,11 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     /// ,然后把线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
     std::set<uint64_t> write_page_set = GetQueryWritePageSet(m_query, this);
     rc = GetWritePageLock(write_page_set, this);
-    if (rc == RC::Abort) { return rc; }
+    if (rc == RC::Abort) {
+        dbx1000::LockTable *lockTable = this->h_thd->manager_client_->lock_table();
+        for (auto iter : write_page_set) { lockTable->RemoveThread(iter, this->get_thd_id()); }
+        return rc;
+    }
     /* ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL; */
     row_cnt = 0;

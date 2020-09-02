@@ -160,22 +160,30 @@ namespace dbx1000 {
         auto thread_iter = iter->second->thread_set.find(thd_id);
         if(thread_iter == iter->second->thread_set.end()){
             iter->second->thread_set.insert(thd_id);
-            lock_table_[page_id]->thread_count.fetch_add(1);
-        }
+            int temp_count = iter->second->thread_count.fetch_add(1);
+            assert(temp_count == iter->second->thread_set.size() - 1);
+        } else if(thread_iter != iter->second->thread_set.end()) {
+            assert(iter->second->thread_set.size() == iter->second->thread_count.load());
+        } else { assert(false); }
         return true;
     }
     bool LockTable::RemoveThread(uint64_t page_id, uint64_t thd_id){
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
-        assert(iter->second->lock_mode != LockMode::O);
+//        assert(iter->second->lock_mode != LockMode::O);
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         auto thread_iter = iter->second->thread_set.find(thd_id);
-        if(thread_iter != iter->second->thread_set.end()){
-            int temp_count = iter->second->thread_count.fetch_sub(1);
-            assert(temp_count > 0);
+
+        assert(thread_iter != iter->second->thread_set.end());
+
+        int temp_count = iter->second->thread_count.fetch_sub(1);
+        assert(temp_count > 0);
+//        if(temp_count == 1) {
             iter->second->thread_set.erase(thd_id);
-        }
+            assert(iter->second->thread_set.size() + 1 == temp_count);
+//    }
+
 //        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
         iter->second->cv.notify_all();
         return true;
@@ -190,10 +198,10 @@ namespace dbx1000 {
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         // cout << "LockTable::LockInvalid waiting." << endl;
-        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
-        if(iter->second->cv.wait_for(lck, chrono::milliseconds(3), [iter](){ return (iter->second->thread_count.load() == 0); }))
+//        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
+        if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (iter->second->thread_count.load() == 0); }))
         {
-        // cout << "LockTable::LockInvalid wait success." << endl;
+//         cout << "LockTable::LockInvalid wait success." << endl;
             assert(iter->second->thread_count == 0);
             assert(iter->second->count == 0);
             iter->second->lock_mode = LockMode::O;
@@ -201,7 +209,7 @@ namespace dbx1000 {
             manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
             rc = RC::RCOK;
         } else {
-         cout << "LockTable::LockInvalid timeout." << endl;
+//            cout << "LockTable::LockInvalid timeout. page_id: " << page_id << endl;
             rc = RC::TIME_OUT;
         }
         iter->second->invalid_req = false;

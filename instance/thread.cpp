@@ -21,7 +21,7 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 	for (int i = 0; i < _abort_buffer_size; i++)
 		_abort_buffer[i].query = NULL;
 	_abort_buffer_empty_slots = _abort_buffer_size;                         //! 10
-	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     //! true
+	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "false");     //! true
 }
 
 uint64_t thread_t::get_thd_id() { return _thd_id; }
@@ -122,7 +122,7 @@ RC thread_t::run() {
 			//! _abort_buffer_enable  == false
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
-				if (rc == RC::RCOK)
+//				if (rc == RC::RCOK)
 					m_query =  manager_client_->query_queue()->get_next_query( _thd_id );
 			}
 		}
@@ -251,7 +251,7 @@ RC thread_t::run() {
 		 */
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART 时，就退出线程
-		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
+		if (warmup_finish && (txn_cnt + m_txn->abort_cnt) >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 			/*
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )

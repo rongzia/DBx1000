@@ -85,7 +85,7 @@ namespace dbx1000 {
         res = this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         assert(0 == res);
         page->Deserialize();
-        assert(page->page_id() == indexItem.page_id_);
+//        assert(page->page_id() == indexItem.page_id_);
 
 //        std::size_t temp_size = ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size();
 //        assert(row->size_ == temp_size);
@@ -94,7 +94,7 @@ namespace dbx1000 {
             /// 验证 key
             uint64_t temp_key;
             memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
-            assert(row->key_ == temp_key);
+//            assert(row->key_ == temp_key);
         }
         return true;
     }
