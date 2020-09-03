@@ -57,6 +57,7 @@ namespace dbx1000 {
                 }
                 return RC::RCOK ;
             } else {
+                if (cntl.ErrorCode() == 1008){return RC::Abort;}
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
                 return RC::Abort;
