@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     globalLockService->global_lock_ = globalLock;
 
     thread lock_service_server(RunLockServiceServer, globalLockService, globalLock);
-    lock_service_server.detach();
+//    lock_service_server.detach();
 
     while(1){};
     return 0;

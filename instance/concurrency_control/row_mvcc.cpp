@@ -129,7 +129,8 @@ void Row_mvcc::GetLatestRow(txn_man * txn) {
     assert(_num_versions == 0);
     assert(nullptr == row_);
     this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-    assert(txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_));
+    bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_);
+    assert(res);
     _latest_row = row_;
 }
 void Row_mvcc::GetLatestRowForTest(txn_man * txn) {
@@ -137,7 +138,8 @@ void Row_mvcc::GetLatestRowForTest(txn_man * txn) {
     assert(_num_versions == 0);
     assert(nullptr == row_);
     this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-//    assert(txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_));
+//    bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_);
+//    assert(res);
     _latest_row = row_;
 }
 
@@ -174,7 +176,8 @@ bool Row_mvcc::RecycleALL() {
         }
     }
     assert(idx < _his_len);
-    assert(this->manager_instance_->WriteRow(_write_history[idx].row));
+    bool res = this->manager_instance_->WriteRow(_write_history[idx].row);
+    assert(res);
     for(uint32_t i = 0; i < _his_len; i++) {
         if(_write_history[i].valid) {
             _num_versions--;
@@ -418,7 +421,8 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
                         /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
                         if(_latest_row == _write_history[i].row) {
                             if(_latest_row != nullptr) {
-//                                assert(txn->h_thd->manager_client_->WriteRow(_latest_row));
+//                                bool res = txn->h_thd->manager_client_->WriteRow(_latest_row);
+//                                assert(res);
                             }
                             _latest_row = nullptr;
                         }

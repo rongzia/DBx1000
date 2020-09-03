@@ -29,6 +29,7 @@ namespace dbx1000 {
         std::set<uint64_t> thread_set;              // 本地对该 locknode 有写意向的线程
         bool invalid_req;                           // 其他进程想要获取当前 page 的锁，在事务执行过程中只能置 invalid_req=true, 然后等待该机器的事务结束
         volatile bool lock_remoting;
+        std::atomic<bool> remote_locking_abort;
         std::mutex mtx;
         std::condition_variable cv;
     };

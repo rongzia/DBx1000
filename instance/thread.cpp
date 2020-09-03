@@ -5,6 +5,7 @@
 #include "thread.h"
 
 #include "common/myhelper.h"
+#include "common/workload/wl.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/query.h"
 #include "instance/txn/ycsb_txn.h"
@@ -21,7 +22,7 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 	for (int i = 0; i < _abort_buffer_size; i++)
 		_abort_buffer[i].query = NULL;
 	_abort_buffer_empty_slots = _abort_buffer_size;                         //! 10
-	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     //! true
+	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "false");     //! true
 }
 
 uint64_t thread_t::get_thd_id() { return _thd_id; }
@@ -122,7 +123,7 @@ RC thread_t::run() {
 			//! _abort_buffer_enable  == false
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
-				if (rc == RC::RCOK)
+//				if (rc == RC::RCOK)
 					m_query =  manager_client_->query_queue()->get_next_query( _thd_id );
 			}
 		}
@@ -221,7 +222,6 @@ RC thread_t::run() {
 			INC_STATS(get_thd_id(), txn_cnt, 1);
 			stats.commit(get_thd_id());
 		     */
-			txn_cnt ++;
 		    this->manager_client_->stats()._stats[_thd_id]->txn_cnt += 1;
 			this->manager_client_->stats().commit(get_thd_id());
 		} else if (rc == RC::Abort) {
@@ -238,6 +238,7 @@ RC thread_t::run() {
 			m_txn->abort_cnt ++;
 			this->manager_client_->stats().commit(get_thd_id());
 		}
+        txn_cnt ++;
 
 		/*
 		//! warmup_finish == true, 在 m_wl->init() 后，该值就为 true
@@ -256,17 +257,22 @@ RC thread_t::run() {
 			/*
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
-			 */
-			delete m_txn;
+            */
+//            this->_wl->sim_done_.store(true);
+//			delete m_txn;
+//			cout << "thread done." << endl;
             return RC::FINISH;
 	    }
 
 		/*
 		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 	    if (_wl->sim_done) {
-   		    return FINISH;
-   		}
-   		*/
+   		    return RC::FINISH;
+   		}*/
+//		if(true == this->_wl->sim_done_.load()){
+//            return RC::FINISH;
+//		}
+
 	}
 	assert(false);
 }

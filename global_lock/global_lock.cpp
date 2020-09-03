@@ -92,7 +92,13 @@ namespace dbx1000 {
 //                 cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
                  rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
 //                 cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
-                 iter->second->write_ins_id = ins_id;
+
+                if(rc == RC::TIME_OUT) {
+//                    cout << ins_id << " want to invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
+                }
+                if(rc == RC::RCOK) {
+                    iter->second->write_ins_id = ins_id;
+                }
             } else {
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
@@ -100,7 +106,6 @@ namespace dbx1000 {
                 }
 //                 cout << ins_id << " get page id : " << page_id << " success" << endl;
             }
-
             return rc;
         }
 
@@ -113,10 +118,9 @@ namespace dbx1000 {
             assert(instances_[instance_id].init_done == false);
             instances_[instance_id].instance_id = instance_id;
             instances_[instance_id].host = hosts_map_[instance_id];
-            cout << "GlobalLock::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host
-                 << endl;
             instances_[instance_id].global_lock_service_client = new global_lock_service::GlobalLockServiceClient(instances_[instance_id].host);
             instances_[instance_id].init_done = true;
+            cout << "GlobalLock::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
         }
 
 
