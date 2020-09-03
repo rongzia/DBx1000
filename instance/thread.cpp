@@ -258,9 +258,9 @@ RC thread_t::run() {
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
             */
-			this->manager_client_->m_workload()->sim_done_.exchange()
+//            this->_wl->sim_done_.store(true);
 //			delete m_txn;
-			cout << "thread done." << endl;
+//			cout << "thread done." << endl;
             return RC::FINISH;
 	    }
 
@@ -269,6 +269,9 @@ RC thread_t::run() {
 	    if (_wl->sim_done) {
    		    return RC::FINISH;
    		}*/
+//		if(true == this->_wl->sim_done_.load()){
+//            return RC::FINISH;
+//		}
 
 	}
 	assert(false);

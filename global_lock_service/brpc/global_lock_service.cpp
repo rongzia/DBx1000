@@ -18,8 +18,8 @@ namespace dbx1000 {
         GlobalLockServiceClient::GlobalLockServiceClient(const std::string &addr) {
             brpc::ChannelOptions options;
             options.use_rdma = false;
-            options.connect_timeout_ms = 60000; // 1 分钟
-            options.timeout_ms = 60000;         // 1 分钟
+            options.connect_timeout_ms = 6000; // 1 分钟
+            options.timeout_ms = 6000;         // 1 分钟
             if (channel_.Init(addr.data(), &options) != 0) {
                 LOG(FATAL) << "Fail to initialize channel";
                 assert(false);

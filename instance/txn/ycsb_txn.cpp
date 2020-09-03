@@ -115,6 +115,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
 #endif
                 if (RC::Abort == rc || RC::TIME_OUT == rc) {
                     lockTable->lock_table_[iter]->lock_remoting = false;
+                    lockTable->lock_table_[iter]->remote_locking_abort.store(true);
                     return RC::Abort;
                 }
                 assert(rc == RC::RCOK);
@@ -129,6 +130,9 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
             } else {
                 assert(true == lockTable->lock_table_[iter]->lock_remoting);
                 while (lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
+                    if(true == lockTable->lock_table_[iter]->remote_locking_abort.load()){
+                        return RC::Abort;
+                    }
 //                    cout << "thread waiting..." << endl; std::this_thread::yield();
                 }
                 assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
@@ -149,7 +153,7 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
 
 
 RC ycsb_txn_man::run_txn(base_query *query) {
-    cout << "txn id : " << txn_id << endl;
+//    cout << "txn id : " << txn_id << endl;
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
     RC rc;
     ycsb_query *m_query = (ycsb_query *) query;

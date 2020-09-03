@@ -22,6 +22,7 @@ namespace dbx1000 {
         this->thread_count = ATOMIC_VAR_INIT(0);
         this->invalid_req = false;
         this->lock_remoting = false;
+        this->remote_locking_abort.store(false);
     }
     LockTable::~LockTable() {
         for(auto &iter : lock_table_){
@@ -179,10 +180,11 @@ namespace dbx1000 {
 
         int temp_count = iter->second->thread_count.fetch_sub(1);
         assert(temp_count > 0);
-//        if(temp_count == 1) {
-            iter->second->thread_set.erase(thd_id);
-            assert(iter->second->thread_set.size() + 1 == temp_count);
-//    }
+        iter->second->thread_set.erase(thd_id);
+        assert(iter->second->thread_set.size() + 1 == temp_count);
+        if(temp_count == 1) {
+            iter->second->remote_locking_abort = false;
+        }
 
 //        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
         iter->second->cv.notify_all();
