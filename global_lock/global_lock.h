@@ -11,7 +11,9 @@
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
+#include <condition_variable>
 #include "common/global.h"
+#include "common/mystats.h"
 
 class workload;
 
@@ -22,7 +24,7 @@ namespace dbx1000 {
     class Page;
     class TableSpace;
     class LockTable;
-//    class Stats;
+
     namespace global_lock_service {
         class GlobalLockServiceClient;
     }
@@ -38,6 +40,7 @@ namespace dbx1000 {
 
             int write_ins_id;
             std::mutex mtx;
+            std::condition_variable cv;
         };
 
         /// global lock 仅作为锁的协调，不缓存锁
@@ -56,6 +59,8 @@ namespace dbx1000 {
                 int instance_id;
                 std::string host;
                 bool init_done;
+                dbx1000::Stats stats;
+                bool instance_run_done;
                 global_lock_service::GlobalLockServiceClient *global_lock_service_client;
             };
 

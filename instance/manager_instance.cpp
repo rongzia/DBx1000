@@ -55,6 +55,7 @@ namespace dbx1000 {
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {
         this->init_done_ = false;
+        this->all_instances_ready_ = false;
         timestamp_ = ATOMIC_VAR_INIT(1);
         this->all_ts_ = new uint64_t[g_thread_cnt]();
         for (uint32_t i = 0; i < g_thread_cnt; i++) { all_ts_[i] = UINT64_MAX; }

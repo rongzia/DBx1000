@@ -88,7 +88,11 @@ namespace dbx1000 {
         /**
          * zhangrongrong, 2020/6/30
          */
-        uint64_t txn_cnt;
+        uint64_t total_run_time_;
+        uint64_t total_latency_;
+        uint64_t total_txn_cnt_;
+        uint64_t total_time_remote_lock_;
+        uint64_t instance_run_time_;
 
         void init();
         void init(uint64_t thread_id);

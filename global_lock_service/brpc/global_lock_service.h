@@ -18,6 +18,7 @@ namespace dbx1000 {
         class GlobalLock;
     }
     class ManagerInstance;
+    class Stats;
 
     namespace global_lock_service {
         class GlobalLockServiceClient {
@@ -33,11 +34,14 @@ namespace dbx1000 {
             void InstanceInitDone(int instance_id);
             bool GlobalLockInitDone();
             uint64_t GetNextTs();
+            void ReportResult(const Stats &stats, int instance_id);
             ManagerInstance* manager_instance() { return this->manager_instance_; }
 
 
         public: /// for global lock
             RC Invalid(uint64_t page_id, char *page_buf, size_t count);
+            void AllInstanceReady();
+            void SyncAllInstanceReady();
             // getter and setter
             global_lock::GlobalLock* global_lock() { return this->global_lock_; };
 
@@ -62,6 +66,10 @@ namespace dbx1000 {
                                const ::dbx1000::InvalidRequest* request,
                                ::dbx1000::InvalidReply* response,
                                ::google::protobuf::Closure* done);
+            virtual void AllInstanceReady(::google::protobuf::RpcController* controller,
+                    const ::dbx1000::AllInstanceReadyRequest* request,
+                    ::dbx1000::AllInstanceReadyReply* response,
+                    ::google::protobuf::Closure* done);
             ManagerInstance *manager_instance_;
 
         public: /// for global lock
@@ -81,6 +89,10 @@ namespace dbx1000 {
                                const ::dbx1000::GetNextTsRequest* request,
                                ::dbx1000::GetNextTsReply* response,
                                ::google::protobuf::Closure* done);
+            virtual void ReportResult(::google::protobuf::RpcController* controller,
+                    const ::dbx1000::ReportResultRequest* request,
+                    ::dbx1000::ReportResultReply* response,
+                    ::google::protobuf::Closure* done);
 
             public: /// for common
             virtual void Test(::google::protobuf::RpcController* controller,

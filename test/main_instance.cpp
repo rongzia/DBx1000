@@ -74,8 +74,9 @@ int main(int argc, char *argv[]) {
     managerInstance->global_lock_service_client()->InstanceInitDone(managerInstance->instance_id());
 
     /// 等待所有 instance 初始化完成
-    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::yield();}
-    cout << "instance start." <<endl;
+    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5 * managerInstance->instance_id()));}
+//    while(!managerInstance->all_instances_ready_) { std::this_thread::yield(); }
+    cout << "instance " << managerInstance->instance_id() << " start." <<endl;
 
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
@@ -92,11 +93,13 @@ int main(int argc, char *argv[]) {
     }
     profiler.End();
 
+    managerInstance->stats().instance_run_time_ += profiler.Nanos();
     managerInstance->stats().print(managerInstance->instance_id());
-    cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
-    cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
-    AppendRunTime(profiler.Nanos() / 1000UL, managerInstance->instance_id());
-    AppendThroughtput(managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
+    managerInstance->global_lock_service_client()->ReportResult(managerInstance->stats(), managerInstance->instance_id());
+//    cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
+//    cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
+    AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
+    AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
 
     while(1) {};

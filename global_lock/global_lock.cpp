@@ -44,6 +44,8 @@ namespace dbx1000 {
             for (int i = 0; i < PROCESS_CNT; i++) {
                 instances_[i].instance_id = -1;
                 instances_[i].init_done = false;
+                instances_[i].stats.init();
+                instances_[i].instance_run_done = false;
             }
 
             timestamp_ = ATOMIC_VAR_INIT(1);
@@ -88,25 +90,30 @@ namespace dbx1000 {
             }
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
-            if (iter->second->write_ins_id >= 0) {
+//            cv_status cvStatus = iter->second->cv.wait_for(lck, chrono::milliseconds(20));
+//            if(cvStatus == cv_status::no_timeout) {
+                if (iter->second->write_ins_id >= 0) {
 //                 cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
-                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
+                    rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
 //                 cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
 
-                if(rc == RC::TIME_OUT) {
+                    if (rc == RC::TIME_OUT) {
 //                    cout << ins_id << " want to invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
-                }
-                if(rc == RC::RCOK) {
+                    }
+                    if (rc == RC::RCOK) {
+                        iter->second->write_ins_id = ins_id;
+                    }
+                } else {
                     iter->second->write_ins_id = ins_id;
-                }
-            } else {
-                iter->second->write_ins_id = ins_id;
-                if (count > 0) {
-                    this->buffer_->BufferGet(page_id, page_buf, count);
-                }
+                    if (count > 0) {
+                        this->buffer_->BufferGet(page_id, page_buf, count);
+                    }
 //                 cout << ins_id << " get page id : " << page_id << " success" << endl;
-            }
-            return rc;
+                }
+                return rc;
+//            } else {
+//                return RC::TIME_OUT;
+//            }
         }
 
         uint64_t GlobalLock::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
@@ -121,14 +128,24 @@ namespace dbx1000 {
             instances_[instance_id].global_lock_service_client = new global_lock_service::GlobalLockServiceClient(instances_[instance_id].host);
             instances_[instance_id].init_done = true;
             cout << "GlobalLock::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
+
+            for (int i = 0; i < PROCESS_CNT; i++) {
+                if (!instances_[i].init_done) { return; }
+            }
+            this->init_done_ = true;
+            if(this->init_done_) {
+                for(int i = 0; i < PROCESS_CNT; i++) {
+                    instances_[i].global_lock_service_client->AllInstanceReady();
+                }
+            }
         }
 
 
         bool GlobalLock::init_done() {
-            for (int i = 0; i < PROCESS_CNT; i++) {
-                if (instances_[i].init_done == false) { return false; }
-            }
-            init_done_ = true;
+//            for (int i = 0; i < PROCESS_CNT; i++) {
+//                if (instances_[i].init_done == false) { return false; }
+//            }
+//            init_done_ = true;
             return init_done_;
         }
 //    void GlobalLock::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }

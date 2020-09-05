@@ -8,9 +8,9 @@
 #include <cassert>
 #include "global_lock_service.h"
 
+#include "common/mystats.h"
 #include "global_lock_service_helper.h"
 #include "global_lock/global_lock.h"
-#include "common/lock_table/lock_table.h"
 #include "instance/manager_instance.h"
 
 namespace dbx1000 {
@@ -87,8 +87,10 @@ namespace dbx1000 {
             if (!cntl.Failed()) {
                 return reply.init_done();
             } else {
-                LOG(FATAL) << cntl.ErrorText();
-                assert(false);
+//                LOG(FATAL) << cntl.ErrorText();
+//                assert(false);
+                std::this_thread::sleep_for(chrono::milliseconds(200));
+                return false;
             }
         }
 
@@ -101,6 +103,25 @@ namespace dbx1000 {
             if (!cntl.Failed()) {
                 return reply.ts();
             } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
+        void GlobalLockServiceClient::ReportResult(const Stats &stats, int instance_id) {
+            dbx1000::ReportResultRequest request;
+            dbx1000::ReportResultReply reply;
+            ::brpc::Controller cntl;
+
+            request.set_total_run_time(stats.total_run_time_);
+            request.set_total_txn_cnt(stats.total_txn_cnt_);
+            request.set_total_latency(stats.total_latency_);
+            request.set_total_time_remote_lock(stats.total_time_remote_lock_);
+            request.set_instance_run_time(stats.instance_run_time_);
+            request.set_instance_id(instance_id);
+
+            stub_->ReportResult(&cntl, &request, &reply, nullptr);
+            if (!cntl.Failed()) { } else {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
@@ -133,6 +154,47 @@ namespace dbx1000 {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
                 return RC::Abort;
+            }
+        }
+        static void OnRPCDone(dbx1000::AllInstanceReadyReply* response, brpc::Controller* cntl) {
+            // unique_ptr会帮助我们在return时自动删掉response/cntl，防止忘记。gcc 3.4下的unique_ptr是模拟版本。
+            std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(response);
+            std::unique_ptr<brpc::Controller> cntl_guard(cntl);
+            if (cntl->Failed()) {
+                // RPC失败了. response里的值是未定义的，勿用。
+            } else {
+                // RPC成功了，response里有我们想要的数据。开始RPC的后续处理。
+            }
+            // NewCallback产生的Closure会在Run结束后删除自己，不用我们做。
+        }
+        void GlobalLockServiceClient::AllInstanceReady(){
+            dbx1000::AllInstanceReadyRequest request;
+            dbx1000::AllInstanceReadyReply *reply = new dbx1000::AllInstanceReadyReply();
+            brpc::Controller* cntl = new brpc::Controller();
+
+//            auto OnRPCDone = [&reply, &cntl]()->void{
+//                    std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(reply);
+//                    std::unique_ptr<brpc::Controller> cntl_guard(cntl);
+//            };
+
+            stub_->AllInstanceReady(cntl, &request, reply
+                                    , google::protobuf::NewCallback(OnRPCDone, reply, cntl));
+        }
+
+        void GlobalLockServiceClient::SyncAllInstanceReady(){
+            dbx1000::AllInstanceReadyRequest request;
+            dbx1000::AllInstanceReadyReply reply;
+            brpc::Controller cntl;
+
+//            auto OnRPCDone = [&reply, &cntl]()->void{
+//                    std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(reply);
+//                    std::unique_ptr<brpc::Controller> cntl_guard(cntl);
+//            };
+
+            stub_->AllInstanceReady(&cntl, &request, &reply, nullptr);
+            if (!cntl.Failed()) {
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
             }
         }
 
@@ -197,6 +259,14 @@ namespace dbx1000 {
             } else {
                 response->set_rc(RpcRC::Abort);
             }
+        }
+
+        void GlobalLockServiceImpl::AllInstanceReady(::google::protobuf::RpcController *controller
+                                                     , const ::dbx1000::AllInstanceReadyRequest *request
+                                                     , ::dbx1000::AllInstanceReadyReply *response, ::google::protobuf::Closure *done) {
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+            manager_instance_->all_instances_ready_ = true;
         }
 
         void GlobalLockServiceImpl::LockRemote(::google::protobuf::RpcController* controller,
@@ -279,6 +349,55 @@ namespace dbx1000 {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
             response->set_ts(global_lock_->GetNextTs(-1));
+        }
+
+        void GlobalLockServiceImpl::ReportResult(::google::protobuf::RpcController* controller,
+                                                 const ::dbx1000::ReportResultRequest* request,
+                                                 ::dbx1000::ReportResultReply* response,
+                                                 ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+
+            Stats *stats = &(global_lock_->instances()[request->instance_id()].stats);
+            stats->total_run_time_ = request->total_run_time();
+            stats->total_latency_  = request->total_latency();
+            stats->total_txn_cnt_  = request->total_txn_cnt();
+            stats->total_time_remote_lock_ = request->total_time_remote_lock();
+            stats->instance_run_time_ = request->instance_run_time();
+
+            global_lock_->instances()[request->instance_id()].instance_run_done = true;
+            bool all_instance_run_done = true;
+            for (int i = 0; i < PROCESS_CNT; i++ )
+                if (!global_lock_->instances()[i].instance_run_done) {
+                    all_instance_run_done = false;
+                    break;
+                }
+
+
+
+            if(all_instance_run_done) {
+                uint64_t total_run_time = 0;
+                uint64_t total_latency = 0;
+                uint64_t total_txn_cnt = 0;
+                uint64_t total_instance_run_time = 0;
+                uint64_t average_instance_run_time = 0;
+                for (int i = 0; i < PROCESS_CNT; i++ ) {
+                    total_run_time += global_lock_->instances()[i].stats.total_run_time_;
+                    total_latency  += global_lock_->instances()[i].stats.total_latency_;
+                    total_txn_cnt  += global_lock_->instances()[i].stats.total_txn_cnt_;
+                    total_instance_run_time += global_lock_->instances()[i].stats.instance_run_time_;
+                }
+                average_instance_run_time = total_instance_run_time / PROCESS_CNT;
+                cout << "total_run_time: "<< total_run_time << endl;
+                cout << "total_latency: "<< total_latency << endl;
+                cout << "total_txn_cnt: "<< total_txn_cnt << endl;
+                cout << "total_instance_run_time: "<< total_instance_run_time << endl;
+                cout << "average_instance_run_time: "<< average_instance_run_time << endl;
+
+                cout << "total txn cnt:   " << THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART << endl;
+                cout << "average latency: " << total_latency / 1000UL / (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) << " us." << endl;
+                cout << "instance throughtput: " << (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) * 1000000000L / average_instance_run_time << " tps." << endl;
+            }
         }
 
         void GlobalLockServiceImpl::Test(::google::protobuf::RpcController* controller,

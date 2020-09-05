@@ -66,6 +66,7 @@ namespace dbx1000 {
         SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
 
         int test_num_;
+        bool all_instances_ready_;
     private:
         int instance_id_;
         std::map<int, std::string> host_map_;

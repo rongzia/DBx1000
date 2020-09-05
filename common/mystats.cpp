@@ -68,7 +68,11 @@ namespace dbx1000 {
         /**
          * zhangrongrong, 2020/6/30
          */
-        txn_cnt = 0;
+        total_run_time_ = 0;
+        total_latency_ = 0;
+        total_txn_cnt_ = 0;
+        total_time_remote_lock_ = 0;
+        instance_run_time_ = 0;
     }
 
 //! 为成员变量分配空间
@@ -171,12 +175,18 @@ namespace dbx1000 {
                 _stats[tid]->abort_cnt
             );
         }
-        this->txn_cnt = total_txn_cnt;
-        cout << "all thread run time : " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
-        cout << " get ts time : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
+        this->total_run_time_ = total_run_time;
+        this->total_txn_cnt_ = total_txn_cnt;
+        this->total_latency_ = total_latency;
+        this->total_time_remote_lock_ = total_count_remote_lock;
+        cout << "all thread run time: " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
+        cout << "get ts time        : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
         cout << "total_count_remote_lock/total_count_write_request/total_count_total_request : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;
+        cout << endl;
         AppendLatency(total_latency / BILLION / total_txn_cnt, ins_id);
         AppendRemoteLockTime(total_time_remote_lock / BILLION, ins_id);
+        cout << "instance run time   : " << instance_run_time_ / BILLION << " us." << endl;
+        cout << "instance throughtput: " << this->total_txn_cnt_ * 1000000000L / instance_run_time_ << " tps." << endl;
     }
 /*
     void Stats::print() {
