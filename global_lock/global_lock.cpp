@@ -93,9 +93,9 @@ namespace dbx1000 {
 //            cv_status cvStatus = iter->second->cv.wait_for(lck, chrono::milliseconds(20));
 //            if(cvStatus == cv_status::no_timeout) {
                 if (iter->second->write_ins_id >= 0) {
-//                 cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+                 cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
                     rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
-//                 cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
+                 cout << ins_id << " invalid " << iter->second->write_ins_id << ", page id : " << page_id << " success" << endl;
 
                     if (rc == RC::TIME_OUT) {
 //                    cout << ins_id << " want to invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;

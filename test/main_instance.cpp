@@ -74,8 +74,8 @@ int main(int argc, char *argv[]) {
     managerInstance->global_lock_service_client()->InstanceInitDone(managerInstance->instance_id());
 
     /// 等待所有 instance 初始化完成
-    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5 * managerInstance->instance_id()));}
-//    while(!managerInstance->all_instances_ready_) { std::this_thread::yield(); }
+//    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5 * managerInstance->instance_id()));}
+    while(!managerInstance->all_instances_ready_) { std::this_thread::yield(); }
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
 
 	warmup_finish = true;

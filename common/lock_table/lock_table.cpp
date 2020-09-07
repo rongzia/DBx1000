@@ -196,7 +196,7 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
-        RC rc;
+        RC rc = RC::RCOK;
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
         // cout << "LockTable::LockInvalid waiting." << endl;

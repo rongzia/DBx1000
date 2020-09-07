@@ -153,6 +153,9 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
 
 
 RC ycsb_txn_man::run_txn(base_query *query) {
+    if(txn_id % 1000 == 0) {
+        cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
+    }
 //    cout << "txn id : " << txn_id << endl;
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
     RC rc;

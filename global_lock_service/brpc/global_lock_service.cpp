@@ -253,7 +253,7 @@ namespace dbx1000 {
             if(RC::TIME_OUT == rc){
                 response->set_rc(RpcRC::TIME_OUT);
             } else if(RC::RCOK == rc){
-//              response->set_page_buf(page_buf, count);
+                response->set_page_buf(page_buf, count);
                 response->set_count(count);
                 response->set_rc(RpcRC::RCOK);
             } else {
