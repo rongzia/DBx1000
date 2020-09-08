@@ -135,8 +135,11 @@ namespace dbx1000 {
             request.set_page_id(page_id);
             request.set_count(count);
 
+//            cntl.set_timeout_ms(20);
             stub_->Invalid(&cntl, &request, &reply, nullptr);
+
             if (!cntl.Failed()) {
+                cout << "remote Invalid page:" << page_id << " success." << endl;
                 RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
                 if(RC::TIME_OUT == rc) {
                     return RC::TIME_OUT;
@@ -151,6 +154,9 @@ namespace dbx1000 {
                 }
                 return RC::RCOK ;
             } else {
+                if(cntl.ErrorCode() == 1008){
+                    return RC::TIME_OUT;
+                }
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
                 return RC::Abort;
@@ -248,6 +254,7 @@ namespace dbx1000 {
             if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
+            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
             RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
@@ -259,6 +266,7 @@ namespace dbx1000 {
             } else {
                 response->set_rc(RpcRC::Abort);
             }
+            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
         }
 
         void GlobalLockServiceImpl::AllInstanceReady(::google::protobuf::RpcController *controller

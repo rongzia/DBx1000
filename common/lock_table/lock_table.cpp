@@ -196,6 +196,8 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
+        cout << page_id << " LockTable::LockInvalid in" << endl;
+
         RC rc = RC::RCOK;
         iter->second->invalid_req = true;
         std::unique_lock<std::mutex> lck(iter->second->mtx);
@@ -203,7 +205,7 @@ namespace dbx1000 {
 //        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
         if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (iter->second->thread_count.load() == 0); }))
         {
-//         cout << "LockTable::LockInvalid wait success." << endl;
+//            cout << "LockTable::LockInvalid wait success." << endl;
             assert(iter->second->thread_count == 0);
             assert(iter->second->count == 0);
             iter->second->lock_mode = LockMode::O;
@@ -215,6 +217,8 @@ namespace dbx1000 {
             rc = RC::TIME_OUT;
         }
         iter->second->invalid_req = false;
+//        cout << "LockInvalid page: " << page_id << "out." << endl;
+        cout << page_id << " LockTable::LockInvalid out" << endl;
         return rc;
     }
 
