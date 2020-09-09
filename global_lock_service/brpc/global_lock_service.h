@@ -75,6 +75,10 @@ namespace dbx1000 {
                                const ::dbx1000::InvalidRequest* request,
                                ::dbx1000::InvalidReply* response,
                                ::google::protobuf::Closure* done);
+            virtual void AsyncInvalid(::google::protobuf::RpcController* controller,
+                                      const ::dbx1000::InvalidRequest* request,
+                                      ::dbx1000::InvalidReply* response,
+                                      ::google::protobuf::Closure* done);
             virtual void AllInstanceReady(::google::protobuf::RpcController* controller,
                     const ::dbx1000::AllInstanceReadyRequest* request,
                     ::dbx1000::AllInstanceReadyReply* response,
@@ -163,6 +167,21 @@ namespace dbx1000 {
             LockRemoteReply* reply;
             google::protobuf::Closure* done;
             global_lock::GlobalLock* global_lock_;
+
+            void run();
+
+            void run_and_delete() {
+                run();
+                delete this;
+            }
+        };
+
+        struct AsyncInvalidJob {
+            brpc::Controller* cntl;
+            const InvalidRequest* request;
+            InvalidReply* reply;
+            google::protobuf::Closure* done;
+            ManagerInstance* manager_instance_;
 
             void run();
 

@@ -160,7 +160,8 @@ namespace dbx1000 {
             request.set_count(count);
 
 //            cntl.set_timeout_ms(20);
-            stub_->Invalid(&cntl, &request, &reply, nullptr);
+//            stub_->Invalid(&cntl, &request, &reply, nullptr);
+            stub_->AsyncInvalid(&cntl, &request, &reply, nullptr);
 
             if (!cntl.Failed()) {
 //                cout << "remote Invalid page:" << page_id << " success." << endl;
@@ -278,6 +279,30 @@ namespace dbx1000 {
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
         }
 
+        void GlobalLockServiceImpl::AsyncInvalid(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::InvalidRequest* request,
+                               ::dbx1000::InvalidReply* response,
+                               ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+
+            AsyncInvalidJob *job = new AsyncInvalidJob();
+            job->cntl = static_cast<brpc::Controller *>(controller);
+            job->request = request;
+            job->reply = response;
+            job->done = done;
+            job->manager_instance_ = this->manager_instance_;
+
+            auto process_thread = [](void* arg) -> void* {
+                AsyncInvalidJob* job = static_cast<AsyncInvalidJob*>(arg);
+                job->run_and_delete();
+                return nullptr;
+            };
+
+            bthread_t th;
+            CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
+            done_guard.release();
+        }
+
         void GlobalLockServiceImpl::AllInstanceReady(::google::protobuf::RpcController *controller
                                                      , const ::dbx1000::AllInstanceReadyRequest *request
                                                      , ::dbx1000::AllInstanceReadyReply *response, ::google::protobuf::Closure *done) {
@@ -321,12 +346,6 @@ namespace dbx1000 {
             response->set_count(count);
         }
 
-        auto process_thread = [](void* arg) -> void* {
-            AsyncLockRemoteJob* job = static_cast<AsyncLockRemoteJob*>(arg);
-            job->run_and_delete();
-            return nullptr;
-        };
-
         void GlobalLockServiceImpl::AsyncLockRemote(::google::protobuf::RpcController* controller,
                                const ::dbx1000::LockRemoteRequest* request,
                                ::dbx1000::LockRemoteReply* response,
@@ -340,6 +359,11 @@ namespace dbx1000 {
             job->done = done;
             job->global_lock_ = this->global_lock_;
 
+            auto process_thread = [](void* arg) -> void* {
+                AsyncLockRemoteJob* job = static_cast<AsyncLockRemoteJob*>(arg);
+                job->run_and_delete();
+                return nullptr;
+            };
 
             bthread_t th;
             CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
@@ -531,6 +555,28 @@ namespace dbx1000 {
                 reply->set_page_buf(page_buf, count);
             }
             reply->set_count(count);
+        }
+
+        void AsyncInvalidJob::run() {
+            brpc::ClosureGuard done_guard(done);
+
+            size_t count = request->count();
+            if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
+            else { assert(0 == count); }
+            char page_buf[MY_PAGE_SIZE];
+//            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
+            RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
+            assert(RC::RCOK == rc || RC::TIME_OUT == rc);
+            if(RC::TIME_OUT == rc){
+                reply->set_rc(RpcRC::TIME_OUT);
+            } else if(RC::RCOK == rc){
+                reply->set_page_buf(page_buf, count);
+                reply->set_count(count);
+                reply->set_rc(RpcRC::RCOK);
+            } else {
+                reply->set_rc(RpcRC::Abort);
+            }
+//            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
         }
     }
 }
