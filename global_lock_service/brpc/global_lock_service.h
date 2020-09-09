@@ -21,6 +21,12 @@ namespace dbx1000 {
     class Stats;
 
     namespace global_lock_service {
+
+        class OnLockRemoteDone;
+        class OnInstanceInitDone;
+        class OnInvalidDone;
+        class OnAllInstanceReadyDone;
+
         class GlobalLockServiceClient {
         public:
             GlobalLockServiceClient(const std::string&);
@@ -31,7 +37,9 @@ namespace dbx1000 {
         public: /// for instance
 
             RC LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count);
+            void AsyncLockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
             void InstanceInitDone(int instance_id);
+            void AsyncInstanceInitDone(int instance_id, OnInstanceInitDone* done);
             bool GlobalLockInitDone();
             uint64_t GetNextTs();
             void ReportResult(const Stats &stats, int instance_id);
@@ -40,8 +48,9 @@ namespace dbx1000 {
 
         public: /// for global lock
             RC Invalid(uint64_t page_id, char *page_buf, size_t count);
+            void AsyncInvalid(uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done);
             void AllInstanceReady();
-            void SyncAllInstanceReady();
+            void AsyncAllInstanceReady(OnAllInstanceReadyDone* done);
             // getter and setter
             global_lock::GlobalLock* global_lock() { return this->global_lock_; };
 
@@ -77,6 +86,10 @@ namespace dbx1000 {
                                const ::dbx1000::LockRemoteRequest* request,
                                ::dbx1000::LockRemoteReply* response,
                                ::google::protobuf::Closure* done);
+            virtual void AsyncLockRemote(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::LockRemoteRequest* request,
+                               ::dbx1000::LockRemoteReply* response,
+                               ::google::protobuf::Closure* done);
             virtual void InstanceInitDone(::google::protobuf::RpcController* controller,
                                const ::dbx1000::InstanceInitDoneRequest* request,
                                ::dbx1000::InstanceInitDoneReply* response,
@@ -103,8 +116,64 @@ namespace dbx1000 {
             global_lock::GlobalLock* global_lock_;
             brpc::Server server;
         };
-    }
-}
+
+
+        /// 异步回调
+        class OnLockRemoteDone: public google::protobuf::Closure {
+        public:
+            void Run();
+
+            LockRemoteReply reply;
+            brpc::Controller cntl;
+            size_t count;
+            char *page_buf;
+        };
+
+        class OnInstanceInitDone: public google::protobuf::Closure {
+        public:
+            void Run();
+
+            InstanceInitDoneReply reply;
+            brpc::Controller cntl;
+        };
+
+        class OnInvalidDone: public google::protobuf::Closure {
+        public:
+            void Run();
+
+            InvalidReply reply;
+            brpc::Controller cntl;
+            uint64_t page_id;
+            size_t count;
+            char *page_buf;
+        };
+
+        class OnAllInstanceReadyDone: public google::protobuf::Closure {
+        public:
+            void Run();
+
+            AllInstanceReadyReply reply;
+            brpc::Controller cntl;
+        };
+
+        /// 服务端异步
+        struct AsyncLockRemoteJob {
+            brpc::Controller* cntl;
+            const LockRemoteRequest* request;
+            LockRemoteReply* reply;
+            google::protobuf::Closure* done;
+            global_lock::GlobalLock* global_lock_;
+
+            void run();
+
+            void run_and_delete() {
+                run();
+                delete this;
+            }
+        };
+
+    }   // global_lock_service
+} // dbx1000
 
 
 #endif //DBX1000_GLOBAL_LOCK_SERVICE_H

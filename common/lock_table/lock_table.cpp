@@ -196,7 +196,7 @@ namespace dbx1000 {
         auto iter = lock_table_.find(page_id);
         if (lock_table_.end() == iter) { assert(false); }
 
-        cout << page_id << " LockTable::LockInvalid in" << endl;
+//        cout << page_id << " LockTable::LockInvalid in" << endl;
 
         RC rc = RC::RCOK;
         iter->second->invalid_req = true;
@@ -218,7 +218,7 @@ namespace dbx1000 {
         }
         iter->second->invalid_req = false;
 //        cout << "LockInvalid page: " << page_id << "out." << endl;
-        cout << page_id << " LockTable::LockInvalid out" << endl;
+//        cout << page_id << " LockTable::LockInvalid out" << endl;
         return rc;
     }
 

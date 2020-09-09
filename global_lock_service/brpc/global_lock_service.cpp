@@ -39,7 +39,8 @@ namespace dbx1000 {
             request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
             request.set_count(count);
 
-            stub_->LockRemote(&cntl, &request, &reply, NULL);
+//            stub_->LockRemote(&cntl, &request, &reply, NULL);
+            stub_->AsyncLockRemote(&cntl, &request, &reply, NULL);
             if (!cntl.Failed()) {
                 RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
                 if(RC::TIME_OUT == rc) {
@@ -64,6 +65,21 @@ namespace dbx1000 {
             }
         }
 
+        void GlobalLockServiceClient::AsyncLockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done) {
+//            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
+            dbx1000::LockRemoteRequest request;
+            request.set_instance_id(instance_id);
+            request.set_page_id(page_id);
+            request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
+            request.set_count(count);
+
+            done->page_buf = page_buf;
+            done->count = count;
+
+            stub_->AsyncLockRemote(&done->cntl, &request, &done->reply, done);
+//            stub_->LockRemote(&done->cntl, &request, &done->reply, done);
+        }
+
         void GlobalLockServiceClient::InstanceInitDone(int instance_id) {
             dbx1000::InstanceInitDoneRequest request;
             dbx1000::InstanceInitDoneReply reply;
@@ -76,6 +92,14 @@ namespace dbx1000 {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
+        }
+
+        void GlobalLockServiceClient::AsyncInstanceInitDone(int instance_id, OnInstanceInitDone* done) {
+            dbx1000::InstanceInitDoneRequest request;
+
+            request.set_instance_id(instance_id);
+
+            stub_->InstanceInitDone(&done->cntl, &request, &done->reply, done);
         }
 
         bool GlobalLockServiceClient::GlobalLockInitDone() {
@@ -139,7 +163,7 @@ namespace dbx1000 {
             stub_->Invalid(&cntl, &request, &reply, nullptr);
 
             if (!cntl.Failed()) {
-                cout << "remote Invalid page:" << page_id << " success." << endl;
+//                cout << "remote Invalid page:" << page_id << " success." << endl;
                 RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
                 if(RC::TIME_OUT == rc) {
                     return RC::TIME_OUT;
@@ -162,46 +186,31 @@ namespace dbx1000 {
                 return RC::Abort;
             }
         }
-        static void OnRPCDone(dbx1000::AllInstanceReadyReply* response, brpc::Controller* cntl) {
-            // unique_ptr会帮助我们在return时自动删掉response/cntl，防止忘记。gcc 3.4下的unique_ptr是模拟版本。
-            std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(response);
-            std::unique_ptr<brpc::Controller> cntl_guard(cntl);
-            if (cntl->Failed()) {
-                // RPC失败了. response里的值是未定义的，勿用。
-            } else {
-                // RPC成功了，response里有我们想要的数据。开始RPC的后续处理。
-            }
-            // NewCallback产生的Closure会在Run结束后删除自己，不用我们做。
+
+        void GlobalLockServiceClient::AsyncInvalid(uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done){
+            dbx1000::InvalidRequest request;
+
+            request.set_page_id(page_id);
+            request.set_count(count);
+
+            done->count = count;
+            done->page_buf = page_buf;
+            done->page_id = page_id;
+
+            stub_->Invalid(&done->cntl, &request, &done->reply, done);
         }
+
         void GlobalLockServiceClient::AllInstanceReady(){
-            dbx1000::AllInstanceReadyRequest request;
-            dbx1000::AllInstanceReadyReply *reply = new dbx1000::AllInstanceReadyReply();
-            brpc::Controller* cntl = new brpc::Controller();
-
-//            auto OnRPCDone = [&reply, &cntl]()->void{
-//                    std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(reply);
-//                    std::unique_ptr<brpc::Controller> cntl_guard(cntl);
-//            };
-
-            stub_->AllInstanceReady(cntl, &request, reply
-                                    , google::protobuf::NewCallback(OnRPCDone, reply, cntl));
-        }
-
-        void GlobalLockServiceClient::SyncAllInstanceReady(){
             dbx1000::AllInstanceReadyRequest request;
             dbx1000::AllInstanceReadyReply reply;
             brpc::Controller cntl;
 
-//            auto OnRPCDone = [&reply, &cntl]()->void{
-//                    std::unique_ptr<dbx1000::AllInstanceReadyReply> response_guard(reply);
-//                    std::unique_ptr<brpc::Controller> cntl_guard(cntl);
-//            };
-
             stub_->AllInstanceReady(&cntl, &request, &reply, nullptr);
-            if (!cntl.Failed()) {
-            } else {
-                LOG(FATAL) << cntl.ErrorText();
-            }
+        }
+
+        void GlobalLockServiceClient::AsyncAllInstanceReady(OnAllInstanceReadyDone* done){
+            dbx1000::AllInstanceReadyRequest request;
+            stub_->AllInstanceReady(&done->cntl, &request, &done->reply, done);
         }
 
         int GlobalLockServiceClient::Test() {
@@ -254,7 +263,7 @@ namespace dbx1000 {
             if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
-            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
+//            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
             RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
@@ -266,7 +275,7 @@ namespace dbx1000 {
             } else {
                 response->set_rc(RpcRC::Abort);
             }
-            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
+//            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
         }
 
         void GlobalLockServiceImpl::AllInstanceReady(::google::protobuf::RpcController *controller
@@ -310,6 +319,31 @@ namespace dbx1000 {
                 response->set_page_buf(page_buf, count);
             }
             response->set_count(count);
+        }
+
+        auto process_thread = [](void* arg) -> void* {
+            AsyncLockRemoteJob* job = static_cast<AsyncLockRemoteJob*>(arg);
+            job->run_and_delete();
+            return nullptr;
+        };
+
+        void GlobalLockServiceImpl::AsyncLockRemote(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::LockRemoteRequest* request,
+                               ::dbx1000::LockRemoteReply* response,
+                               ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+
+            AsyncLockRemoteJob *job = new AsyncLockRemoteJob();
+            job->cntl = static_cast<brpc::Controller *>(controller);
+            job->request = request;
+            job->reply = response;
+            job->done = done;
+            job->global_lock_ = this->global_lock_;
+
+
+            bthread_t th;
+            CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
+            done_guard.release();
         }
 
         /*
@@ -414,6 +448,89 @@ namespace dbx1000 {
                        ::google::protobuf::Closure* done){
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+        }
+
+
+
+
+
+
+
+
+
+        /// 回调
+        void OnLockRemoteDone::Run() {
+//            std::unique_ptr<OnLockRemoteDone> self_guard(this);
+            if (!cntl.Failed()) {
+                if (GlobalLockServiceHelper::DeSerializeRC(reply.rc()) == RC::RCOK
+                    && count > 0) {
+                    assert(MY_PAGE_SIZE == count);
+                    assert(reply.count() == count);
+                    memcpy(page_buf, reply.page_buf().data(), count);
+                }
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
+        void OnInstanceInitDone::Run() {
+            if (!cntl.Failed()) { } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
+        void OnInvalidDone::Run() {
+            if (!cntl.Failed()) {
+//                cout << "remote Invalid page:" << page_id << " success." << endl;
+                if(GlobalLockServiceHelper::DeSerializeRC(reply.rc()) == RC::RCOK && count > 0) {
+                    assert(MY_PAGE_SIZE == count);
+                    assert(reply.count() == count);
+                    memcpy(page_buf, reply.page_buf().data(), count);
+                }
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
+        void OnAllInstanceReadyDone::Run() {
+            if (!cntl.Failed()) { } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
+
+        void AsyncLockRemoteJob::run() {
+            brpc::ClosureGuard done_guard(done);
+
+            RC rc;
+            char *page_buf = nullptr;
+            size_t count = request->count();
+            if(count > 0) {
+                assert(MY_PAGE_SIZE == count);
+                page_buf = new char [MY_PAGE_SIZE];
+            }
+            else {assert(0 == count);}
+
+            rc = global_lock_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
+
+            if(RC::TIME_OUT  == rc) {
+                reply->set_rc(RpcRC::TIME_OUT);
+                return;
+            }
+            if(RC::Abort  == rc) {
+                reply->set_rc(RpcRC::Abort);
+                return;
+            }
+            assert(RC::RCOK == rc);
+            reply->set_rc(RpcRC::RCOK);
+            if(count > 0) {
+                reply->set_page_buf(page_buf, count);
+            }
+            reply->set_count(count);
         }
     }
 }

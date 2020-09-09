@@ -93,17 +93,17 @@ namespace dbx1000 {
 //            cv_status cvStatus = iter->second->cv.wait_for(lck, chrono::milliseconds(20));
 //            if(cvStatus == cv_status::no_timeout) {
                 if (iter->second->write_ins_id >= 0) {
-                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+//                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
                     rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
 
                     if (rc == RC::TIME_OUT) {
-                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
+//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
                     }
                     if (rc == RC::Abort) {
-                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " Abort" << endl;
+//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " Abort" << endl;
                     }
                     if (rc == RC::RCOK) {
-                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", page: " << page_id << " success" << endl;
+//                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", page: " << page_id << " success" << endl;
                         iter->second->write_ins_id = ins_id;
                     }
                 } else {

@@ -2,6 +2,7 @@
 #include <set>
 #include <vector>
 #include <thread>
+#include <future>
 #include "ycsb_txn.h"
 
 #include "common/buffer/buffer.h"
@@ -15,6 +16,7 @@
 #include "instance/thread.h"
 #include "shared_disk_service.h"
 #include "global_lock_service.h"
+#include "global_lock_service_helper.h"
 
 void ycsb_txn_man::init(thread_t *h_thd, workload *h_wl, uint64_t thd_id) {
     txn_man::init(h_thd, h_wl, thd_id);
@@ -151,11 +153,131 @@ RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
     return RC::RCOK;
 }
 
+RC AsyncGetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
+    dbx1000::LockTable *lockTable = ycsb->h_thd->manager_client_->lock_table();
+
+    auto has_invalid_req = [&]() {
+        for (auto iter : write_page_set) {
+            if (ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req) { return true; }
+        }
+        return false;
+    };
+    /// 事务开始前，等待其他节点 Invalid 完成
+    while (has_invalid_req()) { std::this_thread::yield(); }
+    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
+    for (auto iter : write_page_set) { lockTable->AddThread(iter, ycsb->get_thd_id());}
+
+    dbx1000::Profiler profiler;
+    profiler.Start();
+
+    /// remote_lock_page_set 为需要 remote_lock 的集合，wait_lock_page_set 等待其他线程 remote_lock 的集合
+    std::set<uint64_t> remote_lock_page_set;
+    std::set<uint64_t> wait_lock_page_set;
+    for(auto iter : write_page_set) {
+        if(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
+            ycsb->h_thd->manager_client_->stats()._stats[ycsb->get_thd_id()]->count_remote_lock_++;
+            bool flag = ATOM_CAS(lockTable->lock_table_[iter]->lock_remoting, false, true);
+            if(flag) {
+                /// 多个线程不能同时对某个 page 去 Remote lock, 要先抢占 lock_remoting
+                remote_lock_page_set.insert(iter);
+            } else {
+                /// 没有抢到 lock_remoting，等待其他线程 Remote lock
+                wait_lock_page_set.insert(iter);
+            }
+        }
+    }
+
+    /// 等待 wait_lock_page_set 完成
+    auto wait_th = [&lockTable, wait_lock_page_set]() {
+        RC rc = RC::RCOK;
+        for (auto iter : wait_lock_page_set) {
+//            assert(true == lockTable->lock_table_[iter]->lock_remoting);
+            if(true == lockTable->lock_table_[iter]->lock_remoting) {
+                rc = RC::Abort;
+                return rc;
+            }
+            while (lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O) {
+                if (true == lockTable->lock_table_[iter]->remote_locking_abort.load()) {
+                    rc = RC::Abort;
+                    return rc;
+                }
+                this_thread::yield();
+            }
+            assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
+        }
+        return rc;
+    };
+
+    std::future<RC> rc_fut = std::async(wait_th);
+
+    /// async remote locking
+    std::vector<dbx1000::global_lock_service::OnLockRemoteDone*> dones;
+    dones.resize(remote_lock_page_set.size());
+    int count = 0;
+    for(auto iter : remote_lock_page_set) {
+        char* page_buf = new char[MY_PAGE_SIZE];
+        dones[count] = new dbx1000::global_lock_service::OnLockRemoteDone();
+        ycsb->h_thd->manager_client_->global_lock_service_client()->AsyncLockRemote(ycsb->h_thd->manager_client_->instance_id(), iter, dbx1000::LockMode::X, page_buf
+                , MY_PAGE_SIZE, dones[count]);
+        count++;
+    }
+
+    count = 0;
+    /// join remote locking
+    for(auto iter : remote_lock_page_set) {
+        brpc::Join(dones[count]->cntl.call_id());
+        lockTable->lock_table_[iter]->lock_remoting = false;
+        count++;
+    }
+
+    RC rc = rc_fut.get();
+    if(rc == RC::Abort) { return RC::Abort; }
+
+    count = 0;
+    for(auto iter : remote_lock_page_set) {
+        rc = dbx1000::global_lock_service::GlobalLockServiceHelper::DeSerializeRC(dones[count]->reply.rc());
+        /// remote lock 失败
+        if(rc == RC::TIME_OUT || rc == RC::Abort) {
+            lockTable->lock_table_[iter]->remote_locking_abort.store(true);
+            rc = RC::Abort;
+            break;
+        }
+        /// remote lock 成功
+        assert(rc == RC::RCOK);
+        assert(lockTable->lock_table_[iter]->lock_mode == dbx1000::LockMode::O);
+        lockTable->lock_table_[iter]->lock_mode = dbx1000::LockMode::P;
+//                    cout << "thread : " << ycsb->get_thd_id() << " change lock : " << iter << " to P" << endl;
+#ifdef DB2_WITH_NO_CONFLICT
+#else
+        ycsb->h_thd->manager_client_->buffer()->BufferPut(iter, dones[count]->page_buf, MY_PAGE_SIZE);
+        delete dones[count]->page_buf;
+#endif
+        count++;
+    }
+
+    count = 0;
+    for(auto iter : remote_lock_page_set) {
+        delete dones[count];
+        count++;
+    }
+
+    if(rc == RC::Abort) { return rc;}
+
+    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
+    for (auto iter : write_page_set) {
+        assert(lockTable->lock_table_[iter]->lock_mode != dbx1000::LockMode::O);
+    }
+    profiler.End();
+    ycsb->h_thd->manager_client_->stats().tmp_stats[ycsb->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+
+    return RC::RCOK;
+}
+
 
 RC ycsb_txn_man::run_txn(base_query *query) {
-    if(txn_id % 1000 == 0) {
-        cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
-    }
+//    if(txn_id % 1000 == 0) {
+//        cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
+//    }
 //    cout << "txn id : " << txn_id << endl;
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
     RC rc;

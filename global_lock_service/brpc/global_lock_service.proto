@@ -82,13 +82,17 @@ service GlobalLockService {
   // GlobalLockInitDone 和 AllInstanceReady 容易混淆，都是判断是否所有的 instance 是否准备好，
   // GlobalLockInitDone 是 instance 主动发起询问，AllInstanceReady 是 global 告知全部的instance
   rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
+  rpc AsyncLockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
   rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
+  rpc AsyncInstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc GlobalLockInitDone(GlobalLockInitDoneRequest) returns (GlobalLockInitDoneReply) {}
   rpc AllInstanceReady(AllInstanceReadyRequest) returns (AllInstanceReadyReply) {}
+  rpc AsyncAllInstanceReady(AllInstanceReadyRequest) returns (AllInstanceReadyReply) {}
   rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
   rpc ReportResult(ReportResultRequest) returns (ReportResultReply) {}
 
   // for lock_server
   rpc Invalid(InvalidRequest) returns (InvalidReply) {}
+  rpc AsyncInvalid(InvalidRequest) returns (InvalidReply) {}
   rpc Test(TestRequest) returns (TestReply) {}
 }
