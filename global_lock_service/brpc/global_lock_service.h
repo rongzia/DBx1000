@@ -102,6 +102,10 @@ namespace dbx1000 {
                                const ::dbx1000::GlobalLockInitDoneRequest* request,
                                ::dbx1000::GlobalLockInitDoneReply* response,
                                ::google::protobuf::Closure* done);
+            virtual void AsyncGlobalLockInitDone(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::GlobalLockInitDoneRequest* request,
+                               ::dbx1000::GlobalLockInitDoneReply* response,
+                               ::google::protobuf::Closure* done);
             virtual void GetNextTs(::google::protobuf::RpcController* controller,
                                const ::dbx1000::GetNextTsRequest* request,
                                ::dbx1000::GetNextTsReply* response,
@@ -165,6 +169,21 @@ namespace dbx1000 {
             brpc::Controller* cntl;
             const LockRemoteRequest* request;
             LockRemoteReply* reply;
+            google::protobuf::Closure* done;
+            global_lock::GlobalLock* global_lock_;
+
+            void run();
+
+            void run_and_delete() {
+                run();
+                delete this;
+            }
+        };
+
+        struct AsyncGlobalLockInitDoneJob {
+            brpc::Controller* cntl;
+            const GlobalLockInitDoneRequest* request;
+            GlobalLockInitDoneReply* reply;
             google::protobuf::Closure* done;
             global_lock::GlobalLock* global_lock_;
 

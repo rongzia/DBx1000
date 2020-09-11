@@ -107,13 +107,13 @@ namespace dbx1000 {
             dbx1000::GlobalLockInitDoneReply reply;
             ::brpc::Controller cntl;
 
-            stub_->GlobalLockInitDone(&cntl, &request, &reply, nullptr);
+//            stub_->GlobalLockInitDone(&cntl, &request, &reply, nullptr);
+            stub_->AsyncGlobalLockInitDone(&cntl, &request, &reply, nullptr);
             if (!cntl.Failed()) {
                 return reply.init_done();
             } else {
 //                LOG(FATAL) << cntl.ErrorText();
 //                assert(false);
-                std::this_thread::sleep_for(chrono::milliseconds(200));
                 return false;
             }
         }
@@ -408,6 +408,30 @@ namespace dbx1000 {
             response->set_init_done(global_lock_->init_done());
         }
 
+        void GlobalLockServiceImpl::AsyncGlobalLockInitDone(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::GlobalLockInitDoneRequest* request,
+                               ::dbx1000::GlobalLockInitDoneReply* response,
+                               ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+
+            AsyncGlobalLockInitDoneJob *job = new AsyncGlobalLockInitDoneJob();
+            job->cntl = static_cast<brpc::Controller *>(controller);
+            job->request = request;
+            job->reply = response;
+            job->done = done;
+            job->global_lock_ = this->global_lock_;
+
+            auto process_thread = [](void* arg) -> void* {
+                AsyncGlobalLockInitDoneJob* job = static_cast<AsyncGlobalLockInitDoneJob*>(arg);
+                job->run_and_delete();
+                return nullptr;
+            };
+
+            bthread_t th;
+            CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
+            done_guard.release();
+        }
+
         void GlobalLockServiceImpl::GetNextTs(::google::protobuf::RpcController* controller,
                                const ::dbx1000::GetNextTsRequest* request,
                                ::dbx1000::GetNextTsReply* response,
@@ -555,6 +579,12 @@ namespace dbx1000 {
                 reply->set_page_buf(page_buf, count);
             }
             reply->set_count(count);
+        }
+
+
+        void AsyncGlobalLockInitDoneJob::run() {
+            brpc::ClosureGuard done_guard(done);
+            reply->set_init_done(global_lock_->init_done());
         }
 
         void AsyncInvalidJob::run() {

@@ -89,7 +89,7 @@ namespace dbx1000 {
                 return RC::Abort;
             }
             RC rc = RC::RCOK;
-            std::unique_lock<std::mutex> lck(iter->second->mtx);
+            std::lock_guard<std::mutex> lck(iter->second->mtx);
 //            cv_status cvStatus = iter->second->cv.wait_for(lck, chrono::milliseconds(20));
 //            if(cvStatus == cv_status::no_timeout) {
                 if (iter->second->write_ins_id >= 0) {
@@ -132,23 +132,23 @@ namespace dbx1000 {
             instances_[instance_id].init_done = true;
             cout << "GlobalLock::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
 
-            for (int i = 0; i < PROCESS_CNT; i++) {
-                if (!instances_[i].init_done) { return; }
-            }
-            this->init_done_ = true;
-            if(this->init_done_) {
-                for(int i = 0; i < PROCESS_CNT; i++) {
-                    instances_[i].global_lock_service_client->AllInstanceReady();
-                }
-            }
+//            for (int i = 0; i < PROCESS_CNT; i++) {
+//                if (!instances_[i].init_done) { return; }
+//            }
+//            this->init_done_ = true;
+//            if(this->init_done_) {
+//                for(int i = 0; i < PROCESS_CNT; i++) {
+//                    instances_[i].global_lock_service_client->AllInstanceReady();
+//                }
+//            }
         }
 
 
         bool GlobalLock::init_done() {
-//            for (int i = 0; i < PROCESS_CNT; i++) {
-//                if (instances_[i].init_done == false) { return false; }
-//            }
-//            init_done_ = true;
+            for (int i = 0; i < PROCESS_CNT; i++) {
+                if (instances_[i].init_done == false) { return false; }
+            }
+            init_done_ = true;
             return init_done_;
         }
 //    void GlobalLock::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }

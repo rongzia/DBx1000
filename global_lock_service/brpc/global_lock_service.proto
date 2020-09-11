@@ -86,6 +86,7 @@ service GlobalLockService {
   rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc AsyncInstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc GlobalLockInitDone(GlobalLockInitDoneRequest) returns (GlobalLockInitDoneReply) {}
+  rpc AsyncGlobalLockInitDone(GlobalLockInitDoneRequest) returns (GlobalLockInitDoneReply) {}
   rpc AllInstanceReady(AllInstanceReadyRequest) returns (AllInstanceReadyReply) {}
   rpc AsyncAllInstanceReady(AllInstanceReadyRequest) returns (AllInstanceReadyReply) {}
   rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
