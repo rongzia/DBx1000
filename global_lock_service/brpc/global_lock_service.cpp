@@ -39,8 +39,7 @@ namespace dbx1000 {
             request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
             request.set_count(count);
 
-//            stub_->LockRemote(&cntl, &request, &reply, NULL);
-            stub_->AsyncLockRemote(&cntl, &request, &reply, NULL);
+            stub_->LockRemote(&cntl, &request, &reply, NULL);
             if (!cntl.Failed()) {
                 RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
                 if(RC::TIME_OUT == rc) {
@@ -77,7 +76,6 @@ namespace dbx1000 {
             done->count = count;
 
             stub_->AsyncLockRemote(&done->cntl, &request, &done->reply, done);
-//            stub_->LockRemote(&done->cntl, &request, &done->reply, done);
         }
 
         void GlobalLockServiceClient::InstanceInitDone(int instance_id) {
@@ -107,13 +105,13 @@ namespace dbx1000 {
             dbx1000::GlobalLockInitDoneReply reply;
             ::brpc::Controller cntl;
 
-//            stub_->GlobalLockInitDone(&cntl, &request, &reply, nullptr);
-            stub_->AsyncGlobalLockInitDone(&cntl, &request, &reply, nullptr);
+            stub_->GlobalLockInitDone(&cntl, &request, &reply, nullptr);
+
             if (!cntl.Failed()) {
                 return reply.init_done();
             } else {
-//                LOG(FATAL) << cntl.ErrorText();
-//                assert(false);
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
                 return false;
             }
         }
@@ -159,9 +157,7 @@ namespace dbx1000 {
             request.set_page_id(page_id);
             request.set_count(count);
 
-//            cntl.set_timeout_ms(20);
-//            stub_->Invalid(&cntl, &request, &reply, nullptr);
-            stub_->AsyncInvalid(&cntl, &request, &reply, nullptr);
+            stub_->Invalid(&cntl, &request, &reply, nullptr);
 
             if (!cntl.Failed()) {
 //                cout << "remote Invalid page:" << page_id << " success." << endl;
@@ -199,19 +195,6 @@ namespace dbx1000 {
             done->page_id = page_id;
 
             stub_->Invalid(&done->cntl, &request, &done->reply, done);
-        }
-
-        void GlobalLockServiceClient::AllInstanceReady(){
-            dbx1000::AllInstanceReadyRequest request;
-            dbx1000::AllInstanceReadyReply reply;
-            brpc::Controller cntl;
-
-            stub_->AllInstanceReady(&cntl, &request, &reply, nullptr);
-        }
-
-        void GlobalLockServiceClient::AsyncAllInstanceReady(OnAllInstanceReadyDone* done){
-            dbx1000::AllInstanceReadyRequest request;
-            stub_->AllInstanceReady(&done->cntl, &request, &done->reply, done);
         }
 
         int GlobalLockServiceClient::Test() {
@@ -301,14 +284,6 @@ namespace dbx1000 {
             bthread_t th;
             CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
             done_guard.release();
-        }
-
-        void GlobalLockServiceImpl::AllInstanceReady(::google::protobuf::RpcController *controller
-                                                     , const ::dbx1000::AllInstanceReadyRequest *request
-                                                     , ::dbx1000::AllInstanceReadyReply *response, ::google::protobuf::Closure *done) {
-            ::brpc::ClosureGuard done_guard(done);
-            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
-            manager_instance_->all_instances_ready_ = true;
         }
 
         void GlobalLockServiceImpl::LockRemote(::google::protobuf::RpcController* controller,
@@ -542,14 +517,6 @@ namespace dbx1000 {
                 assert(false);
             }
         }
-
-        void OnAllInstanceReadyDone::Run() {
-            if (!cntl.Failed()) { } else {
-                LOG(FATAL) << cntl.ErrorText();
-                assert(false);
-            }
-        }
-
 
         void AsyncLockRemoteJob::run() {
             brpc::ClosureGuard done_guard(done);

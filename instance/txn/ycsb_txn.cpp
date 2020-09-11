@@ -288,6 +288,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     /// ,然后把线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
     std::set<uint64_t> write_page_set = GetQueryWritePageSet(m_query, this);
     rc = GetWritePageLock(write_page_set, this);
+//    rc = AsyncGetWritePageLock(write_page_set, this);
     if (rc == RC::Abort) {
         dbx1000::LockTable *lockTable = this->h_thd->manager_client_->lock_table();
         for (auto iter : write_page_set) { lockTable->RemoveThread(iter, this->get_thd_id()); }

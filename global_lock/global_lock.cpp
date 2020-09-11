@@ -131,16 +131,6 @@ namespace dbx1000 {
             instances_[instance_id].global_lock_service_client = new global_lock_service::GlobalLockServiceClient(instances_[instance_id].host);
             instances_[instance_id].init_done = true;
             cout << "GlobalLock::set_instance_i, instances_[instance_id].host : " << instances_[instance_id].host << endl;
-
-//            for (int i = 0; i < PROCESS_CNT; i++) {
-//                if (!instances_[i].init_done) { return; }
-//            }
-//            this->init_done_ = true;
-//            if(this->init_done_) {
-//                for(int i = 0; i < PROCESS_CNT; i++) {
-//                    instances_[i].global_lock_service_client->AllInstanceReady();
-//                }
-//            }
         }
 
 

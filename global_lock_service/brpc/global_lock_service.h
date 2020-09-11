@@ -79,10 +79,6 @@ namespace dbx1000 {
                                       const ::dbx1000::InvalidRequest* request,
                                       ::dbx1000::InvalidReply* response,
                                       ::google::protobuf::Closure* done);
-            virtual void AllInstanceReady(::google::protobuf::RpcController* controller,
-                    const ::dbx1000::AllInstanceReadyRequest* request,
-                    ::dbx1000::AllInstanceReadyReply* response,
-                    ::google::protobuf::Closure* done);
             ManagerInstance *manager_instance_;
 
         public: /// for global lock
@@ -154,14 +150,6 @@ namespace dbx1000 {
             uint64_t page_id;
             size_t count;
             char *page_buf;
-        };
-
-        class OnAllInstanceReadyDone: public google::protobuf::Closure {
-        public:
-            void Run();
-
-            AllInstanceReadyReply reply;
-            brpc::Controller cntl;
         };
 
         /// 服务端异步
