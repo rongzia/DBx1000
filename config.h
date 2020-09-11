@@ -5,7 +5,7 @@
 // Simulation + Hardware
 /***********************************************/
 #define THREAD_CNT					4
-#define PROCESS_CNT				    12
+#define PROCESS_CNT				    11
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -121,7 +121,7 @@
 //#define SYNTH_TABLE_SIZE 			(1024UL * 100 * 204)
 #define SYNTH_TABLE_SIZE 			(1024UL * 10 * 204)
 //#define SYNTH_TABLE_SIZE 			(1024UL * 1 * 204)
-#define ZIPF_THETA 					0.1
+#define ZIPF_THETA 					0.0001
 #define READ_PERC 					0.9
 #define WRITE_PERC 					0.1
 #define SCAN_PERC 					0
