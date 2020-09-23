@@ -144,3 +144,6 @@ add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cp
 
 add_executable(other_test test/other_test.cpp)
 target_link_libraries(other_test pthread tbb)
+
+add_executable(test_mvcc test/test_mvcc.cpp ${INSTANCE_FILES} ${COMMON_FILES})
+target_link_libraries(test_mvcc global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)

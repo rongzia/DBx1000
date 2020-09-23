@@ -20,6 +20,21 @@
 
 #if CC_ALG == MVCC
 
+Row_mvcc::~Row_mvcc() {
+	for(uint32_t i = 0; i < _his_len; i++) {
+		if(_write_history[i].row != nullptr) {
+			delete _write_history[i].row;
+			_write_history[i].row = nullptr;
+		}
+	}
+	delete [] _requests;
+	delete [] _write_history;
+	_requests = nullptr;
+	_write_history = nullptr;
+	row_ = nullptr;
+	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
+}
+
 void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* managerInstance) {
 	/* _row = row; */
 	this->key_ = key;

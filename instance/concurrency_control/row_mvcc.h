@@ -37,6 +37,7 @@ class Row_mvcc {
 public:
 	void init(uint64_t key, size_t size, dbx1000::ManagerInstance*);
 	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
+	~Row_mvcc();
 private:
  	/* pthread_mutex_t * latch; */
 	volatile bool blatch;
