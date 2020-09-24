@@ -29,20 +29,20 @@ Row_mvcc::~Row_mvcc() {
 	}
 	delete [] _requests;
 	delete [] _write_history;
+	delete row_;
 	_requests = nullptr;
 	_write_history = nullptr;
 	row_ = nullptr;
 	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
+	/// TODO : 把最新行写进缓存
 }
 
-void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* managerInstance) {
+void Row_mvcc::init(table_t* table, uint64_t key) {
 	/* _row = row; */
 	this->key_ = key;
-	this->size_ = size;
-	this->row_ = nullptr;
-	this->manager_instance_ = managerInstance;
+	this->size_ = table->get_schema()->tuple_size;
+	this->row_ = GetRow();
 	_his_len = 4;
-//	_his_len = g_thread_cnt;
 	_req_len = _his_len;
 
 	_write_history = new WriteHisEntry[_his_len]();
@@ -67,8 +67,6 @@ void Row_mvcc::init(uint64_t key, size_t size, dbx1000::ManagerInstance* manager
 	latch = (pthread_mutex_t *) _mm_malloc(sizeof(pthread_mutex_t), 64);
 	pthread_mutex_init(latch, NULL);
 	 */
-
-	flush_req_ = false;
 }
 
 //! 从 _requests 中选出一个空的 ReqEntry，并给该 ReqEntry 赋上相应的数据
@@ -117,7 +115,7 @@ Row_mvcc::double_list(uint32_t list)
 			temp[i].row = NULL;
 		}
 		/* _mm_free(_write_history); */
-        delete _write_history;  /// TODO : 是否会释放 RowItem?
+        delete [] _write_history;  /// 不会调用 _write_history[i].row 的析构函数 
 		_write_history = temp;
 		_his_len = _his_len * 2;
 	} else {
@@ -133,31 +131,18 @@ Row_mvcc::double_list(uint32_t list)
 		for (uint32_t i = _req_len; i < _req_len * 2; i++) 
 			temp[i].valid = false;
 		/* _mm_free(_requests); */
-        delete _requests;  /// TODO : 是否会释放 txn_man?
+        delete [] _requests;  /// TODO : 是否会释放 txn_man?
 		_requests = temp;
 		_req_len = _req_len * 2;
 	}
 }
 
-void Row_mvcc::GetLatestRow(txn_man * txn) {
-    assert(nullptr == _latest_row);
+dbx1000::RowItem* Row_mvcc::GetRow() {
     assert(_num_versions == 0);
-    assert(nullptr == row_);
-    this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-    bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_);
-    assert(res);
-    _latest_row = row_;
+    return new dbx1000::RowItem(this->key_, this->size_);
+    // bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_);
+    // assert(res);
 }
-void Row_mvcc::GetLatestRowForTest(txn_man * txn) {
-    assert(nullptr == _latest_row);
-    assert(_num_versions == 0);
-    assert(nullptr == row_);
-    this->row_ = new dbx1000::RowItem(this->key_, this->size_);
-//    bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->row_);
-//    assert(res);
-    _latest_row = row_;
-}
-
 void Row_mvcc::CheckLatestRow(){
     if(nullptr == _latest_row || _latest_row == row_) {
         return;
@@ -176,38 +161,7 @@ void Row_mvcc::CheckLatestRow(){
     assert(_write_history[idx].valid);
     assert(_write_history[idx].reserved);
 }
-/*
-bool Row_mvcc::RecycleALL() {
-    while (!ATOM_CAS(this->recycle_latch, false, true))
-        PAUSE
-	ts_t max_ts = 0;
-    ts_t idx = _his_len;
-    for (uint32_t i = 0; i < _his_len; i++) {
-        if (_write_history[i].valid
-            && _write_history[i].ts > max_ts)
-        {
-            max_ts = _write_history[i].ts;
-            idx = i;
-        }
-    }
-    assert(idx < _his_len);
-    bool res = this->manager_instance_->WriteRow(_write_history[idx].row);
-    assert(res);
-    for(uint32_t i = 0; i < _his_len; i++) {
-        if(_write_history[i].valid) {
-            _num_versions--;
-        }
-        if(_write_history[i].row != nullptr) {
-            delete _write_history[i].row;
-            _write_history[i].row = nullptr;
-        }
-        _write_history[i].valid = false;
-        _write_history[i].reserved = false;
-    }
-    recycle_latch = false;
-    return true;
-}
-*/
+
 RC Row_mvcc::access(txn_man * txn, TsType type, dbx1000::RowItem * row) {
 	RC rc = RC::RCOK;
 	ts_t ts = txn->get_ts();
@@ -258,8 +212,6 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			    //! 读最新的 row
 				// should just read
 				rc = RC::RCOK;
-//				CheckLatestRow();   // test
-				if(nullptr == _latest_row) { GetLatestRow(txn); }
 				txn->cur_row = _latest_row;
 				if (ts > _max_served_rts)
 					_max_served_rts = ts;
@@ -285,13 +237,9 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 	   		// 当历史不存在时，从 buffer 读
 			if (the_i == _his_len) {
                 /* txn->cur_row = _row; */
-//                CheckLatestRow();   // test
-                if(nullptr == _latest_row) { GetLatestRow(txn); }
-                txn->cur_row = _latest_row;
+                txn->cur_row = row_;
             }
    			else {
-   			    assert(_write_history[the_i].row);
-//   			    CheckLatestRow();   // test
                 txn->cur_row = _write_history[the_i].row;
             }
 		}
@@ -302,21 +250,12 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 			rc = RC::WAIT;
 			buffer_req(P_REQ, txn, false);
 			txn->ts_ready = false;
-//            {
-//                dbx1000::IndexItem indexItem;
-//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
-//                txn->h_thd->manager_client_->lock_table()->AddThread(indexItem.page_id_, txn->h_thd->get_thd_id());
-//            }
 		} else {
 			rc = RC:: RCOK;
 			dbx1000::RowItem * res_row = reserveRow(ts, txn);
 			/* assert(res_row);
 			res_row->copy(_latest_row); */
-//			CheckLatestRow();   // test
-			if(nullptr == _latest_row) { GetLatestRow(txn); }
-            {
-                memcpy(res_row->row_, _latest_row->row_, this->size_);
-            }
+            memcpy(res_row->row_, _latest_row->row_, this->size_);
 			txn->cur_row = res_row;
 		}
 	} else if (type == W_REQ) {
@@ -330,37 +269,14 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 		_write_history[_prewrite_his_id].ts = ts;
 		_latest_wts = ts;
 		_latest_row = row;
-		txn->h_thd->manager_client_->row_handler()->WriteRow(_latest_row);
-//		assert(row);        // test
-//		assert(row->row_);  // test
-        {
-            if(nullptr != this->row_) {
-                delete this->row_;
-                this->row_ = nullptr;
-            }
-        }
 		_exists_prewrite = false;
 		_num_versions ++;
-//            {
-//                dbx1000::IndexItem indexItem;
-//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
-//                txn->h_thd->manager_client_->lock_table()->RemoveThread(indexItem.page_id_, txn->h_thd->get_thd_id());
-//            }
 		update_buffer(txn, W_REQ);
 	} else if (type == XP_REQ) {
 		assert(row == _write_history[_prewrite_his_id].row);
 		_write_history[_prewrite_his_id].valid = false;
 		_write_history[_prewrite_his_id].reserved = false;
-//        { // test
-//            delete _write_history[_prewrite_his_id].row; // test
-//            _write_history[_prewrite_his_id].row = nullptr; // test
-//        } // test
 		_exists_prewrite = false;
-//            {
-//                dbx1000::IndexItem indexItem;
-//                txn->h_thd->manager_client_->index()->IndexGet(this->key_, &indexItem);
-//                txn->h_thd->manager_client_->lock_table()->RemoveThread(indexItem.page_id_, txn->h_thd->get_thd_id());
-//            }
 		update_buffer(txn, XP_REQ);
 	} else 
 		assert(false);
@@ -376,15 +292,6 @@ INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 		//pthread_mutex_unlock( latch );	
 		
 	return rc;
-}
-
-void Row_mvcc::PrintWriteHistory(ts_t ts){
-    cout << "min_ts:" << ts << ", _oldest_wts:" << _oldest_wts << endl;
-    for(uint32_t i = 0; i< g_thread_cnt; i++) {
-        cout << "_write_history[i].row:" << _write_history[i].row;
-        cout << ", ts:" << _write_history[i].ts << ", valid:" << _write_history[i].valid << ", rserved:" <<_write_history[i].reserved << endl;
-    }
-    cout <<"_latest_row:" << _latest_row << endl;
 }
 
 //! 从 _write_history 中分配一个 WriteHisEntry，
@@ -424,6 +331,9 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 			_row = _write_history[idx].row;
 			_write_history[idx].row = temp;
 		     */
+		    dbx1000::RowItem* temp = row_;
+			row_ = _write_history[idx].row;
+			_write_history[idx].row = temp;
 			_oldest_wts = max_recycle_ts;
 			for (uint32_t i = 0; i < _his_len; i++) {
 				if (_write_history[i].valid
@@ -432,18 +342,6 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 					_write_history[i].valid = false;
 					_write_history[i].reserved = false;
 					assert(_write_history[i].row);
-                    {
-                        /// 旧版本直接删掉，注意 _latest_row 可能指向该版本
-                        if(_latest_row == _write_history[i].row) {
-                            if(_latest_row != nullptr) {
-//                                bool res = txn->h_thd->manager_client_->WriteRow(_latest_row);
-//                                assert(res);
-                            }
-                            _latest_row = nullptr;
-                        }
-//                        delete _write_history[i].row;
-//                        _write_history[i].row = nullptr;
-                    }
 					_num_versions --;
 				}
 			}
@@ -500,6 +398,9 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 			_row = _write_history[idx].row;
 			_write_history[idx].row = row;
 			 */
+		    dbx1000::RowItem* temp = row_;
+			row_ = _write_history[idx].row;
+			_write_history[idx].row = temp;
 			_oldest_wts = temp_min_ts;
 			_num_versions --;
 		} else {
@@ -553,8 +454,6 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			if (_requests[i].ts > _max_served_rts)
 				_max_served_rts = _requests[i].ts;
 			_requests[i].valid = false;
-//			CheckLatestRow();   // test
-			if(nullptr == _latest_row) { GetLatestRow(txn); }
 			_requests[i].txn->cur_row = _latest_row;
 			_requests[i].txn->ts_ready = true;
 		}
@@ -564,11 +463,7 @@ void Row_mvcc::update_buffer(txn_man * txn, TsType type) {
 			dbx1000::RowItem * res_row = reserveRow(_requests[i].ts, txn);
 			/* assert(res_row);
 			res_row->copy(_latest_row); */
-            {
-//                CheckLatestRow();   // test
-                if(nullptr == _latest_row) { GetLatestRow(txn); }
-                memcpy(res_row->row_, _latest_row->row_, size_);
-            }
+            memcpy(res_row->row_, _latest_row->row_, size_);
 			_requests[i].valid = false;
 			_requests[i].txn->cur_row = res_row;
 			_requests[i].txn->ts_ready = true;

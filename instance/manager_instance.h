@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <atomic>
 #include <unordered_map>
+#include <vector>
 #include "common/lock_table/lock_table.h"
 #include "common/global.h"
 #include "common/mystats.h"
@@ -52,8 +53,7 @@ namespace dbx1000 {
         void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
         std::map<int, std::string>& host_map()                          { return this->host_map_; }
         Stats &stats()                                                  { return this->stats_; }
-//        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map()              { return this->mvcc_map_; }
-        std::array<Row_mvcc*, SYNTH_TABLE_SIZE> &mvcc_array()           { return this->mvcc_array_; }
+        std::vector<std::pair<weak_ptr<Row_mvcc>, bool>> *mvcc_vector() { return this->mvcc_vector_; }
         Query_queue* query_queue()                                      { return this->query_queue_; }
         workload* m_workload()                                          { return this->m_workload_; }
         RowHandler* row_handler()                                       { return this->row_handler_; }
@@ -74,8 +74,7 @@ namespace dbx1000 {
 
         atomic_uint64_t timestamp_;
         uint64_t*   all_ts_;
-//        std::unordered_map<uint64_t, Row_mvcc*> mvcc_map_;
-        std::array<Row_mvcc*, SYNTH_TABLE_SIZE> mvcc_array_;
+        std::vector<std::pair<weak_ptr<Row_mvcc>, bool>> *mvcc_vector_;
         txn_man** txn_man_;
         dbx1000::Stats stats_;
 

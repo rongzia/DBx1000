@@ -37,8 +37,7 @@ namespace dbx1000 {
 
     ManagerInstance::~ManagerInstance() {
         delete all_ts_;
-//        for(auto &iter:mvcc_map_) { delete iter.second; }
-        for(auto &iter:mvcc_array_) { delete iter; }
+        delete mvcc_vector_;
         delete query_queue_;
         delete m_workload_;
         delete buffer_;
@@ -47,7 +46,6 @@ namespace dbx1000 {
         delete table_space_;
         delete index_;
         delete lock_table_;
-//        delete buffer_manager_rpc_handler_;
     }
 
     ManagerInstance::ManagerInstance() { }
@@ -68,7 +66,7 @@ namespace dbx1000 {
         m_workload_->init();
         row_handler_ = new RowHandler(this);
 
-
+        mvcc_vector_ = new std::vector<std::pair<weak_ptr<Row_mvcc>, bool>>();
         InitMvccs();    // mvcc_map_ 在 m_workload_ 初始化后才能初始化
 
         this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
@@ -100,14 +98,12 @@ namespace dbx1000 {
 
     void ManagerInstance::InitMvccs() {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
+        mvcc_vector_->resize(g_synth_table_size);
         Profiler profiler;
         profiler.Start();
         uint32_t tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
         for (uint64_t  key = 0; key < g_synth_table_size; key++) {
-//            mvcc_map_.insert(std::pair<uint64_t, Row_mvcc *>(key, new Row_mvcc()));
-//            mvcc_map_[key]->init(key, tuple_size, this);
-            mvcc_array_[key] = new Row_mvcc();
-            mvcc_array_[key]->init(key, tuple_size, this);
+            mvcc_vector_->at(key).second = false;
         }
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;

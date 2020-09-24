@@ -42,7 +42,8 @@ namespace dbx1000 {
         uint64_t thd_id = txn->get_thd_id();
         TsType ts_type = (type == RD) ? R_REQ : P_REQ;
 //        rc = this->mvcc_map_[key]->access(txn, ts_type, row);
-        rc = this->manager_instance_->mvcc_array()[key]->access(txn, ts_type, row);
+        // rc = this->manager_instance_->mvcc_array()[key]->access(txn, ts_type, row);
+        rc = txn->mvcc_map_[key]->access(txn, ts_type, row);
         if (rc == RC::RCOK) {
             row = txn->cur_row;
         } else if (rc == RC::WAIT) {
@@ -62,11 +63,14 @@ namespace dbx1000 {
 #if CC_ALG == MVCC
         if (type == XP) {
 //            this->manager_instance_->mvcc_map_[key]->access(txn, XP_REQ, row);
-            this->manager_instance_->mvcc_array()[key]->access(txn, XP_REQ, row);
+            // this->manager_instance_->mvcc_array()[key]->access(txn, XP_REQ, row);
+            txn->mvcc_map_[key]->access(txn, XP_REQ, row);
         } else if (type == WR) {
             assert(type == WR && row != nullptr);
 //            this->manager_instance_->mvcc_map_[key]->access(txn, W_REQ, row);
-            this->manager_instance_->mvcc_array()[key]->access(txn, W_REQ, row);
+            // this->manager_instance_->mvcc_array()[key]->access(txn, W_REQ, row);
+            txn->mvcc_map_[key]->access(txn, W_REQ, row);
+
             assert(rc == RC::RCOK);
         }
 #endif

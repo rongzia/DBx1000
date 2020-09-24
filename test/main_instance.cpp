@@ -95,14 +95,11 @@ int main(int argc, char *argv[]) {
     managerInstance->stats().instance_run_time_ += profiler.Nanos();
     managerInstance->stats().print(managerInstance->instance_id());
     managerInstance->global_lock_service_client()->ReportResult(managerInstance->stats(), managerInstance->instance_id());
-//    cout << "instance run time : " << profiler.Nanos() / 1000UL << " us." << endl;
-//    cout << "instance throughtput : " << managerInstance->stats().txn_cnt * 1000000000L / profiler.Nanos() << " tps." << endl;
     AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
     AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
 
-    while(1) {};
-//    std::this_thread::sleep_for(chrono::seconds(10));
+    while(1) { this_thread::yield(); };
     delete managerInstance;
 
     return 0;

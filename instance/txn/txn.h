@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <cstdint>
+#include <memory>
 #include "common/global.h"
 
 class workload;
@@ -9,6 +10,7 @@ class row_t;
 class table_t;
 class base_query;
 class INDEX;
+class Row_mvcc;
 namespace dbx1000 {
     class RowItem;
 }
@@ -139,4 +141,6 @@ private:
 	RC 				validate_hekaton(RC rc);
 #endif
 	 */
+
+	std::map<uint64_t, shared_ptr<Row_mvcc>> mvcc_map_;
 };

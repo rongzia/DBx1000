@@ -8,7 +8,7 @@ class Catalog;
 class txn_man;
 namespace dbx1000 {
     class RowItem;
-    class ManagerInstance;
+    // class ManagerInstance;
 };
 
 // Only a constant number of versions can be maintained.
@@ -35,21 +35,19 @@ struct ReqEntry {
 
 class Row_mvcc {
 public:
-	void init(uint64_t key, size_t size, dbx1000::ManagerInstance*);
+	void init(table_t*, uint64_t key);		/// key only for debug
 	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
 	~Row_mvcc();
 private:
  	/* pthread_mutex_t * latch; */
 	volatile bool blatch;
-	volatile bool recycle_latch;
 
 	/* row_t * _row; */
 	uint64_t key_;
-	size_t size_;
 	dbx1000::RowItem* row_;
-	dbx1000::ManagerInstance* manager_instance_;
+	size_t size_;
 
-	/* RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0); */
+	RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0);
 	void update_buffer(txn_man * txn, TsType type);
 	void buffer_req(TsType type, txn_man * txn, bool served);
 
@@ -79,14 +77,8 @@ private:
 	void double_list(uint32_t list);
 	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
 
-	bool flush_req_;
-//	bool
-	bool Invalid();
-	void GetLatestRow(txn_man * txn);
-	void GetLatestRowForTest(txn_man * txn);
+	dbx1000::RowItem* GetRow();
 	void CheckLatestRow();
-	bool RecycleALL();
-	void PrintWriteHistory(ts_t ts);
 };
 
 #endif
