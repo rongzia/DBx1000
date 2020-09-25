@@ -41,7 +41,7 @@ private:
     //! 获取下一个时间戳
 	ts_t 		get_next_ts();
 
-	/* RC	 		runTest(txn_man * txn); */
+	RC	 		runTest(txn_man * txn);
 	drand48_data buffer;
 
 	// A restart buffer for aborted txns.

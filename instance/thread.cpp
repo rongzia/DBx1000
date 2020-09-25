@@ -22,7 +22,7 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 	for (int i = 0; i < _abort_buffer_size; i++)
 		_abort_buffer[i].query = NULL;
 	_abort_buffer_empty_slots = _abort_buffer_size;                         //! 10
-	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "false");     //! true
+	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");     //! true
 }
 
 uint64_t thread_t::get_thd_id() { return _thd_id; }
@@ -123,7 +123,7 @@ RC thread_t::run() {
 			//! _abort_buffer_enable  == false
 			else {
 			    //! 上次事务执行成功则获取新的 query，否则 m_query 仍然指向上次的 query，事务仍然执行上次的查询
-//				if (rc == RC::RCOK)
+				if (rc == RC::RCOK)
 					m_query =  manager_client_->query_queue()->get_next_query( _thd_id );
 			}
 		}
@@ -258,9 +258,6 @@ RC thread_t::run() {
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
             */
-//            this->_wl->sim_done_.store(true);
-//			delete m_txn;
-//			cout << "thread done." << endl;
             return RC::FINISH;
 	    }
 
