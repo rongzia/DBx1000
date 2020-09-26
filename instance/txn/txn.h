@@ -11,9 +11,6 @@ class table_t;
 class base_query;
 class INDEX;
 class Row_mvcc;
-namespace dbx1000 {
-    class RowItem;
-}
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -24,11 +21,11 @@ enum TxnType {VLL_Blocked, VLL_Free};
 class Access {
 public:
 	access_t 	type;
-	dbx1000::RowItem * 	orig_row;   //! 事务开始前，从索引里读出来的 row_t
+    row_t * 	orig_row;   //! 事务开始前，从索引里读出来的 row_t
 	//! 事务开始后，txn_man::get_row() -> row_t::get_row() -> Row_mvcc::access() 读出来的 row_t。
 	//! 可能是指向当前 row_t，也可能指向新分配的 row_t(待写入)，也可能是指向的一个旧版本
-	dbx1000::RowItem * 	data;
-	dbx1000::RowItem * 	orig_data;
+    row_t * 	data;
+    row_t * 	orig_data;
 	/*
 	void cleanup();
 #if CC_ALG == TICTOC
@@ -68,7 +65,7 @@ public:
 	/*
 	pthread_mutex_t txn_lock;
 	 */
-	dbx1000::RowItem * volatile cur_row;
+	row_t * volatile cur_row;
 	/*
 #if CC_ALG == HEKATON
 	void * volatile history_entry;
@@ -111,7 +108,7 @@ public:
 	itemid_t *		index_read(INDEX * index, idx_key_t key, int part_id);
 	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
 	 */
-	dbx1000::RowItem * 		get_row(uint64_t key, access_t type);
+    row_t * 		get_row(uint64_t key, access_t type);
 	/*
 protected:	
 	void 			insert_row(row_t * row, table_t * table);

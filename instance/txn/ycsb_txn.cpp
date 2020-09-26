@@ -7,10 +7,10 @@
 
 #include "common/buffer/buffer.h"
 #include "common/index/index.h"
-#include "common/storage/tablespace/row_item.h"
 #include "common/storage/catalog.h"
+#include "common/storage/row.h"
 #include "common/storage/table.h"
-#include "common/workload/ycsb_wl.h"
+#include "common/workload/ycsb.h"
 #include "common/myhelper.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/concurrency_control/row_mvcc.h"
@@ -349,7 +349,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 #endif
             row_t * row = ((row_t *)m_item->location);
              */
-            dbx1000::RowItem *row_local;
+            row_t *row_local;
             access_t type = req->rtype;
 
             /**
@@ -376,7 +376,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
                 goto final;
             }
             size_t size = _wl->the_table->get_schema()->tuple_size;
-            assert(row_local->size_ == size);
+            assert(row_local->get_tuple_size() == size);
 
             // Computation //
             // Only do computation when there are more than 1 requests.
@@ -384,14 +384,14 @@ RC ycsb_txn_man::run_txn(base_query *query) {
                 if (req->rtype == RD || req->rtype == SCAN) {
 //                  for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
                     int fid = 0;
-                    char *data = row_local->row_;
+                    char *data = row_local->get_data();
                     __attribute__((unused)) uint64_t fval = *(uint64_t *) (&data[fid * 10]);
 //                  }
                 } else {
                     assert(req->rtype == WR);
 //					for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
                     int fid = 0;
-                    char *data = row_local->row_;
+                    char *data = row_local->get_data();
                     /* *(uint64_t *)(&data[fid * 10]) = 0; */
                     /// 写入事务 id, 当做版本号
                     memcpy(&data[size - sizeof(uint64_t)], &timestamp, sizeof(uint64_t));

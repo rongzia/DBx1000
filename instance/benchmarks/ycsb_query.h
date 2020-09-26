@@ -22,9 +22,8 @@ public:
 
 class ycsb_query : public base_query {
 public:
-	void init(int thread_id) { assert(false); };
-//	void init(int thread_id, Query_thd * query_thd);
-	void init(Query_thd * query_thd);
+    void init(uint64_t thd_id, workload * h_wl) { assert(false); };
+    void init(uint64_t thd_id, Query_thd * query_thd);
 	static void calculateDenom();       //! 生成 denom
 
 	uint64_t request_cnt;

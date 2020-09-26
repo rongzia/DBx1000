@@ -12,7 +12,7 @@ class table_t;
 //class IndexHash;
 //class index_btree;
 class Catalog;
-class lock_man;
+//class lock_man;
 //class txn_man;
 //class thread_t;
 //class index_base;
@@ -20,9 +20,7 @@ class Timestamp;
 //class Mvcc;
 class Row_mvcc;
 
-namespace leveldb {
-    class DB;
-}
+
 namespace dbx1000{
     class Arena;
     class Buffer;

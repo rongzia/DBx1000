@@ -1,15 +1,14 @@
 #include "query.h"
 #include "tpcc_query.h"
-#include "tpcc.h"
-#include "tpcc_helper.h"
-#include "mem_alloc.h"
-#include "wl.h"
-#include "table.h"
+//#include "tpcc.h"
+#include "common/workload/tpcc_helper.h"
+//#include "mem_alloc.h"
+//#include "wl.h"
+#include "common/storage/table.h"
 
-void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
+void tpcc_query::init(uint64_t thd_id, Query_thd * query_thd) {
 	double x = (double)(rand() % 100) / 100.0;
-	part_to_access = (uint64_t *) 
-		mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
+	part_to_access = new uint64_t ();
 	if (x < g_perc_payment)
 		gen_payment(thd_id);
 	else 
@@ -72,14 +71,15 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	rbk = URand(1, 100, w_id-1);
 	ol_cnt = URand(5, 15, w_id-1);
 	o_entry_d = 2013;
-	items = (Item_no *) _mm_malloc(sizeof(Item_no) * ol_cnt, 64);
+//	items = (Item_no *) _mm_malloc(sizeof(Item_no) * ol_cnt, 64);
+	items = new Item_no();
 	remote = false;
 	part_to_access[0] = wh_to_part(w_id);
 	part_num = 1;
 
-	for (UInt32 oid = 0; oid < ol_cnt; oid ++) {
+	for (uint32_t oid = 0; oid < ol_cnt; oid ++) {
 		items[oid].ol_i_id = NURand(8191, 1, g_max_items, w_id-1);
-		UInt32 x = URand(1, 100, w_id-1);
+        uint32_t x = URand(1, 100, w_id-1);
 		if (x > 1 || g_num_wh == 1)
 			items[oid].ol_supply_w_id = w_id;
 		else  {
@@ -89,22 +89,22 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 		items[oid].ol_quantity = URand(1, 10, w_id-1);
 	}
 	// Remove duplicate items
-	for (UInt32 i = 0; i < ol_cnt; i ++) {
-		for (UInt32 j = 0; j < i; j++) {
+	for (uint32_t i = 0; i < ol_cnt; i ++) {
+		for (uint32_t j = 0; j < i; j++) {
 			if (items[i].ol_i_id == items[j].ol_i_id) {
-				for (UInt32 k = i; k < ol_cnt - 1; k++)
+				for (uint32_t k = i; k < ol_cnt - 1; k++)
 					items[k] = items[k + 1];
 				ol_cnt --;
 				i--;
 			}
 		}
 	}
-	for (UInt32 i = 0; i < ol_cnt; i ++) 
-		for (UInt32 j = 0; j < i; j++) 
+	for (uint32_t i = 0; i < ol_cnt; i ++)
+		for (uint32_t j = 0; j < i; j++)
 			assert(items[i].ol_i_id != items[j].ol_i_id);
 	// update part_to_access
-	for (UInt32 i = 0; i < ol_cnt; i ++) {
-		UInt32 j;
+	for (uint32_t i = 0; i < ol_cnt; i ++) {
+        uint32_t j;
 		for (j = 0; j < part_num; j++ ) 
 			if (part_to_access[j] == wh_to_part(items[i].ol_supply_w_id))
 				break;

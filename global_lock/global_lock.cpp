@@ -15,7 +15,7 @@
 #include "common/storage/tablespace/tablespace.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
-#include "common/workload/ycsb_wl.h"
+#include "common/workload/ycsb.h"
 #include "common/workload/wl.h"
 #include "common/global.h"
 #include "common/myhelper.h"

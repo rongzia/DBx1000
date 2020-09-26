@@ -7,23 +7,22 @@
 #include "instance/concurrency_control/row_mvcc.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
+#include "common/storage/row.h"
 #include "common/storage/table.h"
 #include "common/storage/catalog.h"
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/page.h"
 #include "common/storage/row_handler.h"
-#include "common/workload/ycsb_wl.h"
+#include "common/workload/ycsb.h"
 #include "common/workload/wl.h"
 #include "common/mystats.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
 	this->h_wl = h_wl;
-	/*
-	pthread_mutex_init(&txn_lock, NULL);
+	/* pthread_mutex_init(&txn_lock, NULL);
 	lock_ready = false;
-	ready_part = 0;
-	 */
+	ready_part = 0; */
 	row_cnt = 0;
 	wr_cnt = 0;
 	/* insert_cnt = 0; */
@@ -78,7 +77,6 @@ ts_t txn_man::get_ts() {
 }
 
 void txn_man::cleanup(RC rc) {
-//    cout << "txn_man::cleanup" << endl;
     /*
 #if CC_ALG == HEKATON
 	row_cnt = 0;
@@ -88,13 +86,11 @@ void txn_man::cleanup(RC rc) {
 #endif
      */
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
-		dbx1000::RowItem * orig_r = accesses[rid]->orig_row;
+		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
 		if (type == WR && rc == RC::Abort) {
 			type = XP;
 		}
-//		cout << "key cleanup: " << accesses[rid]->data->key_ << ", type:" << (accesses[rid]->type == access_t::RD ? "RD" : "WR") << endl;
-
     /*
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
 		if (type == RD) {
@@ -113,7 +109,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
 //            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
-            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
+            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->get_primary_key(), type, this, accesses[rid]->data);
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
@@ -144,14 +140,14 @@ void txn_man::cleanup(RC rc) {
 	 */
 }
 
-dbx1000::RowItem * txn_man::get_row(uint64_t key, access_t type) {
-    dbx1000::Profiler profiler;
-    profiler.Start();
+row_t * txn_man::get_row(uint64_t key, access_t type) {
     /*
 	if (CC_ALG == HSTORE)
 		return row;
 	uint64_t starttime = get_sys_clock();
      */
+    dbx1000::Profiler profiler;
+    profiler.Start();
 	RC rc = RC::RCOK;
 	if (accesses[row_cnt] == nullptr) {
 		Access * access = new Access();
@@ -172,12 +168,14 @@ dbx1000::RowItem * txn_man::get_row(uint64_t key, access_t type) {
 	/// accesses[i] 不为 RowItem:row_ 申请空间，读写空间都是指向的 row_mvcc_ 里面的 RowItem
 	/* rc = row->get_row(type, this, accesses[ row_cnt ]->data); */
 	rc = this->h_thd->manager_client_->row_handler()->GetRow(key, type, this, accesses[row_cnt]->data);
+
+
 	if (rc == RC::Abort) {
 		return NULL;
 	}
     assert(accesses[row_cnt]->data == this->cur_row);
-    assert(accesses[row_cnt]->data->key_ == key);
-    assert(accesses[row_cnt]->data->size_ == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
+    assert(accesses[row_cnt]->data->get_primary_key() == key);
+    assert(accesses[row_cnt]->data->get_tuple_size() == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
 
 	accesses[row_cnt]->type = type;
 	/*

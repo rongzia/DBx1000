@@ -1,6 +1,9 @@
+#include <cstring>
+#include <cassert>
 #include "tpcc_helper.h"
 
-drand48_data ** tpcc_buffer;
+drand48_data ** tpcc_buffer = new drand48_data * [g_num_wh];
+
 
 uint64_t distKey(uint64_t d_id, uint64_t d_w_id)  {
 	return d_w_id * DIST_PER_WARE + d_id; 
@@ -105,7 +108,7 @@ uint64_t MakeAlphaString(int min, int max, char* str, uint64_t thd_id) {
 uint64_t MakeNumberString(int min, int max, char* str, uint64_t thd_id) {
 
   uint64_t cnt = URand(min, max, thd_id);
-  for (UInt32 i = 0; i < cnt; i++) {
+  for (uint32_t i = 0; i < cnt; i++) {
     uint64_t r = URand(0L,9L, thd_id);
     str[i] = '0' + r;
   }

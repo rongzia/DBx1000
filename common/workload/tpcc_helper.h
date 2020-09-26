@@ -1,6 +1,6 @@
 #pragma once
-#include "global.h"
-#include "helper.h"
+#include "common/global.h"
+#include "common/myhelper.h"
 
 uint64_t distKey(uint64_t d_id, uint64_t d_w_id);
 uint64_t custKey(uint64_t c_id, uint64_t c_d_id, uint64_t c_w_id);

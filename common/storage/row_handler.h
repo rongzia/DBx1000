@@ -9,6 +9,7 @@
 
 
 class txn_man;
+class row_t;
 namespace dbx1000 {
 
     class RowItem;
@@ -16,8 +17,8 @@ namespace dbx1000 {
     class RowHandler {
     public:
         RowHandler(ManagerInstance *);
-        RC GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&);
-        void ReturnRow(uint64_t key, access_t type, txn_man *txn, RowItem *);
+        RC GetRow(uint64_t key, access_t type, txn_man *txn, row_t *&);
+        void ReturnRow(uint64_t key, access_t type, txn_man *txn, row_t *);
         bool SnapShotReadRow(RowItem *row);
         bool ReadRow(RowItem *row);
         bool WriteRow(RowItem *row);

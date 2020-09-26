@@ -43,8 +43,11 @@ set(COMMON_FILES
         common/lock_table/lock_table.cpp
         common/lock_table/test_lock_table.cpp
         common/storage/catalog.cpp
+        common/storage/row.cpp
         common/storage/row_handler.cpp
         common/storage/table.cpp
+        common/workload/tpcc_wl.cpp
+        common/workload/tpcc_helper.cpp
         common/workload/ycsb_wl.cpp
         common/workload/wl.cpp
         common/global.cpp
@@ -57,11 +60,11 @@ set(COMMON_FILES
         config.cpp
         )
 set(INSTANCE_FILES
+        instance/benchmarks/tpcc_query.cpp
         instance/benchmarks/ycsb_query.cpp
         instance/benchmarks/query.cpp
         instance/concurrency_control/row_mvcc.cpp
-#        instance/concurrency_control/occ.cpp
-#        instance/concurrency_control/row_occ.cpp
+        instance/txn/tpcc_txn.cpp
         instance/txn/ycsb_txn.cpp
         instance/txn/txn.cpp
         instance/manager_instance.cpp
@@ -147,3 +150,6 @@ target_link_libraries(other_test pthread tbb)
 
 add_executable(test_mvcc test/test_mvcc.cpp ${INSTANCE_FILES} ${COMMON_FILES})
 target_link_libraries(test_mvcc global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+
+add_executable(test_query test/test_query.cpp ${INSTANCE_FILES} ${COMMON_FILES})
+target_link_libraries(test_query global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)

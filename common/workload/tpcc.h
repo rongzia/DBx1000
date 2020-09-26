@@ -13,7 +13,7 @@ public:
 	RC init();
 	RC init_table();
 	RC init_schema(const char * schema_file);
-	RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd);
+	/* RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd); */
 	table_t * 		t_warehouse;
 	table_t * 		t_district;
 	table_t * 		t_customer;
@@ -59,6 +59,7 @@ private:
 	static void * threadInitWarehouse(void * This);
 };
 
+/*
 class tpcc_txn_man : public txn_man
 {
 public:
@@ -72,5 +73,5 @@ private:
 	RC run_delivery(tpcc_query * query);
 	RC run_stock_level(tpcc_query * query);
 };
-
+*/
 #endif

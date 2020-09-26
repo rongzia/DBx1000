@@ -12,7 +12,7 @@
 #include "common/storage/tablespace/tablespace.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
-#include "common/workload/ycsb_wl.h"
+#include "common/workload/ycsb.h"
 #include "common/myhelper.h"
 #include "common/mystats.h"
 #include "json/json.h"
@@ -37,7 +37,7 @@ namespace dbx1000 {
      * @param row
      * @return
      */
-    RC RowHandler::GetRow(uint64_t key, access_t type, txn_man *txn, RowItem *&row) {
+    RC RowHandler::GetRow(uint64_t key, access_t type, txn_man *txn, row_t *&row) {
         RC rc = RC::RCOK;
         uint64_t thd_id = txn->get_thd_id();
         TsType ts_type = (type == RD) ? R_REQ : P_REQ;
@@ -58,7 +58,7 @@ namespace dbx1000 {
         return rc;
     }
 
-    void RowHandler::ReturnRow(uint64_t key, access_t type, txn_man *txn, RowItem *row) {
+    void RowHandler::ReturnRow(uint64_t key, access_t type, txn_man *txn, row_t *row) {
         RC rc = RC::RCOK;
 #if CC_ALG == MVCC
         if (type == XP) {

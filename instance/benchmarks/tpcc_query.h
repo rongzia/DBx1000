@@ -1,8 +1,7 @@
 #ifndef _TPCC_QUERY_H_
 #define _TPCC_QUERY_H_
 
-#include "global.h"
-#include "helper.h"
+#include "config.h"
 #include "query.h"
 
 class workload;
@@ -17,6 +16,7 @@ struct Item_no {
 class tpcc_query : public base_query {
 public:
 	void init(uint64_t thd_id, workload * h_wl);
+    void init(uint64_t thd_id, Query_thd * query_thd);
 	TPCCTxnType type;
 	/**********************************************/	
 	// common txn input for both payment & new-order

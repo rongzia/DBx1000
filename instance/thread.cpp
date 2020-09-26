@@ -9,6 +9,7 @@
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/query.h"
 #include "instance/txn/ycsb_txn.h"
+#include "instance/txn/tpcc_txn.h"
 #include "instance/txn/txn.h"
 #include "instance/manager_instance.h"
 
@@ -62,7 +63,12 @@ RC thread_t::run() {
 	rdm.init(get_thd_id());
      */
 	RC rc = RC::RCOK;
-	txn_man * m_txn = new ycsb_txn_man();
+    txn_man * m_txn;
+    switch (WORKLOAD) {
+        case YCSB : m_txn = new ycsb_txn_man(); break;
+        case TPCC : m_txn = new tpcc_txn_man(); break;
+        default: assert(false);
+    }
     m_txn->init(this, this->_wl, this->get_thd_id());
 	/* rc = _wl->get_txn_man(m_txn, this);
 	assert (rc == RCOK);

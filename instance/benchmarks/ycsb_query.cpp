@@ -7,15 +7,15 @@
 uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;
 
-void ycsb_query::init(Query_thd* query_thd) {
+void ycsb_query::init(uint64_t thd_id, Query_thd* query_thd) {
     request_cnt = 0;
 	_query_thd = query_thd;
-    requests = new (_query_thd->queryQueue_->arenas_[_query_thd->thread_id_]->Allocate(sizeof(ycsb_request) * g_req_per_query)) ycsb_request[g_req_per_query]();
-    part_to_access = new (_query_thd->queryQueue_->arenas_[_query_thd->thread_id_]->Allocate(sizeof(uint64_t) * g_req_per_query)) uint64_t();
+    requests = new (_query_thd->arena_->Allocate(sizeof(ycsb_request) * g_req_per_query)) ycsb_request[g_req_per_query]();
+    part_to_access = new (_query_thd->arena_->Allocate(sizeof(uint64_t) * g_req_per_query)) uint64_t();
 	zeta_2_theta = zeta(2, g_zipf_theta);   //! 1.65975
 	assert(the_n != 0);
 	assert(denom != 0);
-	gen_requests(_query_thd->thread_id_);
+	gen_requests(thd_id);
 }
 
 void ycsb_query::calculateDenom()

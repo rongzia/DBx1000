@@ -6,10 +6,7 @@
 class table_t;
 class Catalog;
 class txn_man;
-namespace dbx1000 {
-    class RowItem;
-    // class ManagerInstance;
-};
+class row_t;
 
 // Only a constant number of versions can be maintained.
 // If a request accesses an old version that has been recycled,   
@@ -20,7 +17,7 @@ struct WriteHisEntry {
 	bool valid;		// whether the entry contains a valid version
 	bool reserved; 	// when valid == false, whether the entry is reserved by a P_REQ 
 	ts_t ts;
-	dbx1000::RowItem * row;
+    row_t * row;
 };
 
 struct ReqEntry {
@@ -36,15 +33,14 @@ struct ReqEntry {
 class Row_mvcc {
 public:
 	void init(table_t*, uint64_t key);		/// key only for debug
-	RC access(txn_man * txn, TsType type, dbx1000::RowItem * row);
+	RC access(txn_man * txn, TsType type, row_t * row);
 	~Row_mvcc();
 private:
  	/* pthread_mutex_t * latch; */
 	volatile bool blatch;
 
-	/* row_t * _row; */
+	row_t * _row;
 	uint64_t key_;
-	dbx1000::RowItem* row_;
 	size_t size_;
 
 	RC conflict(TsType type, ts_t ts, uint64_t thd_id = 0);
@@ -52,7 +48,7 @@ private:
 	void buffer_req(TsType type, txn_man * txn, bool served);
 
 	// Invariant: all valid entries in _requests have greater ts than any entry in _write_history 
-	dbx1000::RowItem * 		_latest_row;
+    row_t * 		_latest_row;
 	ts_t			_latest_wts;
 	ts_t			_oldest_wts;
 	WriteHisEntry * _write_history;
@@ -75,9 +71,9 @@ private:
 	// list = 0: _write_history
 	// list = 1: _requests
 	void double_list(uint32_t list);
-	dbx1000::RowItem * reserveRow(ts_t ts, txn_man * txn);
+    row_t * reserveRow(ts_t ts, txn_man * txn);
 
-	dbx1000::RowItem* GetRow();
+    row_t* GetRow(table_t* table, uint64_t key);
 	void CheckLatestRow();
 };
 
