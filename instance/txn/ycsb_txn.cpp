@@ -274,33 +274,6 @@ RC AsyncGetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) 
     return RC::RCOK;
 }
 
-void GetMvccSharedPtrs(ycsb_query *m_query, ycsb_txn_man *m_ycsb_txn_man) {
-    std::vector<std::pair<weak_ptr<Row_mvcc>, bool>> *global_mvcc_vector = m_ycsb_txn_man->h_thd->manager_client_->mvcc_vector();
-    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
-        ycsb_request *req = &m_query->requests[rid];
-        shared_ptr<Row_mvcc> shared_p;
-        while(!ATOM_CAS(global_mvcc_vector->at(req->key).second, false, true))
-            PAUSE
-        shared_p = global_mvcc_vector->at(req->key).first.lock();
-        if(global_mvcc_vector->at(req->key).first.expired()) {
-            assert(shared_p == nullptr);
-            assert(global_mvcc_vector->at(req->key).first.use_count() == 0);
-            assert(global_mvcc_vector->at(req->key).first.expired());
-            shared_p = make_shared<Row_mvcc>();
-            global_mvcc_vector->at(req->key).first = shared_p;
-            shared_p->init(((ycsb_wl *)(m_ycsb_txn_man->h_thd->manager_client_->m_workload()))->the_table, req->key);
-        } else {
-            assert(!global_mvcc_vector->at(req->key).first.expired());
-            // shared_p = global_mvcc_vector[key].first.lock();
-            assert(shared_p != nullptr);
-            assert(global_mvcc_vector->at(req->key).first.use_count() > 0 || global_mvcc_vector->at(req->key).first.use_count() <=10);
-            assert(!global_mvcc_vector->at(req->key).first.expired());
-        }
-        global_mvcc_vector->at(req->key).second = false;
-        m_ycsb_txn_man->mvcc_map_.insert(make_pair(req->key, shared_p));
-    }
-}
-
 RC ycsb_txn_man::run_txn(base_query *query) {
     if(txn_id % 1000 == 0) {
         cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
@@ -321,7 +294,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
         for (auto iter : write_page_set) { lockTable->RemoveThread(iter, this->get_thd_id()); }
         return rc;
     }
-    GetMvccSharedPtrs(m_query, this);
+//    GetMvccSharedPtrs(query);
     /* ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL; */
     row_cnt = 0;
@@ -368,7 +341,8 @@ RC ycsb_txn_man::run_txn(base_query *query) {
             assert(real_key < g_synth_table_size);
             row_local = get_row(real_key , type);
 #else
-            row_local = get_row(req->key, type);
+            GetMvccSharedPtr(TABLES::MAIN_TABLE, req->key);
+            row_local = get_row(TABLES::MAIN_TABLE, req->key, type);
 //			cout << "key: " << req->key << ", type:" << (req->rtype == access_t::WR ? "WR" : "RD") << endl;
 #endif
             if (row_local == NULL) {
@@ -415,6 +389,6 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     for (auto iter : write_page_set) { lockTable->RemoveThread(iter, this->get_thd_id()); }
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " end." << endl;
 
-    mvcc_map_.clear();
+    mvcc_maps_.clear();
     return rc;
 }

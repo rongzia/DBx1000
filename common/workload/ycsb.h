@@ -3,7 +3,7 @@
 //
 
 #ifndef DBX1000_YCSB_H
-#define DBX1000_YCSB_WL_H
+#define DBX1000_YCSB_H
 
 #include <atomic>
 #include "wl.h"

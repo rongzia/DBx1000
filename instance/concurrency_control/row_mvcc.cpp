@@ -140,10 +140,12 @@ Row_mvcc::double_list(uint32_t list)
 
 row_t* Row_mvcc::GetRow(table_t* table, uint64_t key) {
     assert(_num_versions == 0);
-    row_t* new_row = new row_t();
-    new_row->init(table, key);
+    row_t* new_row;
+    uint64_t row_id;
+    table->get_new_row(new_row, 0, row_id);
     new_row->set_primary_key(key);
     new_row->set_value(0, &key);
+    new_row->table = table;
     return new_row;
     // bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->_row);
     // assert(res);

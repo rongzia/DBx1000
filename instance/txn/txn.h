@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include "common/global.h"
 
 class workload;
@@ -38,7 +39,7 @@ public:
 	void * 		history_entry;
 #endif
 	 */
-
+    TABLES table;
 };
 
 //! 每个线程持有一个，在 thread_t::run() 中声明，并在 workload::get_txn_man() 中初始化
@@ -108,7 +109,7 @@ public:
 	itemid_t *		index_read(INDEX * index, idx_key_t key, int part_id);
 	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
 	 */
-    row_t * 		get_row(uint64_t key, access_t type);
+    row_t * 		get_row(TABLES table, uint64_t key, access_t type);
 	/*
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
@@ -139,5 +140,9 @@ private:
 #endif
 	 */
 
-	std::map<uint64_t, shared_ptr<Row_mvcc>> mvcc_map_;
+	std::map<TABLES, std::map<uint64_t, shared_ptr<Row_mvcc>>> mvcc_maps_;
+
+    void GetMvccSharedPtrs(base_query *query);
+    void GetMvccSharedPtrs(base_query *query, TPCCTxnType type);
+    void GetMvccSharedPtr(TABLES , uint64_t key);
 };

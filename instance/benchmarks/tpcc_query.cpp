@@ -49,6 +49,7 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 		} else 
 			c_w_id = w_id;
 	}
+	/*
 	if(y <= 60) {
 		// by last name
 		by_last_name = true;
@@ -57,7 +58,10 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 		// by cust id
 		by_last_name = false;
 		c_id = NURand(1023, 1, g_cust_per_dist,w_id-1);
-	}
+	}*/
+    // by cust id
+    by_last_name = false;
+    c_id = NURand(1023, 1, g_cust_per_dist,w_id-1);
 }
 
 void tpcc_query::gen_new_order(uint64_t thd_id) {

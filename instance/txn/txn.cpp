@@ -4,6 +4,7 @@
 #include "txn.h"
 
 #include "instance/benchmarks/ycsb_query.h"
+#include "instance/benchmarks/tpcc_query.h"
 #include "instance/concurrency_control/row_mvcc.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
@@ -14,8 +15,11 @@
 #include "common/storage/tablespace/page.h"
 #include "common/storage/row_handler.h"
 #include "common/workload/ycsb.h"
+#include "common/workload/tpcc.h"
+#include "common/workload/tpcc_helper.h"
 #include "common/workload/wl.h"
 #include "common/mystats.h"
+#include "common/myhelper.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
@@ -109,7 +113,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
 //            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
-            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->data->get_primary_key(), type, this, accesses[rid]->data);
+            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->table, accesses[rid]->data->get_primary_key(), type, this, accesses[rid]->data);
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
@@ -140,7 +144,7 @@ void txn_man::cleanup(RC rc) {
 	 */
 }
 
-row_t * txn_man::get_row(uint64_t key, access_t type) {
+row_t * txn_man::get_row(TABLES table, uint64_t key, access_t type) {
     /*
 	if (CC_ALG == HSTORE)
 		return row;
@@ -167,7 +171,7 @@ row_t * txn_man::get_row(uint64_t key, access_t type) {
 	}
 	/// accesses[i] 不为 RowItem:row_ 申请空间，读写空间都是指向的 row_mvcc_ 里面的 RowItem
 	/* rc = row->get_row(type, this, accesses[ row_cnt ]->data); */
-	rc = this->h_thd->manager_client_->row_handler()->GetRow(key, type, this, accesses[row_cnt]->data);
+	rc = this->h_thd->manager_client_->row_handler()->GetRow(table, key, type, this, accesses[row_cnt]->data);
 
 
 	if (rc == RC::Abort) {
@@ -175,9 +179,10 @@ row_t * txn_man::get_row(uint64_t key, access_t type) {
 	}
     assert(accesses[row_cnt]->data == this->cur_row);
     assert(accesses[row_cnt]->data->get_primary_key() == key);
-    assert(accesses[row_cnt]->data->get_tuple_size() == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
+//    assert(accesses[row_cnt]->data->get_tuple_size() == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
 
 	accesses[row_cnt]->type = type;
+	accesses[row_cnt]->table = table;
 	/*
 	accesses[row_cnt]->orig_row = row;
 #if CC_ALG == TICTOC
@@ -286,3 +291,99 @@ void txn_man::release() {
 	mem_allocator.free(accesses, 0);
 }
 */
+
+void txn_man::GetMvccSharedPtrs(base_query *query) {
+#if WORKLOAD == YCSB
+    ycsb_query* m_query = (ycsb_query*)query;
+    unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *global_mvcc_maps
+            = this->h_thd->manager_client_->mvcc_vector(TABLES::MAIN_TABLE);
+    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
+        ycsb_request *req = &m_query->requests[rid];
+        shared_ptr<Row_mvcc> shared_p;
+        while(!ATOM_CAS(global_mvcc_maps->at(req->key).second, false, true))
+            PAUSE
+                    shared_p = global_mvcc_maps->at(req->key).first.lock();
+        if(global_mvcc_maps->at(req->key).first.expired()) {
+            assert(shared_p == nullptr);
+            assert(global_mvcc_maps->at(req->key).first.use_count() == 0);
+            assert(global_mvcc_maps->at(req->key).first.expired());
+            shared_p = make_shared<Row_mvcc>();
+            global_mvcc_maps->at(req->key).first = shared_p;
+            shared_p->init(((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table, req->key);
+        } else {
+            assert(!global_mvcc_maps->at(req->key).first.expired());
+            // shared_p = global_mvcc_maps[key].first.lock();
+            assert(shared_p != nullptr);
+            assert(global_mvcc_maps->at(req->key).first.use_count() > 0 || global_mvcc_maps->at(req->key).first.use_count() <=10);
+            assert(!global_mvcc_maps->at(req->key).first.expired());
+        }
+        global_mvcc_maps->at(req->key).second = false;
+        this->mvcc_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, shared_p));
+    }
+#endif
+}
+void txn_man::GetMvccSharedPtrs(base_query *query, TPCCTxnType type) {
+#if WORKLOAD == TPCC
+    tpcc_query* m_query = (tpcc_query*)query;
+    std::map<TABLES, unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *> *global_mvcc_maps
+            = this->h_thd->manager_client_->mvcc_vectors();
+
+    GetMvccSharedPtr(TABLES::WAREHOUSE, m_query->w_id);
+    GetMvccSharedPtr(TABLES::DISTRICT, distKey(m_query->d_id, m_query->d_w_id));
+    GetMvccSharedPtr(TABLES::CUSTOMER, custKey(m_query->c_id, m_query->c_d_id, m_query->c_w_id));
+
+    switch (m_query->type) {
+        case TPCC_PAYMENT : break;
+        case TPCC_NEW_ORDER :
+        {
+            for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
+                GetMvccSharedPtr(TABLES::ITEM, m_query->items[ol_number].ol_i_id);
+                GetMvccSharedPtr(TABLES::STOCK, stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id));
+            }
+            break;
+        }
+        default:
+            assert(false);
+    }
+#endif
+}
+
+table_t* GetTable(TABLES table, txn_man* txnMan) {
+    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_warehouse; }
+    if(table == TABLES::ITEM) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_item; }
+    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_district; }
+    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_customer; }
+    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_history; }
+    if(table == TABLES::STOCK) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_stock; }
+    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_neworder; }
+    if(table == TABLES::ORDER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_order; }
+    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_orderline; }
+}
+
+void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
+    auto global_mvcc_map_i = h_thd->manager_client_->mvcc_vectors()->at(table);
+    shared_ptr<Row_mvcc> shared_p;
+    while(!ATOM_CAS(global_mvcc_map_i->at(key).second, false, true))
+        PAUSE
+    shared_p = global_mvcc_map_i->at(key).first.lock();
+    if(global_mvcc_map_i->at(key).first.expired()) {
+        assert(shared_p == nullptr);
+        assert(global_mvcc_map_i->at(key).first.use_count() == 0);
+        assert(global_mvcc_map_i->at(key).first.expired());
+        shared_p = make_shared<Row_mvcc>();
+        global_mvcc_map_i->at(key).first = shared_p;
+#if WORKLOAD == YCSB
+        shared_p->init(((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table, key);
+#elif WORKLOAD == TPCC
+        shared_p->init(GetTable(table, this), key);
+#endif
+    } else {
+        assert(!global_mvcc_map_i->at(key).first.expired());
+        // shared_p = global_mvcc_map_i[key].first.lock();
+        assert(shared_p != nullptr);
+        assert(global_mvcc_map_i->at(key).first.use_count() > 0 || global_mvcc_map_i->at(key).first.use_count() <=10);
+        assert(!global_mvcc_map_i->at(key).first.expired());
+    }
+    global_mvcc_map_i->at(key).second = false;
+    this->mvcc_maps_[table].insert(make_pair(key, shared_p));
+}

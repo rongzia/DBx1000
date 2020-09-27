@@ -17,6 +17,8 @@
 #include "common/storage/row_handler.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb.h"
+#include "common/workload/tpcc.h"
+#include "common/workload/tpcc_helper.h"
 #include "common/workload/wl.h"
 #include "common/global.h"
 #include "common/myhelper.h"
@@ -37,7 +39,6 @@ namespace dbx1000 {
 
     ManagerInstance::~ManagerInstance() {
         delete all_ts_;
-        delete mvcc_vector_;
         delete query_queue_;
         delete m_workload_;
         delete buffer_;
@@ -62,11 +63,29 @@ namespace dbx1000 {
 
         this->query_queue_ = new Query_queue();
         query_queue_->init();
+#if WORKLOAD == YCSB
         this->m_workload_ = new ycsb_wl();
+#elif WORKLOAD == TPCC
+        this->m_workload_ = new tpcc_wl();
+#endif
         m_workload_->init();
         row_handler_ = new RowHandler(this);
 
-        mvcc_vector_ = new std::vector<std::pair<weak_ptr<Row_mvcc>, bool>>();
+#if WORKLOAD == YCSB
+        mvcc_vectors_.insert(make_pair(TABLES::MAIN_TABLE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+#elif WORKLOAD == TPCC
+        mvcc_vectors_.insert(make_pair(TABLES::WAREHOUSE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::DISTRICT, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::CUSTOMER, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::HISTORY, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::NEW_ORDER, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::ORDER, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::ORDER_LINE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::ITEM, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::STOCK, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+#else
+#endif
+
         InitMvccs();    // mvcc_map_ 在 m_workload_ 初始化后才能初始化
 
         this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
@@ -98,13 +117,47 @@ namespace dbx1000 {
 
     void ManagerInstance::InitMvccs() {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
-        mvcc_vector_->resize(g_synth_table_size);
         Profiler profiler;
         profiler.Start();
-        uint32_t tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
-        for (uint64_t  key = 0; key < g_synth_table_size; key++) {
-            mvcc_vector_->at(key).second = false;
+        uint32_t tuple_size;
+#if WORKLOAD == YCSB
+        tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
+        for(uint64_t key = 0; key < g_synth_table_size; key++) {
+            shared_ptr<Row_mvcc> p;
+            mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(p, false)));
         }
+#elif WORKLOAD == TPCC
+        cout << ((tpcc_wl *) m_workload_)->t_orderline->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_order->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_neworder->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_stock->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_history->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_district->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_item->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_customer->get_schema()->tuple_size << endl;
+        cout << ((tpcc_wl *) m_workload_)->t_warehouse->get_schema()->tuple_size << endl;
+        shared_ptr<Row_mvcc> p;
+        for (uint32_t i = 1; i <= g_max_items; i++) {
+            mvcc_vectors_[TABLES::ITEM]->insert(make_pair(i, make_pair(p, false)));
+        }
+        for(uint64_t key = 1; key <= NUM_WH; key++) {
+            mvcc_vectors_[TABLES::WAREHOUSE]->insert(make_pair(key, make_pair(p, false)));
+        }
+        for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+            mvcc_vectors_[TABLES::DISTRICT]->insert(make_pair(distKey(did, 1), make_pair(p, false)));
+        }
+        for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+            mvcc_vectors_[TABLES::STOCK]->insert(make_pair(stockKey(sid, 1), make_pair(p, false)));
+        }
+        for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+            for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                mvcc_vectors_[TABLES::CUSTOMER]->insert(make_pair(custKey(cid, did, 1), make_pair(p, false)));
+            }
+            for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) { }
+            for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) { }
+        }
+
+#endif
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }

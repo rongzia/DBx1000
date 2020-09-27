@@ -17,8 +17,8 @@ namespace dbx1000 {
     class RowHandler {
     public:
         RowHandler(ManagerInstance *);
-        RC GetRow(uint64_t key, access_t type, txn_man *txn, row_t *&);
-        void ReturnRow(uint64_t key, access_t type, txn_man *txn, row_t *);
+        RC GetRow(TABLES table, uint64_t key, access_t type, txn_man *txn, row_t *&);
+        void ReturnRow(TABLES table, uint64_t key, access_t type, txn_man *txn, row_t *);
         bool SnapShotReadRow(RowItem *row);
         bool ReadRow(RowItem *row);
         bool WriteRow(RowItem *row);

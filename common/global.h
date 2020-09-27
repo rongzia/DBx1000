@@ -89,6 +89,7 @@ extern uint32_t g_max_items;
 extern uint32_t g_cust_per_dist;
 
 enum class RC { RCOK, Commit, Abort, WAIT, ERROR, FINISH, TIME_OUT};
+enum class TABLES {MAIN_TABLE, WAREHOUSE, DISTRICT, CUSTOMER, HISTORY, NEW_ORDER, ORDER, ORDER_LINE, ITEM, STOCK};
 
 /* Thread */
 typedef uint64_t txnid_t;

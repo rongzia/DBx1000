@@ -24,7 +24,7 @@ RC ycsb_wl::init() {
     cout << "ycsb_wl::init()" << endl;
 	workload::init();
 	next_tid = 0;
-    init_schema(g_schame_path);
+    init_schema(g_ycsb_schame_path);
 
 //  init_table_parallel();
 //	init_table();

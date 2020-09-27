@@ -13,6 +13,7 @@
 #include "common/workload/ycsb.h"
 #include "common/workload/tpcc.h"
 #include "common/workload/tpcc_const.h"
+#include "common/workload/tpcc_helper.h"
 #include "common/myhelper.h"
 #include "instance/benchmarks/ycsb_query.h"
 #include "instance/benchmarks/tpcc_query.h"
@@ -29,11 +30,13 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 RC tpcc_txn_man::run_txn(base_query * query) {
 	tpcc_query * m_query = (tpcc_query *) query;
+//    GetMvccSharedPtrs(query, m_query->type);
+    RC rc = RC::RCOK;
 	switch (m_query->type) {
 		case TPCC_PAYMENT :
-			return run_payment(m_query); break;
+            rc = run_payment(m_query); break;
 		case TPCC_NEW_ORDER :
-			return run_new_order(m_query); break;
+            rc = run_new_order(m_query); break;
 /*		case TPCC_ORDER_STATUS :
 			return run_order_status(m_query); break;
 		case TPCC_DELIVERY :
@@ -43,12 +46,13 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 		default:
 			assert(false);
 	}
+    mvcc_maps_.clear();
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	RC rc = RC::RCOK;
 	uint64_t key;
-	itemid_t * item;
+	/* itemid_t * item; */
 
 	uint64_t w_id = query->w_id;
     uint64_t c_w_id = query->c_w_id;
@@ -66,18 +70,20 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	// TODO for variable length variable (string). Should store the size of 
 	// the variable.
 	key = query->w_id;
-	INDEX * index = _wl->i_warehouse; 
-	item = index_read(index, key, wh_to_part(w_id));
-	assert(item != NULL);
-	row_t * r_wh = ((row_t *)item->location);
+    /* INDEX * index = _wl->i_warehouse;
+    item = index_read(index, key, wh_to_part(w_id));
+    assert(item != NULL);
+    row_t * r_wh = ((row_t *)item->location); */
 	row_t * r_wh_local;
+    GetMvccSharedPtr(TABLES::WAREHOUSE, key);
 	if (g_wh_update)
-		r_wh_local = get_row(r_wh, WR);
-	else 
-		r_wh_local = get_row(r_wh, RD);
+		// r_wh_local = get_row(r_wh, WR);
+		r_wh_local = get_row(TABLES::WAREHOUSE, key, WR);
+	else
+        r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 
 	if (r_wh_local == NULL) {
-		return finish(Abort);
+		return finish(RC::Abort);
 	}
 	double w_ytd;
 	
@@ -94,100 +100,110 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 		WHERE d_w_id=:w_id AND d_id=:d_id;
 	+=====================================================*/
 	key = distKey(query->d_id, query->d_w_id);
-	item = index_read(_wl->i_district, key, wh_to_part(w_id));
-	assert(item != NULL);
-	row_t * r_dist = ((row_t *)item->location);
-	row_t * r_dist_local = get_row(r_dist, WR);
-	if (r_dist_local == NULL) {
-		return finish(Abort);
-	}
+    /* item = index_read(_wl->i_district, key, wh_to_part(w_id));
+    assert(item != NULL);
+    row_t * r_dist = ((row_t *)item->location);*/
+    // row_t * r_dist_local = get_row(r_dist, WR);
+    GetMvccSharedPtr(TABLES::DISTRICT, key);
+    row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
+    if (r_dist_local == NULL) {
+        return finish(RC::Abort);
+    }
 
-	double d_ytd;
-	r_dist_local->get_value(D_YTD, d_ytd);
-	r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
-	char d_name[11];
-	tmp_str = r_dist_local->get_value(D_NAME);
-	memcpy(d_name, tmp_str, 10);
-	d_name[10] = '\0';
+    double d_ytd;
+    r_dist_local->get_value(D_YTD, d_ytd);
+    r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
+    char d_name[11];
+    tmp_str = r_dist_local->get_value(D_NAME);
+    memcpy(d_name, tmp_str, 10);
+    d_name[10] = '\0';
 
-	/*====================================================================+
-		EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-		INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
-		FROM district
-		WHERE d_w_id=:w_id AND d_id=:d_id;
-	+====================================================================*/
+    /*====================================================================+
+        EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
+        INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
+        FROM district
+        WHERE d_w_id=:w_id AND d_id=:d_id;
+    +====================================================================*/
 
-	row_t * r_cust;
-	if (query->by_last_name) { 
-		/*==========================================================+
-			EXEC SQL SELECT count(c_id) INTO :namecnt
-			FROM customer
-			WHERE c_last=:c_last AND c_d_id=:c_d_id AND c_w_id=:c_w_id;
-		+==========================================================*/
-		/*==========================================================================+
-			EXEC SQL DECLARE c_byname CURSOR FOR
-			SELECT c_first, c_middle, c_id, c_street_1, c_street_2, c_city, c_state,
-			c_zip, c_phone, c_credit, c_credit_lim, c_discount, c_balance, c_since
-			FROM customer
-			WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_last=:c_last
-			ORDER BY c_first;
-			EXEC SQL OPEN c_byname;
-		+===========================================================================*/
-
-		uint64_t key = custNPKey(query->c_last, query->c_d_id, query->c_w_id);
-		// XXX: the list is not sorted. But let's assume it's sorted... 
-		// The performance won't be much different.
-		INDEX * index = _wl->i_customer_last;
-		item = index_read(index, key, wh_to_part(c_w_id));
-		assert(item != NULL);
-		
-		int cnt = 0;
-		itemid_t * it = item;
-		itemid_t * mid = item;
-		while (it != NULL) {
-			cnt ++;
-			it = it->next;
-			if (cnt % 2 == 0)
-				mid = mid->next;
-		}
-		r_cust = ((row_t *)mid->location);
-		
-		/*============================================================================+
-			for (n=0; n<namecnt/2; n++) {
-				EXEC SQL FETCH c_byname
-				INTO :c_first, :c_middle, :c_id,
-					 :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
-					 :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
-			}
-			EXEC SQL CLOSE c_byname;
-		+=============================================================================*/
-		// XXX: we don't retrieve all the info, just the tuple we are interested in
-	}
-	else { // search customers by cust_id
-		/*=====================================================================+
-			EXEC SQL SELECT c_first, c_middle, c_last, c_street_1, c_street_2,
-			c_city, c_state, c_zip, c_phone, c_credit, c_credit_lim,
-			c_discount, c_balance, c_since
-			INTO :c_first, :c_middle, :c_last, :c_street_1, :c_street_2,
-			:c_city, :c_state, :c_zip, :c_phone, :c_credit, :c_credit_lim,
-			:c_discount, :c_balance, :c_since
-			FROM customer
-			WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_id=:c_id;
-		+======================================================================*/
-		key = custKey(query->c_id, query->c_d_id, query->c_w_id);
-		INDEX * index = _wl->i_customer_id;
-		item = index_read(index, key, wh_to_part(c_w_id));
-		assert(item != NULL);
-		r_cust = (row_t *) item->location;
-	}
+//	row_t * r_cust;
+//	if (query->by_last_name) {
+//		/*==========================================================+
+//			EXEC SQL SELECT count(c_id) INTO :namecnt
+//			FROM customer
+//			WHERE c_last=:c_last AND c_d_id=:c_d_id AND c_w_id=:c_w_id;
+//		+==========================================================*/
+//		/*==========================================================================+
+//			EXEC SQL DECLARE c_byname CURSOR FOR
+//			SELECT c_first, c_middle, c_id, c_street_1, c_street_2, c_city, c_state,
+//			c_zip, c_phone, c_credit, c_credit_lim, c_discount, c_balance, c_since
+//			FROM customer
+//			WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_last=:c_last
+//			ORDER BY c_first;
+//			EXEC SQL OPEN c_byname;
+//		+===========================================================================*/
+//
+//		uint64_t key = custNPKey(query->c_last, query->c_d_id, query->c_w_id);
+//		// XXX: the list is not sorted. But let's assume it's sorted...
+//		// The performance won't be much different.
+//		INDEX * index = _wl->i_customer_last;
+//		item = index_read(index, key, wh_to_part(c_w_id));
+//		assert(item != NULL);
+//
+//		int cnt = 0;
+//		itemid_t * it = item;
+//		itemid_t * mid = item;
+//		while (it != NULL) {
+//			cnt ++;
+//			it = it->next;
+//			if (cnt % 2 == 0)
+//				mid = mid->next;
+//		}
+//		r_cust = ((row_t *)mid->location);
+//
+//		/*============================================================================+
+//			for (n=0; n<namecnt/2; n++) {
+//				EXEC SQL FETCH c_byname
+//				INTO :c_first, :c_middle, :c_id,
+//					 :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
+//					 :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
+//			}
+//			EXEC SQL CLOSE c_byname;
+//		+=============================================================================*/
+//		// XXX: we don't retrieve all the info, just the tuple we are interested in
+//	}
+//	else { // search customers by cust_id
+//		/*=====================================================================+
+//			EXEC SQL SELECT c_first, c_middle, c_last, c_street_1, c_street_2,
+//			c_city, c_state, c_zip, c_phone, c_credit, c_credit_lim,
+//			c_discount, c_balance, c_since
+//			INTO :c_first, :c_middle, :c_last, :c_street_1, :c_street_2,
+//			:c_city, :c_state, :c_zip, :c_phone, :c_credit, :c_credit_lim,
+//			:c_discount, :c_balance, :c_since
+//			FROM customer
+//			WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_id=:c_id;
+//		+======================================================================*/
+//		key = custKey(query->c_id, query->c_d_id, query->c_w_id);
+//		INDEX * index = _wl->i_customer_id;
+//		item = index_read(index, key, wh_to_part(c_w_id));
+//		assert(item != NULL);
+//		r_cust = (row_t *) item->location;
+//	}
 
   	/*======================================================================+
 	   	EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
    		WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    	+======================================================================*/
-	row_t * r_cust_local = get_row(r_cust, WR);
+
+    if(query->by_last_name) {
+        key = custNPKey(query->c_last, query->c_d_id, query->c_w_id);
+    } else {
+        key = custKey(query->c_id, query->c_d_id, query->c_w_id);
+    }
+	// row_t * r_cust_local = get_row(r_cust, WR);
+    GetMvccSharedPtr(TABLES::CUSTOMER, key);
+	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, WR);
 	if (r_cust_local == NULL) {
-		return finish(Abort);
+		return finish(RC::Abort);
 	}
 	double c_balance;
 	double c_ytd_payment;
@@ -247,15 +263,15 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #endif
 //	insert_row(r_hist, _wl->t_history);
 
-	assert( rc == RCOK );
+	assert( rc == RC::RCOK );
 	return finish(rc);
 }
 
 RC tpcc_txn_man::run_new_order(tpcc_query * query) {
-	RC rc = RCOK;
+	RC rc = RC::RCOK;
 	uint64_t key;
-	itemid_t * item;
-	INDEX * index;
+	/* itemid_t * item;
+	INDEX * index; */
 	
 	bool remote = query->remote;
 	uint64_t w_id = query->w_id;
@@ -269,26 +285,30 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id;
 	+========================================================================*/
 	key = w_id;
-	index = _wl->i_warehouse; 
+	/* index = _wl->i_warehouse;
 	item = index_read(index, key, wh_to_part(w_id));
 	assert(item != NULL);
-	row_t * r_wh = ((row_t *)item->location);
-	row_t * r_wh_local = get_row(r_wh, RD);
+	row_t * r_wh = ((row_t *)item->location); */
+	// row_t * r_wh_local = get_row(r_wh, RD);
+    GetMvccSharedPtr(TABLES::WAREHOUSE, key);
+	row_t * r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 	if (r_wh_local == NULL) {
-		return finish(Abort);
+		return finish(RC::Abort);
 	}
 
 
 	double w_tax;
 	r_wh_local->get_value(W_TAX, w_tax); 
 	key = custKey(c_id, d_id, w_id);
-	index = _wl->i_customer_id;
+	/* index = _wl->i_customer_id;
 	item = index_read(index, key, wh_to_part(w_id));
 	assert(item != NULL);
-	row_t * r_cust = (row_t *) item->location;
-	row_t * r_cust_local = get_row(r_cust, RD);
+	row_t * r_cust = (row_t *) item->location; */
+	// row_t * r_cust_local = get_row(r_cust, RD);
+    GetMvccSharedPtr(TABLES::CUSTOMER, key);
+	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, RD);
 	if (r_cust_local == NULL) {
-		return finish(Abort); 
+		return finish(RC::Abort);
 	}
 	uint64_t c_discount;
 	//char * c_last;
@@ -305,12 +325,14 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		WH ERE d _id = :d_id AN D d _w _id = :w _id ;
 	+===================================================*/
 	key = distKey(d_id, w_id);
-	item = index_read(_wl->i_district, key, wh_to_part(w_id));
+	/* item = index_read(_wl->i_district, key, wh_to_part(w_id));
 	assert(item != NULL);
-	row_t * r_dist = ((row_t *)item->location);
-	row_t * r_dist_local = get_row(r_dist, WR);
+	row_t * r_dist = ((row_t *)item->location); */
+	// row_t * r_dist_local = get_row(r_dist, WR);
+    GetMvccSharedPtr(TABLES::DISTRICT, key);
+	row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
 	if (r_dist_local == NULL) {
-		return finish(Abort);
+		return finish(RC::Abort);
 	}
 	//double d_tax;
 	int64_t o_id;
@@ -345,7 +367,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 //	r_no->set_value(NO_D_ID, d_id);
 //	r_no->set_value(NO_W_ID, w_id);
 //	insert_row(r_no, _wl->t_neworder);
-	for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+	for (uint32_t ol_number = 0; ol_number < ol_cnt; ol_number++) {
 
 		uint64_t ol_i_id = query->items[ol_number].ol_i_id;
 		uint64_t ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
@@ -357,13 +379,15 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 			WHERE i_id = :ol_i_id;
 		+===========================================*/
 		key = ol_i_id;
-		item = index_read(_wl->i_item, key, 0);
+		/* item = index_read(_wl->i_item, key, 0);
 		assert(item != NULL);
-		row_t * r_item = ((row_t *)item->location);
+		row_t * r_item = ((row_t *)item->location); */
 
-		row_t * r_item_local = get_row(r_item, RD);
+		// row_t * r_item_local = get_row(r_item, RD);
+        GetMvccSharedPtr(TABLES::ITEM, key);
+		row_t * r_item_local = get_row(TABLES::ITEM, key, RD);
 		if (r_item_local == NULL) {
-			return finish(Abort);
+			return finish(RC::Abort);
 		}
 		int64_t i_price;
 		//char * i_name;
@@ -387,18 +411,20 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		+===============================================*/
 
 		uint64_t stock_key = stockKey(ol_i_id, ol_supply_w_id);
-		INDEX * stock_index = _wl->i_stock;
+		/* INDEX * stock_index = _wl->i_stock;
 		itemid_t * stock_item;
 		index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
 		assert(item != NULL);
-		row_t * r_stock = ((row_t *)stock_item->location);
-		row_t * r_stock_local = get_row(r_stock, WR);
+		row_t * r_stock = ((row_t *)stock_item->location); */
+		// row_t * r_stock_local = get_row(r_stock, WR);
+        GetMvccSharedPtr(TABLES::STOCK, stock_key);
+		row_t * r_stock_local = get_row(TABLES::STOCK, stock_key, WR);
 		if (r_stock_local == NULL) {
-			return finish(Abort);
+			return finish(RC::Abort);
 		}
 		
 		// XXX s_dist_xx are not retrieved.
-		UInt64 s_quantity;
+		uint64_t s_quantity;
 		int64_t s_remote_cnt;
 		s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
 #if !TPCC_SMALL
@@ -451,7 +477,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 #endif		
 //		insert_row(r_ol, _wl->t_orderline);
 	}
-	assert( rc == RCOK );
+	assert( rc == RC::RCOK );
 	return finish(rc);
 }
 
@@ -572,7 +598,7 @@ tpcc_txn_man::run_order_status(tpcc_query * query) {
 final:
 	assert( rc == RCOK );
 	return finish(rc)*/
-	return RCOK;
+	return RC::RCOK;
 }
 
 
@@ -633,10 +659,10 @@ tpcc_txn_man::run_delivery(tpcc_query * query) {
 		uint64_t c_delivery_cnt;
 	}
 */
-	return RCOK;
+	return RC::RCOK;
 }
 
 RC 
 tpcc_txn_man::run_stock_level(tpcc_query * query) {
-	return RCOK;
+	return RC::RCOK;
 }
