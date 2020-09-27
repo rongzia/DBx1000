@@ -41,8 +41,11 @@ Row_mvcc::~Row_mvcc() {
 void Row_mvcc::init(table_t* table, uint64_t key) {
 	/* _row = row; */
 	this->key_ = key;
-	this->size_ = table->get_schema()->tuple_size;
-	this->_row = GetRow(table, key);
+    this->table_ = table;
+    this->size_ = table->get_schema()->tuple_size;
+	this->_row = GetRow(key);
+	assert(this->_row->table == table);
+	assert(this->_row->get_tuple_size() == table->get_schema()->tuple_size);
 	_his_len = 4;
 	_req_len = _his_len;
 
@@ -138,14 +141,13 @@ Row_mvcc::double_list(uint32_t list)
 	}
 }
 
-row_t* Row_mvcc::GetRow(table_t* table, uint64_t key) {
+row_t* Row_mvcc::GetRow(uint64_t key) {
     assert(_num_versions == 0);
     row_t* new_row;
     uint64_t row_id;
-    table->get_new_row(new_row, 0, row_id);
+    table_->get_new_row(new_row, 0, row_id);
     new_row->set_primary_key(key);
     new_row->set_value(0, &key);
-    new_row->table = table;
     return new_row;
     // bool res = txn->h_thd->manager_client_->row_handler()->SnapShotReadRow(this->_row);
     // assert(res);
@@ -424,7 +426,7 @@ Row_mvcc::reserveRow(ts_t ts, txn_man * txn)
 	assert(idx != _his_len);
 	// some entries are not taken. But the row of that entry is NULL.
 	if (!_write_history[idx].row) {
-		_write_history[idx].row = GetRow(_row->get_table(), _row->get_primary_key());
+		_write_history[idx].row = GetRow(_row->get_primary_key());
 		/* _write_history[idx].row->init(MAX_TUPLE_SIZE); */
 	}
 	_write_history[idx].valid = false;

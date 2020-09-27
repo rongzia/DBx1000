@@ -73,8 +73,9 @@ private:
 	void double_list(uint32_t list);
     row_t * reserveRow(ts_t ts, txn_man * txn);
 
-    row_t* GetRow(table_t* table, uint64_t key);
+    row_t* GetRow(uint64_t key);
 	void CheckLatestRow();
+	table_t* table_;
 };
 
 #endif

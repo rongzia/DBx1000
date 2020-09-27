@@ -179,7 +179,7 @@ row_t * txn_man::get_row(TABLES table, uint64_t key, access_t type) {
 	}
     assert(accesses[row_cnt]->data == this->cur_row);
     assert(accesses[row_cnt]->data->get_primary_key() == key);
-//    assert(accesses[row_cnt]->data->get_tuple_size() == ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
+    assert(accesses[row_cnt]->data->get_tuple_size() == GetTable(table)->get_schema()->tuple_size);
 
 	accesses[row_cnt]->type = type;
 	accesses[row_cnt]->table = table;
@@ -348,16 +348,17 @@ void txn_man::GetMvccSharedPtrs(base_query *query, TPCCTxnType type) {
 #endif
 }
 
-table_t* GetTable(TABLES table, txn_man* txnMan) {
-    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_warehouse; }
-    if(table == TABLES::ITEM) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_item; }
-    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_district; }
-    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_customer; }
-    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_history; }
-    if(table == TABLES::STOCK) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_stock; }
-    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_neworder; }
-    if(table == TABLES::ORDER) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_order; }
-    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(txnMan->h_thd->manager_client_->m_workload()))->t_orderline; }
+table_t* txn_man::GetTable(TABLES table) {
+    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_warehouse; }
+    if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_item; }
+    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_district; }
+    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_customer; }
+    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_history; }
+    if(table == TABLES::STOCK) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_stock; }
+    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_neworder; }
+    if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_order; }
+    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_orderline; }
+    if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table; }
 }
 
 void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
