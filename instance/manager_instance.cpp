@@ -127,15 +127,6 @@ namespace dbx1000 {
             mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(p, false)));
         }
 #elif WORKLOAD == TPCC
-        cout << ((tpcc_wl *) m_workload_)->t_orderline->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_order->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_neworder->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_stock->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_history->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_district->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_item->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_customer->get_schema()->tuple_size << endl;
-        cout << ((tpcc_wl *) m_workload_)->t_warehouse->get_schema()->tuple_size << endl;
         shared_ptr<Row_mvcc> p;
         for (uint32_t i = 1; i <= g_max_items; i++) {
             mvcc_vectors_[TABLES::ITEM]->insert(make_pair(i, make_pair(p, false)));

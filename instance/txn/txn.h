@@ -142,7 +142,5 @@ private:
 
 	std::map<TABLES, std::map<uint64_t, shared_ptr<Row_mvcc>>> mvcc_maps_;
     table_t* GetTable(TABLES table);
-    void GetMvccSharedPtrs(base_query *query);
-    void GetMvccSharedPtrs(base_query *query, TPCCTxnType type);
     void GetMvccSharedPtr(TABLES , uint64_t key);
 };

@@ -135,7 +135,7 @@
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
 #define TPCC_SMALL					false
-// Some of the transactions read the data but never use them. 
+// Some of the transactions read the data but never use them.
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
@@ -230,7 +230,11 @@ extern TestCases					g_test_case;
 
 
 #define g_ycsb_schame_path "../common/workload/YCSB_schema.txt"
+#if TPCC_SMALL
 #define g_tpcc_schame_path "../common/workload/TPCC_short_schema.txt"
+#elif !TPCC_SMALL
+#define g_tpcc_schame_path "../common/workload/TPCC_full_schema.txt"
+#endif
 
 #define DB_PREFIX "../db/"
 #define DB_SUFIX ".table"

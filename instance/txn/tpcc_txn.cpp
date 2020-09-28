@@ -31,7 +31,7 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 RC tpcc_txn_man::run_txn(base_query * query) {
 	tpcc_query * m_query = (tpcc_query *) query;
 //    GetMvccSharedPtrs(query, m_query->type);
-    RC rc = RC::RCOK;
+    RC rc;
 	switch (m_query->type) {
 		case TPCC_PAYMENT :
             rc = run_payment(m_query); break;
@@ -47,6 +47,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 			assert(false);
 	}
     mvcc_maps_.clear();
+    return rc;
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {

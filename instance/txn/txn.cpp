@@ -292,62 +292,6 @@ void txn_man::release() {
 }
 */
 
-void txn_man::GetMvccSharedPtrs(base_query *query) {
-#if WORKLOAD == YCSB
-    ycsb_query* m_query = (ycsb_query*)query;
-    unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *global_mvcc_maps
-            = this->h_thd->manager_client_->mvcc_vector(TABLES::MAIN_TABLE);
-    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
-        ycsb_request *req = &m_query->requests[rid];
-        shared_ptr<Row_mvcc> shared_p;
-        while(!ATOM_CAS(global_mvcc_maps->at(req->key).second, false, true))
-            PAUSE
-                    shared_p = global_mvcc_maps->at(req->key).first.lock();
-        if(global_mvcc_maps->at(req->key).first.expired()) {
-            assert(shared_p == nullptr);
-            assert(global_mvcc_maps->at(req->key).first.use_count() == 0);
-            assert(global_mvcc_maps->at(req->key).first.expired());
-            shared_p = make_shared<Row_mvcc>();
-            global_mvcc_maps->at(req->key).first = shared_p;
-            shared_p->init(((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table, req->key);
-        } else {
-            assert(!global_mvcc_maps->at(req->key).first.expired());
-            // shared_p = global_mvcc_maps[key].first.lock();
-            assert(shared_p != nullptr);
-            assert(global_mvcc_maps->at(req->key).first.use_count() > 0 || global_mvcc_maps->at(req->key).first.use_count() <=10);
-            assert(!global_mvcc_maps->at(req->key).first.expired());
-        }
-        global_mvcc_maps->at(req->key).second = false;
-        this->mvcc_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, shared_p));
-    }
-#endif
-}
-void txn_man::GetMvccSharedPtrs(base_query *query, TPCCTxnType type) {
-#if WORKLOAD == TPCC
-    tpcc_query* m_query = (tpcc_query*)query;
-    std::map<TABLES, unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *> *global_mvcc_maps
-            = this->h_thd->manager_client_->mvcc_vectors();
-
-    GetMvccSharedPtr(TABLES::WAREHOUSE, m_query->w_id);
-    GetMvccSharedPtr(TABLES::DISTRICT, distKey(m_query->d_id, m_query->d_w_id));
-    GetMvccSharedPtr(TABLES::CUSTOMER, custKey(m_query->c_id, m_query->c_d_id, m_query->c_w_id));
-
-    switch (m_query->type) {
-        case TPCC_PAYMENT : break;
-        case TPCC_NEW_ORDER :
-        {
-            for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
-                GetMvccSharedPtr(TABLES::ITEM, m_query->items[ol_number].ol_i_id);
-                GetMvccSharedPtr(TABLES::STOCK, stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id));
-            }
-            break;
-        }
-        default:
-            assert(false);
-    }
-#endif
-}
-
 table_t* txn_man::GetTable(TABLES table) {
     if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_warehouse; }
     if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_item; }
@@ -374,17 +318,17 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
         shared_p = make_shared<Row_mvcc>();
         global_mvcc_map_i->at(key).first = shared_p;
 #if WORKLOAD == YCSB
-        shared_p->init(((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table, key);
+        shared_p->init(GetTable(table), key);
 #elif WORKLOAD == TPCC
-        shared_p->init(GetTable(table, this), key);
+        shared_p->init(GetTable(table), key);
 #endif
     } else {
         assert(!global_mvcc_map_i->at(key).first.expired());
         // shared_p = global_mvcc_map_i[key].first.lock();
         assert(shared_p != nullptr);
-        assert(global_mvcc_map_i->at(key).first.use_count() > 0 || global_mvcc_map_i->at(key).first.use_count() <=10);
+        assert(global_mvcc_map_i->at(key).first.use_count() > 0);
         assert(!global_mvcc_map_i->at(key).first.expired());
     }
-    global_mvcc_map_i->at(key).second = false;
     this->mvcc_maps_[table].insert(make_pair(key, shared_p));
+    global_mvcc_map_i->at(key).second = false;
 }
