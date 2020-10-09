@@ -41,6 +41,7 @@ namespace dbx1000 {
 
         void Init(const std::string &shared_disk_host);
         void InitMvccs();
+        void InitLockTables();
 
         void SetTxnMan(txn_man* m_txn);
         uint64_t GetNextTs(uint64_t thread_id);
@@ -61,8 +62,8 @@ namespace dbx1000 {
         Buffer* buffer()                                                { return this->buffer_; }
         TableSpace* table_space()                                       { return this->table_space_; }
         Index* index()                                                  { return this->index_; }
-        LockTable* &lock_table()                                        { return this->lock_table_; }
-        GlobalLockServiceClient *global_lock_service_client()                 { return this->global_lock_service_client_; }
+        LockTable* lock_table_i(TABLES table)                           { return this->lock_table_[table]; }
+        GlobalLockServiceClient *global_lock_service_client()           { return this->global_lock_service_client_; }
         void set_global_lock_service_client(GlobalLockServiceClient* globalLockServiceClient)   { this->global_lock_service_client_ = globalLockServiceClient; }
         SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
 
@@ -85,7 +86,7 @@ namespace dbx1000 {
         Buffer * buffer_;
         TableSpace* table_space_;
         Index* index_;
-        LockTable* lock_table_;
+        std::map<TABLES, LockTable* > lock_table_;
         global_lock_service::GlobalLockServiceClient *global_lock_service_client_;
         SharedDiskClient * shared_disk_client_;
     };

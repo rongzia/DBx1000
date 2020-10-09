@@ -98,15 +98,9 @@ namespace dbx1000 {
         // 应该把缓存调大，避免缓存不够时刷旧版本
         this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
         this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client());
-        this->lock_table_ = new LockTable();
 
-        // 无冲突时，start end ,时分区的
-        // uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
-        // uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
-        uint64_t start = 0;
-        uint64_t end = (table_space_->GetLastPageId() + 1);
-        lock_table_->Init(start, end, this->instance_id_);
-        lock_table_->set_manager_instance(this);
+        InitLockTables();
+
         {   /// 预热缓存
             char buf[MY_PAGE_SIZE];
             for (uint64_t page_id = start; page_id < end; page_id++) {
@@ -152,6 +146,22 @@ namespace dbx1000 {
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }
+
+    void ManagerInstance::InitLockTables() {
+#if WORKLOAD == YCSB
+        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable();
+
+        // 无冲突时，start end ,时分区的
+        // uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
+        // uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
+        uint64_t start = 0;
+        uint64_t end = (table_space_->GetLastPageId() + 1);
+        lock_table_->Init(start, end, this->instance_id_);
+        lock_table_->set_manager_instance(this);
+#elif WORKLOAD == TPCC
+#endif
+    }
+
 
     uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) {
 //        return instance_rpc_handler_->GetNextTs();
