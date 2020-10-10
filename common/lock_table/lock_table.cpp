@@ -1,240 +1,170 @@
-////
-//// Created by rrzhang on 2020/6/2.
-////
-//#include <cassert>
-//#include <iostream>
-//#include "lock_table.h"
 //
-//#include "common/buffer/buffer.h"
-//#include "instance/manager_instance.h"
-//#include "global_lock_service.h"
-//#include "config.h"
+// Created by rrzhang on 2020/10/10.
 //
-//namespace dbx1000 {
-//    LockNode::LockNode(int instanceid) {
-//        this->instance_id = instanceid;
-//#ifdef DB2_WITH_NO_CONFLICT
-//        this->lock_mode = LockMode::P;
-//#else
-//        this->lock_mode = LockMode::O;
-//#endif
-//        this->count = ATOMIC_VAR_INIT(0);
-//        this->thread_count = ATOMIC_VAR_INIT(0);
-//        this->invalid_req = false;
-//        this->lock_remoting = false;
-//        this->remote_locking_abort.store(false);
-//    }
-//    LockTable::~LockTable() {
-//        for(auto &iter : lock_table_){
-//            delete iter.second;
-//        }
-//    }
-//    LockTable::LockTable() {}
-//
-//    void LockTable::Init(uint64_t start_page, uint64_t end_page, int instance_id) {
-//        for (uint64_t page_id = start_page; page_id < end_page; page_id++) {
-//            LockNode* lock_node = new LockNode(instance_id);
-//            lock_table_.insert(std::pair<uint64_t, LockNode*>(page_id, lock_node));
-//        }
-//    }
-//
-///**
-// * 单进程时的读写锁函数，读写不能同时，但是能同时读
-// * @param page_id
-// * @param mode
-// * @return
-//    bool LockTable::Lock(uint64_t page_id, LockMode mode) {
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) {
-//            assert(false);
-//            return false;
-//        }
-//        std::unique_lock <std::mutex> lck(iter->second->mtx);
-//        if(LockMode::X == mode){
-//            while(iter->second->lock_mode != LockMode::P){
-//                iter->second->cv.wait(lck);
-//            }
-//            assert(iter->second->count == 0);
-//            iter->second->lock_mode = LockMode::X;
-//            iter->second->count++;
-//            return true;
-//        }
-//        if(LockMode::S == mode) {
-//            while(iter->second->lock_mode == LockMode::X){
-//                iter->second->cv.wait(lck);
-//            }
-//            assert(iter->second->count >=  0);
-//            iter->second->lock_mode = LockMode::S;
-//            iter->second->count++;
-//            return true;
-//        }
-//        assert(false);
-//    }*/
-//
-//
-//    RC LockTable::Lock(uint64_t page_id, LockMode mode) {
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) { assert(false); }
-//
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        RC rc = RC::Abort;
-//        if(LockMode::X == mode) {
-//            /*
-//            // Test_Lock_Table 中 30 个线程大概需要 1500 - 1600 微秒
-////            if(iter->second->cv.wait_for(lck, chrono::microseconds (1500), [iter](){ return (LockMode::P == iter->second->lock_mode); }) {
-//            if(iter->second->cv.wait_for(lck, chrono::milliseconds(1000), [iter](){ return (LockMode::P == iter->second->lock_mode); })) {
-//                assert(iter->second->count == 0);
-//                iter->second->lock_mode = LockMode::X;
-//                iter->second->count++;
-//                rc = true;
-//            } else {
-//                assert(false);
-//                rc = false;
-//            }
-//            return rc; */
-//            iter->second->cv.wait(lck, [iter](){ return (LockMode::P == iter->second->lock_mode);});
-//            iter->second->lock_mode = LockMode::X;
-//            int temp_count = iter->second->count.fetch_add(1);
-//            assert(0 == temp_count);
-//            rc = RC::RCOK;
-////            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
-//            return rc;
-//        }
-//        if(LockMode::S == mode) {
-//            int temp_count;
-//            iter->second->cv.wait(lck, [iter](){ return (LockMode::X != iter->second->lock_mode); });
-//            if(LockMode::O == iter->second->lock_mode) { }
-//            else if(LockMode::P == iter->second->lock_mode) {
-//                temp_count = iter->second->count.fetch_add(1);
-//                assert(0 == temp_count);
-//                iter->second->lock_mode = LockMode::S;
-//            } else if(LockMode::S == iter->second->lock_mode) {
-//                temp_count = iter->second->count.fetch_add(1);
-//                assert(temp_count > 0);
-//                assert(iter->second->lock_mode == LockMode::S);
-//            } else { assert(false); }
-////            cout << "  lock : " << LockModeToChar(mode) << ", page id : " << page_id << endl;
-//            rc = RC::RCOK;
-//            return rc;
-//        }
-//        if(mode == LockMode::P || mode == LockMode::O) { assert(false); }
-//        else { assert(false); }
-//    }
-//
-//
-//    RC LockTable::UnLock(uint64_t page_id) {
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) { assert(false); }
-//
-//
-//        int temp_count;
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        if (LockMode::X == iter->second->lock_mode) {
-//            temp_count = iter->second->count.fetch_sub(1);
-//            assert(temp_count == 1);
-//            iter->second->lock_mode = LockMode::P;
-////        cout << "lock : " << LockModeToChar(LockMode::X) << ", page id : " << page_id << endl;
-//            iter->second->cv.notify_all();
-//            return RC::RCOK;
-//        }
-//        /* */
-//        if (LockMode::S == iter->second->lock_mode) {
-//            // 仅非 LockMode::O 才需要更改锁表项状态
-//            temp_count = iter->second->count.fetch_sub(1);
-//            assert(temp_count > 0);
-//            if (0 == iter->second->count) {
-//                iter->second->lock_mode = LockMode::P;
-//            }
-////        cout << "unlock : " << LockModeToChar(LockMode::S) << ", page id : " << page_id << endl;
-//            iter->second->cv.notify_all();
-//            return RC::RCOK;
-//        }
-//        if (LockMode::O == iter->second->lock_mode || LockMode::P == iter->second->lock_mode) { return RC::RCOK; }
-//        assert(false);
-//    }
-//
-//    bool LockTable::AddThread(uint64_t page_id, uint64_t thd_id){
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) { assert(false); }
-//
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        auto thread_iter = iter->second->thread_set.find(thd_id);
-//        if(thread_iter == iter->second->thread_set.end()){
-//            iter->second->thread_set.insert(thd_id);
-//            int temp_count = iter->second->thread_count.fetch_add(1);
-//            assert(temp_count == iter->second->thread_set.size() - 1);
-//        } else if(thread_iter != iter->second->thread_set.end()) {
-//            assert(iter->second->thread_set.size() == iter->second->thread_count.load());
-//        } else { assert(false); }
-//        return true;
-//    }
-//    bool LockTable::RemoveThread(uint64_t page_id, uint64_t thd_id){
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) { assert(false); }
-//
-////        assert(iter->second->lock_mode != LockMode::O);
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        auto thread_iter = iter->second->thread_set.find(thd_id);
-//
-//        assert(thread_iter != iter->second->thread_set.end());
-//
-//        int temp_count = iter->second->thread_count.fetch_sub(1);
-//        assert(temp_count > 0);
-//        iter->second->thread_set.erase(thd_id);
-//        assert(iter->second->thread_set.size() + 1 == temp_count);
-//        if(temp_count == 1) {
-//            iter->second->remote_locking_abort = false;
-//        }
-//
-////        cout << "LockTable::RemoveThread page_id : " << page_id << ", thread_count : " << iter->second->thread_count.load() << endl;
-//        iter->second->cv.notify_all();
-//        return true;
-//    }
-//
-//
-//    RC LockTable::LockInvalid(uint64_t page_id, char *page_buf, size_t count){
-//        auto iter = lock_table_.find(page_id);
-//        if (lock_table_.end() == iter) { assert(false); }
-//
-////        cout << page_id << " LockTable::LockInvalid in" << endl;
-//
-//        RC rc = RC::RCOK;
-//        iter->second->invalid_req = true;
-//        std::unique_lock<std::mutex> lck(iter->second->mtx);
-//        // cout << "LockTable::LockInvalid waiting." << endl;
-////        iter->second->cv.wait(lck, [iter](){ return (iter->second->thread_count.load() == 0); });
-//        if(iter->second->cv.wait_for(lck, chrono::milliseconds(10), [iter](){ return (iter->second->thread_count.load() == 0); }))
-//        {
-////            cout << "LockTable::LockInvalid wait success." << endl;
-//            assert(iter->second->thread_count == 0);
-//            assert(iter->second->count == 0);
-//            iter->second->lock_mode = LockMode::O;
-////            cout << "LockTable::LockInvalid invalid page: " << page_id << " success." << endl;
-//            manager_instance_->buffer()->BufferGet(page_id, page_buf, count);
-//            rc = RC::RCOK;
-//        } else {
-////            cout << "LockTable::LockInvalid timeout. page_id: " << page_id << endl;
-//            rc = RC::TIME_OUT;
-//        }
-//        iter->second->invalid_req = false;
-////        cout << "LockInvalid page: " << page_id << "out." << endl;
-////        cout << page_id << " LockTable::LockInvalid out" << endl;
-//        return rc;
-//    }
-//
-//    char LockTable::LockModeToChar(LockMode mode) {
-//        char a;
-//        if (mode == LockMode::X) { a = 'X'; }
-//        else if (mode == LockMode::S) { a = 'S'; }
-//        else if (mode == LockMode::P) { a = 'P'; }
-//        else if (mode == LockMode::O) { a = 'O'; }
-//        else { assert(false); }
-//        return a;
-//    }
-//
-//    void LockTable::Print(){
-//        for(auto iter : this->lock_table_) {
-//            cout << "page_id : " << iter.first << ", lock mode : " << LockModeToChar(iter.second->lock_mode) << endl;
-//        }
-//    }
-//}
+#include "lock_table.h"
+
+
+#include "common/buffer/buffer.h"
+#include "instance/manager_instance.h"
+
+namespace dbx1000 {
+
+
+    LockNode::LockNode(int instanceid, LockMode mode) {
+        instance_id = instanceid;
+        lock_mode = mode;
+    }
+
+    LockTable::LockTable(TABLES table, int instance_id, uint64_t start_id, uint64_t end_id)
+            : table_(table), instance_id_(instance_id) {
+        for (uint64_t key = start_id; key < end_id; key++) {
+            shared_ptr<LockNode> p;
+//            lock_table_.insert(make_pair(key, make_pair(p, false)));
+            lock_table_[key] =  make_pair(p, false);
+            lock_node_local_[key] = false;
+        }
+    }
+
+    RC LockTable::Lock(uint64_t item_id, LockMode mode) {
+        auto iter = lock_table_.find(item_id);
+        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return RC::Abort; }
+
+        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        std::unique_lock<std::mutex> lck(lock_node->mtx);
+        /// 事务执行中才会使用 Lock UnLock，本地应该存在该 item 的读写权限，即 lock_mode 为 非 O，
+        /// 否则事务应该在执行前就回滚了
+        if(!IsValid(item_id, lock_node.get())) { assert(false); return RC::Abort; }
+
+        int temp_count;
+        if(LockMode::X == mode) {
+            lock_node->cv.wait(lck, [lock_node](){ return (LockMode::P == lock_node->lock_mode);});
+            if(LockMode::O == lock_node->lock_mode) { return RC::Abort; }
+            lock_node->lock_mode = LockMode::X;
+            temp_count = lock_node->count.fetch_add(1);
+            assert(0 == temp_count);
+            return RC::RCOK;
+        }
+        if(LockMode::S == mode) {
+            lock_node->cv.wait(lck, [lock_node](){ return (LockMode::X != lock_node->lock_mode); });
+            if(LockMode::O == lock_node->lock_mode) { return RC::RCOK; }
+            if(LockMode::P == lock_node->lock_mode) {
+                temp_count = lock_node->count.fetch_add(1);
+                assert(0 == temp_count);
+                lock_node->lock_mode = LockMode::S;
+            } else if(LockMode::S == lock_node->lock_mode) {
+                temp_count = lock_node->count.fetch_add(1);
+                assert(temp_count > 0);
+            } else { assert(false); }
+            return RC::RCOK;
+        }
+            // 只能读（S）或者写（X）
+        else { assert(false); }
+
+    }
+    RC LockTable::UnLock(uint64_t item_id) {
+        auto iter = lock_table_.find(item_id);
+        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return RC::Abort; }
+
+        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        std::unique_lock<std::mutex> lck(lock_node->mtx);
+        /// 事务执行中才会使用 Lock UnLock，本地应该存在该 item 的读写权限，即 lock_mode 为 非 O，
+        /// 否则事务应该在执行前就回滚了
+        if(!IsValid(item_id, lock_node.get())) { assert(false); return RC::Abort; }
+
+        int temp_count;
+        if (LockMode::X == lock_node->lock_mode) {
+            temp_count = lock_node->count.fetch_sub(1);
+            assert(temp_count == 1);
+            lock_node->lock_mode = LockMode::P;
+            lock_node->cv.notify_all();
+            return RC::RCOK;
+        }
+        /* */
+        if (LockMode::S == lock_node->lock_mode) {
+            // 仅非 LockMode::O 才需要更改锁表项状态
+            temp_count = lock_node->count.fetch_sub(1);
+            assert(temp_count > 0);
+            if (0 == lock_node->count) { lock_node->lock_mode = LockMode::P; }
+            lock_node->cv.notify_all();
+            return RC::RCOK;
+        }
+        if (LockMode::O == lock_node->lock_mode || LockMode::P == lock_node->lock_mode) { return RC::RCOK; }
+        assert(false);
+    }
+    bool LockTable::AddThread(uint64_t item_id, uint64_t thd_id) {
+        auto iter = lock_table_.find(item_id);
+        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return false; }
+
+        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        std::unique_lock<std::mutex> lck(lock_node->mtx);
+        auto thread_iter = lock_node->thread_set.find(thd_id);
+        if(thread_iter == lock_node->thread_set.end()){
+            lock_node->thread_set.insert(thd_id);
+        }
+        return true;
+    }
+    bool LockTable::RemoveThread(uint64_t item_id, uint64_t thd_id) {
+        auto iter = lock_table_.find(item_id);
+        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return false; }
+
+        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        std::unique_lock<std::mutex> lck(lock_node->mtx);
+        auto thread_iter = lock_node->thread_set.find(thd_id);
+        assert(thread_iter != lock_node->thread_set.end());
+        lock_node->thread_set.erase(thd_id);
+        if(lock_node->thread_set.size() == 0) { lock_node->remote_locking_abort = false; }
+
+        lock_node->cv.notify_all();
+        return true;
+    }
+    RC LockTable::RemoteInvalid(uint64_t item_id, char *buf, size_t count) {
+        auto iter = lock_table_.find(item_id);
+        if(lock_table_.end() == iter) { assert(false); return RC::Abort; }
+
+        /// 本地 mode 为 O, 失效错误
+        if(lock_node_local_[item_id] == false) { assert(false); return RC::Abort; }
+
+        shared_ptr<LockNode> lock_node = GetLockTableItemSharedPtr(item_id);
+
+        RC rc = RC::RCOK;
+        lock_node->invalid_req = true;
+        std::unique_lock<std::mutex> lck(lock_node->mtx);
+        if(lock_node->cv.wait_for(lck, chrono::milliseconds(10), [lock_node](){ return (lock_node->thread_set.size() == 0); }))
+        {
+            assert(lock_node->thread_set.size() == 0);
+            assert(lock_node->count == 0);
+            Invalid(item_id, lock_node.get());
+            manager_instance_->buffer()->BufferGet(item_id, buf, count);
+            rc = RC::RCOK;
+        } else {
+            rc = RC::TIME_OUT;
+        }
+        lock_node->invalid_req = false;
+        return rc;
+    }
+
+    shared_ptr<LockNode> LockTable::GetLockTableItemSharedPtr(uint64_t item_id) {
+        auto iter = lock_table_.find(item_id);
+        if (lock_table_.end() == iter) { assert(false); return nullptr; }
+
+        shared_ptr<LockNode> lock_node;
+        while(!ATOM_CAS(iter->second.second, false, true))
+            PAUSE
+                    lock_node = iter->second.first.lock();
+        if(iter->second.first.expired()) {
+            assert(lock_node == nullptr);
+            assert(iter->second.first.use_count() == 0);
+            assert(iter->second.first.expired());
+            lock_node = std::make_shared<LockNode>(this->instance_id_, (lock_node_local_[item_id] == true ? LockMode::P : LockMode::O));
+            iter->second.first = lock_node;
+        } else {
+            assert(!iter->second.first.expired());
+            assert(lock_node != nullptr);
+            assert(iter->second.first.use_count() > 0);
+            assert(!iter->second.first.expired());
+        }
+        iter->second.second = true;
+
+        return lock_node;
+    }
+}

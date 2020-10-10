@@ -131,7 +131,7 @@ target_link_libraries(main_instance global_lock global_lock_service buffer share
 add_executable(disk_service test/disk_service.cpp)
 target_link_libraries(disk_service shared_disk disk pthread tbb)
 # gen_db
-add_executable(gen_db test/gen_db.cpp ${INSTANCE_FILES} ${COMMON_FILES} common/lock_table/lock_table2.cpp common/lock_table/lock_table2.hpp)
+add_executable(gen_db test/gen_db.cpp ${INSTANCE_FILES} ${COMMON_FILES} common/lock_table/lock_table.cpp)
 target_link_libraries(gen_db global_lock_service buffer shared_disk disk tablespace pthread tbb)
 
 ### ******************************* other test *******************************

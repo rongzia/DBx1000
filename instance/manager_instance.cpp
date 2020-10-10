@@ -149,15 +149,13 @@ namespace dbx1000 {
 
     void ManagerInstance::InitLockTables() {
 #if WORKLOAD == YCSB
-        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable();
-
         // 无冲突时，start end ,时分区的
         // uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
         // uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
         uint64_t start = 0;
         uint64_t end = (table_space_->GetLastPageId() + 1);
-        lock_table_->Init(start, end, this->instance_id_);
-        lock_table_->set_manager_instance(this);
+        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end);
+        this->lock_table_[TABLES::MAIN_TABLE]->manager_instance_ = this;
 #elif WORKLOAD == TPCC
 #endif
     }

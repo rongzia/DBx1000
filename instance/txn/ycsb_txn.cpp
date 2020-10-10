@@ -82,12 +82,12 @@ std::set<uint64_t> GetQueryWritePageSet(ycsb_query *m_query, ycsb_txn_man *ycsb)
  * 然后把当前线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
  */
 RC GetWritePageLock(std::set<uint64_t> write_page_set, ycsb_txn_man *ycsb) {
-    dbx1000::LockTable *lockTable = ycsb->h_thd->manager_client_->lock_table();
+    dbx1000::LockTable *lockTable = ycsb->h_thd->manager_client_->lock_table_i(TABLES::MAIN_TABLE);
 
     auto has_invalid_req = [&]() {
         for (auto iter : write_page_set) {
 //            if(ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req == false ) {lockTable->AddThread(iter, ycsb->get_thd_id());}
-            if (ycsb->h_thd->manager_client_->lock_table()->lock_table_[iter]->invalid_req) { return true; }
+            if (ycsb->h_thd->manager_client_->lock_table_i(TABLES::MAIN_TABLE)->lock_table_[iter].first) { return true; }
         }
         return false;
     };

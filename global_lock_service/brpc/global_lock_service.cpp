@@ -248,7 +248,7 @@ namespace dbx1000 {
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
-            RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
+            RC rc = manager_instance_->lock_table_i(TABLES::MAIN_TABLE)->RemoteInvalid(request->page_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
                 response->set_rc(RpcRC::TIME_OUT);
@@ -562,7 +562,7 @@ namespace dbx1000 {
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
-            RC rc = manager_instance_->lock_table()->LockInvalid(request->page_id(), page_buf, count);
+            RC rc = manager_instance_->lock_table_i(TABLES::MAIN_TABLE)->RemoteInvalid(request->page_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
                 reply->set_rc(RpcRC::TIME_OUT);
