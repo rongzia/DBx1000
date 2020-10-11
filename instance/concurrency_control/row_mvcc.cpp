@@ -3,6 +3,7 @@
 #include "row_mvcc.h"
 
 #include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/page.h"
@@ -22,6 +23,9 @@
 #if CC_ALG == MVCC
 
 Row_mvcc::~Row_mvcc() {
+    RC rc =	this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
+    assert(RC::RCOK == rc);
+
 	for(uint32_t i = 0; i < _his_len; i++) {
 		if(_write_history[i].row != nullptr) {
 			delete _write_history[i].row;
@@ -35,15 +39,18 @@ Row_mvcc::~Row_mvcc() {
 	_write_history = nullptr;
     _row = nullptr;
 	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
-	/// TODO : 把最新行写进缓存
 }
 
-void Row_mvcc::init(table_t* table, uint64_t key) {
+void Row_mvcc::init(TABLES tables, table_t* table, uint64_t key, dbx1000::RecordBuffer* record_buffer) {
 	/* _row = row; */
 	this->key_ = key;
+    this->tables_ = tables;
     this->table_ = table;
     this->size_ = table->get_schema()->tuple_size;
-	this->_row = GetRow(key);
+    this->record_buffer_ = record_buffer;
+    RC rc =	this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
+    _row->set_primary_key(key_);
+    assert(RC::RCOK == rc);
 	_his_len = 4;
 	_req_len = _his_len;
 

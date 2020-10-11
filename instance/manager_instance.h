@@ -25,7 +25,7 @@ namespace dbx1000 {
         class GlobalLockServiceClient;
     }
     using namespace dbx1000::global_lock_service;
-    class Buffer;
+    class RecordBuffer;
     class Index;
     class LockTable;
     class Page;
@@ -59,7 +59,7 @@ namespace dbx1000 {
         Query_queue* query_queue()                                      { return this->query_queue_; }
         workload* m_workload()                                          { return this->m_workload_; }
         RowHandler* row_handler()                                       { return this->row_handler_; }
-        Buffer* buffer()                                                { return this->buffer_; }
+//        Buffer* buffer()                                                { return this->buffer_; }
         TableSpace* table_space()                                       { return this->table_space_; }
         Index* index()                                                  { return this->index_; }
         LockTable* lock_table_i(TABLES table)                           { return this->lock_table_[table]; }
@@ -67,9 +67,8 @@ namespace dbx1000 {
         void set_global_lock_service_client(GlobalLockServiceClient* globalLockServiceClient)   { this->global_lock_service_client_ = globalLockServiceClient; }
         SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
 
-        int test_num_;
         bool all_instances_ready_;
-    private:
+//    private:
         int instance_id_;
         std::map<int, std::string> host_map_;
         bool init_done_;
@@ -83,7 +82,8 @@ namespace dbx1000 {
         Query_queue* query_queue_;
         workload* m_workload_;
         RowHandler* row_handler_;
-        Buffer * buffer_;
+//        Buffer * buffer_;
+        RecordBuffer* record_buffer_;
         TableSpace* table_space_;
         Index* index_;
         std::map<TABLES, LockTable* > lock_table_;

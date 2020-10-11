@@ -51,7 +51,7 @@ namespace dbx1000 {
             GlobalLock(const GlobalLock &) = delete;
             GlobalLock &operator=(const GlobalLock &) = delete;
 
-            RC LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count);
+            RC LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count);
 
             uint64_t GetNextTs(uint64_t thread_id);
 
@@ -72,7 +72,6 @@ namespace dbx1000 {
             InstanceInfo *instances() { return this->instances_; }
             void set_instance_i(int instance_id);
 
-//        LockTable* lock_table()                 { return this->lock_table_; }
             Buffer *buffer() { return this->buffer_; }
             Index *index() { return this->index_; }
             int test_num_;
@@ -82,7 +81,9 @@ namespace dbx1000 {
             int lock_service_id_;
             std::map<int, std::string> hosts_map_;
             InstanceInfo *instances_;                                               /// 记录各个 instance 的信息
-            std::unordered_map<uint64_t, LockNode *> lock_service_table_;     /// 该 table 并不是真正的锁表，而是记录哪个 page 锁被哪个节点持有
+//            std::unordered_map<uint64_t, LockNode *> lock_service_table_;
+
+            std::map<TABLES, std::unordered_map<uint64_t, LockNode *>> lock_tables_; /// 该 table 并不是真正的锁表，而是记录哪个 page 锁被哪个节点持有
 
             std::atomic<uint64_t> timestamp_;
 
@@ -91,7 +92,6 @@ namespace dbx1000 {
             TableSpace *table_space_;
             Index *index_;
             SharedDiskClient *shared_disk_client_;
-//        Stats* stats_;
         };
     }
 }

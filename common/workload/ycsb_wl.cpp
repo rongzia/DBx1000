@@ -142,8 +142,8 @@ void * ycsb_wl::init_table_slice() {
         rc = the_index->index_insert(idx_key, m_item, part_id);
         assert(rc == RCOK);
     }
-    return NULL;
      */
+    return NULL;
 }
 /*
 //! h_thd = 0, 1, 2, 3

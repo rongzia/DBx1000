@@ -61,15 +61,12 @@ namespace dbx1000 {
 
             this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
             /// 初始化 lock_service_table_
-            for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++) {
-                this->lock_service_table_.insert(std::pair<uint64_t, LockNode *>(page_id, new LockNode()));
+#if WORKLOAD == YCSB
+            for (uint64_t page_id = 0; page_id < SYNTH_TABLE_SIZE; page_id++) {
+                this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(page_id, new LockNode()));
             }
-
-            /// 预热 buffer
-            for (uint64_t page_id = 0; page_id < table_space_->GetLastPageId() + 1; page_id++) {
-                char page_buf[MY_PAGE_SIZE];
-                buffer_->BufferGet(page_id, page_buf, MY_PAGE_SIZE);
-            }
+#elif WORKLOAD == TPCC
+#endif
         }
 
         /**
@@ -82,41 +79,34 @@ namespace dbx1000 {
          * @param count
          * @return
          */
-        RC GlobalLock::LockRemote(uint64_t ins_id, uint64_t page_id, char *page_buf, size_t count) {
-            auto iter = lock_service_table_.find(page_id);
-            if (lock_service_table_.end() == iter) {
-                assert(false);
-                return RC::Abort;
-            }
-            RC rc = RC::RCOK;
-            std::lock_guard<std::mutex> lck(iter->second->mtx);
-//            cv_status cvStatus = iter->second->cv.wait_for(lck, chrono::milliseconds(20));
-//            if(cvStatus == cv_status::no_timeout) {
-                if (iter->second->write_ins_id >= 0) {
-//                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
-                    rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(page_id, page_buf, count);
+        RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
+            auto iter = lock_tables_[TABLES::MAIN_TABLE].find(item_id);
+            if (lock_tables_[TABLES::MAIN_TABLE].end() == iter) { assert(false); return RC::Abort; }
 
-                    if (rc == RC::TIME_OUT) {
+            RC rc = RC::RCOK;
+            std::unique_lock<std::mutex> lck(iter->second->mtx);
+            if (iter->second->write_ins_id >= 0) {
+//                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+                rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count);
+
+                if (rc == RC::TIME_OUT) {
 //                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
-                    }
-                    if (rc == RC::Abort) {
-//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " Abort" << endl;
-                    }
-                    if (rc == RC::RCOK) {
-//                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", page: " << page_id << " success" << endl;
-                        iter->second->write_ins_id = ins_id;
-                    }
-                } else {
-                    iter->second->write_ins_id = ins_id;
-                    if (count > 0) {
-                        this->buffer_->BufferGet(page_id, page_buf, count);
-                    }
-//                 cout << ins_id << " get page id : " << page_id << " success" << endl;
                 }
+                if (rc == RC::Abort) {
+//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " Abort" << endl;
+                }
+                if (rc == RC::RCOK) {
+//                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", page: " << page_id << " success" << endl;
+                    iter->second->write_ins_id = ins_id;
+                }
+            } else {
+                iter->second->write_ins_id = ins_id;
+                if (count > 0) {
+//                    this->buffer_->BufferGet(table, item_id, buf, count);
+                }
+//                 cout << ins_id << " get page id : " << page_id << " success" << endl;
+            }
                 return rc;
-//            } else {
-//                return RC::TIME_OUT;
-//            }
         }
 
         uint64_t GlobalLock::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
@@ -141,9 +131,5 @@ namespace dbx1000 {
             init_done_ = true;
             return init_done_;
         }
-//    void GlobalLock::set_buffer_manager_id(int id) { this->buffer_manager_id_ = id; }
-//    std::map<int, std::string> &GlobalLock::hosts_map() { return this->hosts_map_; }
-//    GlobalLock::InstanceInfo* GlobalLock::instances(){ return this->instances_; }
-//    LockTable* GlobalLock::lock_table() { return this->lock_table_; }
     }
 }

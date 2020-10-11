@@ -28,14 +28,15 @@ namespace dbx1000 {
             Test();
         }
 
-        RC GlobalLockServiceClient::LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count) {
+        RC GlobalLockServiceClient::LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             dbx1000::LockRemoteReply reply;
             ::brpc::Controller cntl;
 
             request.set_instance_id(instance_id);
-            request.set_page_id(page_id);
+            request.set_table(GlobalLockServiceHelper::SerializeTABLES(table));
+            request.set_item_id(item_id);
             request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
             request.set_count(count);
 
@@ -51,9 +52,8 @@ namespace dbx1000 {
                 assert(RC::RCOK == rc);
                 // 要是 server 数据版本比当前新，返回最新的版本
                 if(count > 0) {
-                    assert(MY_PAGE_SIZE == count);
                     assert(reply.count() == count);
-                    memcpy(page_buf, reply.page_buf().data(), count);
+                    memcpy(buf, reply.buf().data(), count);
                 }
                 return RC::RCOK ;
             } else {
@@ -64,15 +64,15 @@ namespace dbx1000 {
             }
         }
 
-        void GlobalLockServiceClient::AsyncLockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done) {
+        void GlobalLockServiceClient::AsyncLockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count, OnLockRemoteDone* done) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             request.set_instance_id(instance_id);
-            request.set_page_id(page_id);
+            request.set_item_id(item_id);
             request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
             request.set_count(count);
 
-            done->page_buf = page_buf;
+            done->page_buf = buf;
             done->count = count;
 
             stub_->AsyncLockRemote(&done->cntl, &request, &done->reply, done);
@@ -90,14 +90,6 @@ namespace dbx1000 {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
             }
-        }
-
-        void GlobalLockServiceClient::AsyncInstanceInitDone(int instance_id, OnInstanceInitDone* done) {
-            dbx1000::InstanceInitDoneRequest request;
-
-            request.set_instance_id(instance_id);
-
-            stub_->InstanceInitDone(&done->cntl, &request, &done->reply, done);
         }
 
         bool GlobalLockServiceClient::GlobalLockInitDone() {
@@ -149,12 +141,13 @@ namespace dbx1000 {
             }
         }
 
-        RC GlobalLockServiceClient::Invalid(uint64_t page_id, char *page_buf, size_t count){
+        RC GlobalLockServiceClient::Invalid(TABLES table, uint64_t item_id, char *buf, size_t count){
             dbx1000::InvalidRequest request;
             dbx1000::InvalidReply reply;
             ::brpc::Controller cntl;
 
-            request.set_page_id(page_id);
+            request.set_table(GlobalLockServiceHelper::SerializeTABLES(table));
+            request.set_item_id(item_id);
             request.set_count(count);
 
             stub_->Invalid(&cntl, &request, &reply, nullptr);
@@ -169,9 +162,8 @@ namespace dbx1000 {
                 }
                 assert(RC::RCOK == rc);
                 if(count > 0) {
-                    assert(MY_PAGE_SIZE == count);
                     assert(reply.count() == count);
-                    memcpy(page_buf, reply.page_buf().data(), count);
+                    memcpy(buf, reply.buf().data(), count);
                 }
                 return RC::RCOK ;
             } else {
@@ -184,10 +176,10 @@ namespace dbx1000 {
             }
         }
 
-        void GlobalLockServiceClient::AsyncInvalid(uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done){
+        void GlobalLockServiceClient::AsyncInvalid(TABLES table, uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done){
             dbx1000::InvalidRequest request;
 
-            request.set_page_id(page_id);
+            request.set_item_id(page_id);
             request.set_count(count);
 
             done->count = count;
@@ -244,16 +236,16 @@ namespace dbx1000 {
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
 
             size_t count = request->count();
-            if(count > 0) { assert(request->count() == MY_PAGE_SIZE); }
+            if(count > 0) { /* assert(request->count() == MY_PAGE_SIZE);*/ }
             else { assert(0 == count); }
-            char page_buf[MY_PAGE_SIZE];
+            char page_buf[request->count()];
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
-            RC rc = manager_instance_->lock_table_i(TABLES::MAIN_TABLE)->RemoteInvalid(request->page_id(), page_buf, count);
+            RC rc = manager_instance_->lock_table_i(GlobalLockServiceHelper::DeSerializeTABLES(request->table()))->RemoteInvalid(request->item_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
                 response->set_rc(RpcRC::TIME_OUT);
             } else if(RC::RCOK == rc){
-                response->set_page_buf(page_buf, count);
+                response->set_buf(page_buf, count);
                 response->set_count(count);
                 response->set_rc(RpcRC::RCOK);
             } else {
@@ -298,12 +290,13 @@ namespace dbx1000 {
             char *page_buf = nullptr;
             size_t count = request->count();
             if(count > 0) {
-                assert(MY_PAGE_SIZE == count);
+//                assert(MY_PAGE_SIZE == count);
                 page_buf = new char [MY_PAGE_SIZE];
             }
             else {assert(0 == count);}
 
-            rc = global_lock_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
+            rc = global_lock_->LockRemote(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
+                                          , request->item_id(), page_buf, count);
 
             if(RC::TIME_OUT  == rc) {
                 response->set_rc(RpcRC::TIME_OUT);
@@ -316,7 +309,7 @@ namespace dbx1000 {
             assert(RC::RCOK == rc);
             response->set_rc(RpcRC::RCOK);
             if(count > 0) {
-                response->set_page_buf(page_buf, count);
+                response->set_buf(page_buf, count);
             }
             response->set_count(count);
         }
@@ -489,7 +482,7 @@ namespace dbx1000 {
                     && count > 0) {
                     assert(MY_PAGE_SIZE == count);
                     assert(reply.count() == count);
-                    memcpy(page_buf, reply.page_buf().data(), count);
+                    memcpy(page_buf, reply.buf().data(), count);
                 }
             } else {
                 LOG(FATAL) << cntl.ErrorText();
@@ -510,7 +503,7 @@ namespace dbx1000 {
                 if(GlobalLockServiceHelper::DeSerializeRC(reply.rc()) == RC::RCOK && count > 0) {
                     assert(MY_PAGE_SIZE == count);
                     assert(reply.count() == count);
-                    memcpy(page_buf, reply.page_buf().data(), count);
+                    memcpy(page_buf, reply.buf().data(), count);
                 }
             } else {
                 LOG(FATAL) << cntl.ErrorText();
@@ -530,7 +523,7 @@ namespace dbx1000 {
             }
             else {assert(0 == count);}
 
-            rc = global_lock_->LockRemote(request->instance_id(), request->page_id(), page_buf, count);
+            rc = global_lock_->LockRemote(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table()), request->item_id(), page_buf, count);
 
             if(RC::TIME_OUT  == rc) {
                 reply->set_rc(RpcRC::TIME_OUT);
@@ -543,7 +536,7 @@ namespace dbx1000 {
             assert(RC::RCOK == rc);
             reply->set_rc(RpcRC::RCOK);
             if(count > 0) {
-                reply->set_page_buf(page_buf, count);
+                reply->set_buf(page_buf, count);
             }
             reply->set_count(count);
         }
@@ -562,12 +555,12 @@ namespace dbx1000 {
             else { assert(0 == count); }
             char page_buf[MY_PAGE_SIZE];
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
-            RC rc = manager_instance_->lock_table_i(TABLES::MAIN_TABLE)->RemoteInvalid(request->page_id(), page_buf, count);
+            RC rc = manager_instance_->lock_table_i(TABLES::MAIN_TABLE)->RemoteInvalid(request->item_id(), page_buf, count);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             if(RC::TIME_OUT == rc){
                 reply->set_rc(RpcRC::TIME_OUT);
             } else if(RC::RCOK == rc){
-                reply->set_page_buf(page_buf, count);
+                reply->set_buf(page_buf, count);
                 reply->set_count(count);
                 reply->set_rc(RpcRC::RCOK);
             } else {

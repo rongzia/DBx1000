@@ -38,10 +38,19 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
 set(COMMON_FILES
+        common/buffer/buffer.cpp
+        common/buffer/buffer_def.cpp
+        common/buffer/lru.cpp
+        common/buffer/lru_index.cpp
+        common/buffer/record_buffer.cpp
         common/index/index.cpp
-        common/index/test_index.cpp
         common/lock_table/lock_table.cpp
         common/lock_table/test_lock_table.cpp
+        common/storage/disk/file_io.cpp
+        common/storage/disk/memory_io.cpp
+        common/storage/tablespace/page.cpp
+        common/storage/tablespace/row_item.cpp
+        common/storage/tablespace/tablespace.cpp
         common/storage/catalog.cpp
         common/storage/row.cpp
         common/storage/row_handler.cpp
@@ -84,11 +93,11 @@ set(GLOBAL_LOCK_FILES global_lock/global_lock.cpp)
         lock_service -> rpc_handler
 ]]
 ### disk
-add_library(disk SHARED common/storage/disk/file_io.cpp common/storage/disk/memory_io.cpp)
+#add_library(disk SHARED common/storage/disk/file_io.cpp common/storage/disk/memory_io.cpp)
 
 ### tablespace
-add_library(tablespace SHARED common/storage/tablespace/page.cpp common/storage/tablespace/row_item.cpp common/storage/tablespace/tablespace.cpp)
-target_link_libraries(tablespace libjsoncpp.a)
+#add_library(tablespace SHARED common/storage/tablespace/page.cpp common/storage/tablespace/row_item.cpp common/storage/tablespace/tablespace.cpp)
+#target_link_libraries(tablespace libjsoncpp.a)
 
 ### shared_disk
 if (USE_GRPC)
@@ -98,14 +107,14 @@ elseif (USE_BRPC)
 endif ()
 
 ### buffer
-file(GLOB buffer_src ${PROJECT_SOURCE_DIR}/common/buffer/*.cpp)
-foreach(item ${buffer_src})
-    if (${item} MATCHES "test*")
-        list(REMOVE_ITEM buffer_src ${item})
-    endif ()
-endforeach()
-add_library(buffer SHARED ${buffer_src})
-target_link_libraries(buffer ${GFLAGS_LIBRARY})
+#file(GLOB buffer_src ${PROJECT_SOURCE_DIR}/common/buffer/*.cpp)
+#foreach(item ${buffer_src})
+#    if (${item} MATCHES "test*")
+#        list(REMOVE_ITEM buffer_src ${item})
+#    endif ()
+#endforeach()
+#add_library(buffer SHARED ${buffer_src} ${COMMON_FILES} ${INSTANCE_FILES})
+#target_link_libraries(buffer ${GFLAGS_LIBRARY} tbb)
 
 ### global_lock_service
 if (USE_GRPC)
@@ -123,33 +132,37 @@ target_link_libraries(global_lock)
 
 # main_lock_service
 add_executable(main_lock_service test/main_lock_service.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(main_lock_service global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+#target_link_libraries(main_lock_service global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+target_link_libraries(main_lock_service global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a)
 # main_instance
 add_executable(main_instance test/main_instance.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(main_instance global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+#target_link_libraries(main_instance global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb libjsoncpp.a)
+target_link_libraries(main_instance global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a)
 # disk_service
-add_executable(disk_service test/disk_service.cpp)
-target_link_libraries(disk_service shared_disk disk pthread tbb)
+add_executable(disk_service test/disk_service.cpp common/storage/disk/file_io.cpp common/storage/disk/memory_io.cpp)
+#target_link_libraries(disk_service shared_disk disk pthread tbb)
+target_link_libraries(disk_service shared_disk pthread tbb)
 # gen_db
-add_executable(gen_db test/gen_db.cpp ${INSTANCE_FILES} ${COMMON_FILES} common/lock_table/lock_table.cpp)
-target_link_libraries(gen_db global_lock_service buffer shared_disk disk tablespace pthread tbb)
+add_executable(gen_db test/gen_db.cpp ${INSTANCE_FILES} ${COMMON_FILES} common/lock_table/lock_table.cpp util/shared_ptr_helper.h)
+#target_link_libraries(gen_db global_lock_service buffer shared_disk disk tablespace pthread tbb libjsoncpp.a)
+target_link_libraries(gen_db global_lock_service shared_disk pthread tbb libjsoncpp.a)
 
 ### ******************************* other test *******************************
 # for buffer
-add_executable(test_buffer common/buffer/test_buffer.cpp)
-add_executable(test_lru common/buffer/test_lru.cpp)
-add_executable(test_lru_index common/buffer/test_lru_index.cpp)
-target_link_libraries(test_buffer    buffer  disk tablespace pthread tbb)
-target_link_libraries(test_lru       buffer  disk tablespace pthread tbb)
-target_link_libraries(test_lru_index buffer  disk tablespace pthread tbb)
+#add_executable(test_buffer common/buffer/test_buffer.cpp)
+#add_executable(test_lru common/buffer/test_lru.cpp)
+#add_executable(test_lru_index common/buffer/test_lru_index.cpp)
+#target_link_libraries(test_buffer    buffer  disk tablespace pthread tbb)
+#target_link_libraries(test_lru       buffer  disk tablespace pthread tbb)
+#target_link_libraries(test_lru_index buffer  disk tablespace pthread tbb)
 
-add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)
-
-add_executable(other_test test/other_test.cpp)
-target_link_libraries(other_test pthread tbb)
-
-add_executable(test_mvcc test/test_mvcc.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(test_mvcc global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
-
-add_executable(test_query test/test_query.cpp ${INSTANCE_FILES} ${COMMON_FILES})
-target_link_libraries(test_query global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+#add_executable(parse_result_test test/parse_result_test.cpp util/parse_result.cpp)
+#
+#add_executable(other_test test/other_test.cpp)
+#target_link_libraries(other_test pthread tbb)
+#
+#add_executable(test_mvcc test/test_mvcc.cpp ${INSTANCE_FILES} ${COMMON_FILES})
+#target_link_libraries(test_mvcc global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
+#
+#add_executable(test_query test/test_query.cpp ${INSTANCE_FILES} ${COMMON_FILES})
+#target_link_libraries(test_query global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)

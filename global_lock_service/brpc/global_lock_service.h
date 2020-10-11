@@ -35,11 +35,9 @@ namespace dbx1000 {
             GlobalLockServiceClient &operator=(const GlobalLockServiceClient&) = delete;
 
         public: /// for instance
-
-            RC LockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count);
-            void AsyncLockRemote(int instance_id, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
+            RC LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count);
+            void AsyncLockRemote(int instance_id, TABLES table, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
             void InstanceInitDone(int instance_id);
-            void AsyncInstanceInitDone(int instance_id, OnInstanceInitDone* done);
             bool GlobalLockInitDone();
             uint64_t GetNextTs();
             void ReportResult(const Stats &stats, int instance_id);
@@ -47,12 +45,8 @@ namespace dbx1000 {
 
 
         public: /// for global lock
-            RC Invalid(uint64_t page_id, char *page_buf, size_t count);
-            void AsyncInvalid(uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done);
-            void AllInstanceReady();
-            void AsyncAllInstanceReady(OnAllInstanceReadyDone* done);
-            // getter and setter
-            global_lock::GlobalLock* global_lock() { return this->global_lock_; };
+            RC Invalid(TABLES table, uint64_t item_id, char *buf, size_t count);
+            void AsyncInvalid(TABLES table, uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done);
 
         public: /// common
             int Test();
@@ -66,8 +60,8 @@ namespace dbx1000 {
 
         class GlobalLockServiceImpl : dbx1000::GlobalLockService {
         public:
-            GlobalLockServiceImpl() {}
-            ~GlobalLockServiceImpl() {}
+            GlobalLockServiceImpl() = default;
+            ~GlobalLockServiceImpl() = default;
             void Start( const std::string &host);
 
         public: /// for instance
@@ -79,7 +73,7 @@ namespace dbx1000 {
                                       const ::dbx1000::InvalidRequest* request,
                                       ::dbx1000::InvalidReply* response,
                                       ::google::protobuf::Closure* done);
-            ManagerInstance *manager_instance_;
+            ManagerInstance *manager_instance_{};
 
         public: /// for global lock
             virtual void LockRemote(::google::protobuf::RpcController* controller,
@@ -117,7 +111,7 @@ namespace dbx1000 {
                        ::dbx1000::TestReply* response,
                        ::google::protobuf::Closure* done);
 
-            global_lock::GlobalLock* global_lock_;
+            global_lock::GlobalLock* global_lock_{};
             brpc::Server server;
         };
 

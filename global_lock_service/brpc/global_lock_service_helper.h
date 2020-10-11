@@ -21,6 +21,10 @@ namespace dbx1000 {
             static RpcRC SerializeRC(RC rc);
 
             static RC DeSerializeRC(RpcRC rpcRc);
+
+            static RpcTABLES SerializeTABLES(TABLES table);
+
+            static TABLES DeSerializeTABLES(RpcTABLES table);
         };
     }
 }

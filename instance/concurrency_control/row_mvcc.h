@@ -7,6 +7,9 @@ class table_t;
 class Catalog;
 class txn_man;
 class row_t;
+namespace dbx1000 {
+    class RecordBuffer;
+}
 
 // Only a constant number of versions can be maintained.
 // If a request accesses an old version that has been recycled,   
@@ -32,7 +35,7 @@ struct ReqEntry {
 
 class Row_mvcc {
 public:
-	void init(table_t*, uint64_t key);		/// key only for debug
+	void init(TABLES tables, table_t*, uint64_t key, dbx1000::RecordBuffer* record_buffer);		/// key only for debug
 	RC access(txn_man * txn, TsType type, row_t * row);
 	~Row_mvcc();
 private:
@@ -75,7 +78,9 @@ private:
 
     row_t* GetRow(uint64_t key);
 	void CheckLatestRow();
+	TABLES tables_;
 	table_t* table_;
+    dbx1000::RecordBuffer* record_buffer_;
 };
 
 #endif

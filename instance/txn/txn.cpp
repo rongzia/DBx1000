@@ -282,6 +282,8 @@ RC txn_man::finish(RC rc) {
 	profiler.End();
 	this->h_thd->manager_client_->stats().tmp_stats[h_thd->get_thd_id()]->time_man += profiler.Nanos();
 	this->h_thd->manager_client_->stats()._stats[h_thd->get_thd_id()]->time_cleanup += (profiler.Nanos());
+
+    mvcc_maps_.clear();
 	return rc;
 }
 /*
@@ -303,6 +305,7 @@ table_t* txn_man::GetTable(TABLES table) {
     if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_order; }
     if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_orderline; }
     if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table; }
+    else { assert(false); return nullptr; }
 }
 
 void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
@@ -318,7 +321,7 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
         shared_p = make_shared<Row_mvcc>();
         global_mvcc_map_i->at(key).first = shared_p;
 #if WORKLOAD == YCSB
-        shared_p->init(GetTable(table), key);
+        shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
 #elif WORKLOAD == TPCC
         shared_p->init(GetTable(table), key);
 #endif

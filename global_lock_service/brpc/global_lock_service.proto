@@ -21,16 +21,30 @@ enum RpcRC {
   TIME_OUT = 6;
 }
 
+enum RpcTABLES {
+    MAIN_TABLE = 0;
+    WAREHOUSE = 1;
+    DISTRICT = 2;
+    CUSTOMER = 3;
+    HISTORY = 4;
+    NEW_ORDER = 5;
+    ORDER = 6;
+    ORDER_LINE = 7;
+    ITEM = 8;
+    STOCK = 9;
+}
+
 message LockRemoteRequest{
   int32 instance_id = 1;
-  uint64 page_id = 2;
-  RpcLockMode req_mode = 3;
-  bytes page_buf = 4;
-  uint64 count = 5;
+  RpcTABLES table = 2;
+  uint64 item_id = 3;
+  RpcLockMode req_mode = 4;
+  bytes buf = 5;
+  uint64 count = 6;
 }
 message LockRemoteReply{
   RpcRC rc = 1;
-  bytes page_buf = 2;
+  bytes buf = 2;
   uint64 count = 3;
 }
 
@@ -45,14 +59,15 @@ message GlobalLockInitDoneReply{
 }
 
 message InvalidRequest{
-  uint64 page_id = 1;
-  bytes page_buf = 2;
-  uint64 count = 3;
+  RpcTABLES table = 1;
+  uint64 item_id = 2;
+  bytes buf = 3;
+  uint64 count = 4;
 }
 
 message InvalidReply{
   RpcRC rc = 1;
-  bytes page_buf = 2;
+  bytes buf = 2;
   uint64 count = 3;
 }
 message GetNextTsRequest{}

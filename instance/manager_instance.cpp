@@ -6,7 +6,7 @@
 #include <cstdint>
 #include "manager_instance.h"
 
-#include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/lock_table/lock_table.h"
 #include "common/storage/disk/file_io.h"
@@ -41,12 +41,12 @@ namespace dbx1000 {
         delete all_ts_;
         delete query_queue_;
         delete m_workload_;
-        delete buffer_;
+        delete record_buffer_;
         index_->Serialize();
         table_space_->Serialize();
         delete table_space_;
         delete index_;
-        delete lock_table_;
+//        delete lock_table_;
     }
 
     ManagerInstance::ManagerInstance() { }
@@ -97,16 +97,12 @@ namespace dbx1000 {
         // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
         // 应该把缓存调大，避免缓存不够时刷旧版本
         this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
-        this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client());
+//        this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client());
 
         InitLockTables();
 
-        {   /// 预热缓存
-            char buf[MY_PAGE_SIZE];
-            for (uint64_t page_id = start; page_id < end; page_id++) {
-                buffer_->BufferGet(page_id, buf, MY_PAGE_SIZE);
-            }
-        }
+        this->record_buffer_ = new RecordBuffer();
+        this->record_buffer_->Init(m_workload());
     }
 
     void ManagerInstance::InitMvccs() {
@@ -117,7 +113,7 @@ namespace dbx1000 {
 #if WORKLOAD == YCSB
         tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
         for(uint64_t key = 0; key < g_synth_table_size; key++) {
-            shared_ptr<Row_mvcc> p;
+            weak_ptr<Row_mvcc> p;
             mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(p, false)));
         }
 #elif WORKLOAD == TPCC
@@ -149,13 +145,10 @@ namespace dbx1000 {
 
     void ManagerInstance::InitLockTables() {
 #if WORKLOAD == YCSB
-        // 无冲突时，start end ,时分区的
-        // uint64_t start = (table_space_->GetLastPageId() + 1) / 32 * instance_id_;
-        // uint64_t end = (table_space_->GetLastPageId() + 1) / 32 * (instance_id_ + 1);
         uint64_t start = 0;
-        uint64_t end = (table_space_->GetLastPageId() + 1);
-        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end);
-        this->lock_table_[TABLES::MAIN_TABLE]->manager_instance_ = this;
+//        uint64_t end = (table_space_->GetLastPageId() + 1);
+        uint64_t end = SYNTH_TABLE_SIZE;
+        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end, this);
 #elif WORKLOAD == TPCC
 #endif
     }

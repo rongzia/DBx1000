@@ -31,6 +31,13 @@ row_t::init(int size) {
     data = new char[size];
 }
 
+void row_t::init(table_t * host_table){
+    this->table = host_table;
+    Catalog *schema = host_table->get_schema();
+    int tuple_size = schema->get_tuple_size();
+    data = new char[tuple_size];
+}
+
 RC
 row_t::switch_schema(table_t *host_table) {
     this->table = host_table;

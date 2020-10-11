@@ -46,7 +46,6 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 		default:
 			assert(false);
 	}
-    mvcc_maps_.clear();
     return rc;
 }
 
