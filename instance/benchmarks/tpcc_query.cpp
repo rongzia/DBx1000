@@ -76,7 +76,7 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	ol_cnt = URand(5, 15, w_id-1);
 	o_entry_d = 2013;
 //	items = (Item_no *) _mm_malloc(sizeof(Item_no) * ol_cnt, 64);
-	items = new Item_no();
+	items = new Item_no[ol_cnt]();
 	remote = false;
 	part_to_access[0] = wh_to_part(w_id);
 	part_num = 1;

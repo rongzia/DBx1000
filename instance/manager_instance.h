@@ -36,7 +36,7 @@ namespace dbx1000 {
 
     class ManagerInstance {
     public:
-        ManagerInstance();
+        ManagerInstance() = default;
         ~ManagerInstance();
 
         void Init(const std::string &shared_disk_host);

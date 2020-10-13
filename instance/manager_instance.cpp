@@ -49,7 +49,7 @@ namespace dbx1000 {
 //        delete lock_table_;
     }
 
-    ManagerInstance::ManagerInstance() { }
+//    ManagerInstance::ManagerInstance() { }
 
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {

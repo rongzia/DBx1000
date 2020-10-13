@@ -323,7 +323,7 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
 #if WORKLOAD == YCSB
         shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
 #elif WORKLOAD == TPCC
-        shared_p->init(GetTable(table), key);
+        shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
 #endif
     } else {
         assert(!global_mvcc_map_i->at(key).first.expired());

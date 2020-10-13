@@ -24,15 +24,15 @@ public:
 	table_t *		t_item;
 	table_t *		t_stock;
 
-	INDEX * 	i_item;
-	INDEX * 	i_warehouse;
-	INDEX * 	i_district;
-	INDEX * 	i_customer_id;
-	INDEX * 	i_customer_last;
-	INDEX * 	i_stock;
-	INDEX * 	i_order; // key = (w_id, d_id, o_id)
-	INDEX * 	i_orderline; // key = (w_id, d_id, o_id)
-	INDEX * 	i_orderline_wd; // key = (w_id, d_id). 
+//	INDEX * 	i_item;
+//	INDEX * 	i_warehouse;
+//	INDEX * 	i_district;
+//	INDEX * 	i_customer_id;
+//	INDEX * 	i_customer_last;
+//	INDEX * 	i_stock;
+//	INDEX * 	i_order; // key = (w_id, d_id, o_id)
+//	INDEX * 	i_orderline; // key = (w_id, d_id, o_id)
+//	INDEX * 	i_orderline_wd; // key = (w_id, d_id).
 	
 	bool ** delivering;
 	uint32_t next_tid;

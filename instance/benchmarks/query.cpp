@@ -90,7 +90,7 @@ Query_thd::init(int thread_id) {
 //		new(&queries[qid]) ycsb_query();
 		queries[qid].init(thread_id, this);
 #elif WORKLOAD == TPCC
-		new(&queries[qid]) tpcc_query();
+//		new(&queries[qid]) tpcc_query();
 		queries[qid].init(thread_id, this);
 #endif
 	}
@@ -98,9 +98,8 @@ Query_thd::init(int thread_id) {
 
 base_query *
 Query_thd::get_next_query() {
-//	base_query * query = &queries[q_idx++];
-//	return query;
-    return &queries[q_idx++];
+	base_query * query = &queries[q_idx++];
+	return query;
 }
 
 Query_thd::~Query_thd() {
