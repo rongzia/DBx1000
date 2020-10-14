@@ -61,14 +61,16 @@ namespace dbx1000 {
         this->txn_man_ = new txn_man *[g_thread_cnt]();
         stats_.init();
 
-        this->query_queue_ = new Query_queue();
-        query_queue_->init();
 #if WORKLOAD == YCSB
         this->m_workload_ = new ycsb_wl();
 #elif WORKLOAD == TPCC
         this->m_workload_ = new tpcc_wl();
 #endif
         m_workload_->init();
+
+        this->query_queue_ = new Query_queue();
+        query_queue_->init();
+
         row_handler_ = new RowHandler(this);
 
 #if WORKLOAD == YCSB

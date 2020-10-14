@@ -17,7 +17,7 @@ std::atomic<int> Query_queue::_next_tid = ATOMIC_VAR_INIT(0);
 void
 Query_queue::init() {
     std::cout << "Query_queue" << std::endl;
-	all_queries = new Query_thd * [g_thread_cnt]();
+	all_queries = new Query_thd * [g_thread_cnt];
 //	_wl = h_wl;
 	_next_tid = 0;
 
@@ -43,7 +43,8 @@ Query_queue::init() {
 
 void
 Query_queue::init_per_thread(int thread_id) {
-    all_queries[thread_id] = (Query_thd *) _mm_malloc(sizeof(Query_thd), 64);
+//    all_queries[thread_id] = (Query_thd *) _mm_malloc(sizeof(Query_thd), 64);
+    all_queries[thread_id] = new Query_thd();
     all_queries[thread_id]->init(thread_id);
     cout << "Query_queue::init_per_thread" << endl;
 }
@@ -83,7 +84,9 @@ Query_thd::init(int thread_id) {
 	        ycsb_query[request_cnt]();
 	srand48_r(thread_id + 1, &buffer);
 #elif WORKLOAD == TPCC
-	queries = (tpcc_query *) _mm_malloc(sizeof(tpcc_query) * request_cnt, 64);
+//	queries = (tpcc_query *) _mm_malloc(sizeof(tpcc_query) * request_cnt, 64);
+    queries = new (this->arena_->Allocate(sizeof(tpcc_query) * request_cnt))
+            tpcc_query[request_cnt]();
 #endif
 
 	for (uint32_t qid = 0; qid < request_cnt; qid ++) {
@@ -91,7 +94,7 @@ Query_thd::init(int thread_id) {
 //		new(&queries[qid]) ycsb_query();
 		queries[qid].init(thread_id, this);
 #elif WORKLOAD == TPCC
-		new(&queries[qid]) tpcc_query();
+//		new(&queries[qid]) tpcc_query();
 		queries[qid].init(thread_id, this);
 #endif
 	}
