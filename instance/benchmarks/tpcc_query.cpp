@@ -1,3 +1,5 @@
+#include <mm_malloc.h>
+
 #include "query.h"
 #include "tpcc_query.h"
 //#include "tpcc.h"
@@ -8,10 +10,10 @@
 
 void tpcc_query::init(uint64_t thd_id, Query_thd * query_thd) {
 	double x = (double)(rand() % 100) / 100.0;
-	part_to_access = new uint64_t ();
+	part_to_access = new uint64_t [g_part_cnt]();
 	if (x < g_perc_payment)
 		gen_payment(thd_id);
-	else 
+	else
 		gen_new_order(thd_id);
 }
 
@@ -33,11 +35,11 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 
 
 	/// 0.85 概率在本地仓库，0.15 概率在远程仓库
-	if(x <= 85) { 
+	if(x <= 85) {
 		// home warehouse
 		c_d_id = d_id;
 		c_w_id = w_id;
-	} else {	
+	} else {
 		// remote warehouse
 		c_d_id = URand(1, DIST_PER_WARE, w_id-1);
 		if(g_num_wh > 1) {
@@ -46,7 +48,7 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 				part_to_access[1] = wh_to_part(c_w_id);
 				part_num = 2;
 			}
-		} else 
+		} else
 			c_w_id = w_id;
 	}
 	/*
@@ -54,14 +56,11 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 		// by last name
 		by_last_name = true;
 		Lastname(NURand(255,0,999,w_id-1),c_last);
-	} else {
+	} else */ {
 		// by cust id
 		by_last_name = false;
 		c_id = NURand(1023, 1, g_cust_per_dist,w_id-1);
-	}*/
-    // by cust id
-    by_last_name = false;
-    c_id = NURand(1023, 1, g_cust_per_dist,w_id-1);
+	}
 }
 
 void tpcc_query::gen_new_order(uint64_t thd_id) {
@@ -75,8 +74,7 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	rbk = URand(1, 100, w_id-1);
 	ol_cnt = URand(5, 15, w_id-1);
 	o_entry_d = 2013;
-//	items = (Item_no *) _mm_malloc(sizeof(Item_no) * ol_cnt, 64);
-	items = new Item_no[ol_cnt]();
+	items = (Item_no *) _mm_malloc(sizeof(Item_no) * ol_cnt, 64);
 	remote = false;
 	part_to_access[0] = wh_to_part(w_id);
 	part_num = 1;
@@ -109,7 +107,7 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	// update part_to_access
 	for (uint32_t i = 0; i < ol_cnt; i ++) {
         uint32_t j;
-		for (j = 0; j < part_num; j++ ) 
+		for (j = 0; j < part_num; j++ )
 			if (part_to_access[j] == wh_to_part(items[i].ol_supply_w_id))
 				break;
 		if (j == part_num) // not found! add to it.

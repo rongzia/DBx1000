@@ -133,11 +133,11 @@ target_link_libraries(global_lock)
 # main_lock_service
 add_executable(main_lock_service test/main_lock_service.cpp ${INSTANCE_FILES} ${COMMON_FILES})
 #target_link_libraries(main_lock_service global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb)
-target_link_libraries(main_lock_service global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a)
+target_link_libraries(main_lock_service global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a libjemalloc.so)
 # main_instance
 add_executable(main_instance test/main_instance.cpp ${INSTANCE_FILES} ${COMMON_FILES})
 #target_link_libraries(main_instance global_lock global_lock_service buffer shared_disk disk tablespace pthread tbb libjsoncpp.a)
-target_link_libraries(main_instance global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a)
+target_link_libraries(main_instance global_lock global_lock_service shared_disk pthread tbb libjsoncpp.a libjemalloc.so)
 # disk_service
 add_executable(disk_service test/disk_service.cpp common/storage/disk/file_io.cpp common/storage/disk/memory_io.cpp)
 #target_link_libraries(disk_service shared_disk disk pthread tbb)

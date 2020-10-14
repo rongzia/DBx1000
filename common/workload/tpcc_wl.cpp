@@ -1,6 +1,7 @@
 #include <sched.h>
 #include <thread>
 #include <cstring>
+#include <mm_malloc.h>
 
 #include "tpcc.h"
 #include "tpcc_const.h"
@@ -396,9 +397,9 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 //	int tid = ATOM_FETCH_ADD(wl->next_tid, 1);
 	int tid = __sync_fetch_and_add(&wl->next_tid, 1);
 	uint32_t wid = tid + 1;
-//	tpcc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
-//	assert((uint64_t)tid < g_num_wh);
-//	srand48_r(wid, tpcc_buffer[tid]);
+	tpcc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
+	assert((uint64_t)tid < g_num_wh);
+	srand48_r(wid, tpcc_buffer[tid]);
 //
 //	if (tid == 0)
 //		wl->init_tab_item();

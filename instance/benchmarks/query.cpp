@@ -2,6 +2,7 @@
 #include <memory>
 #include <thread>
 
+#include <mm_malloc.h>
 #include "query.h"
 #include "tpcc_query.h"
 #include "ycsb_query.h"
@@ -31,10 +32,10 @@ Query_queue::init() {
     profiler->Start();
     std::vector<std::thread> v_thread;
     for(uint32_t i = 0; i < g_thread_cnt; i++) {
-        v_thread.emplace_back(thread(threadInitQuery, this));
+        v_thread.push_back(thread(threadInitQuery, this));
     }
-    for(uint32_t i = 0; i < g_thread_cnt; i++) {
-        v_thread[i].join();
+    for(auto &th : v_thread) {
+        th.join();
     }
 	profiler->End();
 	std::cout << "Query Queue Init Time : " << profiler->Millis() << " Millis" << std::endl;
@@ -42,8 +43,9 @@ Query_queue::init() {
 
 void
 Query_queue::init_per_thread(int thread_id) {
-    all_queries[thread_id] = new Query_thd();
+    all_queries[thread_id] = (Query_thd *) _mm_malloc(sizeof(Query_thd), 64);
     all_queries[thread_id]->init(thread_id);
+    cout << "Query_queue::init_per_thread" << endl;
 }
 
 base_query *
@@ -81,19 +83,19 @@ Query_thd::init(int thread_id) {
 	        ycsb_query[request_cnt]();
 	srand48_r(thread_id + 1, &buffer);
 #elif WORKLOAD == TPCC
-	queries = new (this->arena_->Allocate(sizeof(tpcc_query) * request_cnt))
-	        tpcc_query[request_cnt]();
+	queries = (tpcc_query *) _mm_malloc(sizeof(tpcc_query) * request_cnt, 64);
 #endif
 
 	for (uint32_t qid = 0; qid < request_cnt; qid ++) {
-#if WORKLOAD == YCSB	
+#if WORKLOAD == YCSB
 //		new(&queries[qid]) ycsb_query();
 		queries[qid].init(thread_id, this);
 #elif WORKLOAD == TPCC
-//		new(&queries[qid]) tpcc_query();
+		new(&queries[qid]) tpcc_query();
 		queries[qid].init(thread_id, this);
 #endif
 	}
+	cout << "thread: " << thread_id << " done." << endl;
 }
 
 base_query *

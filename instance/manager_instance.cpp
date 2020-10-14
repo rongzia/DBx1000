@@ -88,15 +88,15 @@ namespace dbx1000 {
 
         InitMvccs();    // mvcc_map_ 在 m_workload_ 初始化后才能初始化
 
-        this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
-        this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
-        table_space_->DeSerialize();
-        index_->DeSerialize();
+//        this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
+//        this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
+//        table_space_->DeSerialize();
+//        index_->DeSerialize();
 
 
         // instance 缓存不够时，直接刷盘会把过时的数据刷到 DB，
         // 应该把缓存调大，避免缓存不够时刷旧版本
-        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
+//        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
 //        this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client());
 
         InitLockTables();

@@ -9,7 +9,7 @@
  *      private : ycsb_request [16], 是按主键排好序的
  *
  */
-
+#include <iostream>
 
 #include <memory>
 #include <atomic>
@@ -33,6 +33,7 @@ public:
 // All the querise for a particular thread.
 class Query_thd {
 public:
+    Query_thd() { std::cout << "Query_thd::Query_thd" << std::endl; }
 	void init(int thread_id);
 	base_query * get_next_query();
 	int q_idx;                          /// get_next_query() 每被调用一次，该值就增加 1
