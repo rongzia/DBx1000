@@ -6,7 +6,9 @@
 #include "tpcc_txn.h"
 
 #include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
+#include "common/lock_table/lock_table.h"
 #include "common/storage/catalog.h"
 #include "common/storage/row.h"
 #include "common/storage/table.h"
@@ -22,6 +24,7 @@
 #include "shared_disk_service.h"
 #include "global_lock_service.h"
 #include "global_lock_service_helper.h"
+#include "util/shared_ptr_helper.h"
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -29,9 +32,20 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 }
 
 RC tpcc_txn_man::run_txn(base_query * query) {
+    if(txn_id % 1000 == 0) {
+        cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
+    }
 	tpcc_query * m_query = (tpcc_query *) query;
-//    GetMvccSharedPtrs(query, m_query->type);
     RC rc;
+    GetLockTableSharedPtrs(m_query);
+    GetWriteRecordSet(m_query);
+    rc = GetWriteRecordLock( m_query);
+    if (rc == RC::Abort) {
+        for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+        lock_node_maps_.clear();
+        write_record_set.clear();
+        return rc;
+    }
 	switch (m_query->type) {
 		case TPCC_PAYMENT :
             rc = run_payment(m_query); break;
@@ -46,6 +60,11 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 		default:
 			assert(false);
 	}
+    {
+        for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+        lock_node_maps_.clear();
+        write_record_set.clear();
+    }
     return rc;
 }
 
@@ -83,6 +102,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
         r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 
 	if (r_wh_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
 		return finish(RC::Abort);
 	}
 	double w_ytd;
@@ -107,6 +131,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     GetMvccSharedPtr(TABLES::DISTRICT, key);
     row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
     if (r_dist_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
         return finish(RC::Abort);
     }
 
@@ -203,6 +232,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     GetMvccSharedPtr(TABLES::CUSTOMER, key);
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, WR);
 	if (r_cust_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
 		return finish(RC::Abort);
 	}
 	double c_balance;
@@ -293,6 +327,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     GetMvccSharedPtr(TABLES::WAREHOUSE, key);
 	row_t * r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 	if (r_wh_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
 		return finish(RC::Abort);
 	}
 
@@ -308,6 +347,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     GetMvccSharedPtr(TABLES::CUSTOMER, key);
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, RD);
 	if (r_cust_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
 		return finish(RC::Abort);
 	}
 	uint64_t c_discount;
@@ -332,6 +376,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     GetMvccSharedPtr(TABLES::DISTRICT, key);
 	row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
 	if (r_dist_local == NULL) {
+        {
+            for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+            lock_node_maps_.clear();
+            write_record_set.clear();
+        }
 		return finish(RC::Abort);
 	}
 	//double d_tax;
@@ -387,6 +436,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         GetMvccSharedPtr(TABLES::ITEM, key);
 		row_t * r_item_local = get_row(TABLES::ITEM, key, RD);
 		if (r_item_local == NULL) {
+            {
+                for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+                lock_node_maps_.clear();
+                write_record_set.clear();
+            }
 			return finish(RC::Abort);
 		}
 		int64_t i_price;
@@ -420,6 +474,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         GetMvccSharedPtr(TABLES::STOCK, stock_key);
 		row_t * r_stock_local = get_row(TABLES::STOCK, stock_key, WR);
 		if (r_stock_local == NULL) {
+            {
+                for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+                lock_node_maps_.clear();
+                write_record_set.clear();
+            }
 			return finish(RC::Abort);
 		}
 		
@@ -665,4 +724,127 @@ tpcc_txn_man::run_delivery(tpcc_query * query) {
 RC 
 tpcc_txn_man::run_stock_level(tpcc_query * query) {
 	return RC::RCOK;
+}
+
+void tpcc_txn_man::GetLockTableSharedPtrs(tpcc_query *m_query) {
+    auto lock_table_WAREHOUSE = this->h_thd->manager_client_->lock_table_i(TABLES::WAREHOUSE);
+    auto lock_table_DISTRICT = this->h_thd->manager_client_->lock_table_i(TABLES::DISTRICT);
+    auto lock_table_CUSTOMER = this->h_thd->manager_client_->lock_table_i(TABLES::CUSTOMER);
+    auto lock_table_ITEM = this->h_thd->manager_client_->lock_table_i(TABLES::ITEM);
+    auto lock_table_STOCK = this->h_thd->manager_client_->lock_table_i(TABLES::STOCK);
+
+    switch (m_query->type) {
+        case TPCC_PAYMENT :
+            this->lock_node_maps_[TABLES::WAREHOUSE].insert(make_pair(m_query->w_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_WAREHOUSE->lock_table_, m_query->w_id)));
+            this->lock_node_maps_[TABLES::DISTRICT].insert(make_pair(m_query->d_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_DISTRICT->lock_table_, m_query->d_id)));
+            this->lock_node_maps_[TABLES::CUSTOMER].insert(make_pair(m_query->c_id * m_query->c_d_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_CUSTOMER->lock_table_,m_query->c_id * m_query->c_d_id)));
+            break;
+        case TPCC_NEW_ORDER :
+            this->lock_node_maps_[TABLES::WAREHOUSE].insert(make_pair(m_query->w_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_WAREHOUSE->lock_table_, m_query->w_id)));
+            this->lock_node_maps_[TABLES::DISTRICT].insert(make_pair(m_query->d_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_DISTRICT->lock_table_, m_query->d_id)));
+            this->lock_node_maps_[TABLES::CUSTOMER].insert(make_pair(m_query->c_id * m_query->c_d_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_CUSTOMER->lock_table_,m_query->c_id * m_query->c_d_id)));
+            for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
+                this->lock_node_maps_[TABLES::ITEM].insert(make_pair(m_query->items[ol_number].ol_i_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_ITEM->lock_table_, m_query->items[ol_number].ol_i_id)));
+                this->lock_node_maps_[TABLES::STOCK].insert(make_pair(m_query->items[ol_number].ol_i_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table_STOCK->lock_table_, m_query->items[ol_number].ol_i_id)));
+            }
+            break;
+        default:
+            assert(false);
+    }
+}
+
+void tpcc_txn_man::GetWriteRecordSet(tpcc_query *m_query) {
+
+    switch (m_query->type) {
+        case TPCC_PAYMENT :
+//            if(g_wh_update) {
+//                this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+//                write_record_set.insert(make_pair(TABLES::WAREHOUSE, m_query->w_id));
+//            }
+//            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+//            write_record_set.insert(make_pair(TABLES::DISTRICT, m_query->d_id));
+            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+            write_record_set.insert(make_pair(TABLES::CUSTOMER, m_query->c_id * m_query->c_d_id));
+            break;
+        case TPCC_NEW_ORDER :
+//            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+//            write_record_set.insert(make_pair(TABLES::DISTRICT, m_query->d_id));
+            for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
+                this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+                write_record_set.insert(make_pair(TABLES::STOCK, m_query->items[ol_number].ol_i_id));
+            }
+            break;
+        default:
+            assert(false);
+    }
+}
+
+
+RC tpcc_txn_man::GetWriteRecordLock(tpcc_query *m_query) {
+    auto lockTable = this->h_thd->manager_client_->lock_table_;
+
+    /// 等待其他节点 RemoteInvalid 完成
+    auto has_invalid_req = [&]() {
+        for (auto iter : write_record_set) {
+            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
+        }
+        return false;
+    };
+    while (has_invalid_req()) { std::this_thread::yield(); }
+    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
+    /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
+
+    dbx1000::Profiler profiler;
+    profiler.Start();
+
+    for (auto iter : write_record_set) {
+        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
+
+        /// 本地没有锁权限
+        if (!lockTable[iter.first]->IsValid(iter.second)) {
+            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_remote_lock_++;
+
+            bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
+            if (flag) {
+                /// 当前线程去 RemoteLock
+                assert(true == lockNode->lock_remoting);
+                uint32_t tuple_size = GetTable(iter.first)->get_schema()->tuple_size;
+                char record_buf[tuple_size];
+                RC rc = this->h_thd->manager_client_->global_lock_service_client()->LockRemote(
+                        this->h_thd->manager_client_->instance_id(), iter.first, iter.second, dbx1000::LockMode::X, record_buf , tuple_size);
+
+                if (RC::Abort == rc || RC::TIME_OUT == rc) {
+                    lockNode->lock_remoting = false;
+                    lockNode->remote_locking_abort.store(true);
+                    return RC::Abort;
+                }
+                assert(rc == RC::RCOK);
+                lockTable[iter.first]->Valid(iter.second);
+//                assert(lockTable[iter.first]->IsValid(iter.second));
+                row_t* temp_row = new row_t();
+                temp_row->init(GetTable(iter.first));
+                temp_row->set_primary_key(iter.second);
+                memcpy(temp_row->data, record_buf, tuple_size);
+                /// TODO，拿回来的最新值写入缓存
+                this->h_thd->manager_client_->record_buffer_->RecordBufferPut(iter.first, iter.second, temp_row);
+                lockNode->lock_remoting = false;
+            } else {
+                /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
+                assert(true == lockNode->lock_remoting);
+                while (!lockTable[iter.first]->IsValid(iter.second)) {
+                    if(lockNode->remote_locking_abort.load()){
+                        return RC::Abort;
+                    }
+                }
+//                assert(lockTable[iter.first]->IsValid(iter.second));
+            }
+        }
+    }
+
+    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
+//    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
+    profiler.End();
+    this->h_thd->manager_client_->stats().tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+
+    return RC::RCOK;
 }

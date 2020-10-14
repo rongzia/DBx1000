@@ -49,7 +49,6 @@ void f(thread_t* thread) {
 int main(int argc, char *argv[]) {
 //    Test_Lock_Table();
 
-    /**/
     assert(argc >= 2);
 
     dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
     cout << "this instane id : " << managerInstance->instance_id() << ", host : " << managerInstance->host_map()[managerInstance->instance_id()] << endl << "server id : " << managerInstance->host_map()[-1] << endl;
     managerInstance->Init(std::string(SHARED_DISK_HOST));
 
-/*
+/**/
     {   // instance 服务端
         GlobalLockServiceImpl *globalLockService = new GlobalLockServiceImpl();
         globalLockService->manager_instance_ = managerInstance;
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
     /// 等待所有 instance 初始化完成
     while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
-*/
+
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
@@ -93,9 +92,9 @@ int main(int argc, char *argv[]) {
 
     managerInstance->stats().instance_run_time_ += profiler.Nanos();
     managerInstance->stats().print(managerInstance->instance_id());
-//    managerInstance->global_lock_service_client()->ReportResult(managerInstance->stats(), managerInstance->instance_id());
-//    AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
-//    AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
+    managerInstance->global_lock_service_client()->ReportResult(managerInstance->stats(), managerInstance->instance_id());
+    AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
+    AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
 
     while(1) { this_thread::yield(); };

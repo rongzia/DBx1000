@@ -16,6 +16,8 @@
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb.h"
+#include "common/workload/tpcc.h"
+#include "common/workload/tpcc_helper.h"
 #include "common/workload/wl.h"
 #include "common/global.h"
 #include "common/myhelper.h"
@@ -49,23 +51,45 @@ namespace dbx1000 {
             }
 
             timestamp_ = ATOMIC_VAR_INIT(1);
-
+#if WORKLOAD == YCSB
             this->m_workload_ = new ycsb_wl();
+#elif WORKLOAD == TPCC
+            this->m_workload_ = new tpcc_wl();
+#endif
             m_workload_->init();
-            this->shared_disk_client_ = new SharedDiskClient(SHARED_DISK_HOST);
-            this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
-            this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
-            table_space_->DeSerialize();
-            index_->DeSerialize();
-
-
-            this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
+//            this->shared_disk_client_ = new SharedDiskClient(SHARED_DISK_HOST);
+//            this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
+//            this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
+//            table_space_->DeSerialize();
+//            index_->DeSerialize();
+//
+//
+//            this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
             /// 初始化 lock_service_table_
 #if WORKLOAD == YCSB
             for (uint64_t page_id = 0; page_id < SYNTH_TABLE_SIZE; page_id++) {
                 this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(page_id, new LockNode()));
             }
 #elif WORKLOAD == TPCC
+            for (uint32_t i = 1; i <= g_max_items; i++) {
+                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
+            }
+            for(uint64_t key = 1; key <= NUM_WH; key++) {
+                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(key, new LockNode()));
+            }
+            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                this->lock_tables_[TABLES::DISTRICT].insert(make_pair(did, new LockNode()));
+            }
+            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                this->lock_tables_[TABLES::STOCK].insert(make_pair(sid, new LockNode()));
+            }
+            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                    this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(did * cid, new LockNode()));
+                }
+                for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) { }
+                for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) { }
+            }
 #endif
         }
 
@@ -80,8 +104,8 @@ namespace dbx1000 {
          * @return
          */
         RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
-            auto iter = lock_tables_[TABLES::MAIN_TABLE].find(item_id);
-            if (lock_tables_[TABLES::MAIN_TABLE].end() == iter) { assert(false); return RC::Abort; }
+            auto iter = lock_tables_[table].find(item_id);
+            if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
 
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);

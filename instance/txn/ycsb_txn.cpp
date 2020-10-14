@@ -291,6 +291,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     rc = GetWriteRecordLock(write_record_set, m_query);
     if (rc == RC::Abort) {
         for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter]->RemoveThread(this->get_thd_id()); }
+        lock_node_maps_.clear();
         return rc;
     }
 

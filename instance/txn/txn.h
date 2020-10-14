@@ -13,6 +13,10 @@ class base_query;
 class INDEX;
 class Row_mvcc;
 
+namespace dbx1000 {
+    class LockNode;
+}
+
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
@@ -141,6 +145,7 @@ private:
 	 */
 
 	std::map<TABLES, std::map<uint64_t, shared_ptr<Row_mvcc>>> mvcc_maps_;
+    std::map<TABLES, std::map<uint64_t, shared_ptr<dbx1000::LockNode>>> lock_node_maps_;
     table_t* GetTable(TABLES table);
     void GetMvccSharedPtr(TABLES , uint64_t key);
 };

@@ -139,7 +139,6 @@ namespace dbx1000 {
             for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) { }
             for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) { }
         }
-
 #endif
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
@@ -152,6 +151,15 @@ namespace dbx1000 {
         uint64_t end = SYNTH_TABLE_SIZE;
         this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end, this);
 #elif WORKLOAD == TPCC
+        this->lock_table_[TABLES::WAREHOUSE] = new LockTable(TABLES::WAREHOUSE, this->instance_id(), 0, NUM_WH + 1, this);
+        this->lock_table_[TABLES::DISTRICT] = new LockTable(TABLES::DISTRICT, this->instance_id(), 0, DIST_PER_WARE + 1, this);
+        this->lock_table_[TABLES::CUSTOMER] = new LockTable(TABLES::CUSTOMER, this->instance_id(), 0, (DIST_PER_WARE + 1) * (g_cust_per_dist + 1), this);
+//        this->lock_table_[TABLES::HISTORY] = new LockTable(TABLES::HISTORY, this->instance_id(), 0, NUM_WH + 1, this);
+//        this->lock_table_[TABLES::NEW_ORDER] = new LockTable(TABLES::NEW_ORDER, this->instance_id(), 0, NUM_WH + 1, this);
+//        this->lock_table_[TABLES::ORDER] = new LockTable(TABLES::ORDER, this->instance_id(), 0, NUM_WH + 1, this);
+//        this->lock_table_[TABLES::ORDER_LINE] = new LockTable(TABLES::ORDER_LINE, this->instance_id(), 0, NUM_WH + 1, this);
+        this->lock_table_[TABLES::ITEM] = new LockTable(TABLES::ITEM, this->instance_id(), 0, g_max_items + 1, this);
+        this->lock_table_[TABLES::STOCK] = new LockTable(TABLES::STOCK, this->instance_id(), 0, g_max_items + 1, this);
 #endif
     }
 

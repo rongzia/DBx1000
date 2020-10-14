@@ -15,6 +15,11 @@ class tpcc_txn_man : public txn_man
 public:
     void init(thread_t * h_thd, workload * h_wl, uint64_t part_id);
     RC run_txn(base_query * query);
+
+    void GetLockTableSharedPtrs(tpcc_query *m_query);
+    void GetWriteRecordSet(tpcc_query *m_query);
+    RC GetWriteRecordLock(tpcc_query *m_query);
+    std::set<std::pair<TABLES, uint64_t>> write_record_set;
 private:
     tpcc_wl * _wl;
     RC run_payment(tpcc_query * m_query);

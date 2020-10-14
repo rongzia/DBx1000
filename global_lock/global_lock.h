@@ -72,8 +72,8 @@ namespace dbx1000 {
             InstanceInfo *instances() { return this->instances_; }
             void set_instance_i(int instance_id);
 
-            Buffer *buffer() { return this->buffer_; }
-            Index *index() { return this->index_; }
+//            Buffer *buffer() { return this->buffer_; }
+//            Index *index() { return this->index_; }
             int test_num_;
 
         private:
@@ -88,10 +88,10 @@ namespace dbx1000 {
             std::atomic<uint64_t> timestamp_;
 
             workload *m_workload_;
-            Buffer *buffer_;
-            TableSpace *table_space_;
-            Index *index_;
-            SharedDiskClient *shared_disk_client_;
+//            Buffer *buffer_;
+//            TableSpace *table_space_;
+//            Index *index_;
+//            SharedDiskClient *shared_disk_client_;
         };
     }
 }
