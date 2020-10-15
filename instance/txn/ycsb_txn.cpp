@@ -373,6 +373,16 @@ RC ycsb_txn_man::run_txn(base_query *query) {
                 }
             }
 
+#if defined(B_M_L_R)
+            if(write_record_set.end() != write_record_set.find(req->key)) {
+                this_thread::sleep_for(chrono::microseconds(100));
+            }
+#elif defined(B_P_L_R)
+            if(write_record_set.end() != write_record_set.find(req->key)) {
+                this_thread::sleep_for(chrono::microseconds(125));
+            }
+#endif
+
 
             iteration++;
             if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
@@ -398,7 +408,12 @@ void ycsb_txn_man::GetLockTableSharedPtrs(ycsb_query *m_query) {
     auto lock_table = this->h_thd->manager_client_->lock_table_i(TABLES::MAIN_TABLE);
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
+#if defined(B_M_L_P) || defined(B_P_L_P)
+        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()), GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()))));
+#else
         this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key)));
+#endif
+
     }
 }
 
@@ -408,7 +423,11 @@ std::set<uint64_t> ycsb_txn_man::GetWriteRecordSet(ycsb_query *m_query) {
         ycsb_request *req = &m_query->requests[rid];
         if (req->rtype == WR) {
             this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+#if defined(B_M_L_P) || defined(B_P_L_P)
+            write_record_set.insert(req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()));
+#else
             write_record_set.insert(req->key);
+#endif
         }
     }
     return write_record_set;
@@ -454,7 +473,7 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
                 }
                 assert(rc == RC::RCOK);
                 lockTable->Valid(iter);
-                assert(lockTable->IsValid(iter));
+//                assert(lockTable->IsValid(iter));
                 row_t* temp_row = new row_t();
                 ycsb_wl* wl = (ycsb_wl*) this->h_thd->manager_client_->m_workload();
                 temp_row->init(wl->the_table);
@@ -471,13 +490,13 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
                         return RC::Abort;
                     }
                 }
-                assert(lockTable->IsValid(iter));
+//                assert(lockTable->IsValid(iter));
             }
         }
     }
 
     /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
-    for (auto iter : write_record_set) { assert(lockTable->IsValid(iter)); }
+//    for (auto iter : write_record_set) { assert(lockTable->IsValid(iter)); }
     profiler.End();
     this->h_thd->manager_client_->stats().tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
 

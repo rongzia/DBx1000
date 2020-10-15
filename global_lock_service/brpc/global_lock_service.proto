@@ -82,9 +82,10 @@ message ReportResultRequest{
   uint64 total_run_time = 1;
   uint64 total_latency = 2;
   uint64 total_txn_cnt = 3;
-  uint64 total_time_remote_lock = 4;
-  uint64 instance_run_time = 5;
-  int32 instance_id = 6;
+  uint64 total_remote_lock_cnt = 4;
+  uint64 total_time_remote_lock = 5;
+  uint64 instance_run_time = 6;
+  int32 instance_id = 7;
 }
 message ReportResultReply {}
 

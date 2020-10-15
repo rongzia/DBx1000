@@ -154,6 +154,7 @@ namespace dbx1000 {
             Invalid(item_id);
             row_t* new_row;
             manager_instance_->record_buffer_->RecordBufferGet(table_, item_id, new_row);
+            assert(count == new_row->get_tuple_size());
             memcpy(buf, new_row->data, new_row->get_tuple_size());
             delete new_row;
             rc = RC::RCOK;

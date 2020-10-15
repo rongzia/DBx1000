@@ -130,6 +130,7 @@ namespace dbx1000 {
             request.set_total_run_time(stats.total_run_time_);
             request.set_total_txn_cnt(stats.total_txn_cnt_);
             request.set_total_latency(stats.total_latency_);
+            request.set_total_remote_lock_cnt(stats.total_remote_lock_cnt_);
             request.set_total_time_remote_lock(stats.total_time_remote_lock_);
             request.set_instance_run_time(stats.instance_run_time_);
             request.set_instance_id(instance_id);
@@ -420,6 +421,7 @@ namespace dbx1000 {
             stats->total_run_time_ = request->total_run_time();
             stats->total_latency_  = request->total_latency();
             stats->total_txn_cnt_  = request->total_txn_cnt();
+            stats->total_remote_lock_cnt_ = request->total_remote_lock_cnt();
             stats->total_time_remote_lock_ = request->total_time_remote_lock();
             stats->instance_run_time_ = request->instance_run_time();
 
@@ -437,23 +439,29 @@ namespace dbx1000 {
                 uint64_t total_run_time = 0;
                 uint64_t total_latency = 0;
                 uint64_t total_txn_cnt = 0;
+                uint64_t total_remote_lock_cnt = 0;
+                uint64_t total_time_remote_lock = 0;
                 uint64_t total_instance_run_time = 0;
                 uint64_t average_instance_run_time = 0;
                 for (int i = 0; i < PROCESS_CNT; i++ ) {
                     total_run_time += global_lock_->instances()[i].stats.total_run_time_;
                     total_latency  += global_lock_->instances()[i].stats.total_latency_;
                     total_txn_cnt  += global_lock_->instances()[i].stats.total_txn_cnt_;
+                    total_remote_lock_cnt += global_lock_->instances()[i].stats.total_remote_lock_cnt_;
+                    total_time_remote_lock += global_lock_->instances()[i].stats.total_time_remote_lock_;
                     total_instance_run_time += global_lock_->instances()[i].stats.instance_run_time_;
                 }
                 average_instance_run_time = total_instance_run_time / PROCESS_CNT;
                 cout << "total_run_time: "<< total_run_time << endl;
                 cout << "total_latency: "<< total_latency << endl;
                 cout << "total_txn_cnt: "<< total_txn_cnt << endl;
+                cout << "total_time_remote_lock: "<< total_time_remote_lock << endl;
                 cout << "total_instance_run_time: "<< total_instance_run_time << endl;
                 cout << "average_instance_run_time: "<< average_instance_run_time << endl;
 
                 cout << "total txn cnt:   " << THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART << endl;
                 cout << "average latency: " << total_latency / 1000UL / (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) << " us." << endl;
+                cout << "average lock latency: " << total_time_remote_lock / 1000UL / total_remote_lock_cnt << " us." << endl;
                 cout << "instance throughtput: " << (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) * 1000000000L / average_instance_run_time << " tps." << endl;
             }
         }

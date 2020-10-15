@@ -91,6 +91,7 @@ namespace dbx1000 {
         uint64_t total_run_time_;
         uint64_t total_latency_;
         uint64_t total_txn_cnt_;
+        uint64_t total_remote_lock_cnt_;
         uint64_t total_time_remote_lock_;
         uint64_t instance_run_time_;
 

@@ -178,7 +178,8 @@ namespace dbx1000 {
         this->total_run_time_ = total_run_time;
         this->total_txn_cnt_ = total_txn_cnt;
         this->total_latency_ = total_latency;
-        this->total_time_remote_lock_ = total_count_remote_lock;
+        this->total_remote_lock_cnt_ = total_count_remote_lock;
+        this->total_time_remote_lock_ = total_time_remote_lock;
         cout << "all thread run time: " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
         cout << "get ts time        : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
         cout << "total_count_remote_lock/total_count_write_request/total_count_total_request : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;

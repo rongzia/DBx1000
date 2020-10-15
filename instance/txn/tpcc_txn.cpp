@@ -95,6 +95,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     row_t * r_wh = ((row_t *)item->location); */
 	row_t * r_wh_local;
     GetMvccSharedPtr(TABLES::WAREHOUSE, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 	if (g_wh_update)
 		// r_wh_local = get_row(r_wh, WR);
 		r_wh_local = get_row(TABLES::WAREHOUSE, key, WR);
@@ -129,6 +130,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     row_t * r_dist = ((row_t *)item->location);*/
     // row_t * r_dist_local = get_row(r_dist, WR);
     GetMvccSharedPtr(TABLES::DISTRICT, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
     row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
     if (r_dist_local == NULL) {
         {
@@ -230,6 +232,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     }
 	// row_t * r_cust_local = get_row(r_cust, WR);
     GetMvccSharedPtr(TABLES::CUSTOMER, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, WR);
 	if (r_cust_local == NULL) {
         {
@@ -325,6 +328,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	row_t * r_wh = ((row_t *)item->location); */
 	// row_t * r_wh_local = get_row(r_wh, RD);
     GetMvccSharedPtr(TABLES::WAREHOUSE, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 	if (r_wh_local == NULL) {
         {
@@ -345,6 +349,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	row_t * r_cust = (row_t *) item->location; */
 	// row_t * r_cust_local = get_row(r_cust, RD);
     GetMvccSharedPtr(TABLES::CUSTOMER, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, RD);
 	if (r_cust_local == NULL) {
         {
@@ -374,6 +379,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	row_t * r_dist = ((row_t *)item->location); */
 	// row_t * r_dist_local = get_row(r_dist, WR);
     GetMvccSharedPtr(TABLES::DISTRICT, key);
+    h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
 	if (r_dist_local == NULL) {
         {
@@ -434,6 +440,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 
 		// row_t * r_item_local = get_row(r_item, RD);
         GetMvccSharedPtr(TABLES::ITEM, key);
+        h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 		row_t * r_item_local = get_row(TABLES::ITEM, key, RD);
 		if (r_item_local == NULL) {
             {
@@ -472,6 +479,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		row_t * r_stock = ((row_t *)stock_item->location); */
 		// row_t * r_stock_local = get_row(r_stock, WR);
         GetMvccSharedPtr(TABLES::STOCK, stock_key);
+        h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
 		row_t * r_stock_local = get_row(TABLES::STOCK, stock_key, WR);
 		if (r_stock_local == NULL) {
             {
@@ -763,8 +771,8 @@ void tpcc_txn_man::GetWriteRecordSet(tpcc_query *m_query) {
 //            }
 //            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
 //            write_record_set.insert(make_pair(TABLES::DISTRICT, m_query->d_id));
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
-            write_record_set.insert(make_pair(TABLES::CUSTOMER, m_query->c_id * m_query->c_d_id));
+//            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
+//            write_record_set.insert(make_pair(TABLES::CUSTOMER, m_query->c_id * m_query->c_d_id));
             break;
         case TPCC_NEW_ORDER :
 //            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
