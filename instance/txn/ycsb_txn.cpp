@@ -372,18 +372,6 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 //					}
                 }
             }
-
-#if defined(B_M_L_R)
-            if(write_record_set.end() != write_record_set.find(req->key)) {
-                this_thread::sleep_for(chrono::microseconds(100));
-            }
-#elif defined(B_P_L_R)
-            if(write_record_set.end() != write_record_set.find(req->key)) {
-                this_thread::sleep_for(chrono::microseconds(125));
-            }
-#endif
-
-
             iteration++;
             if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
                 finish_req = true;
@@ -393,6 +381,12 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 
     final:
     rc = finish(rc);
+
+#if defined(B_M_L_R)
+    this_thread::sleep_for(chrono::microseconds(105) * write_record_set.size());
+#elif defined(B_P_L_R)
+    this_thread::sleep_for(chrono::microseconds(130) * write_record_set.size());
+#endif
 
     /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
     for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter]->RemoveThread(this->get_thd_id()); }
@@ -409,7 +403,8 @@ void ycsb_txn_man::GetLockTableSharedPtrs(ycsb_query *m_query) {
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
 #if defined(B_M_L_P) || defined(B_P_L_P)
-        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()), GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()))));
+        uint64_t page_id = req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size());
+        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(page_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, page_id)));
 #else
         this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key)));
 #endif
@@ -422,7 +417,6 @@ std::set<uint64_t> ycsb_txn_man::GetWriteRecordSet(ycsb_query *m_query) {
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
         if (req->rtype == WR) {
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_++;
 #if defined(B_M_L_P) || defined(B_P_L_P)
             write_record_set.insert(req->key/(16384 / ((ycsb_wl*)this->h_wl)->the_table->get_schema()->get_tuple_size()));
 #else
@@ -430,6 +424,7 @@ std::set<uint64_t> ycsb_txn_man::GetWriteRecordSet(ycsb_query *m_query) {
 #endif
         }
     }
+    this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += write_record_set.size();
     return write_record_set;
 }
 
@@ -481,6 +476,12 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
                 memcpy(temp_row->data, record_buf, tuple_size);
                 /// TODO，拿回来的最新值写入缓存
                 this->h_thd->manager_client_->record_buffer_->RecordBufferPut(TABLES::MAIN_TABLE, iter, temp_row);
+#if defined(B_M_L_R) || defined(B_M_L_P)
+                this->h_thd->manager_client_->record_buffer_->RecordBufferPut(TABLES::MAIN_TABLE, iter, temp_row);
+#endif
+#if defined(B_P_L_P) || defined(B_P_L_R)
+                this->h_thd->manager_client_->record_buffer_->PageBufferPut(TABLES::MAIN_TABLE, iter, temp_row);
+#endif
                 lockNode->lock_remoting = false;
             } else {
                 /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true

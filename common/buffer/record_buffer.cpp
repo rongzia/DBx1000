@@ -45,32 +45,56 @@ namespace dbx1000 {
         }
         return RC::RCOK;
     }
+    RC RecordBuffer::PageBufferGet(TABLES table, uint64_t item_id, row_t *&row) {
+        uint64_t page_id = item_id / (16384/tables_[table]->get_schema()->get_tuple_size());
+        row = new row_t();
+        row->init(tables_[table]);
+        row->set_primary_key(item_id);
+
+        tbb::concurrent_hash_map<uint64_t, row_t*>::const_accessor const_acc_page;
+        bool res = buffers_page_[table].find(const_acc_page, page_id);
+        if(res) {
+            memcpy(row->data, const_acc_page->second->data, tables_[table]->get_schema()->get_tuple_size());
+            row->set_value(0, &item_id);
+        } else {
+            row->set_value(0, &item_id);
+        }
+        return RC::RCOK;
+    }
 
     RC RecordBuffer::RecordBufferPut(TABLES table, uint64_t item_id, row_t* row) {
         tbb::concurrent_hash_map<uint64_t, row_t*>::accessor accessor;
         bool res = buffers_[table].find(accessor, item_id);
+
         if(res) {
             memcpy(accessor->second->data, row->data, tables_[table]->get_schema()->get_tuple_size());
-            row->set_primary_key(item_id);
-            row->set_value(0, &item_id);
+            accessor->second->set_primary_key(item_id);
+            accessor->second->set_value(0, &item_id);
         } else {
             row_t* new_row = new row_t();
             new_row->init(tables_[table]);
             new_row->set_primary_key(item_id);
             row->set_value(0, &item_id);
             memcpy(new_row->data, row->data, tables_[table]->get_schema()->get_tuple_size());
-            Profiler profiler;
-            profiler.Start();
-            buffers_[table].insert(make_pair(item_id, new_row));
-            profiler.End();
-//            std::cout << profiler.Nanos() << std::endl;
-#if defined(B_M_L_R) || defined(B_M_L_P)
-            this_thread::sleep_for(chrono::nanoseconds(profiler.Nanos()) * 0.5);
-//            this_thread::sleep_for(chrono::microseconds(5);
-#endif
-#if defined(B_P_L_P) || defined(B_P_L_R)
-            this_thread::sleep_for(chrono::nanoseconds(profiler.Nanos()) * 5);
-#endif
+            buffers_[table].insert(accessor, make_pair(item_id, new_row));
+        }
+        return RC::RCOK;
+    }
+    RC RecordBuffer::PageBufferPut(TABLES table, uint64_t item_id, row_t* row) {
+        uint64_t page_id = item_id / (16384/tables_[table]->get_schema()->get_tuple_size());
+        tbb::concurrent_hash_map<uint64_t, row_t*>::accessor accessor_page;
+        bool res = buffers_[table].find(accessor_page, page_id);
+        if(res) {
+            memcpy(accessor_page->second->data, row->data, tables_[table]->get_schema()->get_tuple_size());
+            accessor_page->second->set_primary_key(page_id);
+            accessor_page->second->set_value(0, &page_id);
+        } else {
+            row_t* new_row = new row_t();
+            new_row->init(tables_[table]);
+            new_row->set_primary_key(page_id);
+            row->set_value(0, &page_id);
+            memcpy(new_row->data, row->data, tables_[table]->get_schema()->get_tuple_size());
+            buffers_page_[table].insert(accessor_page, make_pair(page_id, new_row));
         }
         return RC::RCOK;
     }

@@ -24,6 +24,13 @@
 
 Row_mvcc::~Row_mvcc() {
     RC rc =	this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
+#if defined(B_M_L_R) || defined(B_M_L_P)
+    this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
+#endif
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    this->record_buffer_->PageBufferPut(tables_, key_, this->_row);
+#endif
+
     assert(RC::RCOK == rc);
 
 	for(uint32_t i = 0; i < _his_len; i++) {
@@ -48,6 +55,14 @@ void Row_mvcc::init(TABLES tables, table_t* table, uint64_t key, dbx1000::Record
     this->table_ = table;
     this->size_ = table->get_schema()->tuple_size;
     this->record_buffer_ = record_buffer;
+#if defined(B_M_L_R) || defined(B_M_L_P)
+    this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
+    delete this->_row;
+#endif
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    this->record_buffer_->PageBufferGet(tables_, key_, this->_row);
+    delete this->_row;
+#endif
     RC rc =	this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
     _row->set_primary_key(key_);
     assert(RC::RCOK == rc);
