@@ -45,6 +45,7 @@ namespace dbx1000 {
         }
         return RC::RCOK;
     }
+    /*
     RC RecordBuffer::PageBufferGet(TABLES table, uint64_t item_id, row_t *&row) {
         uint64_t page_id = item_id / (16384/tables_[table]->get_schema()->get_tuple_size());
         row = new row_t();
@@ -60,9 +61,11 @@ namespace dbx1000 {
             row->set_value(0, &item_id);
         }
         return RC::RCOK;
-    }
+    }*/
 
     RC RecordBuffer::RecordBufferPut(TABLES table, uint64_t item_id, row_t* row) {
+        Profiler profiler;
+        profiler.Start();
         tbb::concurrent_hash_map<uint64_t, row_t*>::accessor accessor;
         bool res = buffers_[table].find(accessor, item_id);
 
@@ -78,8 +81,11 @@ namespace dbx1000 {
             memcpy(new_row->data, row->data, tables_[table]->get_schema()->get_tuple_size());
             buffers_[table].insert(accessor, make_pair(item_id, new_row));
         }
+        profiler.End();
+        while(profiler.Start())
         return RC::RCOK;
     }
+    /*
     RC RecordBuffer::PageBufferPut(TABLES table, uint64_t item_id, row_t* row) {
         uint64_t page_id = item_id / (16384/tables_[table]->get_schema()->get_tuple_size());
         tbb::concurrent_hash_map<uint64_t, row_t*>::accessor accessor_page;
@@ -97,7 +103,7 @@ namespace dbx1000 {
             buffers_page_[table].insert(accessor_page, make_pair(page_id, new_row));
         }
         return RC::RCOK;
-    }
+    }*/
 
     RC RecordBuffer::RecordBufferDel(TABLES table, uint64_t item_id) {
         buffers_[table].erase(item_id);

@@ -88,6 +88,13 @@ int main(int argc, char *argv[]) {
     for(uint32_t i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
+
+//#if defined(B_M_L_R) || defined(B_M_L_P)
+//    this_thread::sleep_for(chrono::nanoseconds(record_buffer_time / 2));
+//#endif
+//#if defined(B_P_L_P) || defined(B_P_L_R)
+//    this_thread::sleep_for(chrono::nanoseconds(record_buffer_time * 5));
+//#endif
     profiler.End();
 
     managerInstance->stats().instance_run_time_ += profiler.Nanos();

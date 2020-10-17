@@ -87,3 +87,6 @@ uint32_t g_cust_per_dist = 2000;
 uint32_t g_max_items = 100000;
 uint32_t g_cust_per_dist = 3000;
 #endif
+
+atomic_uint64_t record_buffer_time = ATOMIC_VAR_INIT(0);
+atomic_uint64_t record_buffer_cnt = ATOMIC_VAR_INIT(0);

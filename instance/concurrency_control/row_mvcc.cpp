@@ -24,13 +24,6 @@
 
 Row_mvcc::~Row_mvcc() {
     RC rc =	this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
-#if defined(B_M_L_R) || defined(B_M_L_P)
-    this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
-#endif
-#if defined(B_P_L_P) || defined(B_P_L_R)
-    this->record_buffer_->PageBufferPut(tables_, key_, this->_row);
-#endif
-
     assert(RC::RCOK == rc);
 
 	for(uint32_t i = 0; i < _his_len; i++) {

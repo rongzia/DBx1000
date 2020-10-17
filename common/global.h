@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <map>
+#include <atomic>
 
 //#include "pthread.h"
 #include "config.h"
@@ -136,3 +137,6 @@ enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 #ifndef UINT64_MAX
 #define UINT64_MAX 		18446744073709551615UL
 #endif // UINT64_MAX
+
+extern atomic_uint64_t record_buffer_time;
+extern atomic_uint64_t record_buffer_cnt;
