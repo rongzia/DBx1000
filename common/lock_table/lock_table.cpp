@@ -153,14 +153,6 @@ namespace dbx1000 {
             assert(lock_node->count == 0);
             Invalid(item_id);
             row_t* new_row;
-//#if defined(B_M_L_R) || defined(B_M_L_P)
-//            manager_instance_->record_buffer_->RecordBufferGet(table_, item_id, new_row);
-//            delete new_row;
-//#endif
-//#if defined(B_P_L_P) || defined(B_P_L_R)
-//            manager_instance_->record_buffer_->PageBufferGet(table_, item_id, new_row);
-//            delete new_row;
-//#endif
             manager_instance_->record_buffer_->RecordBufferGet(table_, item_id, new_row);
             assert(count == new_row->get_tuple_size());
             memcpy(buf, new_row->data, new_row->get_tuple_size());
