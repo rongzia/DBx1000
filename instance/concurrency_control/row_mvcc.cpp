@@ -38,7 +38,7 @@ Row_mvcc::~Row_mvcc() {
 	_requests = nullptr;
 	_write_history = nullptr;
     _row = nullptr;
-	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
+//	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
 }
 
 void Row_mvcc::init(TABLES tables, table_t* table, uint64_t key, dbx1000::RecordBuffer* record_buffer) {
