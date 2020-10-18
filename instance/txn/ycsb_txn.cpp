@@ -479,7 +479,7 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
                 lockNode->lock_remoting = false;
             } else {
                 /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
-                assert(true == lockNode->lock_remoting);
+//                assert(true == lockNode->lock_remoting);
                 while (!lockTable->IsValid(iter)) {
                     if(lockNode->remote_locking_abort.load()){
                         return RC::Abort;

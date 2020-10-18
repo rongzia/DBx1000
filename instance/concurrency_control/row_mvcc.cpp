@@ -48,14 +48,6 @@ void Row_mvcc::init(TABLES tables, table_t* table, uint64_t key, dbx1000::Record
     this->table_ = table;
     this->size_ = table->get_schema()->tuple_size;
     this->record_buffer_ = record_buffer;
-#if defined(B_M_L_R) || defined(B_M_L_P)
-    this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
-    delete this->_row;
-#endif
-#if defined(B_P_L_P) || defined(B_P_L_R)
-    this->record_buffer_->PageBufferGet(tables_, key_, this->_row);
-    delete this->_row;
-#endif
     RC rc =	this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
     _row->set_primary_key(key_);
     assert(RC::RCOK == rc);

@@ -65,9 +65,9 @@ namespace dbx1000 {
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-#if defined(B_M_L_R)
+#if defined(B_M_L_P) || defined(B_M_L_R)
         while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 0.5 * dura) { break; } }
-#elif defined(B_P_L_R)
+#elif defined(B_P_L_P) || defined(B_P_L_R)
         while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 5 * dura) { break; } }
 #endif
 

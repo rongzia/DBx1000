@@ -21,6 +21,9 @@ class ycsb_query;
 class tpcc_query;
 class Query_queue;
 class Query_thd;
+namespace dbx1000 {
+    class ManagerInstance;
+}
 
 class base_query {
 public:
@@ -47,6 +50,7 @@ public:
 
     dbx1000::Arena* arena_;
     ~Query_thd();
+    Query_queue* queryQueue_;
 };
 
 // TODO we assume a separate task queue for each thread in order to avoid 
@@ -61,6 +65,8 @@ public:
 	base_query * get_next_query(int thread_id);
 
 	~Query_queue();
+
+    dbx1000::ManagerInstance* managerInstance_;
 
 private:
     //! 调用 init_per_thread

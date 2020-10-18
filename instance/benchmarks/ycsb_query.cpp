@@ -2,6 +2,11 @@
 #include <set>
 
 #include "ycsb_query.h"
+
+#include "common/workload/ycsb.h"
+#include "instance/manager_instance.h"
+#include "common/storage/catalog.h"
+#include "common/storage/table.h"
 #include "util/arena.h"
 
 uint64_t ycsb_query::the_n = 0;
@@ -150,6 +155,17 @@ void ycsb_query::gen_requests(int thd_id) {
 		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);   //! g_zipf_theta == 0.6
 		assert(row_id < table_size);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
+#ifdef PAR_KEY_BY_INSTANCE
+        {
+            uint32_t tuple_size = ((ycsb_wl*)_query_thd->queryQueue_->managerInstance_->m_workload())->the_table->get_schema()->get_tuple_size();
+            int instance_id = _query_thd->queryQueue_->managerInstance_->instance_id();
+            uint64_t count = 16384 / tuple_size;
+            uint64_t num1 = primary_key / count;
+            uint64_t num2 = primary_key % count;
+            uint64_t num3 = count/PROCESS_CNT;
+            primary_key = num1 * (16384 / tuple_size) + (num3 * instance_id + num2 % num3);
+        }
+#endif
 		req->key = primary_key;
 		int64_t rint64;
 		lrand48_r(&_query_thd->buffer, &rint64);

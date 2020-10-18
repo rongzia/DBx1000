@@ -69,7 +69,9 @@ namespace dbx1000 {
         m_workload_->init();
 
         this->query_queue_ = new Query_queue();
+        query_queue_->managerInstance_ = this;
         query_queue_->init();
+
 
         row_handler_ = new RowHandler(this);
 
