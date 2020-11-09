@@ -41,7 +41,6 @@ namespace dbx1000 {
         delete all_ts_;
         delete query_queue_;
         delete m_workload_;
-        delete record_buffer_;
         index_->Serialize();
         table_space_->Serialize();
         delete table_space_;
@@ -105,8 +104,6 @@ namespace dbx1000 {
 
         InitLockTables();
 
-        this->record_buffer_ = new RecordBuffer();
-        this->record_buffer_->Init(m_workload());
     }
 
     void ManagerInstance::InitMvccs() {

@@ -35,11 +35,10 @@
 using namespace std;
 using namespace dbx1000::global_lock_service;
 
-extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
-extern void Test_Lock_Table();
+extern void parser_host(int argc, char *argv[], int &ins_id, std::map<int, std::string> &hosts_map);
 
 void RunInstanceServer(GlobalLockServiceImpl *instanceServer, dbx1000::ManagerInstance *managerInstance) {
-    instanceServer->Start(managerInstance->host_map()[managerInstance->instance_id()]);
+    instanceServer->Start(managerInstance->host_map_[managerInstance->instance_id()]);
 }
 void f(thread_t* thread) {
     thread->run();
@@ -47,14 +46,12 @@ void f(thread_t* thread) {
 
 
 int main(int argc, char *argv[]) {
-//    Test_Lock_Table();
-
     assert(argc >= 2);
 
     dbx1000::ManagerInstance *managerInstance = new dbx1000::ManagerInstance();
-    int ins_id = parser_host(argc, argv, managerInstance->host_map());
-    managerInstance->set_instance_id(ins_id);
-    cout << "this instane id : " << managerInstance->instance_id() << ", host : " << managerInstance->host_map()[managerInstance->instance_id()] << endl << "server id : " << managerInstance->host_map()[-1] << endl;
+    parser_host(argc, argv, managerInstance->instance_id_, managerInstance->host_map_);
+    cout << "this instane id : " << managerInstance->instance_id_ << ", host : " << managerInstance->host_map_[managerInstance->instance_id_] << endl
+         << "server id : " << managerInstance->host_map_[-1] << endl;
     managerInstance->Init(std::string(SHARED_DISK_HOST));
 
 /**/
@@ -65,6 +62,7 @@ int main(int argc, char *argv[]) {
         instance_service_server.detach();
     }
     std::this_thread::sleep_for(chrono::seconds(2));
+#ifndef SINGLE_NODE
     // 连接集中锁管理器
     managerInstance->set_global_lock_service_client(new GlobalLockServiceClient(managerInstance->host_map()[-1]));
 
@@ -74,7 +72,7 @@ int main(int argc, char *argv[]) {
     /// 等待所有 instance 初始化完成
     while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
-
+#endif
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;
@@ -89,17 +87,13 @@ int main(int argc, char *argv[]) {
         v_thread[i].join();
     }
 
-//#if defined(B_M_L_R) || defined(B_M_L_P)
-//    this_thread::sleep_for(chrono::nanoseconds(record_buffer_time / 2));
-//#endif
-//#if defined(B_P_L_P) || defined(B_P_L_R)
-//    this_thread::sleep_for(chrono::nanoseconds(record_buffer_time * 5));
-//#endif
     profiler.End();
 
     managerInstance->stats().instance_run_time_ += profiler.Nanos();
     managerInstance->stats().print(managerInstance->instance_id());
-    managerInstance->global_lock_service_client()->ReportResult(managerInstance->stats(), managerInstance->instance_id());
+#ifndef SINGLE_NODE
+    managerInstance->global_lock_service_client_->ReportResult(managerInstance->stats(), managerInstance->instance_id());
+#endif
     AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
     AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 

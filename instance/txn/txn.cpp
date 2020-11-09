@@ -113,7 +113,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			/* orig_r->return_row(type, this, accesses[rid]->data); */
 //            this->h_thd->manager_client_->ReturnRow(accesses[rid]->data->key_, type, this, accesses[rid]->data);
-            this->h_thd->manager_client_->row_handler()->ReturnRow(accesses[rid]->table, accesses[rid]->data->get_primary_key(), type, this, accesses[rid]->data);
+            this->h_thd->manager_client_->row_handler_->ReturnRow(accesses[rid]->table, accesses[rid]->data->get_primary_key(), type, this, accesses[rid]->data);
 		}
 		/*
 #if CC_ALG != TICTOC && CC_ALG != SILO
@@ -171,7 +171,7 @@ row_t * txn_man::get_row(TABLES table, uint64_t key, access_t type) {
 	}
 	/// accesses[i] 不为 RowItem:row_ 申请空间，读写空间都是指向的 row_mvcc_ 里面的 RowItem
 	/* rc = row->get_row(type, this, accesses[ row_cnt ]->data); */
-	rc = this->h_thd->manager_client_->row_handler()->GetRow(table, key, type, this, accesses[row_cnt]->data);
+	rc = this->h_thd->manager_client_->row_handler_->GetRow(table, key, type, this, accesses[row_cnt]->data);
 
 
 	if (rc == RC::Abort) {
@@ -216,7 +216,7 @@ row_t * txn_man::get_row(TABLES table, uint64_t key, access_t type) {
 	INC_TMP_STATS(get_thd_id(), time_man, timespan);
      */
 	profiler.End();
-	this->h_thd->manager_client_->stats().tmp_stats[h_thd->get_thd_id()]->time_man += profiler.Nanos();
+	this->h_thd->manager_client_->stats_.tmp_stats[h_thd->get_thd_id()]->time_man += profiler.Nanos();
 	return accesses[row_cnt - 1]->data;
 }
 /*
@@ -280,8 +280,8 @@ RC txn_man::finish(RC rc) {
 	INC_STATS(get_thd_id(), time_cleanup,  timespan);
      */
 	profiler.End();
-	this->h_thd->manager_client_->stats().tmp_stats[h_thd->get_thd_id()]->time_man += profiler.Nanos();
-	this->h_thd->manager_client_->stats()._stats[h_thd->get_thd_id()]->time_cleanup += (profiler.Nanos());
+	this->h_thd->manager_client_->stats_.tmp_stats[h_thd->get_thd_id()]->time_man += profiler.Nanos();
+	this->h_thd->manager_client_->stats_._stats[h_thd->get_thd_id()]->time_cleanup += (profiler.Nanos());
 
     mvcc_maps_.clear();
 	return rc;
@@ -295,21 +295,21 @@ void txn_man::release() {
 */
 
 table_t* txn_man::GetTable(TABLES table) {
-    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_warehouse; }
-    if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_item; }
-    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_district; }
-    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_customer; }
-    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_history; }
-    if(table == TABLES::STOCK) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_stock; }
-    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_neworder; }
-    if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_order; }
-    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload()))->t_orderline; }
-    if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload()))->the_table; }
+    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_warehouse; }
+    if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_item; }
+    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_district; }
+    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_customer; }
+    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_history; }
+    if(table == TABLES::STOCK) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_stock; }
+    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_neworder; }
+    if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_order; }
+    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_orderline; }
+    if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload_))->the_table; }
     else { assert(false); return nullptr; }
 }
 
 void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
-    auto global_mvcc_map_i = h_thd->manager_client_->mvcc_vectors()->at(table);
+    auto global_mvcc_map_i = h_thd->manager_client_->mvcc_vectors_.at(table);
     shared_ptr<Row_mvcc> shared_p;
     while(!ATOM_CAS(global_mvcc_map_i->at(key).second, false, true))
         PAUSE
@@ -323,7 +323,7 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
 #if WORKLOAD == YCSB
         shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
 #elif WORKLOAD == TPCC
-        shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
+        shared_p->init(h_thd->manager_client_->m_workload_, table, key);
 #endif
     } else {
         assert(!global_mvcc_map_i->at(key).first.expired());

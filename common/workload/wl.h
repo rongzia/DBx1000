@@ -23,7 +23,7 @@ class Row_mvcc;
 
 namespace dbx1000{
     class Arena;
-    class Buffer;
+    class RecordBuffer;
     class MemoryDB;
     class TableSpace;
     class Index;
@@ -54,8 +54,14 @@ public:
 	//! 是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？
 //	bool sim_done;
 	std::atomic<bool> sim_done_;
+
+    /////////////// rrzhang ///////////////
+    std::map<TABLES, dbx1000::TableSpace*> tablespaces_;
+    std::map<TABLES, dbx1000::Index*> indexes_;
+    std::map<TABLES, dbx1000::RecordBuffer*> buffers_;
+    std::map<TABLES, table_t*> tables_;
 	std::vector<dbx1000::Arena*> arenas_;
-	dbx1000::Buffer* buffer_;
+    /////////////// rrzhang ///////////////
 
 protected:
 //	void index_insert(string index_name, uint64_t key, row_t * row);

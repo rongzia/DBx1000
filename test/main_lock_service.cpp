@@ -8,7 +8,7 @@
 #include "config.h"
 using namespace std;
 
-extern int parser_host(int argc, char *argv[], std::map<int, std::string> &hosts_map);
+extern void parser_host(int argc, char *argv[], int &ins_id, std::map<int, std::string> &hosts_map);
 
 void RunLockServiceServer(dbx1000::global_lock_service::GlobalLockServiceImpl * globalLockService, dbx1000::global_lock::GlobalLock* globalLock) {
     std::string port = globalLock->hosts_map()[globalLock->lock_service_id()].substr(globalLock->hosts_map()[-1].find(':'));
@@ -17,7 +17,7 @@ void RunLockServiceServer(dbx1000::global_lock_service::GlobalLockServiceImpl * 
 
 int main(int argc, char* argv[]){
     dbx1000::global_lock::GlobalLock* globalLock = new dbx1000::global_lock::GlobalLock();
-    parser_host(argc, argv, globalLock->hosts_map());
+    parser_host(argc, argv, globalLock->lock_service_id_, globalLock->hosts_map_);
     globalLock->set_lock_service_id(-1);
 
     dbx1000::global_lock_service::GlobalLockServiceImpl * globalLockService = new dbx1000::global_lock_service::GlobalLockServiceImpl();

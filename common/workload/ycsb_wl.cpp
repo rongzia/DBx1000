@@ -3,11 +3,12 @@
 #include <sched.h>
 #include <thread>
 #include <cstring>
+#include <iostream>
 
 #include "ycsb.h"
 
 #include "common/global.h"
-#include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
@@ -35,6 +36,15 @@ RC ycsb_wl::init_schema(string schema_file) {
 	workload::init_schema(schema_file);
 	the_table = tables["MAIN_TABLE"];
 //	the_index = indexes["MAIN_INDEX"];
+/////////////// rrzhang ///////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    tablespaces_[TABLES::MAIN_TABLE]      =  new dbx1000::TableSpace();
+    indexes_[TABLES::MAIN_TABLE]  = new dbx1000::Index();
+#endif
+    buffers_[TABLES::MAIN_TABLE]  = new dbx1000::RecordBuffer();
+/////////////// rrzhang ///////////////
+
+
 	return RC::RCOK;
 }
 //! 数据是分区的，每个区间的 key 都是 0-g_synth_table_size / g_part_cnt，单调增，返回 key 在哪个区间

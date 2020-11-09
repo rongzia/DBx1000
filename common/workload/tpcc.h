@@ -36,6 +36,8 @@ public:
 	
 	bool ** delivering;
 	uint32_t next_tid;
+
+
 private:
 	uint64_t num_wh;
 	void init_tab_item();

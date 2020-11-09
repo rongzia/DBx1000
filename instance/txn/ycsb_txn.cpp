@@ -277,7 +277,7 @@ void ycsb_txn_man::init(thread_t *h_thd, workload *h_wl, uint64_t thd_id) {
 
 RC ycsb_txn_man::run_txn(base_query *query) {
     if(txn_id % 1000 == 0) {
-        cout << "instance id: " << h_thd->manager_client_->instance_id() << ", txn id : " << txn_id << endl;
+        cout << "instance id: " << h_thd->manager_client_->instance_id_ << ", txn id : " << txn_id << endl;
     }
 //    cout << "txn id : " << txn_id << endl;
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
@@ -301,7 +301,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 
 
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
-        h_thd->manager_client_->stats()._stats[get_thd_id()]->count_total_request_++;
+        h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
         ycsb_request *req = &m_query->requests[rid];
         /* int part_id = wl->key_to_part( req->key ); */      //! 分区数为 1，part_id == 0
         //! finish_req、iteration 是为 req->rtype==SCAN 准备的，扫描需要读 SCAN_LEN 个 item，
@@ -399,7 +399,7 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 
 
 void ycsb_txn_man::GetLockTableSharedPtrs(ycsb_query *m_query) {
-    auto lock_table = this->h_thd->manager_client_->lock_table_i(TABLES::MAIN_TABLE);
+    auto lock_table = this->h_thd->manager_client_->lock_table_[TABLES::MAIN_TABLE];
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
 #if defined(B_M_L_P) || defined(B_P_L_P)
@@ -424,12 +424,12 @@ std::set<uint64_t> ycsb_txn_man::GetWriteRecordSet(ycsb_query *m_query) {
 #endif
         }
     }
-    this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += write_record_set.size();
+    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_ += write_record_set.size();
     return write_record_set;
 }
 
 RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_query *m_query) {
-    dbx1000::LockTable *lockTable = this->h_thd->manager_client_->lock_table_i(TABLES::MAIN_TABLE);
+    dbx1000::LockTable *lockTable = this->h_thd->manager_client_->lock_table_[TABLES::MAIN_TABLE];
 
     /// 等待其他节点 RemoteInvalid 完成
     auto has_invalid_req = [&]() {
@@ -450,16 +450,16 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
 
         /// 本地没有锁权限
         if (!lockTable->IsValid(iter)) {
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_remote_lock_++;
+            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
 
             bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
             if (flag) {
                 /// 当前线程去 RemoteLock
                 assert(true == lockNode->lock_remoting);
-                uint32_t tuple_size = ((ycsb_wl *) this->h_thd->manager_client_->m_workload())->the_table->get_schema()->tuple_size;
+                uint32_t tuple_size = ((ycsb_wl *) this->h_thd->manager_client_->m_workload_)->the_table->get_schema()->tuple_size;
                 char record_buf[tuple_size];
-                RC rc = this->h_thd->manager_client_->global_lock_service_client()->LockRemote(
-                        this->h_thd->manager_client_->instance_id(), TABLES::MAIN_TABLE, iter, dbx1000::LockMode::X, record_buf , tuple_size);
+                RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
+                        this->h_thd->manager_client_->instance_id_, TABLES::MAIN_TABLE, iter, dbx1000::LockMode::X, record_buf , tuple_size);
 
                 if (RC::Abort == rc || RC::TIME_OUT == rc) {
                     lockNode->lock_remoting = false;
@@ -470,12 +470,12 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
                 lockTable->Valid(iter);
 //                assert(lockTable->IsValid(iter));
                 row_t* temp_row = new row_t();
-                ycsb_wl* wl = (ycsb_wl*) this->h_thd->manager_client_->m_workload();
+                ycsb_wl* wl = (ycsb_wl*) this->h_thd->manager_client_->m_workload_;
                 temp_row->init(wl->the_table);
                 temp_row->set_primary_key(iter);
                 memcpy(temp_row->data, record_buf, tuple_size);
                 /// TODO，拿回来的最新值写入缓存
-                this->h_thd->manager_client_->record_buffer_->RecordBufferPut(TABLES::MAIN_TABLE, iter, temp_row);
+                this->h_thd->manager_client_->m_workload_->buffers_[TABLES::MAIN_TABLE]->BufferPut(iter, temp_row->data, temp_row->get_tuple_size());
                 lockNode->lock_remoting = false;
             } else {
                 /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
@@ -493,7 +493,7 @@ RC ycsb_txn_man::GetWriteRecordLock(std::set<uint64_t> &write_record_set, ycsb_q
     /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
 //    for (auto iter : write_record_set) { assert(lockTable->IsValid(iter)); }
     profiler.End();
-    this->h_thd->manager_client_->stats().tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
 
     return RC::RCOK;
 }

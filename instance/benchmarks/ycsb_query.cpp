@@ -157,8 +157,8 @@ void ycsb_query::gen_requests(int thd_id) {
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 #ifdef PAR_KEY_BY_INSTANCE
         {
-            uint32_t tuple_size = ((ycsb_wl*)_query_thd->queryQueue_->managerInstance_->m_workload())->the_table->get_schema()->get_tuple_size();
-            int instance_id = _query_thd->queryQueue_->managerInstance_->instance_id();
+            uint32_t tuple_size = ((ycsb_wl*)_query_thd->queryQueue_->managerInstance_->m_workload_)->the_table->get_schema()->get_tuple_size();
+            int instance_id = _query_thd->queryQueue_->managerInstance_->instance_id_;
             uint64_t count = 16384 / tuple_size;
             uint64_t num1 = primary_key / count;
             uint64_t num2 = primary_key % count;

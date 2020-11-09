@@ -48,27 +48,27 @@ namespace dbx1000 {
         void AddTs(uint64_t, uint64_t);
         uint64_t GetMinTs(uint64_t);
 
-        /// getter and setter
+//        /// getter and setter
         int instance_id()                                               { return this->instance_id_; }
-        void set_instance_id(int instance_id)                           { this->instance_id_ = instance_id; }
-        void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
-        std::map<int, std::string>& host_map()                          { return this->host_map_; }
+//        void set_instance_id(int instance_id)                           { this->instance_id_ = instance_id; }
+//        void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
+//        std::map<int, std::string>& host_map()                          { return this->host_map_; }
         Stats &stats()                                                  { return this->stats_; }
-        std::map<TABLES, unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *> *mvcc_vectors() { return &this->mvcc_vectors_; }
-        unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *mvcc_vector(TABLES table) { return this->mvcc_vectors_[table]; }
+//        std::map<TABLES, unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *> *mvcc_vectors() { return &this->mvcc_vectors_; }
+//        unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>> *mvcc_vector(TABLES table) { return this->mvcc_vectors_[table]; }
         Query_queue* query_queue()                                      { return this->query_queue_; }
         workload* m_workload()                                          { return this->m_workload_; }
         RowHandler* row_handler()                                       { return this->row_handler_; }
-//        Buffer* buffer()                                                { return this->buffer_; }
-        TableSpace* table_space()                                       { return this->table_space_; }
-        Index* index()                                                  { return this->index_; }
-        LockTable* lock_table_i(TABLES table)                           { return this->lock_table_[table]; }
-        GlobalLockServiceClient *global_lock_service_client()           { return this->global_lock_service_client_; }
-        void set_global_lock_service_client(GlobalLockServiceClient* globalLockServiceClient)   { this->global_lock_service_client_ = globalLockServiceClient; }
-        SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
+////        Buffer* buffer()                                                { return this->buffer_; }
+//        TableSpace* table_space()                                       { return this->table_space_; }
+//        Index* index()                                                  { return this->index_; }
+//        LockTable* lock_table_i(TABLES table)                           { return this->lock_table_[table]; }
+//        GlobalLockServiceClient *global_lock_service_client()           { return this->global_lock_service_client_; }
+//        void set_global_lock_service_client(GlobalLockServiceClient* globalLockServiceClient)   { this->global_lock_service_client_ = globalLockServiceClient; }
+//        SharedDiskClient * shared_disk_client()                         { return this->shared_disk_client_; }
 
-        bool all_instances_ready_;
 //    private:
+        bool all_instances_ready_;
         int instance_id_;
         std::map<int, std::string> host_map_;
         bool init_done_;
@@ -83,7 +83,7 @@ namespace dbx1000 {
         workload* m_workload_;
         RowHandler* row_handler_;
 //        Buffer * buffer_;
-        RecordBuffer* record_buffer_;
+//        RecordBuffer* record_buffer_;
         TableSpace* table_space_;
         Index* index_;
         std::map<TABLES, LockTable* > lock_table_;

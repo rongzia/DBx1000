@@ -8,6 +8,8 @@
 #include "common/storage/row.h"
 #include "instance/manager_instance.h"
 #include "util/shared_ptr_helper.h"
+#include "common/storage/table.h"
+#include "common/workload/wl.h"
 
 namespace dbx1000 {
     void LockNode::Init(int instanceid, LockMode mode) {
@@ -153,7 +155,9 @@ namespace dbx1000 {
             assert(lock_node->count == 0);
             Invalid(item_id);
             row_t* new_row;
-            manager_instance_->record_buffer_->RecordBufferGet(table_, item_id, new_row);
+            uint64_t row_id;
+            manager_instance_->m_workload_->tables_[table_]->get_new_row(new_row, 0, row_id);
+            manager_instance_->m_workload_->buffers_[table_]->BufferGet(item_id, new_row->data, new_row->get_tuple_size());
             assert(count == new_row->get_tuple_size());
             memcpy(buf, new_row->data, new_row->get_tuple_size());
             delete new_row;

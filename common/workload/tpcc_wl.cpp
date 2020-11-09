@@ -2,13 +2,14 @@
 #include <thread>
 #include <cstring>
 #include <mm_malloc.h>
+#include <iostream>
 
 #include "tpcc.h"
 #include "tpcc_const.h"
 #include "tpcc_helper.h"
 
 #include "common/global.h"
-#include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/storage/disk/file_io.h"
 #include "common/storage/tablespace/page.h"
@@ -47,6 +48,49 @@ RC tpcc_wl::init_schema(const char * schema_file) {
 	t_orderline = tables["ORDER-LINE"];
 	t_item = tables["ITEM"];
 	t_stock = tables["STOCK"];
+/////////////// rrzhang ///////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    tablespaces_[TABLES::WAREHOUSE]  =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::DISTRICT]   =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::CUSTOMER]   =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::HISTORY]    =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::NEW_ORDER]  =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::ORDER]      =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::ORDER_LINE] =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::ITEM]       =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::STOCK]      =  new dbx1000::TableSpace();
+
+    indexes_[TABLES::WAREHOUSE]  = new dbx1000::Index();
+    indexes_[TABLES::DISTRICT]   =  new dbx1000::Index();
+    indexes_[TABLES::CUSTOMER]   =  new dbx1000::Index();
+    indexes_[TABLES::HISTORY]    =  new dbx1000::Index();
+    indexes_[TABLES::NEW_ORDER]  =  new dbx1000::Index();
+    indexes_[TABLES::ORDER]      =  new dbx1000::Index();
+    indexes_[TABLES::ORDER_LINE] =  new dbx1000::Index();
+    indexes_[TABLES::ITEM]       =  new dbx1000::Index();
+    indexes_[TABLES::STOCK]      =  new dbx1000::Index();
+#endif
+
+    buffers_[TABLES::WAREHOUSE]  = new dbx1000::RecordBuffer();
+    buffers_[TABLES::DISTRICT]   =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::CUSTOMER]   =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::HISTORY]    =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::NEW_ORDER]  =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::ORDER]      =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::ORDER_LINE] =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::ITEM]       =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::STOCK]      =  new dbx1000::RecordBuffer();
+
+    tables_[TABLES::WAREHOUSE]  = t_warehouse;
+    tables_[TABLES::DISTRICT]   = t_district;
+    tables_[TABLES::CUSTOMER]   = t_customer;
+    tables_[TABLES::HISTORY]    = t_history;
+    tables_[TABLES::NEW_ORDER]  = t_neworder;
+    tables_[TABLES::ORDER]      = t_order;
+    tables_[TABLES::ORDER_LINE] = t_orderline;
+    tables_[TABLES::ITEM]       = t_item;
+    tables_[TABLES::STOCK]      = t_stock;
+/////////////// rrzhang ///////////////
 
 	/* i_item = indexes["ITEM_IDX"];
 	i_warehouse = indexes["WAREHOUSE_IDX"];
@@ -91,204 +135,357 @@ RC tpcc_wl::init_table() {
 //	return RCOK;
 //}
 //
+////////////// rrzhang //////////////
+void insert_into_item(){
+
+}
+////////////// rrzhang //////////////
+
+
 //// TODO ITEM table is assumed to be in partition 0
-//void tpcc_wl::init_tab_item() {
-//	for (uint32_t i = 1; i <= g_max_items; i++) {
-//		row_t * row;
-//		uint64_t row_id;
-//		t_item->get_new_row(row, 0, row_id);
-//		row->set_primary_key(i);
-//		row->set_value(I_ID, i);
-//		row->set_value(I_IM_ID, URand(1L,10000L, 0));
-//		char name[24];
-//		MakeAlphaString(14, 24, name, 0);
-//		row->set_value(I_NAME, name);
-//		row->set_value(I_PRICE, URand(1, 100, 0));
-//		char data[50];
-//    	MakeAlphaString(26, 50, data, 0);
-//		// TODO in TPCC, "original" should start at a random position
-//		if (RAND(10, 0) == 0)
-//			strcpy(data, "original");
-//		row->set_value(I_DATA, data);
-//
+void tpcc_wl::init_tab_item() {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::ITEM]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	for (uint32_t i = 1; i <= g_max_items; i++) {
+		row_t * row;
+		uint64_t row_id;
+		t_item->get_new_row(row, 0, row_id);
+		row->set_primary_key(i);
+		row->set_value(I_ID, i);
+		row->set_value(I_IM_ID, URand(1L,10000L, 0));
+		char name[24];
+		MakeAlphaString(14, 24, name, 0);
+		row->set_value(I_NAME, name);
+		row->set_value(I_PRICE, URand(1, 100, 0));
+		char data[50];
+    	MakeAlphaString(26, 50, data, 0);
+		// TODO in TPCC, "original" should start at a random position
+		if (RAND(10, 0) == 0)
+			strcpy(data, "original");
+		row->set_value(I_DATA, data);
+
 //		index_insert(i_item, i, row, 0);
-//	}
-//}
-//
-//void tpcc_wl::init_tab_wh(uint32_t wid) {
-//	assert(wid >= 1 && wid <= g_num_wh);
-//	row_t * row;
-//	uint64_t row_id;
-//	t_warehouse->get_new_row(row, 0, row_id);
-//	row->set_primary_key(wid);
-//
-//	row->set_value(W_ID, wid);
-//	char name[10];
-//    MakeAlphaString(6, 10, name, wid-1);
-//	row->set_value(W_NAME, name);
-//	char street[20];
-//    MakeAlphaString(10, 20, street, wid-1);
-//	row->set_value(W_STREET_1, street);
-//    MakeAlphaString(10, 20, street, wid-1);
-//	row->set_value(W_STREET_2, street);
-//    MakeAlphaString(10, 20, street, wid-1);
-//	row->set_value(W_CITY, street);
-//	char state[2];
-//	MakeAlphaString(2, 2, state, wid-1); /* State */
-//	row->set_value(W_STATE, state);
-//	char zip[9];
-//   	MakeNumberString(9, 9, zip, wid-1); /* Zip */
-//	row->set_value(W_ZIP, zip);
-//   	double tax = (double)URand(0L,200L,wid-1)/1000.0;
-//   	double w_ytd=300000.00;
-//	row->set_value(W_TAX, tax);
-//	row->set_value(W_YTD, w_ytd);
-//
+
+        ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+            page->Serialize();
+            buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            page->set_page_id(tablespaces_[TABLES::ITEM]->GetNextPageId());
+            page->set_used_size(64);
+        }
+        page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+        indexes_[TABLES::ITEM]->IndexPut(row->get_primary_key(), &indexItem);
+#elif
+        buffers_[TABLES::ITEM]->BufferPut(row->get_primary_key(), row->data, row->get_tuple_size());
+#endif
+        ////////////// rrzhang //////////////
+	}
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#endif
+////////////// rrzhang //////////////
+}
+
+void tpcc_wl::init_tab_wh(uint32_t wid) {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	assert(wid >= 1 && wid <= g_num_wh);
+	row_t * row;
+	uint64_t row_id;
+	t_warehouse->get_new_row(row, 0, row_id);
+	row->set_primary_key(wid);
+
+	row->set_value(W_ID, wid);
+	char name[10];
+    MakeAlphaString(6, 10, name, wid-1);
+	row->set_value(W_NAME, name);
+	char street[20];
+    MakeAlphaString(10, 20, street, wid-1);
+	row->set_value(W_STREET_1, street);
+    MakeAlphaString(10, 20, street, wid-1);
+	row->set_value(W_STREET_2, street);
+    MakeAlphaString(10, 20, street, wid-1);
+	row->set_value(W_CITY, street);
+	char state[2];
+	MakeAlphaString(2, 2, state, wid-1); /* State */
+	row->set_value(W_STATE, state);
+	char zip[9];
+   	MakeNumberString(9, 9, zip, wid-1); /* Zip */
+	row->set_value(W_ZIP, zip);
+   	double tax = (double)URand(0L,200L,wid-1)/1000.0;
+   	double w_ytd=300000.00;
+	row->set_value(W_TAX, tax);
+	row->set_value(W_YTD, w_ytd);
+
 //	index_insert(i_warehouse, wid, row, wh_to_part(wid));
-//	return;
-//}
-//
-//void tpcc_wl::init_tab_dist(uint64_t wid) {
-//	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) { /// DIST_PER_WARE  == 10
-//		row_t * row;
-//		uint64_t row_id;
-//		t_district->get_new_row(row, 0, row_id);
-//		row->set_primary_key(did);
-//
-//		row->set_value(D_ID, did);
-//		row->set_value(D_W_ID, wid);
-//		char name[10];
-//		MakeAlphaString(6, 10, name, wid-1);
-//		row->set_value(D_NAME, name);
-//		char street[20];
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(D_STREET_1, street);
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(D_STREET_2, street);
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(D_CITY, street);
-//		char state[2];
-//		MakeAlphaString(2, 2, state, wid-1); /* State */
-//		row->set_value(D_STATE, state);
-//		char zip[9];
-//    	MakeNumberString(9, 9, zip, wid-1); /* Zip */
-//		row->set_value(D_ZIP, zip);
-//    	double tax = (double)URand(0L,200L,wid-1)/1000.0;
-//    	double w_ytd=30000.00;
-//		row->set_value(D_TAX, tax);
-//		row->set_value(D_YTD, w_ytd);
-//		row->set_value(D_NEXT_O_ID, 3001);
-//
+
+    ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+        page->Serialize();
+        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
+        page->set_used_size(64);
+    }
+    page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+    dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+    indexes_[TABLES::WAREHOUSE]->IndexPut(row->get_primary_key(), &indexItem);
+
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#elif
+    buffers_[TABLES::WAREHOUSE]->BufferPut(row->get_primary_key(), row->data, row->get_tuple_size());
+#endif
+////////////// rrzhang //////////////
+	return;
+}
+
+void tpcc_wl::init_tab_dist(uint64_t wid) {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::DISTRICT]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) { /// DIST_PER_WARE  == 10
+		row_t * row;
+		uint64_t row_id;
+		t_district->get_new_row(row, 0, row_id);
+		row->set_primary_key(did);
+
+		row->set_value(D_ID, did);
+		row->set_value(D_W_ID, wid);
+		char name[10];
+		MakeAlphaString(6, 10, name, wid-1);
+		row->set_value(D_NAME, name);
+		char street[20];
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(D_STREET_1, street);
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(D_STREET_2, street);
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(D_CITY, street);
+		char state[2];
+		MakeAlphaString(2, 2, state, wid-1); /* State */
+		row->set_value(D_STATE, state);
+		char zip[9];
+    	MakeNumberString(9, 9, zip, wid-1); /* Zip */
+		row->set_value(D_ZIP, zip);
+    	double tax = (double)URand(0L,200L,wid-1)/1000.0;
+    	double w_ytd=30000.00;
+		row->set_value(D_TAX, tax);
+		row->set_value(D_YTD, w_ytd);
+		row->set_value(D_NEXT_O_ID, 3001);
+
 //		index_insert(i_district, distKey(did, wid), row, wh_to_part(wid));
-//	}
-//}
-//
-//void tpcc_wl::init_tab_stock(uint64_t wid) {
-//
-//	for (UInt32 sid = 1; sid <= g_max_items; sid++) {
-//		row_t * row;
-//		uint64_t row_id;
-//		t_stock->get_new_row(row, 0, row_id);
-//		row->set_primary_key(sid);
-//		row->set_value(S_I_ID, sid);
-//		row->set_value(S_W_ID, wid);
-//		row->set_value(S_QUANTITY, URand(10, 100, wid-1));
-//		row->set_value(S_REMOTE_CNT, 0);
-//#if !TPCC_SMALL
-//		char s_dist[25];
-//		char row_name[10] = "S_DIST_";
-//		for (int i = 1; i <= 10; i++) {
-//			if (i < 10) {
-//				row_name[7] = '0';
-//				row_name[8] = i + '0';
-//			} else {
-//				row_name[7] = '1';
-//				row_name[8] = '0';
-//			}
-//			row_name[9] = '\0';
-//			MakeAlphaString(24, 24, s_dist, wid-1);
-//			row->set_value(row_name, s_dist);
-//		}
-//		row->set_value(S_YTD, 0);
-//		row->set_value(S_ORDER_CNT, 0);
-//		char s_data[50];
-//		int len = MakeAlphaString(26, 50, s_data, wid-1);
-//		if (rand() % 100 < 10) {
-//			int idx = URand(0, len - 8, wid-1);
-//			strcpy(&s_data[idx], "original");
-//		}
-//		row->set_value(S_DATA, s_data);
-//#endif
+
+        ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+            page->Serialize();
+            buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            page->set_page_id(tablespaces_[TABLES::DISTRICT]->GetNextPageId());
+            page->set_used_size(64);
+        }
+        page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+        indexes_[TABLES::DISTRICT]->IndexPut(distKey(did, wid), &indexItem);
+#elif
+        buffers_[TABLES::DISTRICT]->BufferPut(distKey(did, wid), row->data, row->get_tuple_size());
+#endif
+        ////////////// rrzhang //////////////
+	}
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#endif
+////////////// rrzhang //////////////
+}
+
+void tpcc_wl::init_tab_stock(uint64_t wid) {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::STOCK]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+		row_t * row;
+		uint64_t row_id;
+		t_stock->get_new_row(row, 0, row_id);
+		row->set_primary_key(sid);
+		row->set_value(S_I_ID, sid);
+		row->set_value(S_W_ID, wid);
+		row->set_value(S_QUANTITY, URand(10, 100, wid-1));
+		row->set_value(S_REMOTE_CNT, 0);
+#if !TPCC_SMALL
+		char s_dist[25];
+		char row_name[10] = "S_DIST_";
+		for (int i = 1; i <= 10; i++) {
+			if (i < 10) {
+				row_name[7] = '0';
+				row_name[8] = i + '0';
+			} else {
+				row_name[7] = '1';
+				row_name[8] = '0';
+			}
+			row_name[9] = '\0';
+			MakeAlphaString(24, 24, s_dist, wid-1);
+			row->set_value(row_name, s_dist);
+		}
+		row->set_value(S_YTD, 0);
+		row->set_value(S_ORDER_CNT, 0);
+		char s_data[50];
+		int len = MakeAlphaString(26, 50, s_data, wid-1);
+		if (rand() % 100 < 10) {
+			int idx = URand(0, len - 8, wid-1);
+			strcpy(&s_data[idx], "original");
+		}
+		row->set_value(S_DATA, s_data);
+#endif
 //		index_insert(i_stock, stockKey(sid, wid), row, wh_to_part(wid));
-//	}
-//}
-//
-//void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
-//	assert(g_cust_per_dist >= 1000);
-//	for (UInt32 cid = 1; cid <= g_cust_per_dist; cid++) {
-//		row_t * row;
-//		uint64_t row_id;
-//		t_customer->get_new_row(row, 0, row_id);
-//		row->set_primary_key(cid);
-//
-//		row->set_value(C_ID, cid);
-//		row->set_value(C_D_ID, did);
-//		row->set_value(C_W_ID, wid);
-//		char c_last[LASTNAME_LEN];
-//		if (cid <= 1000)
-//			Lastname(cid - 1, c_last);
-//		else
-//			Lastname(NURand(255,0,999,wid-1), c_last);
-//		row->set_value(C_LAST, c_last);
-//#if !TPCC_SMALL
-//		char tmp[3] = "OE";
-//		row->set_value(C_MIDDLE, tmp);
-//		char c_first[FIRSTNAME_LEN];
-//		MakeAlphaString(FIRSTNAME_MINLEN, sizeof(c_first), c_first, wid-1);
-//		row->set_value(C_FIRST, c_first);
-//		char street[20];
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(C_STREET_1, street);
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(C_STREET_2, street);
-//        MakeAlphaString(10, 20, street, wid-1);
-//		row->set_value(C_CITY, street);
-//		char state[2];
-//		MakeAlphaString(2, 2, state, wid-1); /* State */
-//		row->set_value(C_STATE, state);
-//		char zip[9];
-//    	MakeNumberString(9, 9, zip, wid-1); /* Zip */
-//		row->set_value(C_ZIP, zip);
-//		char phone[16];
-//  		MakeNumberString(16, 16, phone, wid-1); /* Zip */
-//		row->set_value(C_PHONE, phone);
-//		row->set_value(C_SINCE, 0);
-//		row->set_value(C_CREDIT_LIM, 50000);
-//		row->set_value(C_DELIVERY_CNT, 0);
-//		char c_data[500];
-//        MakeAlphaString(300, 500, c_data, wid-1);
-//		row->set_value(C_DATA, c_data);
-//#endif
-//		if (RAND(10, wid-1) == 0) {
-//			char tmp[] = "GC";
-//			row->set_value(C_CREDIT, tmp);
-//		} else {
-//			char tmp[] = "BC";
-//			row->set_value(C_CREDIT, tmp);
-//		}
-//		row->set_value(C_DISCOUNT, (double)RAND(5000,wid-1) / 10000);
-//		row->set_value(C_BALANCE, -10.0);
-//		row->set_value(C_YTD_PAYMENT, 10.0);
-//		row->set_value(C_PAYMENT_CNT, 1);
-//		uint64_t key;
+
+        ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+            page->Serialize();
+            buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            page->set_page_id(tablespaces_[TABLES::STOCK]->GetNextPageId());
+            page->set_used_size(64);
+        }
+        page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+        indexes_[TABLES::STOCK]->IndexPut(stockKey(sid, wid), &indexItem);
+#elif
+        buffers_[TABLES::STOCK]->BufferPut(stockKey(sid, wid), row->data, row->get_tuple_size());
+#endif
+        ////////////// rrzhang //////////////
+	}
+
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#endif
+////////////// rrzhang //////////////
+}
+
+void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::CUSTOMER]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	assert(g_cust_per_dist >= 1000);
+	for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+		row_t * row;
+		uint64_t row_id;
+		t_customer->get_new_row(row, 0, row_id);
+		row->set_primary_key(cid);
+
+		row->set_value(C_ID, cid);
+		row->set_value(C_D_ID, did);
+		row->set_value(C_W_ID, wid);
+		char c_last[LASTNAME_LEN];
+		if (cid <= 1000)
+			Lastname(cid - 1, c_last);
+		else
+			Lastname(NURand(255,0,999,wid-1), c_last);
+		row->set_value(C_LAST, c_last);
+#if !TPCC_SMALL
+		char tmp[3] = "OE";
+		row->set_value(C_MIDDLE, tmp);
+		char c_first[FIRSTNAME_LEN];
+		MakeAlphaString(FIRSTNAME_MINLEN, sizeof(c_first), c_first, wid-1);
+		row->set_value(C_FIRST, c_first);
+		char street[20];
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(C_STREET_1, street);
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(C_STREET_2, street);
+        MakeAlphaString(10, 20, street, wid-1);
+		row->set_value(C_CITY, street);
+		char state[2];
+		MakeAlphaString(2, 2, state, wid-1); /* State */
+		row->set_value(C_STATE, state);
+		char zip[9];
+    	MakeNumberString(9, 9, zip, wid-1); /* Zip */
+		row->set_value(C_ZIP, zip);
+		char phone[16];
+  		MakeNumberString(16, 16, phone, wid-1); /* Zip */
+		row->set_value(C_PHONE, phone);
+		row->set_value(C_SINCE, 0);
+		row->set_value(C_CREDIT_LIM, 50000);
+		row->set_value(C_DELIVERY_CNT, 0);
+		char c_data[500];
+        MakeAlphaString(300, 500, c_data, wid-1);
+		row->set_value(C_DATA, c_data);
+#endif
+		if (RAND(10, wid-1) == 0) {
+			char tmp[] = "GC";
+			row->set_value(C_CREDIT, tmp);
+		} else {
+			char tmp[] = "BC";
+			row->set_value(C_CREDIT, tmp);
+		}
+		row->set_value(C_DISCOUNT, (double)RAND(5000,wid-1) / 10000);
+		row->set_value(C_BALANCE, -10.0);
+		row->set_value(C_YTD_PAYMENT, 10.0);
+		row->set_value(C_PAYMENT_CNT, 1);
+		uint64_t key;
 //		key = custNPKey(c_last, did, wid);
 //		index_insert(i_customer_last, key, row, wh_to_part(wid));
-//		key = custKey(cid, did, wid);
+		key = custKey(cid, did, wid);
 //		index_insert(i_customer_id, key, row, wh_to_part(wid));
-//	}
-//}
-//
-//void tpcc_wl::init_tab_hist(uint64_t c_id, uint64_t d_id, uint64_t w_id) {
+        ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+            page->Serialize();
+            buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            page->set_page_id(tablespaces_[TABLES::CUSTOMER]->GetNextPageId());
+            page->set_used_size(64);
+        }
+        page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+        indexes_[TABLES::CUSTOMER]->IndexPut(key, &indexItem);
+#elif
+        buffers_[TABLES::CUSTOMER]->BufferPut(key, row->data, row->get_tuple_size());
+#endif
+        ////////////// rrzhang //////////////
+	}
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#endif
+////////////// rrzhang //////////////
+}
+
+void tpcc_wl::init_tab_hist(uint64_t c_id, uint64_t d_id, uint64_t w_id) {
 //	row_t * row;
 //	uint64_t row_id;
 //	t_history->get_new_row(row, 0, row_id);
@@ -305,88 +502,117 @@ RC tpcc_wl::init_table() {
 //	MakeAlphaString(12, 24, h_data, w_id-1);
 //	row->set_value(H_DATA, h_data);
 //#endif
-//
-//}
-//
-//void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
-//	uint64_t perm[g_cust_per_dist];
-//	init_permutation(perm, wid); /* initialize permutation of customer numbers */
-//	for (UInt32 oid = 1; oid <= g_cust_per_dist; oid++) {
-//		row_t * row;
-//		uint64_t row_id;
-//		t_order->get_new_row(row, 0, row_id);
-//		row->set_primary_key(oid);
-//		uint64_t o_ol_cnt = 1;
-//		uint64_t cid = perm[oid - 1]; //get_permutation();
-//		row->set_value(O_ID, oid);
-//		row->set_value(O_C_ID, cid);
-//		row->set_value(O_D_ID, did);
-//		row->set_value(O_W_ID, wid);
-//		uint64_t o_entry = 2013;
-//		row->set_value(O_ENTRY_D, o_entry);
-//		if (oid < 2101)
-//			row->set_value(O_CARRIER_ID, URand(1, 10, wid-1));
-//		else
-//			row->set_value(O_CARRIER_ID, 0);
-//		o_ol_cnt = URand(5, 15, wid-1);
-//		row->set_value(O_OL_CNT, o_ol_cnt);
-//		row->set_value(O_ALL_LOCAL, 1);
-//
-//		// ORDER-LINE
-//#if !TPCC_SMALL
-//		for (uint32_t ol = 1; ol <= o_ol_cnt; ol++) {
-//			t_orderline->get_new_row(row, 0, row_id);
-//			row->set_value(OL_O_ID, oid);
-//			row->set_value(OL_D_ID, did);
-//			row->set_value(OL_W_ID, wid);
-//			row->set_value(OL_NUMBER, ol);
-//			row->set_value(OL_I_ID, URand(1, 100000, wid-1));
-//			row->set_value(OL_SUPPLY_W_ID, wid);
-//			if (oid < 2101) {
-//				row->set_value(OL_DELIVERY_D, o_entry);
-//				row->set_value(OL_AMOUNT, 0);
-//			} else {
-//				row->set_value(OL_DELIVERY_D, 0);
-//				row->set_value(OL_AMOUNT, (double)URand(1, 999999, wid-1)/100);
-//			}
-//			row->set_value(OL_QUANTITY, 5);
-//			char ol_dist_info[24];
-//	        MakeAlphaString(24, 24, ol_dist_info, wid-1);
-//			row->set_value(OL_DIST_INFO, ol_dist_info);
-//		}
-//#endif
-//		// NEW ORDER
-//		if (oid > 2100) {
-//			t_neworder->get_new_row(row, 0, row_id);
-//			row->set_value(NO_O_ID, oid);
-//			row->set_value(NO_D_ID, did);
-//			row->set_value(NO_W_ID, wid);
-//		}
-//	}
-//}
-//
-///*==================================================================+
-//| ROUTINE NAME
-//| InitPermutation
-//+==================================================================*/
-//
-//void
-//tpcc_wl::init_permutation(uint64_t * perm_c_id, uint64_t wid) {
-//	uint32_t i;
-//	// Init with consecutive values
-//	for(i = 0; i < g_cust_per_dist; i++)
-//		perm_c_id[i] = i+1;
-//
-//	// shuffle
-//	for(i=0; i < g_cust_per_dist-1; i++) {
-//		uint64_t j = URand(i+1, g_cust_per_dist-1, wid-1);
-//		uint64_t tmp = perm_c_id[i];
-//		perm_c_id[i] = perm_c_id[j];
-//		perm_c_id[j] = tmp;
-//	}
-//}
-//
-//
+
+}
+
+void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    page->set_page_id(tablespaces_[TABLES::ORDER]->GetNextPageId());
+#endif
+////////////// rrzhang //////////////
+	uint64_t perm[g_cust_per_dist];
+	init_permutation(perm, wid); /* initialize permutation of customer numbers */
+	for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) {
+		row_t * row;
+		uint64_t row_id;
+		t_order->get_new_row(row, 0, row_id);
+		row->set_primary_key(oid);
+		uint64_t o_ol_cnt = 1;
+		uint64_t cid = perm[oid - 1]; //get_permutation();
+		row->set_value(O_ID, oid);
+		row->set_value(O_C_ID, cid);
+		row->set_value(O_D_ID, did);
+		row->set_value(O_W_ID, wid);
+		uint64_t o_entry = 2013;
+		row->set_value(O_ENTRY_D, o_entry);
+		if (oid < 2101)
+			row->set_value(O_CARRIER_ID, URand(1, 10, wid-1));
+		else
+			row->set_value(O_CARRIER_ID, 0);
+		o_ol_cnt = URand(5, 15, wid-1);
+		row->set_value(O_OL_CNT, o_ol_cnt);
+		row->set_value(O_ALL_LOCAL, 1);
+
+		// ORDER-LINE
+#if !TPCC_SMALL
+		for (uint32_t ol = 1; ol <= o_ol_cnt; ol++) {
+			t_orderline->get_new_row(row, 0, row_id);
+			row->set_value(OL_O_ID, oid);
+			row->set_value(OL_D_ID, did);
+			row->set_value(OL_W_ID, wid);
+			row->set_value(OL_NUMBER, ol);
+			row->set_value(OL_I_ID, URand(1, 100000, wid-1));
+			row->set_value(OL_SUPPLY_W_ID, wid);
+			if (oid < 2101) {
+				row->set_value(OL_DELIVERY_D, o_entry);
+				row->set_value(OL_AMOUNT, 0);
+			} else {
+				row->set_value(OL_DELIVERY_D, 0);
+				row->set_value(OL_AMOUNT, (double)URand(1, 999999, wid-1)/100);
+			}
+			row->set_value(OL_QUANTITY, 5);
+			char ol_dist_info[24];
+	        MakeAlphaString(24, 24, ol_dist_info, wid-1);
+			row->set_value(OL_DIST_INFO, ol_dist_info);
+		}
+#endif
+		// NEW ORDER
+		if (oid > 2100) {
+			t_neworder->get_new_row(row, 0, row_id);
+			row->set_value(NO_O_ID, oid);
+			row->set_value(NO_D_ID, did);
+			row->set_value(NO_W_ID, wid);
+		}
+        ////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
+            page->Serialize();
+            buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            page->set_page_id(tablespaces_[TABLES::ORDER]->GetNextPageId());
+            page->set_used_size(64);
+        }
+        page->PagePut(page->page_id(), row->data, row->get_tuple_size());
+//        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
+//        indexes_[TABLES::ORDER]->IndexPut(key, &indexItem);
+#elif
+        buffers_[TABLES::ORDER]->BufferPut(key, row->data, row->get_tuple_size());
+#endif
+        ////////////// rrzhang //////////////
+	}
+////////////// rrzhang //////////////
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+    }
+#endif
+////////////// rrzhang //////////////
+}
+
+/*==================================================================+
+| ROUTINE NAME
+| InitPermutation
++==================================================================*/
+
+void
+tpcc_wl::init_permutation(uint64_t * perm_c_id, uint64_t wid) {
+	uint32_t i;
+	// Init with consecutive values
+	for(i = 0; i < g_cust_per_dist; i++)
+		perm_c_id[i] = i+1;
+
+	// shuffle
+	for(i=0; i < g_cust_per_dist-1; i++) {
+		uint64_t j = URand(i+1, g_cust_per_dist-1, wid-1);
+		uint64_t tmp = perm_c_id[i];
+		perm_c_id[i] = perm_c_id[j];
+		perm_c_id[j] = tmp;
+	}
+}
+
+
 ///*==================================================================+
 //| ROUTINE NAME
 //| GetPermutation
@@ -401,17 +627,17 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	tpcc_buffer[tid] = new drand48_data();
 	assert((uint64_t)tid < g_num_wh);
 	srand48_r(wid, tpcc_buffer[tid]);
-//
-//	if (tid == 0)
-//		wl->init_tab_item();
-//	wl->init_tab_wh( wid );
-//	wl->init_tab_dist( wid );
-//	wl->init_tab_stock( wid );
-//	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {  /// DIST_PER_WARE == 10, 地区数量
-//		wl->init_tab_cust(did, wid);
-//		wl->init_tab_order(did, wid);
-//		for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++)
-//			wl->init_tab_hist(cid, did, wid);
-//	}
+
+	if (tid == 0)
+		wl->init_tab_item();
+	wl->init_tab_wh( wid );
+	wl->init_tab_dist( wid );
+	wl->init_tab_stock( wid );
+	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {  /// DIST_PER_WARE == 10, 地区数量
+		wl->init_tab_cust(did, wid);
+		wl->init_tab_order(did, wid);
+		for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++)
+			wl->init_tab_hist(cid, did, wid);
+	}
 	return NULL;
 }

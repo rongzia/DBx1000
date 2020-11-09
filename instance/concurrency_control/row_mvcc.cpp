@@ -23,7 +23,7 @@
 #if CC_ALG == MVCC
 
 Row_mvcc::~Row_mvcc() {
-    RC rc =	this->record_buffer_->RecordBufferPut(tables_, key_, this->_row);
+    RC rc =	workload_->buffers_[table_]->BufferPut(key_, _row->data, size_);
     assert(RC::RCOK == rc);
 
 	for(uint32_t i = 0; i < _his_len; i++) {
@@ -41,14 +41,16 @@ Row_mvcc::~Row_mvcc() {
 //	if(key_ % 1000000 == 0) {cout << "Row_mvcc::~Row_mvcc: " << key_ << endl;}
 }
 
-void Row_mvcc::init(TABLES tables, table_t* table, uint64_t key, dbx1000::RecordBuffer* record_buffer) {
+void Row_mvcc::init(workload* workload, TABLES table, uint64_t key) {
 	/* _row = row; */
+	this->workload_ = workload;
+	this->table_ = table;
 	this->key_ = key;
-    this->tables_ = tables;
-    this->table_ = table;
-    this->size_ = table->get_schema()->tuple_size;
-    this->record_buffer_ = record_buffer;
-    RC rc =	this->record_buffer_->RecordBufferGet(tables_, key_, this->_row);
+    this->size_ = workload_->tables_[table_]->get_schema()->get_tuple_size();
+
+    uint64_t row_id;
+    workload_->tables_[table_]->get_new_row(this->_row, 0, row_id);
+    RC rc =	workload_->buffers_[table_]->BufferGet(key_, _row->data, size_);
     _row->set_primary_key(key_);
     assert(RC::RCOK == rc);
 	_his_len = 4;
@@ -149,7 +151,7 @@ Row_mvcc::double_list(uint32_t list)
 row_t* Row_mvcc::GetRow(uint64_t key) {
     row_t* new_row;
     uint64_t row_id;
-    table_->get_new_row(new_row, 0, row_id);
+    workload_->tables_[table_]->get_new_row(new_row, 0, row_id);
     new_row->set_primary_key(key);
     new_row->set_value(0, &key);
     return new_row;
@@ -190,7 +192,7 @@ uint64_t t1 = get_sys_clock();
 		while (!ATOM_CAS(blatch, false, true))
 			PAUSE
     profiler.End();
-	txn->h_thd->manager_client_->stats()._stats[txn->get_thd_id()]->debug4 += profiler.Nanos();
+	txn->h_thd->manager_client_->stats_._stats[txn->get_thd_id()]->debug4 += profiler.Nanos();
 
 	profiler.Clear();
 	profiler.Start();
@@ -293,7 +295,7 @@ INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
 	} else 
 		assert(false);
 	profiler.End();
-	txn->h_thd->manager_client_->stats()._stats[txn->get_thd_id()]->debug3 += profiler.Nanos();
+	txn->h_thd->manager_client_->stats_._stats[txn->get_thd_id()]->debug3 += profiler.Nanos();
 	/*
 INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - t2);
 	if (g_central_man)

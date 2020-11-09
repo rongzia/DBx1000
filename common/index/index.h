@@ -29,6 +29,7 @@ namespace dbx1000 {
     class Index {
     public:
         Index(const std::string&);
+        Index()  = default;
         ~Index();
 
         IndexFlag IndexGet(uint64_t key, IndexItem* indexItem);

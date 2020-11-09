@@ -76,7 +76,7 @@ namespace dbx1000 {
 //            Index *index() { return this->index_; }
             int test_num_;
 
-        private:
+//        private:
             bool init_done_;
             int lock_service_id_;
             std::map<int, std::string> hosts_map_;
