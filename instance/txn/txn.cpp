@@ -1,6 +1,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <thread>
 #include "txn.h"
 
 #include "instance/benchmarks/ycsb_query.h"
@@ -8,6 +9,7 @@
 #include "instance/concurrency_control/row_mvcc.h"
 #include "instance/manager_instance.h"
 #include "instance/thread.h"
+#include "common/buffer/record_buffer.h"
 #include "common/storage/row.h"
 #include "common/storage/table.h"
 #include "common/storage/catalog.h"
@@ -20,6 +22,7 @@
 #include "common/workload/wl.h"
 #include "common/mystats.h"
 #include "common/myhelper.h"
+#include "global_lock_service/brpc/global_lock_service.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
@@ -179,7 +182,7 @@ row_t * txn_man::get_row(TABLES table, uint64_t key, access_t type) {
 	}
     assert(accesses[row_cnt]->data == this->cur_row);
     assert(accesses[row_cnt]->data->get_primary_key() == key);
-    assert(accesses[row_cnt]->data->get_tuple_size() == GetTable(table)->get_schema()->tuple_size);
+    assert(accesses[row_cnt]->data->get_tuple_size() == h_wl->tables_[table]->get_schema()->tuple_size);
 
 	accesses[row_cnt]->type = type;
 	accesses[row_cnt]->table = table;
@@ -294,19 +297,19 @@ void txn_man::release() {
 }
 */
 
-table_t* txn_man::GetTable(TABLES table) {
-    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_warehouse; }
-    if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_item; }
-    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_district; }
-    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_customer; }
-    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_history; }
-    if(table == TABLES::STOCK) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_stock; }
-    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_neworder; }
-    if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_order; }
-    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_orderline; }
-    if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload_))->the_table; }
-    else { assert(false); return nullptr; }
-}
+//table_t* txn_man::GetTable(TABLES table) {
+//    if(table == TABLES::WAREHOUSE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_warehouse; }
+//    if(table == TABLES::ITEM) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_item; }
+//    if(table == TABLES::DISTRICT) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_district; }
+//    if(table == TABLES::CUSTOMER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_customer; }
+//    if(table == TABLES::HISTORY) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_history; }
+//    if(table == TABLES::STOCK) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_stock; }
+//    if(table == TABLES::NEW_ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_neworder; }
+//    if(table == TABLES::ORDER) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_order; }
+//    if(table == TABLES::ORDER_LINE) { return ((tpcc_wl *)(this->h_thd->manager_client_->m_workload_))->t_orderline; }
+//    if(table == TABLES::MAIN_TABLE) { return ((ycsb_wl *)(this->h_thd->manager_client_->m_workload_))->the_table; }
+//    else { assert(false); return nullptr; }
+//}
 
 void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
     auto global_mvcc_map_i = h_thd->manager_client_->mvcc_vectors_.at(table);
@@ -320,11 +323,7 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
         assert(global_mvcc_map_i->at(key).first.expired());
         shared_p = make_shared<Row_mvcc>();
         global_mvcc_map_i->at(key).first = shared_p;
-#if WORKLOAD == YCSB
-        shared_p->init(table, GetTable(table), key, this->h_thd->manager_client_->record_buffer_);
-#elif WORKLOAD == TPCC
         shared_p->init(h_thd->manager_client_->m_workload_, table, key);
-#endif
     } else {
         assert(!global_mvcc_map_i->at(key).first.expired());
         // shared_p = global_mvcc_map_i[key].first.lock();
@@ -334,4 +333,82 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
     }
     this->mvcc_maps_[table].insert(make_pair(key, shared_p));
     global_mvcc_map_i->at(key).second = false;
+}
+
+
+RC txn_man::GetWriteRecordLock() {
+    auto lockTable = this->h_thd->manager_client_->lock_table_;
+
+    /// 等待其他节点 RemoteInvalid 完成
+    auto has_invalid_req = [&]() {
+        for (auto iter : write_record_set) {
+            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
+        }
+        return false;
+    };
+    while (has_invalid_req()) { std::this_thread::yield(); }
+    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
+    /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
+
+    dbx1000::Profiler profiler;
+    profiler.Start();
+
+    for (auto iter : write_record_set) {
+        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
+
+        /// 本地没有锁权限
+        if (!lockTable[iter.first]->IsValid(iter.second)) {
+            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
+
+            bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
+            if (flag) {
+                /// 当前线程去 RemoteLock
+                assert(true == lockNode->lock_remoting);
+                std::size_t buf_size;
+#if defined(B_P_L_P)
+                buf_size = MY_PAGE_SIZE;
+#else
+                buf_size = this->h_wl->tables_[iter.first]->get_schema()->tuple_size;
+#endif
+                char buf[buf_size];
+                RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
+                        this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
+
+                if (RC::Abort == rc || RC::TIME_OUT == rc) {
+                    lockNode->lock_remoting = false;
+                    lockNode->remote_locking_abort.store(true);
+                    return RC::Abort;
+                }
+                assert(rc == RC::RCOK);
+                lockTable[iter.first]->Valid(iter.second);
+//                assert(lockTable[iter.first]->IsValid(iter.second));
+#if defined(B_P_L_P)
+                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, MY_PAGE_SIZE);
+//#else
+                uint64_t row_id;
+                row_t* temp_row;
+                h_wl->tables_[iter.first]->get_new_row(temp_row, 0, row_id);
+                memcpy(temp_row->data, buf, buf_size);
+                h_wl->manager_instance_->row_handler_->WriteRow(iter.first, iter.second, temp_row, buf_size);
+#endif
+                lockNode->lock_remoting = false;
+            } else {
+                /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
+                assert(true == lockNode->lock_remoting);
+                while (!lockTable[iter.first]->IsValid(iter.second)) {
+                    if(lockNode->remote_locking_abort.load()){
+                        return RC::Abort;
+                    }
+                }
+//                assert(lockTable[iter.first]->IsValid(iter.second));
+            }
+        }
+    }
+
+    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
+//    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
+    profiler.End();
+    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+
+    return RC::RCOK;
 }

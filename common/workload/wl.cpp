@@ -15,8 +15,26 @@ workload::workload(){
 
 workload::~workload(){
     cout << "workload::~workload()" << endl;
-    for(uint32_t i = 0; i < g_init_parallelism; i++) {
-        delete arenas_[i];
+//    for(uint32_t i = 0; i < g_init_parallelism; i++) {
+//        delete arenas_[i];
+//    }
+    for(auto &iter : arenas_) {
+        delete iter;
+    }
+    for(auto &iter : tables) {
+        delete iter.second;
+    }
+    for(auto &iter : tablespaces_) {
+        delete iter.second;
+    }
+    for(auto &iter : indexes_) {
+        delete iter.second;
+    }
+    for(auto &iter : tables_) {
+        delete iter.second;
+    }
+    for(auto &iter : buffers_) {
+        delete iter.second;
     }
 }
 

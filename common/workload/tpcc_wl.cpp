@@ -18,6 +18,7 @@
 #include "common/storage/catalog.h"
 #include "common/storage/row.h"
 #include "common/storage/table.h"
+#include "instance/manager_instance.h"
 #include "util/profiler.h"
 #include "util/arena.h"
 
@@ -33,7 +34,7 @@ RC tpcc_wl::init() {
 	init_schema( g_tpcc_schame_path );
 	cout << "TPCC schema initialized" << endl;
 	init_table();
-	next_tid = 0;
+	next_tid = manager_instance_->instance_id_;
 	return RC::RCOK;
 }
 
@@ -181,7 +182,7 @@ void tpcc_wl::init_tab_item() {
         page->PagePut(page->page_id(), row->data, row->get_tuple_size());
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::ITEM]->IndexPut(row->get_primary_key(), &indexItem);
-#elif
+#else
         buffers_[TABLES::ITEM]->BufferPut(row->get_primary_key(), row->data, row->get_tuple_size());
 #endif
         ////////////// rrzhang //////////////
@@ -202,8 +203,9 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
     dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
     page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
 #endif
+    assert((int)wid > manager_instance_->instance_id_*NUM_WH && (int)wid <= (manager_instance_->instance_id_+1)*NUM_WH);
 ////////////// rrzhang //////////////
-	assert(wid >= 1 && wid <= g_num_wh);
+//	assert(wid >= 1 && wid <= g_num_wh);
 	row_t * row;
 	uint64_t row_id;
 	t_warehouse->get_new_row(row, 0, row_id);
@@ -249,7 +251,7 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
         page->Serialize();
         buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
     }
-#elif
+#else
     buffers_[TABLES::WAREHOUSE]->BufferPut(row->get_primary_key(), row->data, row->get_tuple_size());
 #endif
 ////////////// rrzhang //////////////
@@ -306,7 +308,7 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
         page->PagePut(page->page_id(), row->data, row->get_tuple_size());
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::DISTRICT]->IndexPut(distKey(did, wid), &indexItem);
-#elif
+#else
         buffers_[TABLES::DISTRICT]->BufferPut(distKey(did, wid), row->data, row->get_tuple_size());
 #endif
         ////////////// rrzhang //////////////
@@ -375,7 +377,7 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
         page->PagePut(page->page_id(), row->data, row->get_tuple_size());
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::STOCK]->IndexPut(stockKey(sid, wid), &indexItem);
-#elif
+#else
         buffers_[TABLES::STOCK]->BufferPut(stockKey(sid, wid), row->data, row->get_tuple_size());
 #endif
         ////////////// rrzhang //////////////
@@ -470,7 +472,7 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
         page->PagePut(page->page_id(), row->data, row->get_tuple_size());
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::CUSTOMER]->IndexPut(key, &indexItem);
-#elif
+#else
         buffers_[TABLES::CUSTOMER]->BufferPut(key, row->data, row->get_tuple_size());
 #endif
         ////////////// rrzhang //////////////
@@ -576,8 +578,8 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
         page->PagePut(page->page_id(), row->data, row->get_tuple_size());
 //        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
 //        indexes_[TABLES::ORDER]->IndexPut(key, &indexItem);
-#elif
-        buffers_[TABLES::ORDER]->BufferPut(key, row->data, row->get_tuple_size());
+#else
+//        buffers_[TABLES::ORDER]->BufferPut(key, row->data, row->get_tuple_size());
 #endif
         ////////////// rrzhang //////////////
 	}
@@ -622,7 +624,7 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	tpcc_wl * wl = (tpcc_wl *) This;
 //	int tid = ATOM_FETCH_ADD(wl->next_tid, 1);
 	int tid = __sync_fetch_and_add(&wl->next_tid, 1);
-	uint32_t wid = tid + 1;
+    uint32_t wid = tid + 1;
 //	tpcc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
 	tpcc_buffer[tid] = new drand48_data();
 	assert((uint64_t)tid < g_num_wh);

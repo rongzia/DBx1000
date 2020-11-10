@@ -24,9 +24,9 @@ class Row_mvcc;
 namespace dbx1000{
     class Arena;
     class RecordBuffer;
-    class MemoryDB;
     class TableSpace;
     class Index;
+    class ManagerInstance;
 }
 
 //! workload 基类，tables (表名和table指针集各)，indexes（表名对应的索引）
@@ -61,6 +61,7 @@ public:
     std::map<TABLES, dbx1000::RecordBuffer*> buffers_;
     std::map<TABLES, table_t*> tables_;
 	std::vector<dbx1000::Arena*> arenas_;
+	dbx1000::ManagerInstance * manager_instance_;
     /////////////// rrzhang ///////////////
 
 protected:

@@ -11,6 +11,7 @@
 #include "common/lock_table/lock_table.h"
 #include "common/storage/catalog.h"
 #include "common/storage/row.h"
+#include "common/storage/row_handler.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb.h"
 #include "common/workload/tpcc.h"
@@ -37,7 +38,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
     }
 	tpcc_query * m_query = (tpcc_query *) query;
     RC rc;
-    GetLockTableSharedPtrs(m_query);
+    GetLockTableSharedPtrs(query);
 #ifndef SINGLE_NODE
     GetWriteRecordSet(m_query);
     rc = GetWriteRecordLock( m_query);
@@ -738,7 +739,8 @@ tpcc_txn_man::run_stock_level(tpcc_query * query) {
 	return RC::RCOK;
 }
 
-void tpcc_txn_man::GetLockTableSharedPtrs(tpcc_query *m_query) {
+void tpcc_txn_man::GetLockTableSharedPtrs(base_query *query) {
+    tpcc_query * m_query = (tpcc_query *) query;
     auto lock_table_WAREHOUSE = this->h_thd->manager_client_->lock_table_[TABLES::WAREHOUSE];
     auto lock_table_DISTRICT = this->h_thd->manager_client_->lock_table_[TABLES::DISTRICT];
     auto lock_table_CUSTOMER = this->h_thd->manager_client_->lock_table_[TABLES::CUSTOMER];
@@ -765,8 +767,8 @@ void tpcc_txn_man::GetLockTableSharedPtrs(tpcc_query *m_query) {
     }
 }
 
-void tpcc_txn_man::GetWriteRecordSet(tpcc_query *m_query) {
-
+void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
+    tpcc_query * m_query = (tpcc_query *) query;
     switch (m_query->type) {
         case TPCC_PAYMENT :
 //            if(g_wh_update) {
@@ -792,71 +794,80 @@ void tpcc_txn_man::GetWriteRecordSet(tpcc_query *m_query) {
 }
 
 
-RC tpcc_txn_man::GetWriteRecordLock(tpcc_query *m_query) {
-    auto lockTable = this->h_thd->manager_client_->lock_table_;
-
-    /// 等待其他节点 RemoteInvalid 完成
-    auto has_invalid_req = [&]() {
-        for (auto iter : write_record_set) {
-            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
-        }
-        return false;
-    };
-    while (has_invalid_req()) { std::this_thread::yield(); }
-    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
-    /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
-
-    dbx1000::Profiler profiler;
-    profiler.Start();
-
-    for (auto iter : write_record_set) {
-        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
-
-        /// 本地没有锁权限
-        if (!lockTable[iter.first]->IsValid(iter.second)) {
-            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
-
-            bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
-            if (flag) {
-                /// 当前线程去 RemoteLock
-                assert(true == lockNode->lock_remoting);
-                uint32_t tuple_size = GetTable(iter.first)->get_schema()->tuple_size;
-                char record_buf[tuple_size];
-                RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
-                        this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, record_buf , tuple_size);
-
-                if (RC::Abort == rc || RC::TIME_OUT == rc) {
-                    lockNode->lock_remoting = false;
-                    lockNode->remote_locking_abort.store(true);
-                    return RC::Abort;
-                }
-                assert(rc == RC::RCOK);
-                lockTable[iter.first]->Valid(iter.second);
-//                assert(lockTable[iter.first]->IsValid(iter.second));
-                row_t* temp_row = new row_t();
-                temp_row->init(GetTable(iter.first));
-                temp_row->set_primary_key(iter.second);
-                memcpy(temp_row->data, record_buf, tuple_size);
-                /// TODO，拿回来的最新值写入缓存
-                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, temp_row->data, temp_row->get_tuple_size());
-                lockNode->lock_remoting = false;
-            } else {
-                /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
-                assert(true == lockNode->lock_remoting);
-                while (!lockTable[iter.first]->IsValid(iter.second)) {
-                    if(lockNode->remote_locking_abort.load()){
-                        return RC::Abort;
-                    }
-                }
-//                assert(lockTable[iter.first]->IsValid(iter.second));
-            }
-        }
-    }
-
-    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
-//    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
-    profiler.End();
-    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
-
-    return RC::RCOK;
-}
+//RC tpcc_txn_man::GetWriteRecordLock(base_query *query) {
+//    tpcc_query * m_query = (tpcc_query *) query;
+//    auto lockTable = this->h_thd->manager_client_->lock_table_;
+//
+//    /// 等待其他节点 RemoteInvalid 完成
+//    auto has_invalid_req = [&]() {
+//        for (auto iter : write_record_set) {
+//            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
+//        }
+//        return false;
+//    };
+//    while (has_invalid_req()) { std::this_thread::yield(); }
+//    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
+//    /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
+//
+//    dbx1000::Profiler profiler;
+//    profiler.Start();
+//
+//    for (auto iter : write_record_set) {
+//        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
+//
+//        /// 本地没有锁权限
+//        if (!lockTable[iter.first]->IsValid(iter.second)) {
+//            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
+//
+//            bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
+//            if (flag) {
+//                /// 当前线程去 RemoteLock
+//                assert(true == lockNode->lock_remoting);
+//                std::size_t buf_size;
+//#if defined(B_P_L_P)
+//                buf_size = MY_PAGE_SIZE;
+//#else
+//                buf_size = this->h_wl->tables_[iter.first]->get_schema()->tuple_size;
+//#endif
+//                char buf[buf_size];
+//                RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
+//                        this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
+//
+//                if (RC::Abort == rc || RC::TIME_OUT == rc) {
+//                    lockNode->lock_remoting = false;
+//                    lockNode->remote_locking_abort.store(true);
+//                    return RC::Abort;
+//                }
+//                assert(rc == RC::RCOK);
+//                lockTable[iter.first]->Valid(iter.second);
+////                assert(lockTable[iter.first]->IsValid(iter.second));
+//#if defined(B_P_L_P)
+//                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, MY_PAGE_SIZE);
+////#else
+//                uint64_t row_id;
+//                row_t* temp_row;
+//                h_wl->tables_[iter.first]->get_new_row(temp_row, 0, row_id);
+//                memcpy(temp_row->data, buf, buf_size);
+//                h_wl->manager_instance_->row_handler_->WriteRow(iter.first, iter.second, temp_row, buf_size);
+//#endif
+//                lockNode->lock_remoting = false;
+//            } else {
+//                /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
+//                assert(true == lockNode->lock_remoting);
+//                while (!lockTable[iter.first]->IsValid(iter.second)) {
+//                    if(lockNode->remote_locking_abort.load()){
+//                        return RC::Abort;
+//                    }
+//                }
+////                assert(lockTable[iter.first]->IsValid(iter.second));
+//            }
+//        }
+//    }
+//
+//    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
+////    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
+//    profiler.End();
+//    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+//
+//    return RC::RCOK;
+//}

@@ -23,7 +23,22 @@
 #if CC_ALG == MVCC
 
 Row_mvcc::~Row_mvcc() {
-    RC rc =	workload_->buffers_[table_]->BufferPut(key_, _row->data, size_);
+    /// 刷 page 至 buffer
+//#if defined(B_P_L_P) || defined(B_P_L_R)
+//    dbx1000::IndexItem indexItem;
+//    workload_->indexes_[table_]->IndexGet(key_, &indexItem);
+//    dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+//    workload_->buffers_[table_]->BufferGet(indexItem.page_id_, page->page_buf(), page->page_size());
+//    page->Deserialize();
+//    assert(page->page_id() == indexItem.page_id_);
+//    memcpy(&page->page_buf()[indexItem.page_location_], _row->data, size_);
+//    page->Serialize();
+//    RC rc = workload_->buffers_[table_]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+//    delete page;
+//#else
+//    RC rc =	workload_->buffers_[table_]->BufferPut(key_, _row->data, size_);
+//#endif
+    RC rc = workload_->manager_instance_->row_handler_->WriteRow(table_, key_, _row, size_);
     assert(RC::RCOK == rc);
 
 	for(uint32_t i = 0; i < _his_len; i++) {
@@ -50,7 +65,8 @@ void Row_mvcc::init(workload* workload, TABLES table, uint64_t key) {
 
     uint64_t row_id;
     workload_->tables_[table_]->get_new_row(this->_row, 0, row_id);
-    RC rc =	workload_->buffers_[table_]->BufferGet(key_, _row->data, size_);
+    RC rc = workload_->manager_instance_->row_handler_->ReadRow(table_, key_, _row, size_);
+//    RC rc =	workload_->buffers_[table_]->BufferGet(key_, _row->data, size_);
     _row->set_primary_key(key_);
     assert(RC::RCOK == rc);
 	_his_len = 4;

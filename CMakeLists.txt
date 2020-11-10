@@ -38,10 +38,10 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
 
 set(COMMON_FILES
-        common/buffer/buffer.cpp
-        common/buffer/buffer_def.cpp
-        common/buffer/lru.cpp
-        common/buffer/lru_index.cpp
+#        common/buffer/buffer.cpp
+#        common/buffer/buffer_def.cpp
+#        common/buffer/lru.cpp
+#        common/buffer/lru_index.cpp
         common/buffer/record_buffer.cpp
         common/index/index.cpp
         common/lock_table/lock_table.cpp

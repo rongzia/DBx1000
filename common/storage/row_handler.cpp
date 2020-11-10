@@ -4,13 +4,14 @@
 
 #include "row_handler.h"
 
-#include "common/buffer/buffer.h"
+#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/lock_table/lock_table.h"
 #include "common/storage/tablespace/page.h"
 #include "common/storage/tablespace/row_item.h"
 #include "common/storage/tablespace/tablespace.h"
 #include "common/storage/catalog.h"
+#include "common/storage/row.h"
 #include "common/storage/table.h"
 #include "common/workload/ycsb.h"
 #include "common/myhelper.h"
@@ -75,94 +76,48 @@ namespace dbx1000 {
         }
 #endif
     }
-///**
-// * 读一行数据到 DB（这里 DB 是缓存+磁盘）
-// * @param row
-// * @return
-// */
-//    bool RowHandler::SnapShotReadRow(RowItem *row){
-//        auto *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-//        dbx1000::IndexItem indexItem;
-//        this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
-//        int res;
-////        res = this->manager_instance_->buffer()->BufferGetWithLock(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-//        res = this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-//        assert(0 == res);
-//        page->Deserialize();
-////        assert(page->page_id() == indexItem.page_id_);
-//
-////        std::size_t temp_size = ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size();
-////        assert(row->size_ == temp_size);
-//        memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
-//        {
-//            /// 验证 key
-//            uint64_t temp_key;
-//            memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
-////            assert(row->key_ == temp_key);
-//        }
-//        return true;
-//    }
-//
-//
-///**
-// * 读一行数据到 DB（这里 DB 是缓存+磁盘）
-// * @param row
-// * @return
-// */
-//    bool RowHandler::ReadRow(RowItem *row) {
-//        auto *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-//        dbx1000::IndexItem indexItem;
-//        this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
-//        RC rc = this->manager_instance_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::S);
-//        assert(RC::RCOK == rc);
-//        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O
-//               || this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode == LockMode::S);
-//        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::P
-//               && this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::X);
-//        int res = this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-//        assert(0 == res);
-//        page->Deserialize();
-//        assert(page->page_id() == indexItem.page_id_);
-//
-////        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
-//        memcpy(row->row_, &page->page_buf()[indexItem.page_location_], row->size_);
-//        {
-//            /// 验证 key
-//            uint64_t temp_key;
-//            memcpy(&temp_key, row->row_, sizeof(uint64_t));           /// 读 key
-//            assert(row->key_ == temp_key);
-//        }
-//        rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
-//        assert(RC::RCOK == rc);
-//        return true;
-//    }
-//
-///**
-// * 写一行数据到 DB（这里 DB 是缓存+磁盘）
-// * @param row
-// * @return
-// */
-//    bool RowHandler::WriteRow(RowItem *row) {
-//        auto *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-//        dbx1000::IndexItem indexItem;
-//        this->manager_instance_->index()->IndexGet(row->key_, &indexItem);
-//        assert(this->manager_instance_->lock_table()->lock_table_[indexItem.page_id_]->lock_mode != LockMode::O);
-//        RC rc = this->manager_instance_->lock_table()->Lock(indexItem.page_id_, dbx1000::LockMode::X);
-//        assert(RC::RCOK == rc);
-//        this->manager_instance_->buffer()->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-//        page->Deserialize();
-//
-////        assert(row->size_ == ((ycsb_wl *) (this->m_workload_))->the_table->get_schema()->get_tuple_size());
-////        {   // some check
-////            uint64_t temp_key1, temp_key2;
-////            memcpy(&temp_key1, &page->page_buf()[indexItem.page_location_], sizeof(uint64_t));
-////            memcpy(&temp_key2, row->row_, sizeof(uint64_t));
-////            assert(temp_key1 == temp_key2);
-////        }
-//        memcpy(&page->page_buf()[indexItem.page_location_], row->row_, row->size_);
-//        this->manager_instance_->buffer()->BufferPut(indexItem.page_id_, page->Serialize()->page_buf(), MY_PAGE_SIZE);
-//        rc = this->manager_instance_->lock_table()->UnLock(indexItem.page_id_);
-//        assert(RC::RCOK == rc);
-//        return true;
-//    }
+
+/**
+ * 读一行数据到 DB（这里 DB 是缓存+磁盘）
+ * @param row
+ * @return
+ */
+    RC RowHandler::ReadRow(TABLES table, uint64_t key, row_t * row, size_t size) {
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        dbx1000::IndexItem indexItem;
+        manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
+        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), page->page_size());
+        page->Deserialize();
+        assert(page->page_id() == indexItem.page_id_);
+        memcpy(row->data, &page->page_buf()[indexItem.page_location_], size);
+        delete page;
+#else
+        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
+#endif
+        return rc;
+    }
+
+/**
+ * 写一行数据到 DB（这里 DB 是缓存+磁盘）
+ * @param row
+ * @return
+ */
+    RC RowHandler::WriteRow(TABLES table, uint64_t key, row_t * row, size_t size) {
+#if defined(B_P_L_P) || defined(B_P_L_R)
+        dbx1000::IndexItem indexItem;
+        manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
+        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+        manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), page->page_size());
+        page->Deserialize();
+        assert(page->page_id() == indexItem.page_id_);
+        memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
+        page->Serialize();
+        RC rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        delete page;
+#else
+        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferPut(key, row->data, size);
+#endif
+        return rc;
+    }
 }

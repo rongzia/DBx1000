@@ -63,7 +63,7 @@ namespace dbx1000 {
             free_list_->Prepend(page_node);
         }
     }
-    
+
     void Buffer::FlushALl() {
         PageNode* page_node;
         int size = page_list_->size();

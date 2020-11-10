@@ -17,15 +17,14 @@ namespace dbx1000 {
     class RecordBuffer {
     public:
         RecordBuffer() = default;
-//        void Init(workload* workload);
+        ~RecordBuffer();
+
         RC BufferGet(uint64_t item_id, char *buf, std::size_t size);
         RC BufferPut(uint64_t item_id, const char *buf, std::size_t size);
         RC BufferDel(uint64_t item_id);
     private:
 
-//        std::map<TABLES, tbb::concurrent_hash_map<uint64_t, row_t*>> buffers_;
         tbb::concurrent_hash_map<uint64_t, char*> buffer_;
-//        std::map<TABLES, table_t*> tables_;
     };
 }
 

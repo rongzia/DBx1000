@@ -16,7 +16,7 @@ namespace dbx1000 {
                             , used_size_(64) {}
 
     Page::~Page() {
-        delete page_buf_;
+        delete [] page_buf_;
     }
 
     int Page::PagePut(uint64_t page_id, const char *row_buf, size_t count) {

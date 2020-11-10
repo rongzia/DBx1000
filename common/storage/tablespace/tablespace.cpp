@@ -23,8 +23,6 @@ namespace dbx1000 {
             , row_size_(0)
             , last_page_id_(-1) {}
 
-    TableSpace::~TableSpace() {}
-
     uint64_t TableSpace::GetNextPageId() {
         mtx_.lock();
         last_page_id_++;

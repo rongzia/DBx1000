@@ -36,13 +36,13 @@ namespace dbx1000 {
         RC Lock(LockMode mode);
         RC UnLock();
 
-        int instance_id{};
+        int instance_id;
         LockMode lock_mode;
-        std::atomic_int count{};                      // 正在获取该 locknode 的调用数
+        std::atomic_int count;                      // 正在获取该 locknode 的调用数
         std::set<uint64_t> thread_set;              // 本地对该 locknode 有写意向的线程
-        bool invalid_req{};                           // 其他进程想要获取当前 page 的锁，在事务执行过程中只能置 invalid_req=true, 然后等待该机器的事务结束
-        volatile bool lock_remoting{};
-        std::atomic<bool> remote_locking_abort{};
+        bool invalid_req;                           // 其他进程想要获取当前 page 的锁，在事务执行过程中只能置 invalid_req=true, 然后等待该机器的事务结束
+        volatile bool lock_remoting;
+        std::atomic<bool> remote_locking_abort;
         std::mutex mtx;
         std::condition_variable cv;
     };
@@ -50,7 +50,7 @@ namespace dbx1000 {
 
     class LockTable {
     public:
-        ~LockTable();
+        ~LockTable() = default;
         LockTable(TABLES, int instance_id, uint64_t start_id, uint64_t end_id, ManagerInstance* manager_instance);
         RC Lock(uint64_t item_id, LockMode mode);
         RC UnLock(uint64_t page_id);
@@ -67,7 +67,7 @@ namespace dbx1000 {
         TABLES table_;
         int instance_id_;
         std::size_t size_;
-        std::unordered_map<uint64_t, std::pair<weak_ptr<LockNode>, bool>> lock_table_;
+        std::unordered_map<uint64_t, std::pair<weak_ptr<LockNode>, volatile bool>> lock_table_;
         boost::dynamic_bitset<> lock_node_local_;
     };
 }

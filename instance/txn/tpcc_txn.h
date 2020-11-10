@@ -16,10 +16,9 @@ public:
     void init(thread_t * h_thd, workload * h_wl, uint64_t part_id);
     RC run_txn(base_query * query);
 
-    void GetLockTableSharedPtrs(tpcc_query *m_query);
-    void GetWriteRecordSet(tpcc_query *m_query);
-    RC GetWriteRecordLock(tpcc_query *m_query);
-    std::set<std::pair<TABLES, uint64_t>> write_record_set;
+    void GetLockTableSharedPtrs(base_query *m_query) override;
+    void GetWriteRecordSet(base_query *m_query) override;
+//    RC GetWriteRecordLock(base_query *m_query) override;
 private:
     tpcc_wl * _wl;
     RC run_payment(tpcc_query * m_query);

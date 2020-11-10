@@ -16,7 +16,7 @@ namespace dbx1000 {
     public:
         TableSpace();
         TableSpace(const std::string& );
-        ~TableSpace();
+        ~TableSpace() {}
 
         uint64_t GetNextPageId();
         uint64_t GetLastPageId() const;
