@@ -45,6 +45,7 @@ namespace dbx1000 {
 
         /// getter and setter
         int instance_id()                                               { return this->instance_id_; }
+        void set_init_done(bool init_done)                              { this->init_done_ = init_done; }
         workload* m_workload()                                          { return this->m_workload_;  }
         dbx1000::Stats& stats()                                         { return this->stats_;       }
         RowHandler* row_handler()                                       { return this->row_handler_; }
@@ -52,6 +53,8 @@ namespace dbx1000 {
 
 //    private:
         int instance_id_;
+        uint32_t wh_start_id;
+        bool init_done_;
         std::map<int, std::string> host_map_;
 
         atomic_uint64_t timestamp_;

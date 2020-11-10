@@ -33,8 +33,10 @@ RC tpcc_wl::init() {
 	cout << "reading schema file: " << g_tpcc_schame_path << endl;
 	init_schema( g_tpcc_schame_path );
 	cout << "TPCC schema initialized" << endl;
-	init_table();
-	next_tid = manager_instance_->instance_id_;
+    if(manager_instance_ != nullptr) {
+        next_tid = manager_instance_->wh_start_id;
+        init_table();
+    }
 	return RC::RCOK;
 }
 
@@ -51,36 +53,36 @@ RC tpcc_wl::init_schema(const char * schema_file) {
 	t_stock = tables["STOCK"];
 /////////////// rrzhang ///////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    tablespaces_[TABLES::WAREHOUSE]  =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::DISTRICT]   =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::CUSTOMER]   =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::HISTORY]    =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::NEW_ORDER]  =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::ORDER]      =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::ORDER_LINE] =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::ITEM]       =  new dbx1000::TableSpace();
-    tablespaces_[TABLES::STOCK]      =  new dbx1000::TableSpace();
+    tablespaces_[TABLES::WAREHOUSE]  = make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::DISTRICT]   =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::CUSTOMER]   =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::HISTORY]    =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::NEW_ORDER]  =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::ORDER]      =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::ORDER_LINE] =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::ITEM]       =  make_shared<dbx1000::TableSpace>();
+    tablespaces_[TABLES::STOCK]      =  make_shared<dbx1000::TableSpace>();
 
-    indexes_[TABLES::WAREHOUSE]  = new dbx1000::Index();
-    indexes_[TABLES::DISTRICT]   =  new dbx1000::Index();
-    indexes_[TABLES::CUSTOMER]   =  new dbx1000::Index();
-    indexes_[TABLES::HISTORY]    =  new dbx1000::Index();
-    indexes_[TABLES::NEW_ORDER]  =  new dbx1000::Index();
-    indexes_[TABLES::ORDER]      =  new dbx1000::Index();
-    indexes_[TABLES::ORDER_LINE] =  new dbx1000::Index();
-    indexes_[TABLES::ITEM]       =  new dbx1000::Index();
-    indexes_[TABLES::STOCK]      =  new dbx1000::Index();
+    indexes_[TABLES::WAREHOUSE]  = make_shared<dbx1000::Index>();
+    indexes_[TABLES::DISTRICT]   =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::CUSTOMER]   =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::HISTORY]    =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::NEW_ORDER]  =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::ORDER]      =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::ORDER_LINE] =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::ITEM]       =  make_shared<dbx1000::Index>();
+    indexes_[TABLES::STOCK]      =  make_shared<dbx1000::Index>();
 #endif
 
-    buffers_[TABLES::WAREHOUSE]  = new dbx1000::RecordBuffer();
-    buffers_[TABLES::DISTRICT]   =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::CUSTOMER]   =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::HISTORY]    =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::NEW_ORDER]  =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::ORDER]      =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::ORDER_LINE] =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::ITEM]       =  new dbx1000::RecordBuffer();
-    buffers_[TABLES::STOCK]      =  new dbx1000::RecordBuffer();
+    buffers_[TABLES::WAREHOUSE]  = make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::DISTRICT]   =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::CUSTOMER]   =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::HISTORY]    =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::NEW_ORDER]  =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::ORDER]      =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::ORDER_LINE] =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::ITEM]       =  make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::STOCK]      =  make_shared<dbx1000::RecordBuffer>();
 
     tables_[TABLES::WAREHOUSE]  = t_warehouse;
     tables_[TABLES::DISTRICT]   = t_district;
@@ -117,7 +119,7 @@ RC tpcc_wl::init_table() {
 //		- new order
 //		- order line
 /**********************************/
-	tpcc_buffer = new drand48_data * [g_num_wh];
+	tpcc_buffer = new drand48_data * [NUM_WH];
 	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
 	for (uint32_t i = 0; i < g_num_wh - 1; i++)
 		pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
@@ -175,7 +177,7 @@ void tpcc_wl::init_tab_item() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
             page->set_page_id(tablespaces_[TABLES::ITEM]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -191,8 +193,9 @@ void tpcc_wl::init_tab_item() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #endif
 ////////////// rrzhang //////////////
 }
@@ -203,7 +206,6 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
     dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
     page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
 #endif
-    assert((int)wid > manager_instance_->instance_id_*NUM_WH && (int)wid <= (manager_instance_->instance_id_+1)*NUM_WH);
 ////////////// rrzhang //////////////
 //	assert(wid >= 1 && wid <= g_num_wh);
 	row_t * row;
@@ -239,7 +241,7 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
         page->Serialize();
-        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
         page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
         page->set_used_size(64);
     }
@@ -249,8 +251,9 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #else
     buffers_[TABLES::WAREHOUSE]->BufferPut(row->get_primary_key(), row->data, row->get_tuple_size());
 #endif
@@ -301,7 +304,7 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
             page->set_page_id(tablespaces_[TABLES::DISTRICT]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -317,8 +320,9 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #endif
 ////////////// rrzhang //////////////
 }
@@ -370,7 +374,7 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
             page->set_page_id(tablespaces_[TABLES::STOCK]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -387,8 +391,9 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #endif
 ////////////// rrzhang //////////////
 }
@@ -465,7 +470,7 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
             page->set_page_id(tablespaces_[TABLES::CUSTOMER]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -481,8 +486,9 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #endif
 ////////////// rrzhang //////////////
 }
@@ -571,7 +577,7 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+            buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
             page->set_page_id(tablespaces_[TABLES::ORDER]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -587,8 +593,9 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
     }
+    delete page;
 #endif
 ////////////// rrzhang //////////////
 }
@@ -624,13 +631,14 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	tpcc_wl * wl = (tpcc_wl *) This;
 //	int tid = ATOM_FETCH_ADD(wl->next_tid, 1);
 	int tid = __sync_fetch_and_add(&wl->next_tid, 1);
-    uint32_t wid = tid + 1;
+    assert(tid <= NUM_WH);
+    uint32_t wid = tid;
 //	tpcc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
 	tpcc_buffer[tid] = new drand48_data();
-	assert((uint64_t)tid < g_num_wh);
+//	assert((uint64_t)tid < g_num_wh);
 	srand48_r(wid, tpcc_buffer[tid]);
 
-	if (tid == 0)
+	if (tid == (int)(wl->manager_instance_->wh_start_id))
 		wl->init_tab_item();
 	wl->init_tab_wh( wid );
 	wl->init_tab_dist( wid );

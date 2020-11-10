@@ -51,7 +51,7 @@ namespace dbx1000 {
             GlobalLock(const GlobalLock &) = delete;
             GlobalLock &operator=(const GlobalLock &) = delete;
 
-            RC LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count);
+            RC LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t &count);
 
             uint64_t GetNextTs(uint64_t thread_id);
 

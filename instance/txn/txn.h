@@ -147,13 +147,10 @@ private:
 ////////////////////////// rrzhang //////////////////////////
 	// 本地 Row_mvcc 集合，事务结束时，map 清空，可能调用 Row_mvcc 的析构函数，写回数据到 buffer
 	std::map<TABLES, std::map<uint64_t, shared_ptr<Row_mvcc>>> mvcc_maps_;
-	// 本地 lock_node 集合，类似 mvcc_maps_, 节约空间
-    std::map<TABLES, std::map<uint64_t, shared_ptr<dbx1000::LockNode>>> lock_node_maps_;
     // 写集合
     std::set<std::pair<TABLES, uint64_t>> write_record_set;
-//    table_t* GetTable(TABLES table);
     void GetMvccSharedPtr(TABLES , uint64_t key);
-    virtual void GetLockTableSharedPtrs(base_query *m_query) = 0;
+//    virtual void GetLockTableSharedPtrs(base_query *m_query) = 0;
 
     virtual void GetWriteRecordSet(base_query *m_query) = 0;
     RC GetWriteRecordLock();

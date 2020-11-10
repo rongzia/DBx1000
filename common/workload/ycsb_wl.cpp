@@ -38,10 +38,10 @@ RC ycsb_wl::init_schema(string schema_file) {
 //	the_index = indexes["MAIN_INDEX"];
 /////////////// rrzhang ///////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    tablespaces_[TABLES::MAIN_TABLE]      =  new dbx1000::TableSpace();
-    indexes_[TABLES::MAIN_TABLE]  = new dbx1000::Index();
+    tablespaces_[TABLES::MAIN_TABLE] =  make_shared<dbx1000::TableSpace>();
+    indexes_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::Index>();
 #endif
-    buffers_[TABLES::MAIN_TABLE]  = new dbx1000::RecordBuffer();
+    buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>();
 /////////////// rrzhang ///////////////
 
 

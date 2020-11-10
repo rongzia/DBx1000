@@ -16,7 +16,7 @@ public:
     void init(thread_t * h_thd, workload * h_wl, uint64_t part_id);
     RC run_txn(base_query * query);
 
-    void GetLockTableSharedPtrs(base_query *m_query) override;
+//    void GetLockTableSharedPtrs(base_query *m_query) override;
     void GetWriteRecordSet(base_query *m_query) override;
 //    RC GetWriteRecordLock(base_query *m_query) override;
 private:

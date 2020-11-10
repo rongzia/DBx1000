@@ -284,15 +284,15 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     RC rc;
     ycsb_query *m_query = (ycsb_query *) query;
 
-    GetLockTableSharedPtrs(query);
+//    GetLockTableSharedPtrs(query);
     /// 事务开始前，记录下写 page 集合，同时确保这些写page的锁在本地（若不在本地，则通过 RemoteLock 获取）
     /// ,然后把线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
 //    std::set<uint64_t> write_record_set = GetWriteRecordSet(m_query);
     GetWriteRecordSet(query);
     rc = GetWriteRecordLock();
     if (rc == RC::Abort) {
-        for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
-        lock_node_maps_.clear();
+//        for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
+//        lock_node_maps_.clear();
         return rc;
     }
 
@@ -390,8 +390,8 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 #endif
 
     /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
-    for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
-    lock_node_maps_.clear();
+//    for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
+//    lock_node_maps_.clear();
 //    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " end." << endl;
 
     return rc;
@@ -399,22 +399,22 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 
 
 
-void ycsb_txn_man::GetLockTableSharedPtrs(base_query *query) {
-    ycsb_query* m_query = (ycsb_query*) query;
-    auto lock_table = this->h_thd->manager_client_->lock_table_[TABLES::MAIN_TABLE];
-    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
-        ycsb_request *req = &m_query->requests[rid];
-#if defined(B_P_L_P)
-        dbx1000::IndexItem indexItem;
-        h_wl->indexes_[TABLES::MAIN_TABLE]->IndexGet(req->key, &indexItem);
-        uint64_t page_id = indexItem.page_id_;
-        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(page_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, page_id)));
-#else
-        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key)));
-#endif
-
-    }
-}
+//void ycsb_txn_man::GetLockTableSharedPtrs(base_query *query) {
+//    ycsb_query* m_query = (ycsb_query*) query;
+//    auto lock_table = this->h_thd->manager_client_->lock_table_[TABLES::MAIN_TABLE];
+//    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
+//        ycsb_request *req = &m_query->requests[rid];
+//#if defined(B_P_L_P)
+//        dbx1000::IndexItem indexItem;
+//        h_wl->indexes_[TABLES::MAIN_TABLE]->IndexGet(req->key, &indexItem);
+//        uint64_t page_id = indexItem.page_id_;
+//        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(page_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, page_id)));
+//#else
+//        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key)));
+//#endif
+//
+//    }
+//}
 
 void ycsb_txn_man::GetWriteRecordSet(base_query *query) {
     ycsb_query* m_query = (ycsb_query*) query;

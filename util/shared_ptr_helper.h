@@ -8,11 +8,14 @@
 #include <memory>
 #include <unordered_map>
 #include <cassert>
+#include <iostream>
 
 template <typename P>
 std::shared_ptr<P> GetOrCreateSharedPtr(std::unordered_map<uint64_t, std::pair<std::weak_ptr<P>, volatile bool>> &unorderedMap, uint64_t item_id) {
     auto iter = unorderedMap.find(item_id);
-    if (unorderedMap.end() == iter) { assert(false); return nullptr; }
+    if (unorderedMap.end() == iter) {
+        std::cout << item_id << std::endl;
+        assert(false); return nullptr; }
 
     std::shared_ptr <P> ptr;
     while (!__sync_bool_compare_and_swap(&iter->second.second, false, true))

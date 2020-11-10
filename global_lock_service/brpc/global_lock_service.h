@@ -35,7 +35,7 @@ namespace dbx1000 {
             GlobalLockServiceClient &operator=(const GlobalLockServiceClient&) = delete;
 
         public: /// for instance
-            RC LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count);
+            RC LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t &count);
             void AsyncLockRemote(int instance_id, TABLES table, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
             void InstanceInitDone(int instance_id);
             bool GlobalLockInitDone();

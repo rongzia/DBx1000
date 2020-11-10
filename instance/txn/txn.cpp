@@ -323,7 +323,7 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
         assert(global_mvcc_map_i->at(key).first.expired());
         shared_p = make_shared<Row_mvcc>();
         global_mvcc_map_i->at(key).first = shared_p;
-        shared_p->init(h_thd->manager_client_->m_workload_, table, key);
+        shared_p->init(h_thd->manager_client_, table, key);
     } else {
         assert(!global_mvcc_map_i->at(key).first.expired());
         // shared_p = global_mvcc_map_i[key].first.lock();
@@ -342,22 +342,38 @@ RC txn_man::GetWriteRecordLock() {
     /// 等待其他节点 RemoteInvalid 完成
     auto has_invalid_req = [&]() {
         for (auto iter : write_record_set) {
-            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
+            if (lockTable[iter.first]->lock_table_.find(iter.second) == lockTable[iter.first]->lock_table_.end()) {
+                int a;
+                if(iter.first == TABLES::MAIN_TABLE) { a= 0;}
+                if(iter.first == TABLES::WAREHOUSE) { a= 1;}
+                if(iter.first == TABLES::DISTRICT) { a= 2;}
+                if(iter.first == TABLES::CUSTOMER) { a= 3;}
+                if(iter.first == TABLES::HISTORY) { a= 4;}
+                if(iter.first == TABLES::NEW_ORDER) { a= 5;}
+                if(iter.first == TABLES::ORDER) { a= 6;}
+                if(iter.first == TABLES::ORDER_LINE) { a= 7;}
+                if(iter.first == TABLES::ITEM) { a= 8;}
+                if(iter.first == TABLES::STOCK) { a= 9;}
+                cout << a << "+" << iter.second << endl;
+                assert(false);
+            }
+            if(lockTable[iter.first]->lock_table_[iter.second]->invalid_req) { return true; }
         }
         return false;
     };
     while (has_invalid_req()) { std::this_thread::yield(); }
-    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
+    for (auto iter : write_record_set) { lockTable[iter.first]->lock_table_[iter.second]->AddThread(this->get_thd_id());}
     /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
 
     dbx1000::Profiler profiler;
     profiler.Start();
 
     for (auto iter : write_record_set) {
-        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
+        std::shared_ptr<dbx1000::LockNode> lockNode = lockTable[iter.first]->lock_table_[iter.second];
 
         /// 本地没有锁权限
-        if (!lockTable[iter.first]->IsValid(iter.second)) {
+//        if (!lockTable[iter.first]->IsValid(iter.second)) {
+        if (lockNode->lock_mode == dbx1000::LockMode::O) {
             this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
 
             bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
@@ -380,22 +396,27 @@ RC txn_man::GetWriteRecordLock() {
                     return RC::Abort;
                 }
                 assert(rc == RC::RCOK);
-                lockTable[iter.first]->Valid(iter.second);
+                lockNode->lock_mode = dbx1000::LockMode::P;
+//                lockTable[iter.first]->Valid(iter.second);
 //                assert(lockTable[iter.first]->IsValid(iter.second));
 #if defined(B_P_L_P)
-                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, MY_PAGE_SIZE);
-//#else
+                if(buf_size == MY_PAGE_SIZE) {
+                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
+                }
+#else
                 uint64_t row_id;
                 row_t* temp_row;
                 h_wl->tables_[iter.first]->get_new_row(temp_row, 0, row_id);
                 memcpy(temp_row->data, buf, buf_size);
-                h_wl->manager_instance_->row_handler_->WriteRow(iter.first, iter.second, temp_row, buf_size);
+                if(buf_size == this->h_wl->tables_[iter.first]->get_schema()->tuple_size) {
+                    h_wl->manager_instance_->row_handler_->WriteRow(iter.first, iter.second, temp_row, buf_size);
+                }
 #endif
                 lockNode->lock_remoting = false;
             } else {
                 /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
                 assert(true == lockNode->lock_remoting);
-                while (!lockTable[iter.first]->IsValid(iter.second)) {
+                while (lockNode->lock_mode == dbx1000::LockMode::O) {
                     if(lockNode->remote_locking_abort.load()){
                         return RC::Abort;
                     }

@@ -63,6 +63,8 @@ namespace dbx1000 {
         this->m_workload_ = new tpcc_wl();
 #endif
         m_workload_->manager_instance_ = this;
+        assert(this->instance_id_ >= 0 && this->instance_id_ < (int)(UINT32_MAX / 3));
+        this->wh_start_id = this->instance_id_ * NUM_WH_PER_NODE + 1;
         m_workload_->init();
 
         // init query
@@ -108,20 +110,19 @@ namespace dbx1000 {
             mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(p, false)));
         }
 #elif WORKLOAD == TPCC
-        shared_ptr<Row_mvcc> p;
         for (uint32_t i = 1; i <= g_max_items; i++) {
-            mvcc_vectors_[TABLES::ITEM]->insert(make_pair(i, make_pair(p, false)));
+            mvcc_vectors_[TABLES::ITEM]->insert(make_pair(i, make_pair(shared_ptr<Row_mvcc>(), false)));
         }
-        for(uint64_t wh_id = NUM_WH * instance_id_ + 1; wh_id <= NUM_WH * (instance_id_+1); wh_id++) {
-            mvcc_vectors_[TABLES::WAREHOUSE]->insert(make_pair(wh_id, make_pair(p, false)));
+        for(uint64_t wh_id = wh_start_id; wh_id <= wh_start_id+NUM_WH_PER_NODE; wh_id++) {
+            mvcc_vectors_[TABLES::WAREHOUSE]->insert(make_pair(wh_id, make_pair(shared_ptr<Row_mvcc>(), false)));
             for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
-                mvcc_vectors_[TABLES::DISTRICT]->insert(make_pair(distKey(did, wh_id), make_pair(p, false)));
+                mvcc_vectors_[TABLES::DISTRICT]->insert(make_pair(distKey(did, wh_id), make_pair(shared_ptr<Row_mvcc>(), false)));
                 for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
-                    mvcc_vectors_[TABLES::CUSTOMER]->insert(make_pair(custKey(cid, did, wh_id), make_pair(p, false)));
+                    mvcc_vectors_[TABLES::CUSTOMER]->insert(make_pair(custKey(cid, did, wh_id), make_pair(shared_ptr<Row_mvcc>(), false)));
                 }
             }
             for (uint32_t sid = 1; sid <= g_max_items; sid++) {
-                mvcc_vectors_[TABLES::STOCK]->insert(make_pair(stockKey(sid, wh_id), make_pair(p, false)));
+                mvcc_vectors_[TABLES::STOCK]->insert(make_pair(stockKey(sid, wh_id), make_pair(shared_ptr<Row_mvcc>(), false)));
             }
         }
 //        for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
@@ -140,16 +141,70 @@ namespace dbx1000 {
         uint64_t end = SYNTH_TABLE_SIZE;
         this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end, this);
 #elif WORKLOAD == TPCC
-        this->lock_table_[TABLES::WAREHOUSE] = new LockTable(TABLES::WAREHOUSE, this->instance_id(), 0, NUM_WH + 1, this);
-        this->lock_table_[TABLES::DISTRICT] = new LockTable(TABLES::DISTRICT, this->instance_id(), 0, DIST_PER_WARE + 1, this);
-        this->lock_table_[TABLES::CUSTOMER] = new LockTable(TABLES::CUSTOMER, this->instance_id(), 0, (DIST_PER_WARE + 1) * (g_cust_per_dist + 1), this);
+        this->lock_table_[TABLES::WAREHOUSE] = new LockTable(TABLES::WAREHOUSE, this->instance_id(), this);
+        this->lock_table_[TABLES::DISTRICT] = new LockTable(TABLES::DISTRICT, this->instance_id(), this);
+        this->lock_table_[TABLES::CUSTOMER] = new LockTable(TABLES::CUSTOMER, this->instance_id(), this);
 //        this->lock_table_[TABLES::HISTORY] = new LockTable(TABLES::HISTORY, this->instance_id(), 0, NUM_WH + 1, this);
 //        this->lock_table_[TABLES::NEW_ORDER] = new LockTable(TABLES::NEW_ORDER, this->instance_id(), 0, NUM_WH + 1, this);
 //        this->lock_table_[TABLES::ORDER] = new LockTable(TABLES::ORDER, this->instance_id(), 0, NUM_WH + 1, this);
 //        this->lock_table_[TABLES::ORDER_LINE] = new LockTable(TABLES::ORDER_LINE, this->instance_id(), 0, NUM_WH + 1, this);
-        this->lock_table_[TABLES::ITEM] = new LockTable(TABLES::ITEM, this->instance_id(), 0, g_max_items + 1, this);
-        this->lock_table_[TABLES::STOCK] = new LockTable(TABLES::STOCK, this->instance_id(), 0, g_max_items + 1, this);
-#endif
+        this->lock_table_[TABLES::ITEM] = new LockTable(TABLES::ITEM, this->instance_id(), this);
+        this->lock_table_[TABLES::STOCK] = new LockTable(TABLES::STOCK, this->instance_id(), this);
+
+#ifdef B_P_L_P
+        IndexItem indexItem;
+        for (uint32_t i = 1; i <= g_max_items; i++) {
+            m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
+            if(lock_table_[TABLES::ITEM]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::ITEM]->lock_table_.end()) {
+                lock_table_[TABLES::ITEM]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+            }
+        }
+        for(uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
+            m_workload_->indexes_[TABLES::ITEM]->IndexGet(wh_id, &indexItem);
+            if(lock_table_[TABLES::WAREHOUSE]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::WAREHOUSE]->lock_table_.end()) {
+                lock_table_[TABLES::WAREHOUSE]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+            }
+            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(distKey(did, wh_id), &indexItem);
+                if(lock_table_[TABLES::DISTRICT]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::DISTRICT]->lock_table_.end()) {
+                    lock_table_[TABLES::DISTRICT]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                }
+                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                    m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(custKey(cid, did, wh_id), &indexItem);
+                    if(lock_table_[TABLES::CUSTOMER]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::CUSTOMER]->lock_table_.end()) {
+                        lock_table_[TABLES::CUSTOMER]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                    }
+                }
+            }
+            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                m_workload_->indexes_[TABLES::STOCK]->IndexGet(stockKey(sid, wh_id), &indexItem);
+                if(lock_table_[TABLES::STOCK]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::STOCK]->lock_table_.end()) {
+                    lock_table_[TABLES::STOCK]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                }
+            }
+        }
+#else
+        for (uint32_t i = 1; i <= g_max_items; i++) {
+            lock_table_[TABLES::ITEM]->lock_table_[i] = make_shared<LockNode>();
+        }
+        for(uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
+            lock_table_[TABLES::WAREHOUSE]->lock_table_[wh_id] = make_shared<LockNode>();
+            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                lock_table_[TABLES::DISTRICT]->lock_table_[distKey(did, wh_id)] = make_shared<LockNode>();
+                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                    lock_table_[TABLES::CUSTOMER]->lock_table_[custKey(cid, did, wh_id)] = make_shared<LockNode>();
+                }
+            }
+            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)] = make_shared<LockNode>();
+            }
+        }
+//        for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+//            for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) { }
+//            for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) { }
+//        }
+#endif // B_P_L_P
+#endif // TPCC
     }
 
 

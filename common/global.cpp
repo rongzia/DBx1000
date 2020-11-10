@@ -73,7 +73,7 @@ uint32_t g_req_per_query = REQ_PER_QUERY;
 uint32_t g_field_per_tuple = FIELD_PER_TUPLE;
 uint32_t g_init_parallelism = INIT_PARALLELISM;   //! wl 加载时，并行度
 
-uint32_t g_num_wh = NUM_WH;
+uint32_t g_num_wh = NUM_WH_PER_NODE;
 double g_perc_payment = PERC_PAYMENT;
 bool g_wh_update = WH_UPDATE;
 char * output_file = NULL;

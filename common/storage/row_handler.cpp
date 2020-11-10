@@ -83,17 +83,27 @@ namespace dbx1000 {
  * @return
  */
     RC RowHandler::ReadRow(TABLES table, uint64_t key, row_t * row, size_t size) {
-#if defined(B_P_L_P) || defined(B_P_L_R)
+        RC rc = RC::RCOK;
+#if defined(B_P_L_R) || defined(B_P_L_P)
+        assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
         dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), page->page_size());
+        rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        if(rc == RC::Abort) { assert(false); }
         page->Deserialize();
+        if(page->page_id() != indexItem.page_id_) {
+            cout << page->page_id() << " + " << indexItem.page_id_ << endl;
+            page->Print();
+        }
         assert(page->page_id() == indexItem.page_id_);
         memcpy(row->data, &page->page_buf()[indexItem.page_location_], size);
         delete page;
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+        assert(size == row->get_tuple_size());
+        rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
 #else
-        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
+        assert(false);
 #endif
         return rc;
     }
@@ -104,19 +114,25 @@ namespace dbx1000 {
  * @return
  */
     RC RowHandler::WriteRow(TABLES table, uint64_t key, row_t * row, size_t size) {
-#if defined(B_P_L_P) || defined(B_P_L_R)
+        RC rc = RC::RCOK;
+#if defined(B_P_L_R) || defined(B_P_L_P)
+        assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
         dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), page->page_size());
+        manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
+        if(rc == RC::Abort) { assert(false); }
         page->Deserialize();
         assert(page->page_id() == indexItem.page_id_);
         memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
         page->Serialize();
-        RC rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), page->page_size());
+        rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
         delete page;
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+        assert(size == row->get_tuple_size());
+        rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(key, row->data, size);
 #else
-        RC rc =	manager_instance_->m_workload_->buffers_[table]->BufferPut(key, row->data, size);
+        assert(false);
 #endif
         return rc;
     }

@@ -28,7 +28,7 @@ namespace dbx1000 {
             Test();
         }
 
-        RC GlobalLockServiceClient::LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count) {
+        RC GlobalLockServiceClient::LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t &count) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             dbx1000::LockRemoteReply reply;
@@ -51,6 +51,7 @@ namespace dbx1000 {
                 }
                 assert(RC::RCOK == rc);
                 // 要是 server 数据版本比当前新，返回最新的版本
+                count = reply.count();
                 if(count > 0) {
                     assert(reply.count() == count);
                     memcpy(buf, reply.buf().data(), count);
@@ -291,8 +292,7 @@ namespace dbx1000 {
             char *page_buf = nullptr;
             size_t count = request->count();
             if(count > 0) {
-//                assert(MY_PAGE_SIZE == count);
-                page_buf = new char [MY_PAGE_SIZE];
+                page_buf = new char [count];
             }
             else {assert(0 == count);}
 
@@ -310,7 +310,7 @@ namespace dbx1000 {
             assert(RC::RCOK == rc);
             response->set_rc(RpcRC::RCOK);
             if(count > 0) {
-                response->set_buf(page_buf, count);
+                response->set_buf(page_buf, request->count());
             }
             response->set_count(count);
         }

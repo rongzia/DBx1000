@@ -6,6 +6,7 @@
 #define DBX1000_LOCK_TABLE2_HPP
 
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <mutex>
 #include <condition_variable>
@@ -21,7 +22,7 @@ namespace dbx1000 {
     class ManagerInstance;
 
     enum class LockMode{
-//        O,  /// 失效
+        O,  /// 失效
         P,  /// 独占
         S,  /// 读锁
         X,  /// 写锁
@@ -48,27 +49,22 @@ namespace dbx1000 {
     };
 
 
+    // 每个 LockTable 有一个 TABLES 对象表示哪张表
     class LockTable {
     public:
         ~LockTable() = default;
-        LockTable(TABLES, int instance_id, uint64_t start_id, uint64_t end_id, ManagerInstance* manager_instance);
+        LockTable(TABLES, int instance_id, ManagerInstance* manager_instance);
         RC Lock(uint64_t item_id, LockMode mode);
         RC UnLock(uint64_t page_id);
         bool AddThread(uint64_t item_id, uint64_t thd_id);
         bool RemoveThread(uint64_t item_id, uint64_t thd_id);
         RC RemoteInvalid(uint64_t item_id, char *buf, size_t count);
 
-        void Valid  (uint64_t item_id) { this->lock_node_local_.set(item_id); }
-        void Invalid(uint64_t item_id) { this->lock_node_local_.reset(item_id); }
-        bool IsValid(uint64_t item_id) { return lock_node_local_.test(item_id); }
-
         ManagerInstance* manager_instance_;
 //    private:
         TABLES table_;
         int instance_id_;
-        std::size_t size_;
-        std::unordered_map<uint64_t, std::pair<weak_ptr<LockNode>, volatile bool>> lock_table_;
-        boost::dynamic_bitset<> lock_node_local_;
+        std::unordered_map<uint64_t, shared_ptr<LockNode>> lock_table_;
     };
 }
 

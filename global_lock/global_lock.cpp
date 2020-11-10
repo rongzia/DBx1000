@@ -56,41 +56,51 @@ namespace dbx1000 {
 #elif WORKLOAD == TPCC
             this->m_workload_ = new tpcc_wl();
 #endif
+            m_workload_->manager_instance_ = nullptr;
             m_workload_->init();
-//            this->shared_disk_client_ = new SharedDiskClient(SHARED_DISK_HOST);
-//            this->table_space_ = new TableSpace(((ycsb_wl *) m_workload_)->the_table->get_table_name());
-//            this->index_ = new Index(((ycsb_wl *) m_workload_)->the_table->get_table_name() + "_INDEX");
-//            table_space_->DeSerialize();
-//            index_->DeSerialize();
-//
-//
-//            this->buffer_ = new Buffer(FILE_SIZE, MY_PAGE_SIZE, shared_disk_client_);
+
             /// 初始化 lock_service_table_
 #if WORKLOAD == YCSB
             for (uint64_t page_id = 0; page_id < SYNTH_TABLE_SIZE; page_id++) {
                 this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(page_id, new LockNode()));
             }
 #elif WORKLOAD == TPCC
+#ifdef B_P_L_P
+            IndexItem indexItem;
+            for (uint32_t i = 0; i <= g_max_items; i++) {
+//                m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
+                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
+            }
+            for(uint64_t wh_id = 0; wh_id <= NUM_WH; wh_id++) {
+                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(wh_id, new LockNode()));
+                for (uint64_t did = 0; did <= DIST_PER_WARE; did++) {
+                    this->lock_tables_[TABLES::DISTRICT].insert(make_pair(distKey(did, wh_id), new LockNode()));
+                    for (uint32_t cid = 0; cid <= g_cust_per_dist; cid++) {
+                        this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(custKey(cid, did, wh_id), new LockNode()));
+                    }
+                }
+                for (uint32_t sid = 0; sid <= g_max_items; sid++) {
+                    this->lock_tables_[TABLES::STOCK].insert(make_pair(stockKey(sid, wh_id), new LockNode()));
+                }
+            }
+#else
             for (uint32_t i = 1; i <= g_max_items; i++) {
                 this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
             }
-            for(uint64_t key = 1; key <= NUM_WH; key++) {
-                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(key, new LockNode()));
-            }
-            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
-                this->lock_tables_[TABLES::DISTRICT].insert(make_pair(did, new LockNode()));
-            }
-            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
-                this->lock_tables_[TABLES::STOCK].insert(make_pair(sid, new LockNode()));
-            }
-            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
-                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
-                    this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(did * cid, new LockNode()));
+            for(uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
+                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(1, new LockNode()));
+                for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                    this->lock_tables_[TABLES::DISTRICT].insert(make_pair(distKey(did, wh_id), new LockNode()));
+                    for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                        this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(custKey(cid, did, wh_id), new LockNode()));
+                    }
                 }
-                for (uint32_t oid = 1; oid <= g_cust_per_dist; oid++) { }
-                for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) { }
+                for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                    this->lock_tables_[TABLES::STOCK].insert(make_pair(stockKey(sid, wh_id), new LockNode()));
+                }
             }
-#endif
+#endif // B_P_L_P
+#endif // TPCC
         }
 
         /**
@@ -100,11 +110,26 @@ namespace dbx1000 {
          * @param ins_id
          * @param page_id
          * @param page_buf
-         * @param count
+         * @param count, 要是当前节点申请的锁不在任何节点中，那么直接 count = 0,表示没有返回数据
          * @return
          */
-        RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
+        RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t &count) {
             auto iter = lock_tables_[table].find(item_id);
+            if (lock_tables_[table].end() == iter) {
+                int a;
+                if(table == TABLES::MAIN_TABLE) { a= 0;}
+                if(table == TABLES::WAREHOUSE) { a= 1;}
+                if(table == TABLES::DISTRICT) { a= 2;}
+                if(table == TABLES::CUSTOMER) { a= 3;}
+                if(table == TABLES::HISTORY) { a= 4;}
+                if(table == TABLES::NEW_ORDER) { a= 5;}
+                if(table == TABLES::ORDER) { a= 6;}
+                if(table == TABLES::ORDER_LINE) { a= 7;}
+                if(table == TABLES::ITEM) { a= 8;}
+                if(table == TABLES::STOCK) { a= 9;}
+                cout << a << "+" << iter->first << endl;
+                assert(false);
+            }
             if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
 
             RC rc = RC::RCOK;
@@ -126,7 +151,7 @@ namespace dbx1000 {
             } else {
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
-//                    this->buffer_->BufferGet(table, item_id, buf, count);
+                    count = 0;
                 }
 //                 cout << ins_id << " get page id : " << page_id << " success" << endl;
             }

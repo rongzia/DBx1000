@@ -9,6 +9,8 @@
 #include "instance/manager_instance.h"
 #include "util/shared_ptr_helper.h"
 #include "common/storage/table.h"
+#include "common/storage/catalog.h"
+#include "common/storage/row_handler.h"
 #include "common/workload/wl.h"
 
 namespace dbx1000 {
@@ -87,52 +89,50 @@ namespace dbx1000 {
         assert(false);
     }
 
-    LockTable::LockTable(TABLES table, int instance_id, uint64_t start_id, uint64_t end_id, ManagerInstance* manager_instance)
-            : manager_instance_(manager_instance), table_(table), instance_id_(instance_id), size_(end_id - start_id) {
-        this->lock_node_local_.resize(size_, false);
-        shared_ptr<LockNode> p;
-        for (uint64_t key = start_id; key < end_id; key++) {
-            lock_table_[key] =  make_pair(p, false);
-        }
-    }
+    LockTable::LockTable(TABLES table, int instance_id, ManagerInstance* manager_instance)
+            : manager_instance_(manager_instance), table_(table), instance_id_(instance_id) { }
 
 
     RC LockTable::Lock(uint64_t item_id, LockMode mode) {
         auto iter = lock_table_.find(item_id);
-        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return RC::Abort; }
+        if(lock_table_.end() == iter) { assert(false); return RC::Abort; }
 
         /// 事务执行中才会使用 Lock，本地应该存在该 item 的读写权限，即 lock_mode 为 非 O，
         /// 否则事务应该在执行前就回滚了
-        if(!IsValid(item_id)) { assert(false); return RC::Abort; }
+        if(lock_table_[item_id]->lock_mode == LockMode::O) { assert(false); return RC::Abort; }
 
-        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        assert(iter->second.use_count() >= 1);
+        shared_ptr<LockNode> lock_node = iter->second;
         return lock_node->Lock(mode);
     }
 
     RC LockTable::UnLock(uint64_t item_id) {
         auto iter = lock_table_.find(item_id);
-        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return RC::Abort; }
+        if(lock_table_.end() == iter ) { assert(false); return RC::Abort; }
 
         /// 事务执行中才会使用 UnLock，本地应该存在该 item 的读写权限，即 lock_mode 为 非 O，
         /// 否则事务应该在执行前就回滚了
-        if(!IsValid(item_id)) { assert(false); return RC::Abort; }
+        if(lock_table_[item_id]->lock_mode == LockMode::O) { assert(false); return RC::Abort; }
 
-        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        assert(iter->second.use_count() >= 1);
+        shared_ptr<LockNode> lock_node = iter->second;
         return lock_node->UnLock();
     }
 
     bool LockTable::AddThread(uint64_t item_id, uint64_t thd_id) {
         auto iter = lock_table_.find(item_id);
-        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return false; }
+        if(lock_table_.end() == iter) { assert(false); return false; }
 
-        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        assert(iter->second.use_count() >= 1);
+        shared_ptr<LockNode> lock_node = iter->second;
         return lock_node->AddThread(thd_id);
     }
     bool LockTable::RemoveThread(uint64_t item_id, uint64_t thd_id) {
         auto iter = lock_table_.find(item_id);
-        if(lock_table_.end() == iter || iter->second.first.expired()) { assert(false); return false; }
+        if(lock_table_.end() == iter) { assert(false); return false; }
 
-        shared_ptr<LockNode> lock_node = iter->second.first.lock();
+        assert(iter->second.use_count() >= 1);
+        shared_ptr<LockNode> lock_node = iter->second;
         return lock_node->RemoveThread(thd_id);
     }
 
@@ -142,9 +142,9 @@ namespace dbx1000 {
         if(lock_table_.end() == iter) { assert(false); return RC::Abort; }
 
         /// 本地 mode 为 O, 失效错误
-//        if(!lock_node_local_.test(item_id)) { assert(false); return RC::Abort; }
+        if(lock_table_[item_id]->lock_mode == LockMode::O) { assert(false); return RC::Abort; }
 
-        shared_ptr<LockNode> lock_node = GetOrCreateSharedPtr<LockNode>(lock_table_, item_id);
+        shared_ptr<LockNode> lock_node = iter->second;
 
         RC rc;
         lock_node->invalid_req = true;
@@ -153,14 +153,19 @@ namespace dbx1000 {
         {
             assert(lock_node->thread_set.empty());
             assert(lock_node->count == 0);
-            Invalid(item_id);
+            iter->second->lock_mode = LockMode::O;
+#if defined(B_P_L_P)
+            assert(count == MY_PAGE_SIZE);
+            manager_instance_->m_workload_->buffers_[table_]->BufferGet(item_id, buf, count);
+#else
+            assert(count == manager_instance_->m_workload_->tables_[table_]->get_schema()->tuple_size);
             row_t* new_row;
             uint64_t row_id;
             manager_instance_->m_workload_->tables_[table_]->get_new_row(new_row, 0, row_id);
-            manager_instance_->m_workload_->buffers_[table_]->BufferGet(item_id, new_row->data, new_row->get_tuple_size());
-            assert(count == new_row->get_tuple_size());
-            memcpy(buf, new_row->data, new_row->get_tuple_size());
+            manager_instance_->row_handler_->ReadRow(table_, item_id, new_row, count);
+            memcpy(buf, new_row->data, count);
             delete new_row;
+#endif
             rc = RC::RCOK;
         } else {
             rc = RC::TIME_OUT;

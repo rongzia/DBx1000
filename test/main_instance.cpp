@@ -64,13 +64,13 @@ int main(int argc, char *argv[]) {
     std::this_thread::sleep_for(chrono::seconds(2));
 #ifndef SINGLE_NODE
     // 连接集中锁管理器
-    managerInstance->set_global_lock_service_client(new GlobalLockServiceClient(managerInstance->host_map()[-1]));
+    managerInstance->global_lock_service_client_ = new GlobalLockServiceClient(managerInstance->host_map_[-1]);
 
     managerInstance->set_init_done(true);
-    managerInstance->global_lock_service_client()->InstanceInitDone(managerInstance->instance_id());
+    managerInstance->global_lock_service_client_->InstanceInitDone(managerInstance->instance_id());
 
     /// 等待所有 instance 初始化完成
-    while(!managerInstance->global_lock_service_client()->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
+    while(!managerInstance->global_lock_service_client_->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
 #endif
 	warmup_finish = true;

@@ -10,6 +10,7 @@ class row_t;
 class workload;
 namespace dbx1000 {
     class RecordBuffer;
+    class ManagerInstance;
 }
 
 // Only a constant number of versions can be maintained.
@@ -36,7 +37,7 @@ struct ReqEntry {
 
 class Row_mvcc {
 public:
-	void init(workload* workload, TABLES table, uint64_t key);		/// key only for debug
+	void init(dbx1000::ManagerInstance* managerInstance, TABLES table, uint64_t key);		/// key only for debug
 	RC access(txn_man * txn, TsType type, row_t * row);
 	~Row_mvcc();
 private:
@@ -80,7 +81,7 @@ private:
     row_t* GetRow(uint64_t key);
 	void CheckLatestRow();
 	TABLES table_;
-    workload* workload_;
+    dbx1000::ManagerInstance * managerInstance_;
 };
 
 #endif

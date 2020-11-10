@@ -24,16 +24,7 @@ workload::~workload(){
     for(auto &iter : tables) {
         delete iter.second;
     }
-    for(auto &iter : tablespaces_) {
-        delete iter.second;
-    }
-    for(auto &iter : indexes_) {
-        delete iter.second;
-    }
     for(auto &iter : tables_) {
-        delete iter.second;
-    }
-    for(auto &iter : buffers_) {
         delete iter.second;
     }
 }

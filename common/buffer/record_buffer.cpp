@@ -21,6 +21,7 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferGet(uint64_t item_id, char *buf, std::size_t size) {
+        RC rc = RC::RCOK;
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
         tbb::concurrent_hash_map<uint64_t, char*>::const_accessor const_acc;
         bool res = buffer_.find(const_acc, item_id);
@@ -28,6 +29,7 @@ namespace dbx1000 {
             memcpy(buf, const_acc->second, size);
         } else {
             // TODO: buffer 不存在的情况
+            rc = RC::Abort;
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
@@ -36,7 +38,7 @@ namespace dbx1000 {
 //#elif defined(B_P_L_P) || defined(B_P_L_R)
 //        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 5 * dura) { break; } }
 #endif
-        return RC::RCOK;
+        return rc;
     }
 
     RC RecordBuffer::BufferPut(uint64_t item_id, const char *buf, std::size_t size) {
@@ -63,7 +65,12 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferDel(uint64_t item_id) {
-        buffer_.erase(item_id);
+        tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        bool res = buffer_.find(accessor, item_id);
+        if(res) {
+            delete [] accessor->second;
+            buffer_.erase(item_id);
+        }
         return RC::RCOK;
     }
 }

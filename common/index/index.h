@@ -19,6 +19,7 @@ namespace dbx1000 {
     public:
         IndexItem(uint64_t page_id, uint64_t location);
         IndexItem();
+        ~IndexItem() {}
         IndexItem(const IndexItem &) = delete;
         IndexItem &operator=(const IndexItem &) = delete;
 
@@ -28,7 +29,7 @@ namespace dbx1000 {
 
     class Index {
     public:
-        Index(const std::string&);
+        explicit Index(const std::string&);
         Index()  = default;
         ~Index();
 
@@ -48,7 +49,7 @@ namespace dbx1000 {
         const std::string& index_name();
         void set_index_name(const std::string&);
 
-    private:
+//    private:
         std::unordered_map<uint64_t, IndexItem *> index_;
         std::string index_name_;
         std::mutex mutex_;
