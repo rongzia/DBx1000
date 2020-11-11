@@ -7,8 +7,10 @@
 //#include "mem_alloc.h"
 //#include "wl.h"
 #include "common/storage/table.h"
+#include "instance/manager_instance.h"
 
 void tpcc_query::init(uint64_t thd_id, Query_thd * query_thd) {
+	queryThd_ = query_thd;
 	double x = (double)(rand() % 100) / 100.0;
 	part_to_access = new uint64_t [g_part_cnt]();
 	if (x < g_perc_payment)
@@ -20,7 +22,8 @@ void tpcc_query::init(uint64_t thd_id, Query_thd * query_thd) {
 void tpcc_query::gen_payment(uint64_t thd_id) {
 	type = TPCC_PAYMENT;
 	if (FIRST_PART_LOCAL)
-		w_id = thd_id % g_num_wh + 1;
+//		w_id = thd_id % g_num_wh + 1;
+		w_id = thd_id % g_num_wh + queryThd_->queryQueue_->managerInstance_->wh_start_id;
 	else
 		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
 	d_w_id = w_id;
@@ -50,6 +53,10 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 			}
 		} else
 			c_w_id = w_id;
+		// conflict
+		if(NUM_WH > 1) {
+			while((c_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
+		}
 	}
 	/*
 	if(y <= 60) {
@@ -66,7 +73,8 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 void tpcc_query::gen_new_order(uint64_t thd_id) {
 	type = TPCC_NEW_ORDER;
 	if (FIRST_PART_LOCAL)
-		w_id = thd_id % g_num_wh + 1;
+//		w_id = thd_id % g_num_wh + 1;
+		w_id = thd_id % g_num_wh + queryThd_->queryQueue_->managerInstance_->wh_start_id;
 	else
 		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
 	d_id = URand(1, DIST_PER_WARE, w_id-1);
@@ -83,10 +91,15 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	for (uint32_t oid = 0; oid < ol_cnt; oid ++) {
 		items[oid].ol_i_id = NURand(8191, 1, g_max_items, w_id-1);
         uint32_t x = URand(1, 100, w_id-1);
-		if (x > 1 || g_num_wh == 1)
+		if (x > 1 || g_num_wh == 1) {
 			items[oid].ol_supply_w_id = w_id;
+		}
 		else  {
-			while((items[oid].ol_supply_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
+//			while((items[oid].ol_supply_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
+            // no conflict
+//            items[oid].ol_supply_w_id = w_id;
+            // conflict
+			while((items[oid].ol_supply_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
 			remote = true;
 		}
 		items[oid].ol_quantity = URand(1, 10, w_id-1);
@@ -118,22 +131,22 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 
 void 
 tpcc_query::gen_order_status(uint64_t thd_id) {
-	type = TPCC_ORDER_STATUS;
-	if (FIRST_PART_LOCAL)
-		w_id = thd_id % g_num_wh + 1;
-	else
-		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
-	d_id = URand(1, DIST_PER_WARE, w_id-1);
-	c_w_id = w_id;
-	c_d_id = d_id;
-	int y = URand(1, 100, w_id-1);
-	if(y <= 60) {
-		// by last name
-		by_last_name = true;
-		Lastname(NURand(255,0,999,w_id-1),c_last);
-	} else {
-		// by cust id
-		by_last_name = false;
-		c_id = NURand(1023, 1, g_cust_per_dist, w_id-1);
-	}
+//	type = TPCC_ORDER_STATUS;
+//	if (FIRST_PART_LOCAL)
+//		w_id = thd_id % g_num_wh + 1;
+//	else
+//		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
+//	d_id = URand(1, DIST_PER_WARE, w_id-1);
+//	c_w_id = w_id;
+//	c_d_id = d_id;
+//	int y = URand(1, 100, w_id-1);
+//	if(y <= 60) {
+//		// by last name
+//		by_last_name = true;
+//		Lastname(NURand(255,0,999,w_id-1),c_last);
+//	} else {
+//		// by cust id
+//		by_last_name = false;
+//		c_id = NURand(1023, 1, g_cust_per_dist, w_id-1);
+//	}
 }

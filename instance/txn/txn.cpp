@@ -247,6 +247,11 @@ txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item)
 }
 */
 RC txn_man::finish(RC rc) {
+
+    {
+        for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+        write_record_set.clear();
+    }
     dbx1000::Profiler profiler;
     profiler.Start();
     /*
@@ -342,21 +347,7 @@ RC txn_man::GetWriteRecordLock() {
     /// 等待其他节点 RemoteInvalid 完成
     auto has_invalid_req = [&]() {
         for (auto iter : write_record_set) {
-            if (lockTable[iter.first]->lock_table_.find(iter.second) == lockTable[iter.first]->lock_table_.end()) {
-                int a;
-                if(iter.first == TABLES::MAIN_TABLE) { a= 0;}
-                if(iter.first == TABLES::WAREHOUSE) { a= 1;}
-                if(iter.first == TABLES::DISTRICT) { a= 2;}
-                if(iter.first == TABLES::CUSTOMER) { a= 3;}
-                if(iter.first == TABLES::HISTORY) { a= 4;}
-                if(iter.first == TABLES::NEW_ORDER) { a= 5;}
-                if(iter.first == TABLES::ORDER) { a= 6;}
-                if(iter.first == TABLES::ORDER_LINE) { a= 7;}
-                if(iter.first == TABLES::ITEM) { a= 8;}
-                if(iter.first == TABLES::STOCK) { a= 9;}
-                cout << a << "+" << iter.second << endl;
-                assert(false);
-            }
+            assert(lockTable[iter.first]->lock_table_.find(iter.second) != lockTable[iter.first]->lock_table_.end());
             if(lockTable[iter.first]->lock_table_[iter.second]->invalid_req) { return true; }
         }
         return false;
@@ -373,6 +364,11 @@ RC txn_man::GetWriteRecordLock() {
 
         /// 本地没有锁权限
 //        if (!lockTable[iter.first]->IsValid(iter.second)) {
+
+        if(iter.first == TABLES::ITEM) {
+            lockNode->lock_mode = dbx1000::LockMode::P;
+            continue;
+        }
         if (lockNode->lock_mode == dbx1000::LockMode::O) {
             this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
 
@@ -397,11 +393,11 @@ RC txn_man::GetWriteRecordLock() {
                 }
                 assert(rc == RC::RCOK);
                 lockNode->lock_mode = dbx1000::LockMode::P;
-//                lockTable[iter.first]->Valid(iter.second);
-//                assert(lockTable[iter.first]->IsValid(iter.second));
+                // 取回来的数据写入缓存
 #if defined(B_P_L_P)
                 if(buf_size == MY_PAGE_SIZE) {
-                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
+//                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
+                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(UINT64_MAX, buf, buf_size);
                 }
 #else
                 uint64_t row_id;

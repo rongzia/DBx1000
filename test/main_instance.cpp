@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
 
-//    while(1) { this_thread::yield(); };
+    while(1) { this_thread::yield(); };
     delete managerInstance;
 
     return 0;

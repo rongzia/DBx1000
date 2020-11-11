@@ -61,7 +61,7 @@ public:
     std::map<TABLES, std::shared_ptr<dbx1000::RecordBuffer>> buffers_;
     std::map<TABLES, table_t*> tables_;
 	std::vector<dbx1000::Arena*> arenas_;
-	dbx1000::ManagerInstance * manager_instance_;
+//	dbx1000::ManagerInstance * manager_instance_;
     /////////////// rrzhang ///////////////
 
 protected:

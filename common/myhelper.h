@@ -18,6 +18,7 @@ namespace dbx1000 {
         static int TsTypeToInt(TsType ts_type);
         static TsType IntToTsType(int i);
         static std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> GetSysClock();
+        static int TABLESToInt(TABLES table);
     };
 }
 

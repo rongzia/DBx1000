@@ -142,7 +142,7 @@ namespace dbx1000 {
         if(lock_table_.end() == iter) { assert(false); return RC::Abort; }
 
         /// 本地 mode 为 O, 失效错误
-        if(lock_table_[item_id]->lock_mode == LockMode::O) { assert(false); return RC::Abort; }
+//        if(lock_table_[item_id]->lock_mode == LockMode::O) { assert(false); return RC::Abort; }
 
         shared_ptr<LockNode> lock_node = iter->second;
 

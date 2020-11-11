@@ -45,8 +45,6 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 #endif
     if (rc == RC::Abort) {
         for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-        //lock_node_maps_.clear();
         write_record_set.clear();
         return rc;
     }
@@ -67,8 +65,6 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 #ifndef SINGLE_NODE
     {
         for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//        for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-        //lock_node_maps_.clear();
         write_record_set.clear();
     }
 #endif
@@ -110,12 +106,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
         r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 
 	if (r_wh_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-//            lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+//            write_record_set.clear();
+//        }
 		return finish(RC::Abort);
 	}
 	double w_ytd;
@@ -141,12 +135,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
     row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
     if (r_dist_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-//            lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+//            write_record_set.clear();
+//        }
         return finish(RC::Abort);
     }
 
@@ -244,12 +236,12 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, WR);
 	if (r_cust_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-//            //lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+////            //lock_node_maps_.clear();
+//            write_record_set.clear();
+//        }
 		return finish(RC::Abort);
 	}
 	double c_balance;
@@ -341,12 +333,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_wh_local = get_row(TABLES::WAREHOUSE, key, RD);
 	if (r_wh_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-            //lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+//            //lock_node_maps_.clear();
+//            write_record_set.clear();
+//        }
 		return finish(RC::Abort);
 	}
 
@@ -363,12 +355,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_cust_local = get_row(TABLES::CUSTOMER, key, RD);
 	if (r_cust_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-            //lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+//            //lock_node_maps_.clear();
+//            write_record_set.clear();
+//        }
 		return finish(RC::Abort);
 	}
 	uint64_t c_discount;
@@ -394,12 +386,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 	row_t * r_dist_local = get_row(TABLES::DISTRICT, key, WR);
 	if (r_dist_local == NULL) {
-        {
-            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-            //lock_node_maps_.clear();
-            write_record_set.clear();
-        }
+//        {
+//            for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+//            //lock_node_maps_.clear();
+//            write_record_set.clear();
+//        }
 		return finish(RC::Abort);
 	}
 	//double d_tax;
@@ -456,12 +448,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 		row_t * r_item_local = get_row(TABLES::ITEM, key, RD);
 		if (r_item_local == NULL) {
-            {
-                for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-                //lock_node_maps_.clear();
-                write_record_set.clear();
-            }
+//            {
+//                for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+//                //lock_node_maps_.clear();
+//                write_record_set.clear();
+//            }
 			return finish(RC::Abort);
 		}
 		int64_t i_price;
@@ -496,12 +488,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
 		row_t * r_stock_local = get_row(TABLES::STOCK, stock_key, WR);
 		if (r_stock_local == NULL) {
-            {
-                for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-//for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
-                //lock_node_maps_.clear();
-                write_record_set.clear();
-            }
+//            {
+//                for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+////for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->RemoveThread(this->get_thd_id()); }
+//                //lock_node_maps_.clear();
+//                write_record_set.clear();
+//            }
 			return finish(RC::Abort);
 		}
 		
@@ -814,8 +806,6 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             key = custKey(m_query->c_id, m_query->c_d_id, m_query->c_w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(key, &indexItem);
             write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
-
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += 3;
             break;
         case TPCC_NEW_ORDER :
             key = m_query->w_id;
@@ -827,7 +817,6 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(key, &indexItem);
             write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += 3;
             for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
                 key = m_query->items[ol_number].ol_i_id;
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::ITEM]->IndexGet(key, &indexItem);
@@ -835,16 +824,14 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
                 key = stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id);
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::STOCK]->IndexGet(key, &indexItem);
                 write_record_set.insert(make_pair(TABLES::STOCK, indexItem.page_id_));
-
-                this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= m_query->ol_cnt * 2;
             }
             break;
         default:
             assert(false);
     }
+    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= write_record_set.size();
+
 #else
-
-
     switch (m_query->type) {
         case TPCC_PAYMENT :
             if(g_wh_update) {
@@ -868,20 +855,17 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
 
             key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
             write_record_set.insert(make_pair(TABLES::CUSTOMER, key));
-
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += 3;
             for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
                 key = m_query->items[ol_number].ol_i_id;
                 write_record_set.insert(make_pair(TABLES::ITEM, key));
                 key = stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id);
                 write_record_set.insert(make_pair(TABLES::STOCK, key));
-
-                this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= m_query->ol_cnt * 2;
             }
             break;
         default:
             assert(false);
     }
+    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= write_record_set.size();
 #endif
 }
 

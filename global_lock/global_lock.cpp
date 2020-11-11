@@ -56,7 +56,6 @@ namespace dbx1000 {
 #elif WORKLOAD == TPCC
             this->m_workload_ = new tpcc_wl();
 #endif
-            m_workload_->manager_instance_ = nullptr;
             m_workload_->init();
 
             /// 初始化 lock_service_table_
@@ -68,7 +67,6 @@ namespace dbx1000 {
 #ifdef B_P_L_P
             IndexItem indexItem;
             for (uint32_t i = 0; i <= g_max_items; i++) {
-//                m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
                 this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
             }
             for(uint64_t wh_id = 0; wh_id <= NUM_WH; wh_id++) {
@@ -115,37 +113,23 @@ namespace dbx1000 {
          */
         RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t &count) {
             auto iter = lock_tables_[table].find(item_id);
-            if (lock_tables_[table].end() == iter) {
-                int a;
-                if(table == TABLES::MAIN_TABLE) { a= 0;}
-                if(table == TABLES::WAREHOUSE) { a= 1;}
-                if(table == TABLES::DISTRICT) { a= 2;}
-                if(table == TABLES::CUSTOMER) { a= 3;}
-                if(table == TABLES::HISTORY) { a= 4;}
-                if(table == TABLES::NEW_ORDER) { a= 5;}
-                if(table == TABLES::ORDER) { a= 6;}
-                if(table == TABLES::ORDER_LINE) { a= 7;}
-                if(table == TABLES::ITEM) { a= 8;}
-                if(table == TABLES::STOCK) { a= 9;}
-                cout << a << "+" << iter->first << endl;
-                assert(false);
-            }
+            assert(lock_tables_[table].end() != iter);
             if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
 
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             if (iter->second->write_ins_id >= 0) {
-//                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", page id : " << page_id << endl;
+//                    cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count);
 
                 if (rc == RC::TIME_OUT) {
-//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " time out" << endl;
+//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
                 }
                 if (rc == RC::Abort) {
-//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", page: " << page_id << " Abort" << endl;
+//                        cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " Abort" << endl;
                 }
                 if (rc == RC::RCOK) {
-//                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", page: " << page_id << " success" << endl;
+//                        cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
                     iter->second->write_ins_id = ins_id;
                 }
             } else {

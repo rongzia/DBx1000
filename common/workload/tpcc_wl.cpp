@@ -23,21 +23,19 @@
 #include "util/arena.h"
 
 RC tpcc_wl::init() {
-	workload::init();
+    workload::init();
 //	string path = "../benchmarks/";
 //#if TPCC_SMALL
 //	path += "TPCC_short_schema.txt";
 //#else
 //	path += "TPCC_full_schema.txt";
 //#endif
-	cout << "reading schema file: " << g_tpcc_schame_path << endl;
-	init_schema( g_tpcc_schame_path );
-	cout << "TPCC schema initialized" << endl;
-    if(manager_instance_ != nullptr) {
-        next_tid = manager_instance_->wh_start_id;
-        init_table();
-    }
-	return RC::RCOK;
+    cout << "reading schema file: " << g_tpcc_schame_path << endl;
+    init_schema( g_tpcc_schame_path );
+    cout << "TPCC schema initialized" << endl;
+    init_table();
+    next_tid = 0;
+    return RC::RCOK;
 }
 
 RC tpcc_wl::init_schema(const char * schema_file) {
@@ -628,26 +626,32 @@ tpcc_wl::init_permutation(uint64_t * perm_c_id, uint64_t wid) {
 //+==================================================================*/
 //
 void * tpcc_wl::threadInitWarehouse(void * This) {
-	tpcc_wl * wl = (tpcc_wl *) This;
+    tpcc_wl * wl = (tpcc_wl *) This;
 //	int tid = ATOM_FETCH_ADD(wl->next_tid, 1);
-	int tid = __sync_fetch_and_add(&wl->next_tid, 1);
-    assert(tid <= NUM_WH);
-    uint32_t wid = tid;
+    int tid = __sync_fetch_and_add(&wl->next_tid, 1);
+    uint32_t wid = tid + 1;
 //	tpcc_buffer[tid] = (drand48_data *) _mm_malloc(sizeof(drand48_data), 64);
-	tpcc_buffer[tid] = new drand48_data();
-//	assert((uint64_t)tid < g_num_wh);
-	srand48_r(wid, tpcc_buffer[tid]);
+//    tpcc_buffer[tid] = new drand48_data();
+//    assert((uint64_t)tid < g_num_wh);
+//    srand48_r(wid, tpcc_buffer[tid]);
 
-	if (tid == (int)(wl->manager_instance_->wh_start_id))
-		wl->init_tab_item();
-	wl->init_tab_wh( wid );
-	wl->init_tab_dist( wid );
-	wl->init_tab_stock( wid );
-	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {  /// DIST_PER_WARE == 10, 地区数量
-		wl->init_tab_cust(did, wid);
-		wl->init_tab_order(did, wid);
-		for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++)
-			wl->init_tab_hist(cid, did, wid);
-	}
-	return NULL;
+
+    for(wid = 1; wid <= NUM_WH; wid++) {
+        tpcc_buffer[wid - 1] = new drand48_data();
+        srand48_r(wid, tpcc_buffer[wid - 1]);
+    }
+    if (tid == 0)
+        wl->init_tab_item();
+    for(wid = 1; wid <= NUM_WH; wid++) {
+        wl->init_tab_wh(wid);
+        wl->init_tab_dist(wid);
+        wl->init_tab_stock(wid);
+        for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {  /// DIST_PER_WARE == 10, 地区数量
+            wl->init_tab_cust(did, wid);
+            wl->init_tab_order(did, wid);
+            for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++)
+                wl->init_tab_hist(cid, did, wid);
+        }
+    }
+    return NULL;
 }

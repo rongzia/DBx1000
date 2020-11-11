@@ -60,4 +60,18 @@ namespace dbx1000 {
     std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> MyHelper::GetSysClock() {
         return std::chrono::system_clock::now();
     }
+
+    int MyHelper::TABLESToInt(TABLES table) {
+        if(TABLES::MAIN_TABLE == table) { return 0; }
+        if(TABLES::WAREHOUSE == table) { return 1; }
+        if(TABLES::DISTRICT == table) { return 2; }
+        if(TABLES::CUSTOMER == table) { return 3; }
+        if(TABLES::HISTORY == table) { return 4; }
+        if(TABLES::NEW_ORDER == table) { return 5; }
+        if(TABLES::ORDER == table) { return 6; }
+        if(TABLES::ORDER_LINE == table) { return 7; }
+        if(TABLES::ITEM == table) { return 8; }
+        if(TABLES::STOCK == table) { return 9; }
+        else return -1;
+    }
 }
