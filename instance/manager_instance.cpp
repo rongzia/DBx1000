@@ -59,6 +59,7 @@ namespace dbx1000 {
         // init workload
 #if WORKLOAD == YCSB
         this->m_workload_ = new ycsb_wl();
+        m_workload_->manager_instance_ = this;
 #elif WORKLOAD == TPCC
         this->m_workload_ = new tpcc_wl();
 #endif
@@ -76,7 +77,7 @@ namespace dbx1000 {
 
         // init mvcc
 #if WORKLOAD == YCSB
-        mvcc_vectors_.insert(make_pair(TABLES::MAIN_TABLE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, bool>>()));
+        mvcc_vectors_.insert(make_pair(TABLES::MAIN_TABLE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, volatile bool>>()));
 #elif WORKLOAD == TPCC
         mvcc_vectors_.insert(make_pair(TABLES::WAREHOUSE, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, volatile bool>>()));
         mvcc_vectors_.insert(make_pair(TABLES::DISTRICT, new unordered_map<uint64_t, std::pair<weak_ptr<Row_mvcc>, volatile bool>>()));
@@ -104,10 +105,15 @@ namespace dbx1000 {
         profiler.Start();
         uint32_t tuple_size;
 #if WORKLOAD == YCSB
-        tuple_size = ((ycsb_wl *) m_workload_)->the_table->get_schema()->tuple_size;
+        uint64_t start, end;
+
+#ifdef NO_CONFLICT
+        for(uint64_t key = g_synth_table_size*this->instance_id_; key < g_synth_table_size*(this->instance_id_+1); key++) {
+#else // NO_CONFLICT
         for(uint64_t key = 0; key < g_synth_table_size; key++) {
-            weak_ptr<Row_mvcc> p;
-            mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(p, false)));
+#endif // NO_CONFLICT
+//            weak_ptr<Row_mvcc> p;
+            mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(weak_ptr<Row_mvcc>(), false)));
         }
 #elif WORKLOAD == TPCC
         for (uint32_t i = 1; i <= g_max_items; i++) {
@@ -125,17 +131,22 @@ namespace dbx1000 {
                 mvcc_vectors_[TABLES::STOCK]->insert(make_pair(stockKey(sid, wh_id), make_pair(shared_ptr<Row_mvcc>(), false)));
             }
         }
-#endif
+#endif // WORKLOAD
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }
 
     void ManagerInstance::InitLockTables() {
 #if WORKLOAD == YCSB
-        uint64_t start = 0;
-//        uint64_t end = (table_space_->GetLastPageId() + 1);
-        uint64_t end = SYNTH_TABLE_SIZE;
-        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), start, end, this);
+        this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), this);
+#ifdef NO_CONFLICT
+        for(uint64_t key = g_synth_table_size*this->instance_id_; key < g_synth_table_size*(this->instance_id_+1); key++) {
+#else // NO_CONFLICT
+            for(uint64_t key = 0; key < g_synth_table_size; key++) {
+#endif // NO_CONFLICT
+//            weak_ptr<Row_mvcc> p;
+            mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(weak_ptr<Row_mvcc>(), false)));
+        }
 #elif WORKLOAD == TPCC
         this->lock_table_[TABLES::WAREHOUSE] = new LockTable(TABLES::WAREHOUSE, this->instance_id(), this);
         this->lock_table_[TABLES::DISTRICT] = new LockTable(TABLES::DISTRICT, this->instance_id(), this);

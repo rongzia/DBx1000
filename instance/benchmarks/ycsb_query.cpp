@@ -26,20 +26,7 @@ void ycsb_query::init(uint64_t thd_id, Query_thd* query_thd) {
 void ycsb_query::calculateDenom()
 {
 	assert(the_n == 0);
-		/**
-		 * 为了实现多个进程访问的数据没有重叠，没有冲突时，每个进程只访问 key:[g_synth_table_size/MAX_PROCESS_CNT*this->process_id, g_synth_table_size/MAX_PROCESS_CNT*(this->process_id+1)] 范围内的数据
-		 * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/MAX_PROCESS_CNT]
-		 * 在事务执行时，应该加上 : g_synth_table_size / MAX_PROCESS_CNT * process_id;
-		 *
-		 * 为什么是 MAX_PROCESS_CNT，而不是 PROCESS_CNT？
-		 * PROCESS_CNT 下，随着 PROCESS_CNT 增大， key 范围缩小，会导致每个节点内事务同时访问的 page_id 的概率增大
-		 * MAX_PROCESS_CNT 是预估最大达到的实例数
-		 */
-#ifdef DB2_WITH_NO_CONFLICT
-    uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / MAX_PROCESS_CNT;
-#else
 	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
-#endif
 	the_n = table_size - 1;
 	denom = zeta(the_n, g_zipf_theta);
 	//! denom = 1605.65, when n = 1024*1024*10 and theta = 0.6
@@ -139,33 +126,26 @@ void ycsb_query::gen_requests(int thd_id) {
 		uint64_t part_id = 
 			part_to_access[ ith ];
 		/**
-		 * 为了实现多个进程访问的数据没有重叠，没有冲突时，每个进程只访问 key:[g_synth_table_size/MAX_PROCESS_CNT*this->process_id, g_synth_table_size/MAX_PROCESS_CNT*(this->process_id+1)] 范围内的数据
-		 * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/MAX_PROCESS_CNT]
-		 * 在事务执行时，应该加上 : g_synth_table_size / MAX_PROCESS_CNT * process_id;
-		 *
-		 * 为什么是 MAX_PROCESS_CNT，而不是 PROCESS_CNT？
-		 * PROCESS_CNT 下，随着 PROCESS_CNT 增大， key 范围缩小，会导致每个节点内事务同时访问的 page_id 的概率增大
-		 * MAX_PROCESS_CNT 是预估最大达到的实例数
 		 */
- #ifdef DB2_WITH_NO_CONFLICT
-    uint64_t table_size = (g_synth_table_size / g_virtual_part_cnt) / MAX_PROCESS_CNT;
-#else
-	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
-#endif
+	    uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
 		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);   //! g_zipf_theta == 0.6
 		assert(row_id < table_size);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
-#ifdef PAR_KEY_BY_INSTANCE
-        {
-            uint32_t tuple_size = ((ycsb_wl*)_query_thd->queryQueue_->managerInstance_->m_workload_)->the_table->get_schema()->get_tuple_size();
-            int instance_id = _query_thd->queryQueue_->managerInstance_->instance_id_;
-            uint64_t count = 16384 / tuple_size;
-            uint64_t num1 = primary_key / count;
-            uint64_t num2 = primary_key % count;
-            uint64_t num3 = count/PROCESS_CNT;
-            primary_key = num1 * (16384 / tuple_size) + (num3 * instance_id + num2 % num3);
-        }
-#endif
+#ifdef NO_CONFLICT
+        primary_key += _query_thd->queryQueue_->managerInstance_->instance_id_*g_synth_table_size;
+#else // NO_CONFLICT
+#endif // NO_CONFLICT
+//#ifdef PAR_KEY_BY_INSTANCE
+//        {
+//            uint32_t tuple_size = ((ycsb_wl*)_query_thd->queryQueue_->managerInstance_->m_workload_)->the_table->get_schema()->get_tuple_size();
+//            int instance_id = _query_thd->queryQueue_->managerInstance_->instance_id_;
+//            uint64_t count = 16384 / tuple_size;
+//            uint64_t num1 = primary_key / count;
+//            uint64_t num2 = primary_key % count;
+//            uint64_t num3 = count/PROCESS_CNT;
+//            primary_key = num1 * (16384 / tuple_size) + (num3 * instance_id + num2 % num3);
+//        }
+//#endif // PAR_KEY_BY_INSTANCE
 		req->key = primary_key;
 		int64_t rint64;
 		lrand48_r(&_query_thd->buffer, &rint64);

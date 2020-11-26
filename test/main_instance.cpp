@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     /// 等待所有 instance 初始化完成
     while(!managerInstance->global_lock_service_client_->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
-#endif
+#endif // SINGLE_NODE
 	warmup_finish = true;
     thread_t *thread_t_s = new thread_t[g_thread_cnt]();
     std::vector<std::thread> v_thread;

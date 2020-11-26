@@ -42,7 +42,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 #ifndef SINGLE_NODE
     GetWriteRecordSet(query);
     rc = GetWriteRecordLock();
-#endif
+#endif // SINGLE_NODE
     if (rc == RC::Abort) {
         for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
         write_record_set.clear();
@@ -67,7 +67,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
         for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
         write_record_set.clear();
     }
-#endif
+#endif // SINGLE_NODE
     return rc;
 }
 

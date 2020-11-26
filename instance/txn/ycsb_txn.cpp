@@ -284,17 +284,17 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     RC rc;
     ycsb_query *m_query = (ycsb_query *) query;
 
-//    GetLockTableSharedPtrs(query);
     /// 事务开始前，记录下写 page 集合，同时确保这些写page的锁在本地（若不在本地，则通过 RemoteLock 获取）
     /// ,然后把线程 id 记录到 page 内，目的是为了阻塞事务开始后，其他实例的 invalid 请求
-//    std::set<uint64_t> write_record_set = GetWriteRecordSet(m_query);
+#ifndef SINGLE_NODE
     GetWriteRecordSet(query);
     rc = GetWriteRecordLock();
     if (rc == RC::Abort) {
-//        for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
-//        lock_node_maps_.clear();
+        for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+        write_record_set.clear();
         return rc;
     }
+#endif // SINGLE_NODE
 
     /* ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL; */
@@ -325,27 +325,10 @@ RC ycsb_txn_man::run_txn(base_query *query) {
              */
             row_t *row_local;
             access_t type = req->rtype;
-
-            /**
-             * 为了实现多个进程访问的数据没有重叠，没有冲突时，每个进程只访问 key:[g_synth_table_size/64*this->process_id, g_synth_table_size/MAX_PROCESS_CNT*(this->process_id+1)] 范围内的数据
-             * 但是，query 模块没有对应进程的 id, 所以产生的 key 范围只在 [0, g_synth_table_size/64]
-             * 在事务执行时，应该加上 : g_synth_table_size / MAX_PROCESS_CNT * process_id;
-             *
-             * 为什么是 MAX_PROCESS_CNT，而不是 PROCESS_CNT？
-             * PROCESS_CNT 下，随着 PROCESS_CNT 增大， key 范围缩小，会导致每个节点内事务同时访问的 page_id  的概率增大
-             * MAX_PROCESS_CNT 是预估最大达到的实例数
-             */
-#ifdef DB2_WITH_NO_CONFLICT
-            assert(h_thd->manager_client_->instance_id() < MAX_PROCESS_CNT);
-            assert(req->key < g_synth_table_size / MAX_PROCESS_CNT);
-            uint64_t real_key = req->key + g_synth_table_size / MAX_PROCESS_CNT * h_thd->manager_client_->instance_id();
-            assert(real_key < g_synth_table_size);
-            row_local = get_row(real_key , type);
-#else
+            
             GetMvccSharedPtr(TABLES::MAIN_TABLE, req->key);
             row_local = get_row(TABLES::MAIN_TABLE, req->key, type);
 //			cout << "key: " << req->key << ", type:" << (req->rtype == access_t::WR ? "WR" : "RD") << endl;
-#endif
             if (row_local == NULL) {
                 rc = RC::Abort;
                 goto final;
@@ -390,10 +373,12 @@ RC ycsb_txn_man::run_txn(base_query *query) {
 #endif
 
     /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
-//    for (auto iter : write_record_set) { lock_node_maps_[TABLES::MAIN_TABLE][iter.second]->RemoveThread(this->get_thd_id()); }
-//    lock_node_maps_.clear();
-//    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " end." << endl;
-
+#ifndef SINGLE_NODE
+    {
+        for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
+        write_record_set.clear();
+    }
+#endif // SINGLE_NODE
     return rc;
 }
 
