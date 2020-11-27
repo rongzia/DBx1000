@@ -61,9 +61,7 @@ namespace dbx1000 {
         this->m_workload_ = new ycsb_wl();
 #elif WORKLOAD == TPCC
         this->m_workload_ = new tpcc_wl();
-        this->wh_start_id = this->instance_id_ * NUM_WH_PER_NODE + 1;
 #endif
-//        assert(this->instance_id_ >= 0 && this->instance_id_ < (int)(UINT32_MAX / 3));
         m_workload_->manager_instance_ = this;
         m_workload_->is_server_ = false;
         m_workload_->init();
@@ -178,43 +176,45 @@ namespace dbx1000 {
         this->lock_table_[TABLES::ITEM] = new LockTable(TABLES::ITEM, this->instance_id(), this);
         this->lock_table_[TABLES::STOCK] = new LockTable(TABLES::STOCK, this->instance_id(), this);
 
-//#ifdef B_P_L_P
-//        IndexItem indexItem;
-//        for (uint32_t i = 1; i <= g_max_items; i++) {
-//            m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
-//            if(lock_table_[TABLES::ITEM]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::ITEM]->lock_table_.end()) {
-//                lock_table_[TABLES::ITEM]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
-//            }
-//        }
-//        for(uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
-//            m_workload_->indexes_[TABLES::ITEM]->IndexGet(wh_id, &indexItem);
-//            if(lock_table_[TABLES::WAREHOUSE]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::WAREHOUSE]->lock_table_.end()) {
-//                lock_table_[TABLES::WAREHOUSE]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
-//            }
-//            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
-//                m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(distKey(did, wh_id), &indexItem);
-//                if(lock_table_[TABLES::DISTRICT]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::DISTRICT]->lock_table_.end()) {
-//                    lock_table_[TABLES::DISTRICT]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
-//                }
-//                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
-//                    m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(custKey(cid, did, wh_id), &indexItem);
-//                    if(lock_table_[TABLES::CUSTOMER]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::CUSTOMER]->lock_table_.end()) {
-//                        lock_table_[TABLES::CUSTOMER]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
-//                    }
-//                }
-//            }
-//            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
-//                m_workload_->indexes_[TABLES::STOCK]->IndexGet(stockKey(sid, wh_id), &indexItem);
-//                if(lock_table_[TABLES::STOCK]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::STOCK]->lock_table_.end()) {
-//                    lock_table_[TABLES::STOCK]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
-//                }
-//            }
-//        }
-//#else
+#ifdef B_P_L_P
+        IndexItem indexItem;
+        for (uint32_t i = 1; i <= g_max_items; i++) {
+            m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
+            if (lock_table_[TABLES::ITEM]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::ITEM]->lock_table_.end()) {
+                lock_table_[TABLES::ITEM]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+            }
+        }
+        for (uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
+            m_workload_->indexes_[TABLES::WAREHOUSE]->IndexGet(wh_id, &indexItem);
+            if (lock_table_[TABLES::WAREHOUSE]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::WAREHOUSE]->lock_table_.end()) {
+                lock_table_[TABLES::WAREHOUSE]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+            }
+            for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(distKey(did, wh_id), &indexItem);
+                if (lock_table_[TABLES::DISTRICT]->lock_table_.find(indexItem.page_id_) ==
+                    lock_table_[TABLES::DISTRICT]->lock_table_.end()) {
+                    lock_table_[TABLES::DISTRICT]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                }
+                for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                    m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(custKey(cid, did, wh_id), &indexItem);
+                    if (lock_table_[TABLES::CUSTOMER]->lock_table_.find(indexItem.page_id_) ==
+                        lock_table_[TABLES::CUSTOMER]->lock_table_.end()) {
+                        lock_table_[TABLES::CUSTOMER]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                    }
+                }
+            }
+            for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                m_workload_->indexes_[TABLES::STOCK]->IndexGet(stockKey(sid, wh_id), &indexItem);
+                if (lock_table_[TABLES::STOCK]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::STOCK]->lock_table_.end()) {
+                    lock_table_[TABLES::STOCK]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                }
+            }
+        }
+#else // B_P_L_P
         for (uint32_t i = 0; i <= g_max_items; i++) {
             lock_table_[TABLES::ITEM]->lock_table_[i] = make_shared<LockNode>();
         }
-        for(uint64_t wh_id = 0; wh_id <= NUM_WH; wh_id++) {
+        for (uint64_t wh_id = 0; wh_id <= NUM_WH; wh_id++) {
             lock_table_[TABLES::WAREHOUSE]->lock_table_[wh_id] = make_shared<LockNode>();
             for (uint64_t did = 0; did <= DIST_PER_WARE; did++) {
                 lock_table_[TABLES::DISTRICT]->lock_table_[distKey(did, wh_id)] = make_shared<LockNode>();
@@ -226,6 +226,7 @@ namespace dbx1000 {
                 lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)] = make_shared<LockNode>();
             }
         }
+#endif // B_P_L_P
     }
 #endif // TPCC
 

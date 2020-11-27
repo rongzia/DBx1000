@@ -53,7 +53,6 @@ namespace dbx1000 {
 
 //    private:
         int instance_id_;
-        uint32_t wh_start_id;
         bool init_done_;
         std::map<int, std::string> host_map_;
 

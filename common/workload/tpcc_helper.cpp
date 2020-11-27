@@ -3,7 +3,7 @@
 #include "tpcc_helper.h"
 
 //drand48_data ** tpcc_buffer = new drand48_data * [g_num_wh];
-drand48_data ** tpcc_buffer = new drand48_data * [PROCESS_CNT*g_num_wh];
+drand48_data ** tpcc_buffer = new drand48_data * [NUM_WH];
 
 
 uint64_t distKey(uint64_t d_id, uint64_t d_w_id)  {
@@ -51,7 +51,7 @@ uint64_t RAND(uint64_t max, uint64_t thd_id) {
 	lrand48_r(tpcc_buffer[thd_id], &rint64);
 	return rint64 % max;
 }
-
+// [x, y] 随机
 uint64_t URand(uint64_t x, uint64_t y, uint64_t thd_id) {
     return x + RAND(y - x + 1, thd_id);
 }

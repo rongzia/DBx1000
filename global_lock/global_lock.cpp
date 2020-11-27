@@ -77,27 +77,42 @@ namespace dbx1000 {
 #elif WORKLOAD == TPCC
 #ifdef B_P_L_P
             IndexItem indexItem;
-            for (uint32_t i = 0; i <= g_max_items; i++) {
-                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
+            for (uint32_t i = 1; i <= g_max_items; i++) {
+                m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
+                if (lock_tables_[TABLES::ITEM].find(indexItem.page_id_) == lock_tables_[TABLES::ITEM].end()) {
+                    this->lock_tables_[TABLES::ITEM].insert(make_pair(indexItem.page_id_, new LockNode()));
+                }
             }
-            for(uint64_t wh_id = 0; wh_id <= NUM_WH; wh_id++) {
-                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(wh_id, new LockNode()));
-                for (uint64_t did = 0; did <= DIST_PER_WARE; did++) {
-                    this->lock_tables_[TABLES::DISTRICT].insert(make_pair(distKey(did, wh_id), new LockNode()));
-                    for (uint32_t cid = 0; cid <= g_cust_per_dist; cid++) {
-                        this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(custKey(cid, did, wh_id), new LockNode()));
+            for (uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
+                m_workload_->indexes_[TABLES::WAREHOUSE]->IndexGet(wh_id, &indexItem);
+                if (lock_tables_[TABLES::WAREHOUSE].find(indexItem.page_id_) == lock_tables_[TABLES::WAREHOUSE].end()) {
+                    this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(indexItem.page_id_, new LockNode()));
+                }
+                for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
+                    m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(distKey(did, wh_id), &indexItem);
+                    if (lock_tables_[TABLES::DISTRICT].find(indexItem.page_id_) == lock_tables_[TABLES::DISTRICT].end()) {
+                        this->lock_tables_[TABLES::DISTRICT].insert(make_pair(indexItem.page_id_, new LockNode()));
+                    }
+                    for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
+                        m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(custKey(cid, did, wh_id), &indexItem);
+                        if (lock_tables_[TABLES::CUSTOMER].find(indexItem.page_id_) == lock_tables_[TABLES::CUSTOMER].end()) {
+                            this->lock_tables_[TABLES::CUSTOMER].insert(make_pair(indexItem.page_id_, new LockNode()));
+                        }
                     }
                 }
-                for (uint32_t sid = 0; sid <= g_max_items; sid++) {
-                    this->lock_tables_[TABLES::STOCK].insert(make_pair(stockKey(sid, wh_id), new LockNode()));
+                for (uint32_t sid = 1; sid <= g_max_items; sid++) {
+                    m_workload_->indexes_[TABLES::STOCK]->IndexGet(stockKey(sid, wh_id), &indexItem);
+                    if (lock_tables_[TABLES::STOCK].find(indexItem.page_id_) == lock_tables_[TABLES::STOCK].end()) {
+                        this->lock_tables_[TABLES::STOCK].insert(make_pair(indexItem.page_id_, new LockNode()));
+                    }
                 }
             }
-#else
-            for (uint32_t i = 1; i <= g_max_items; i++) {
-                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
-            }
+#else // B_P_L_P
+//            for (uint32_t i = 1; i <= g_max_items; i++) {
+//                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
+//            }
             for(uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
-                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(1, new LockNode()));
+                this->lock_tables_[TABLES::WAREHOUSE].insert(make_pair(wh_id, new LockNode()));
                 for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
                     this->lock_tables_[TABLES::DISTRICT].insert(make_pair(distKey(did, wh_id), new LockNode()));
                     for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
@@ -130,23 +145,23 @@ namespace dbx1000 {
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             if (iter->second->write_ins_id >= 0) {
-#ifdef NO_CONFLICT
+#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
                     cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
 #endif
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count);
 
                 if (rc == RC::TIME_OUT) {
-#ifdef NO_CONFLICT
+#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
 #endif
                 }
                 if (rc == RC::Abort) {
-#ifdef NO_CONFLICT
+#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " Abort" << endl;
 #endif
                 }
                 if (rc == RC::RCOK) {
-#ifdef NO_CONFLICT
+#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
                     iter->second->write_ins_id = ins_id;

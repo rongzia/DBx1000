@@ -808,19 +808,23 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
             break;
         case TPCC_NEW_ORDER :
-            key = m_query->w_id;
-            h_thd->manager_client_->m_workload_->indexes_[TABLES::WAREHOUSE]->IndexGet(key, &indexItem);
-            write_record_set.insert(make_pair(TABLES::WAREHOUSE, indexItem.page_id_));
+//            key = m_query->w_id;
+//            h_thd->manager_client_->m_workload_->indexes_[TABLES::WAREHOUSE]->IndexGet(key, &indexItem);
+//            write_record_set.insert(make_pair(TABLES::WAREHOUSE, indexItem.page_id_));
+
             key = distKey(m_query->d_id, m_query->w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(key, &indexItem);
             write_record_set.insert(make_pair(TABLES::DISTRICT, indexItem.page_id_));
-            key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
-            h_thd->manager_client_->m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(key, &indexItem);
-            write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
+
+//            key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
+//            h_thd->manager_client_->m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(key, &indexItem);
+//            write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
+
             for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
                 key = m_query->items[ol_number].ol_i_id;
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::ITEM]->IndexGet(key, &indexItem);
                 write_record_set.insert(make_pair(TABLES::ITEM, indexItem.page_id_));
+
                 key = stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id);
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::STOCK]->IndexGet(key, &indexItem);
                 write_record_set.insert(make_pair(TABLES::STOCK, indexItem.page_id_));
@@ -829,8 +833,6 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
         default:
             assert(false);
     }
-    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= write_record_set.size();
-
 #else
     switch (m_query->type) {
         case TPCC_PAYMENT :
@@ -844,17 +846,16 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             key = custKey(m_query->c_id, m_query->c_d_id, m_query->c_w_id);
             write_record_set.insert(make_pair(TABLES::CUSTOMER, key));
 
-            this->h_thd->manager_client_->stats()._stats[this->get_thd_id()]->count_write_request_ += 3;
             break;
         case TPCC_NEW_ORDER :
-            key = m_query->w_id;
-            write_record_set.insert(make_pair(TABLES::WAREHOUSE, key));
+//            key = m_query->w_id;
+//            write_record_set.insert(make_pair(TABLES::WAREHOUSE, key));
 
             key = distKey(m_query->d_id, m_query->w_id);
             write_record_set.insert(make_pair(TABLES::DISTRICT, key));
 
-            key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
-            write_record_set.insert(make_pair(TABLES::CUSTOMER, key));
+//            key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
+//            write_record_set.insert(make_pair(TABLES::CUSTOMER, key));
             for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
                 key = m_query->items[ol_number].ol_i_id;
                 write_record_set.insert(make_pair(TABLES::ITEM, key));
@@ -865,85 +866,6 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
         default:
             assert(false);
     }
-    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= write_record_set.size();
 #endif
+    this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_write_request_+= write_record_set.size();
 }
-
-
-//RC tpcc_txn_man::GetWriteRecordLock(base_query *query) {
-//    tpcc_query * m_query = (tpcc_query *) query;
-//    auto lockTable = this->h_thd->manager_client_->lock_table_;
-//
-//    /// 等待其他节点 RemoteInvalid 完成
-//    auto has_invalid_req = [&]() {
-//        for (auto iter : write_record_set) {
-//            if (lock_node_maps_[iter.first][iter.second]->invalid_req) { return true; }
-//        }
-//        return false;
-//    };
-//    while (has_invalid_req()) { std::this_thread::yield(); }
-//    for (auto iter : write_record_set) { lock_node_maps_[iter.first][iter.second]->AddThread(this->get_thd_id());}
-//    /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
-//
-//    dbx1000::Profiler profiler;
-//    profiler.Start();
-//
-//    for (auto iter : write_record_set) {
-//        std::shared_ptr<dbx1000::LockNode> lockNode = lock_node_maps_[iter.first][iter.second];
-//
-//        /// 本地没有锁权限
-//        if (!lockTable[iter.first]->IsValid(iter.second)) {
-//            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
-//
-//            bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
-//            if (flag) {
-//                /// 当前线程去 RemoteLock
-//                assert(true == lockNode->lock_remoting);
-//                std::size_t buf_size;
-//#if defined(B_P_L_P)
-//                buf_size = MY_PAGE_SIZE;
-//#else
-//                buf_size = this->h_wl->tables_[iter.first]->get_schema()->tuple_size;
-//#endif
-//                char buf[buf_size];
-//                RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
-//                        this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
-//
-//                if (RC::Abort == rc || RC::TIME_OUT == rc) {
-//                    lockNode->lock_remoting = false;
-//                    lockNode->remote_locking_abort.store(true);
-//                    return RC::Abort;
-//                }
-//                assert(rc == RC::RCOK);
-//                lockTable[iter.first]->Valid(iter.second);
-////                assert(lockTable[iter.first]->IsValid(iter.second));
-//#if defined(B_P_L_P)
-//                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, MY_PAGE_SIZE);
-////#else
-//                uint64_t row_id;
-//                row_t* temp_row;
-//                h_wl->tables_[iter.first]->get_new_row(temp_row, 0, row_id);
-//                memcpy(temp_row->data, buf, buf_size);
-//                h_wl->manager_instance_->row_handler_->WriteRow(iter.first, iter.second, temp_row, buf_size);
-//#endif
-//                lockNode->lock_remoting = false;
-//            } else {
-//                /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
-//                assert(true == lockNode->lock_remoting);
-//                while (!lockTable[iter.first]->IsValid(iter.second)) {
-//                    if(lockNode->remote_locking_abort.load()){
-//                        return RC::Abort;
-//                    }
-//                }
-////                assert(lockTable[iter.first]->IsValid(iter.second));
-//            }
-//        }
-//    }
-//
-//    /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
-////    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
-//    profiler.End();
-//    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
-//
-//    return RC::RCOK;
-//}

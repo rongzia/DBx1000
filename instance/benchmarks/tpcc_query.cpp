@@ -20,10 +20,18 @@ void tpcc_query::init(uint64_t thd_id, Query_thd * query_thd) {
 }
 
 void tpcc_query::gen_payment(uint64_t thd_id) {
+    assert(queryThd_->queryQueue_->managerInstance_->instance_id_ >= 0
+    && queryThd_->queryQueue_->managerInstance_->instance_id_ < PROCESS_CNT);
+    // 每个节点内访问的 wh 范围在 [start_wh, end_wh] 内
+    uint64_t start_wh = (queryThd_->queryQueue_->managerInstance_->instance_id_%NUM_WH_NODE)*g_num_wh + 1;
+    uint64_t end_wh   = (queryThd_->queryQueue_->managerInstance_->instance_id_%NUM_WH_NODE+1)*g_num_wh;
+    assert(start_wh >= 1 && end_wh <= NUM_WH);
+    // 冲突由 PROCESS_CNT 和 NUM_WH_NODE 控制，当 PROCESS_CNT >= NUM_WH_NODE 时，每个节点访问的仓库没有交叉，节点间不会有冲突
+    // 当 PROCESS_CNT < NUM_WH_NODE 时，实际上节点 i 访问的 wh 范围是 [start_wh, end_wh]，节点间产生了冲突
 	type = TPCC_PAYMENT;
 	if (FIRST_PART_LOCAL)
 //		w_id = thd_id % g_num_wh + 1;
-		w_id = thd_id % g_num_wh + queryThd_->queryQueue_->managerInstance_->wh_start_id;
+		w_id = thd_id % g_num_wh + start_wh;
 	else
 		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
 	d_w_id = w_id;
@@ -43,21 +51,18 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 		c_d_id = d_id;
 		c_w_id = w_id;
 	} else {
-		// remote warehouse
-		c_d_id = URand(1, DIST_PER_WARE, w_id-1);
-		if(g_num_wh > 1) {
-			while((c_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
-			if (wh_to_part(w_id) != wh_to_part(c_w_id)) {
-				part_to_access[1] = wh_to_part(c_w_id);
-				part_num = 2;
-			}
-		} else
-			c_w_id = w_id;
-		// conflict
-		if(NUM_WH > 1) {
-			while((c_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
-		}
-	}
+        // remote warehouse
+        c_d_id = URand(1, DIST_PER_WARE, w_id-1);
+        if(g_num_wh > 1) {
+//            while((c_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
+            while((c_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+            if (wh_to_part(w_id) != wh_to_part(c_w_id)) {
+                part_to_access[1] = wh_to_part(c_w_id);
+                part_num = 2;
+            }
+        } else
+            c_w_id = w_id;
+    }
 	/*
 	if(y <= 60) {
 		// by last name
@@ -71,10 +76,18 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 }
 
 void tpcc_query::gen_new_order(uint64_t thd_id) {
+    assert(queryThd_->queryQueue_->managerInstance_->instance_id_ >= 0);
+    // 每个节点内访问的 wh 范围在 [start_wh, end_wh] 内
+    uint64_t start_wh = (queryThd_->queryQueue_->managerInstance_->instance_id_%NUM_WH_NODE)*g_num_wh + 1;
+    uint64_t end_wh   = (queryThd_->queryQueue_->managerInstance_->instance_id_%NUM_WH_NODE+1)*g_num_wh;
+    assert(start_wh >= 1 && end_wh <= NUM_WH);
+    // 冲突由 PROCESS_CNT 和 NUM_WH_NODE 控制，当 PROCESS_CNT >= NUM_WH_NODE 时，每个节点访问的仓库没有交叉，节点间不会有冲突
+    // 当 PROCESS_CNT < NUM_WH_NODE 时，实际上节点 i 访问的 wh 范围是 [start_wh, end_wh]，节点间产生了冲突
+
 	type = TPCC_NEW_ORDER;
 	if (FIRST_PART_LOCAL)
 //		w_id = thd_id % g_num_wh + 1;
-		w_id = thd_id % g_num_wh + queryThd_->queryQueue_->managerInstance_->wh_start_id;
+		w_id = thd_id % g_num_wh + start_wh;
 	else
 		w_id = URand(1, g_num_wh, thd_id % g_num_wh);
 	d_id = URand(1, DIST_PER_WARE, w_id-1);
@@ -95,12 +108,9 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 			items[oid].ol_supply_w_id = w_id;
 		}
 		else  {
-//			while((items[oid].ol_supply_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
-            // no conflict
-//            items[oid].ol_supply_w_id = w_id;
-            // conflict
-			while((items[oid].ol_supply_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
-			remote = true;
+//            while((items[oid].ol_supply_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
+            while((items[oid].ol_supply_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+            remote = true;
 		}
 		items[oid].ol_quantity = URand(1, 10, w_id-1);
 	}
