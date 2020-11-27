@@ -67,9 +67,7 @@ RC ycsb_wl::init_table() {
 #ifdef NO_CONFLICT
     for(auto i = 0; i < PROCESS_CNT; i++) {
         bool key_in_this_instance = false;
-        assert(manager_instance_ != nullptr);
-        assert(manager_instance_->instance_id_);
-        if(i == manager_instance_->instance_id_) { key_in_this_instance = true; }
+        if (manager_instance_ && i == manager_instance_->instance_id_) { key_in_this_instance = true; }
         for (uint64_t key = i*g_synth_table_size; key < (i+1)*g_synth_table_size; key++) {
             uint64_t total_row = key;
             row_t *new_row = NULL;
@@ -93,7 +91,7 @@ RC ycsb_wl::init_table() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
             if (new_row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
                 page->Serialize();
-                if(key_in_this_instance) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
+                if(key_in_this_instance || is_server_ == true) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
                 page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
                 page->set_used_size(64);
             }
@@ -101,19 +99,22 @@ RC ycsb_wl::init_table() {
             dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
             indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
 #else
-            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, row->data, row->get_tuple_size());
+            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, new_row->data, new_row->get_tuple_size());
 #endif
         }
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (page->used_size() > 64) {
             page->Serialize();
-            if(key_in_this_instance) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
+            if(key_in_this_instance || is_server_ == true) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
         }
 #endif
     }
+
+#if defined(B_P_L_P) || defined(B_P_L_R)
     delete page;
+#endif
 #else // NO_CONFLICT
-    for(auto key = 0; key < TABLE_SIZE; key++) {
+    for(auto key = 0; key < g_synth_table_size; key++) {
             uint64_t total_row = key;
             row_t *new_row = NULL;
             uint64_t row_id;
@@ -144,7 +145,7 @@ RC ycsb_wl::init_table() {
             dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
             indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
 #else // defined(B_P_L_P) || defined(B_P_L_R)
-            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, row->data, row->get_tuple_size());
+            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, new_row->data, new_row->get_tuple_size());
 #endif // defined(B_P_L_P) || defined(B_P_L_R)
         }
 #if defined(B_P_L_P) || defined(B_P_L_R)
@@ -152,8 +153,8 @@ RC ycsb_wl::init_table() {
             page->Serialize();
             buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
         }
-#endif // defined(B_P_L_P) || defined(B_P_L_R)
     delete page;
+#endif // defined(B_P_L_P) || defined(B_P_L_R)
 #endif // NO_CONFLICT
 
     printf("[YCSB] Table \"MAIN_TABLE\" initialized.\n");

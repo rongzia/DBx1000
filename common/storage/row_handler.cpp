@@ -102,6 +102,7 @@ namespace dbx1000 {
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
         rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
+        assert(rc == RC::RCOK);
 #else
         assert(false);
 #endif

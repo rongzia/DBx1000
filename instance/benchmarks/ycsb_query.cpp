@@ -132,6 +132,7 @@ void ycsb_query::gen_requests(int thd_id) {
 		assert(row_id < table_size);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 #ifdef NO_CONFLICT
+		assert(primary_key < g_synth_table_size);
         primary_key += _query_thd->queryQueue_->managerInstance_->instance_id_*g_synth_table_size;
 #else // NO_CONFLICT
 #endif // NO_CONFLICT

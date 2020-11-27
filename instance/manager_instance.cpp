@@ -59,13 +59,13 @@ namespace dbx1000 {
         // init workload
 #if WORKLOAD == YCSB
         this->m_workload_ = new ycsb_wl();
-        m_workload_->manager_instance_ = this;
 #elif WORKLOAD == TPCC
         this->m_workload_ = new tpcc_wl();
-#endif
-//        m_workload_->manager_instance_ = this;
-//        assert(this->instance_id_ >= 0 && this->instance_id_ < (int)(UINT32_MAX / 3));
         this->wh_start_id = this->instance_id_ * NUM_WH_PER_NODE + 1;
+#endif
+//        assert(this->instance_id_ >= 0 && this->instance_id_ < (int)(UINT32_MAX / 3));
+        m_workload_->manager_instance_ = this;
+        m_workload_->is_server_ = false;
         m_workload_->init();
 
         // init query
@@ -99,23 +99,29 @@ namespace dbx1000 {
         InitLockTables();
     }
 
+#if WORKLOAD == YCSB
     void ManagerInstance::InitMvccs() {
         std::cout << "ManagerInstance::InitMvccs" << std::endl;
         Profiler profiler;
         profiler.Start();
-        uint32_t tuple_size;
-#if WORKLOAD == YCSB
-        uint64_t start, end;
-
 #ifdef NO_CONFLICT
         for(uint64_t key = g_synth_table_size*this->instance_id_; key < g_synth_table_size*(this->instance_id_+1); key++) {
 #else // NO_CONFLICT
         for(uint64_t key = 0; key < g_synth_table_size; key++) {
 #endif // NO_CONFLICT
-//            weak_ptr<Row_mvcc> p;
             mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(weak_ptr<Row_mvcc>(), false)));
         }
-#elif WORKLOAD == TPCC
+        profiler.End();
+        std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
+    }
+#endif  // WORKLOAD == YCSB
+
+#if WORKLOAD == TPCC
+    void ManagerInstance::InitMvccs() {
+        std::cout << "ManagerInstance::InitMvccs" << std::endl;
+        Profiler profiler;
+        profiler.Start();
+        uint32_t tuple_size;
         for (uint32_t i = 1; i <= g_max_items; i++) {
             mvcc_vectors_[TABLES::ITEM]->insert(make_pair(i, make_pair(shared_ptr<Row_mvcc>(), false)));
         }
@@ -131,23 +137,37 @@ namespace dbx1000 {
                 mvcc_vectors_[TABLES::STOCK]->insert(make_pair(stockKey(sid, wh_id), make_pair(shared_ptr<Row_mvcc>(), false)));
             }
         }
-#endif // WORKLOAD
         profiler.End();
         std::cout << "ManagerInstance::InitMvccs done. time : " << profiler.Millis() << " millis." << std::endl;
     }
+#endif // WORKLOAD == TPCC
 
-    void ManagerInstance::InitLockTables() {
+
 #if WORKLOAD == YCSB
+    void ManagerInstance::InitLockTables() {
+        IndexItem indexItem;
         this->lock_table_[TABLES::MAIN_TABLE] = new LockTable(TABLES::MAIN_TABLE, this->instance_id(), this);
 #ifdef NO_CONFLICT
         for(uint64_t key = g_synth_table_size*this->instance_id_; key < g_synth_table_size*(this->instance_id_+1); key++) {
 #else // NO_CONFLICT
-            for(uint64_t key = 0; key < g_synth_table_size; key++) {
+        for(uint64_t key = 0; key < g_synth_table_size; key++) {
 #endif // NO_CONFLICT
-//            weak_ptr<Row_mvcc> p;
-            mvcc_vectors_[TABLES::MAIN_TABLE]->insert(make_pair(key, make_pair(weak_ptr<Row_mvcc>(), false)));
+#ifdef B_P_L_P
+            m_workload_->indexes_[TABLES::MAIN_TABLE]->IndexGet(key, &indexItem);
+            if(lock_table_[TABLES::MAIN_TABLE]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::MAIN_TABLE]->lock_table_.end()) {
+                lock_table_[TABLES::MAIN_TABLE]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                lock_table_[TABLES::MAIN_TABLE]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
+            }
+#else // B_P_L_P
+            lock_table_[TABLES::MAIN_TABLE]->lock_table_[key] = make_shared<LockNode>();
+            lock_table_[TABLES::MAIN_TABLE]->lock_table_[key]->Init(this->instance_id_, LockMode::O);
+#endif // B_P_L_P
         }
-#elif WORKLOAD == TPCC
+    }
+#endif // WORKLOAD == YCSB
+
+#if WORKLOAD == TPCC
+    void ManagerInstance::InitLockTables() {
         this->lock_table_[TABLES::WAREHOUSE] = new LockTable(TABLES::WAREHOUSE, this->instance_id(), this);
         this->lock_table_[TABLES::DISTRICT] = new LockTable(TABLES::DISTRICT, this->instance_id(), this);
         this->lock_table_[TABLES::CUSTOMER] = new LockTable(TABLES::CUSTOMER, this->instance_id(), this);
@@ -206,8 +226,8 @@ namespace dbx1000 {
                 lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)] = make_shared<LockNode>();
             }
         }
-#endif // TPCC
     }
+#endif // TPCC
 
 
     uint64_t ManagerInstance::GetNextTs(uint64_t thread_id) {

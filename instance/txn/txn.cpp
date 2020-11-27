@@ -396,8 +396,7 @@ RC txn_man::GetWriteRecordLock() {
                 // 取回来的数据写入缓存
 #if defined(B_P_L_P)
                 if(buf_size == MY_PAGE_SIZE) {
-//                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
-                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(UINT64_MAX, buf, buf_size);
+                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
                 }
 #else
                 uint64_t row_id;

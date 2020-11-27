@@ -280,7 +280,6 @@ RC ycsb_txn_man::run_txn(base_query *query) {
         cout << "instance id: " << h_thd->manager_client_->instance_id_ << ", txn id : " << txn_id << endl;
     }
 //    cout << "txn id : " << txn_id << endl;
-//    cout << "instance " << h_thd->manager_client_->instance_id() << ", thread " << this->get_thd_id() << ", txn " << this->txn_id << " start." << endl;
     RC rc;
     ycsb_query *m_query = (ycsb_query *) query;
 
@@ -382,25 +381,6 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     return rc;
 }
 
-
-
-//void ycsb_txn_man::GetLockTableSharedPtrs(base_query *query) {
-//    ycsb_query* m_query = (ycsb_query*) query;
-//    auto lock_table = this->h_thd->manager_client_->lock_table_[TABLES::MAIN_TABLE];
-//    for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
-//        ycsb_request *req = &m_query->requests[rid];
-//#if defined(B_P_L_P)
-//        dbx1000::IndexItem indexItem;
-//        h_wl->indexes_[TABLES::MAIN_TABLE]->IndexGet(req->key, &indexItem);
-//        uint64_t page_id = indexItem.page_id_;
-//        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(page_id, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, page_id)));
-//#else
-//        this->lock_node_maps_[TABLES::MAIN_TABLE].insert(make_pair(req->key, GetOrCreateSharedPtr<dbx1000::LockNode>(lock_table->lock_table_, req->key)));
-//#endif
-//
-//    }
-//}
-
 void ycsb_txn_man::GetWriteRecordSet(base_query *query) {
     ycsb_query* m_query = (ycsb_query*) query;
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
@@ -409,8 +389,7 @@ void ycsb_txn_man::GetWriteRecordSet(base_query *query) {
 #if defined(B_P_L_P)
             dbx1000::IndexItem indexItem;
             h_wl->indexes_[TABLES::MAIN_TABLE]->IndexGet(req->key, &indexItem);
-            uint64_t page_id = indexItem.page_id_;
-            write_record_set.insert(make_pair(TABLES::MAIN_TABLE, page_id));
+            write_record_set.insert(make_pair(TABLES::MAIN_TABLE, indexItem.page_id_));
 #else
             write_record_set.insert(make_pair(TABLES::MAIN_TABLE, req->key));
 #endif
