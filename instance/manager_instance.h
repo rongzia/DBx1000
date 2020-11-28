@@ -34,6 +34,8 @@ namespace dbx1000 {
         ManagerInstance() = default;
         ~ManagerInstance();
 
+        void ReRun();
+
         void Init(const std::string &shared_disk_host);
         void InitMvccs();
         void InitLockTables();

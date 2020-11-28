@@ -25,6 +25,8 @@ void ycsb_query::init(uint64_t thd_id, Query_thd* query_thd) {
 
 void ycsb_query::calculateDenom()
 {
+    the_n = 0;
+    denom = 0;
 	assert(the_n == 0);
 	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
 	the_n = table_size - 1;

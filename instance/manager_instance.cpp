@@ -48,6 +48,22 @@ namespace dbx1000 {
         delete global_lock_service_client_;
     }
 
+    void ManagerInstance::ReRun(){
+        delete this->query_queue_;
+        query_queue_ = nullptr;
+        this->query_queue_ = new Query_queue();
+        this->query_queue_->managerInstance_ = this;
+        query_queue_->init();
+
+        for(auto i = 0; i < g_thread_cnt; i++) {
+            stats_.clear(i);
+            txn_man_[i] = nullptr;
+            all_ts_[i] = UINT64_MAX;
+        }
+
+        timestamp_.store(0);
+    }
+
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
     void ManagerInstance::Init(const std::string &shared_disk_host) {
         timestamp_ = ATOMIC_VAR_INIT(1);

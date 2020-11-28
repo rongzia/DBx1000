@@ -73,11 +73,16 @@ int main(int argc, char *argv[]) {
     while(!managerInstance->global_lock_service_client_->GlobalLockInitDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
     cout << "instance " << managerInstance->instance_id() << " start." <<endl;
 #endif // SINGLE_NODE
-	warmup_finish = true;
-    thread_t *thread_t_s = new thread_t[g_thread_cnt]();
+
+
+
+    thread_t *thread_t_s;
     std::vector<std::thread> v_thread;
     dbx1000::Profiler profiler;
-    profiler.Start();
+#ifdef WITH_WARM_UP
+    /// 预热
+	warmup_finish = false;
+    thread_t_s = new thread_t[g_thread_cnt]();
     for(uint32_t i = 0; i < g_thread_cnt; i++) {
         thread_t_s[i].init(i, managerInstance->m_workload());
         thread_t_s[i].manager_client_ = managerInstance;
@@ -86,7 +91,25 @@ int main(int argc, char *argv[]) {
     for(uint32_t i = 0; i < g_thread_cnt; i++) {
         v_thread[i].join();
     }
+    v_thread.clear();
+    delete [] thread_t_s;
 
+    managerInstance->ReRun();
+#endif // WITH_WARM_UP
+
+    /// run
+    warmup_finish = true;
+    thread_t_s = new thread_t[g_thread_cnt]();
+    v_thread.resize(g_thread_cnt);
+    profiler.Start();
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
+        thread_t_s[i].init(i, managerInstance->m_workload());
+        thread_t_s[i].manager_client_ = managerInstance;
+        v_thread[i] = std::thread(f, &thread_t_s[i]);
+    }
+    for(uint32_t i = 0; i < g_thread_cnt; i++) {
+        v_thread[i].join();
+    }
     profiler.End();
 
     managerInstance->stats().instance_run_time_ += profiler.Nanos();

@@ -461,7 +461,8 @@ namespace dbx1000 {
 
                 cout << "total txn cnt:   " << THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART << endl;
                 cout << "average latency: " << total_latency / 1000UL / (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) << " us." << endl;
-                cout << "average lock latency: " << total_time_remote_lock / 1000UL / total_remote_lock_cnt << " us." << endl;
+                if(total_remote_lock_cnt == 0) {cout << "average lock latency: 0 us."; }
+                else {cout << "average lock latency: " << total_time_remote_lock / 1000UL / total_remote_lock_cnt << " us." << endl;}
                 cout << "instance throughtput: " << (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) * 1000000000L / average_instance_run_time << " tps." << endl;
             }
         }

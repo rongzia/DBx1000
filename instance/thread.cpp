@@ -258,12 +258,15 @@ RC thread_t::run() {
 		 */
 
 		//! 成功执行的事务数量 txn_cnt 达到 MAX_TXN_PER_PART 时，就退出线程
-		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
+		if (
+//		        warmup_finish &&
+		        txn_cnt >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 			/*
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
             */
+            delete m_txn;
             return RC::FINISH;
 	    }
 
@@ -277,6 +280,7 @@ RC thread_t::run() {
 //		}
 
 	}
+    delete m_txn;
 	assert(false);
 }
 

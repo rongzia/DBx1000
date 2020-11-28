@@ -17,8 +17,8 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-//#define WORKLOAD 					YCSB
-#define WORKLOAD 					TPCC
+#define WORKLOAD 					YCSB
+//#define WORKLOAD 					TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -248,7 +248,8 @@ extern TestCases					g_test_case;
 
 #define PAR_KEY_BY_INSTANCE
 
-//#define NO_CONFLICT                 // 是否实例间访问的数据有冲突
+#define NO_CONFLICT                 // 是否实例间访问的数据有冲突
+#define WITH_WARM_UP
 #define B_P_L_P // buffer page, lock page       1
 //#define B_R_L_R // buffer record, lock record   2
 //#define B_M_L_R // buffer mixed, lock record    3

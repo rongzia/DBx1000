@@ -38,10 +38,14 @@ namespace dbx1000 {
         debug5 = 0;
         latency = 0;
 
+
         /**
          * zhangrongrong, 2020/6/30
          */
-         time_remote_lock_ = 0;
+        time_remote_lock_ = 0;
+        count_remote_lock_ = 0;
+        count_total_request_ = 0;
+        count_write_request_ = 0;
     }
 
     void Stats_tmp::init() {
@@ -71,6 +75,7 @@ namespace dbx1000 {
         total_run_time_ = 0;
         total_latency_ = 0;
         total_txn_cnt_ = 0;
+        total_remote_lock_cnt_ = 0;
         total_time_remote_lock_ = 0;
         instance_run_time_ = 0;
     }
@@ -95,6 +100,14 @@ namespace dbx1000 {
             dl_wait_time = 0;
             cycle_detect = 0;
             deadlock = 0;
+            /**
+             * zhangrongrong, 2020/6/30
+             */
+            total_run_time_ = 0;
+            total_latency_ = 0;
+            total_txn_cnt_ = 0;
+            total_time_remote_lock_ = 0;
+            instance_run_time_ = 0;
         }
     }
 

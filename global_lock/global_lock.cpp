@@ -145,23 +145,23 @@ namespace dbx1000 {
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             if (iter->second->write_ins_id >= 0) {
-#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                     cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
 #endif
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count);
 
                 if (rc == RC::TIME_OUT) {
-#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
 #endif
                 }
                 if (rc == RC::Abort) {
-#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " Abort" << endl;
 #endif
                 }
                 if (rc == RC::RCOK) {
-#if defined(NO_CONFLICT) || (PROCESS_CNT == NUM_WH_NODE)
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
                     iter->second->write_ins_id = ins_id;
