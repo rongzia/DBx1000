@@ -342,6 +342,8 @@ void txn_man::GetMvccSharedPtr(TABLES table, uint64_t key) {
 
 
 RC txn_man::GetWriteRecordLock() {
+    dbx1000::Profiler profiler;
+    profiler.Start();
     auto lockTable = this->h_thd->manager_client_->lock_table_;
 
     /// 等待其他节点 RemoteInvalid 完成
@@ -356,8 +358,6 @@ RC txn_man::GetWriteRecordLock() {
     for (auto iter : write_record_set) { lockTable[iter.first]->lock_table_[iter.second]->AddThread(this->get_thd_id());}
     /// 当前线程开始后，阻塞其他节点的 RemoteInvalid
 
-    dbx1000::Profiler profiler;
-    profiler.Start();
 
     for (auto iter : write_record_set) {
         std::shared_ptr<dbx1000::LockNode> lockNode = lockTable[iter.first]->lock_table_[iter.second];
@@ -370,8 +370,6 @@ RC txn_man::GetWriteRecordLock() {
             continue;
         }
         if (lockNode->lock_mode == dbx1000::LockMode::O) {
-            this->h_thd->manager_client_->stats_._stats[this->get_thd_id()]->count_remote_lock_++;
-
             bool flag = ATOM_CAS(lockNode->lock_remoting, false, true);
             if (flag) {
                 /// 当前线程去 RemoteLock
@@ -383,8 +381,13 @@ RC txn_man::GetWriteRecordLock() {
                 buf_size = this->h_wl->tables_[iter.first]->get_schema()->tuple_size;
 #endif
                 char buf[buf_size];
+                dbx1000::Profiler profiler2;
+                profiler2.Start();
                 RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
                         this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
+                profiler2.End();
+                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler2.Nanos();
+                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->count_remote_lock_++;
 
                 if (RC::Abort == rc || RC::TIME_OUT == rc) {
                     lockNode->lock_remoting = false;
@@ -424,7 +427,7 @@ RC txn_man::GetWriteRecordLock() {
     /// 把该线程请求加入 page 锁, 阻塞事务开始后，其他实例的 invalid 请求
 //    for (auto iter : write_record_set) { assert(lockTable[iter.first]->IsValid(iter.second)); }
     profiler.End();
-    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler.Nanos();
+    this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_get_lock_ += profiler.Nanos();
 
     return RC::RCOK;
 }

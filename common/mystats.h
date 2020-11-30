@@ -41,18 +41,17 @@ namespace dbx1000 {
         uint64_t debug4;             /// Row_mvcc::access 获取锁的时间
         uint64_t debug5;             ///
 
-        uint64_t latency;
+        uint64_t latency;            /// latency 和 run_time 区别在于： latency 只是执行成功地事务总时间，run_time = latency + time_abort
         uint64_t *all_debug1;
         uint64_t *all_debug2;
         /**
          * zhangrongrong, 2020/6/30
          */
-         uint64_t time_remote_lock_;
-         uint64_t count_remote_lock_;
-         uint64_t count_total_request_;
-         uint64_t count_write_request_;
-//         uint64_t total_run_time_;
-//         uint64_t total_latency_;
+         uint64_t time_get_lock_;        /// 事务执行远程调用的时间
+         uint64_t time_remote_lock_;        /// 事务执行远程调用的时间
+         uint64_t count_remote_lock_;       /// 事务执行远程调用次数
+         uint64_t count_total_request_;     /// 事务 query 总 request 数
+         uint64_t count_write_request_;     /// 事务写请求数， 小于 count_remote_lock_, 因为不是所有请求都需要远程请求，本地可能存在该锁
     };
 
     /// 事务执行有 thread -> txn
@@ -69,7 +68,9 @@ namespace dbx1000 {
         /**
          * zhangrongrong, 2020/6/30
          */
-         uint64_t time_remote_lock_;
+        uint64_t time_get_lock_;
+        uint64_t time_remote_lock_;
+        uint64_t count_remote_lock_;
     };
 
     class Stats {
@@ -91,6 +92,7 @@ namespace dbx1000 {
         uint64_t total_run_time_;
         uint64_t total_latency_;
         uint64_t total_txn_cnt_;
+        uint64_t throughput_;
         uint64_t total_remote_lock_cnt_;
         uint64_t total_time_remote_lock_;
         uint64_t instance_run_time_;

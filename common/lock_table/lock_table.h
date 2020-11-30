@@ -58,7 +58,7 @@ namespace dbx1000 {
         RC UnLock(uint64_t page_id);
         bool AddThread(uint64_t item_id, uint64_t thd_id);
         bool RemoveThread(uint64_t item_id, uint64_t thd_id);
-        RC RemoteInvalid(uint64_t item_id, char *buf, size_t count);
+        RC RemoteInvalid(uint64_t item_id, char *buf, size_t count, uint64_t &time);
 
         ManagerInstance* manager_instance_;
 //    private:

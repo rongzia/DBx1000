@@ -69,6 +69,7 @@ message InvalidReply{
   RpcRC rc = 1;
   bytes buf = 2;
   uint64 count = 3;
+  uint64 invld_time = 4;
 }
 message GetNextTsRequest{}
 message GetNextTsReply{
@@ -79,7 +80,7 @@ message  TestRequest{}
 message TestReply{}
 
 message ReportResultRequest{
-  uint64 total_run_time = 1;
+  uint64 throughtput = 1;
   uint64 total_latency = 2;
   uint64 total_txn_cnt = 3;
   uint64 total_remote_lock_cnt = 4;
@@ -88,6 +89,12 @@ message ReportResultRequest{
   int32 instance_id = 7;
 }
 message ReportResultReply {}
+
+
+message WarmupDoneRequest{
+  int32 instance_id = 1;
+}
+message WarmupDoneReply {}
 
 
 service GlobalLockService {
@@ -105,4 +112,5 @@ service GlobalLockService {
   rpc Invalid(InvalidRequest) returns (InvalidReply) {}
   rpc AsyncInvalid(InvalidRequest) returns (InvalidReply) {}
   rpc Test(TestRequest) returns (TestReply) {}
+  rpc WarmupDone(WarmupDoneRequest) returns (WarmupDoneReply) {}
 }

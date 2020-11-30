@@ -42,6 +42,7 @@ namespace dbx1000 {
         /**
          * zhangrongrong, 2020/6/30
          */
+        time_get_lock_ = 0;
         time_remote_lock_ = 0;
         count_remote_lock_ = 0;
         count_total_request_ = 0;
@@ -56,7 +57,10 @@ namespace dbx1000 {
         time_man = 0;
         time_index = 0;
         time_wait = 0;
+
+        time_get_lock_ = 0;
         time_remote_lock_ = 0;
+        count_remote_lock_ = 0;
     }
 
     void Stats::init() {
@@ -106,7 +110,9 @@ namespace dbx1000 {
             total_run_time_ = 0;
             total_latency_ = 0;
             total_txn_cnt_ = 0;
+            throughput_ = 0;
             total_time_remote_lock_ = 0;
+            total_remote_lock_cnt_ = 0;
             instance_run_time_ = 0;
         }
     }
@@ -126,7 +132,9 @@ namespace dbx1000 {
             _stats[thd_id]->time_man += tmp_stats[thd_id]->time_man;
             _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
             _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
+            _stats[thd_id]->time_get_lock_ += tmp_stats[thd_id]->time_get_lock_;
             _stats[thd_id]->time_remote_lock_ += tmp_stats[thd_id]->time_remote_lock_;
+            _stats[thd_id]->count_remote_lock_ += tmp_stats[thd_id]->count_remote_lock_;
             tmp_stats[thd_id]->clear();
         }
     }
@@ -155,10 +163,11 @@ namespace dbx1000 {
         uint64_t total_time_wait = 0;
         uint64_t total_time_ts_alloc = 0;
         uint64_t total_time_query = 0;
+        uint64_t total_time_get_lock = 0;
         uint64_t total_time_remote_lock = 0;
         uint64_t total_count_remote_lock = 0;
-        uint64_t total_count_write_request = 0;
         uint64_t total_count_total_request = 0;
+        uint64_t total_count_write_request = 0;
 
         for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
             total_txn_cnt += _stats[tid]->txn_cnt;
@@ -177,6 +186,7 @@ namespace dbx1000 {
             total_time_wait += _stats[tid]->time_wait;
             total_time_ts_alloc += _stats[tid]->time_ts_alloc;
             total_time_query += _stats[tid]->time_query;
+            total_time_get_lock += _stats[tid]->time_get_lock_;
             total_time_remote_lock += _stats[tid]->time_remote_lock_;
             total_count_remote_lock += _stats[tid]->count_remote_lock_;
             total_count_write_request += _stats[tid]->count_write_request_;
@@ -191,16 +201,18 @@ namespace dbx1000 {
         this->total_run_time_ = total_run_time;
         this->total_txn_cnt_ = total_txn_cnt;
         this->total_latency_ = total_latency;
+        this->throughput_     = total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt);
         this->total_remote_lock_cnt_ = total_count_remote_lock;
         this->total_time_remote_lock_ = total_time_remote_lock;
-        cout << "all thread run time: " << total_run_time / BILLION << " us, average latency : " << total_latency / BILLION / total_txn_cnt << " us." << endl;
-        cout << "get ts time        : " << total_time_ts_alloc / BILLION << ", all thread time remote lock : " << total_time_remote_lock / BILLION << " us." << endl;
-        cout << "total_count_remote_lock/total_count_write_request/total_count_total_request : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;
+
+        cout << "latency/avg_latency/ins_run_time: " << total_latency_/BILLION << "/" <<  total_latency_/g_thread_cnt/BILLION << "/" << instance_run_time_/BILLION << " us." << endl;
+        cout << "avg_txn_latency                 : " << total_latency_/BILLION/total_txn_cnt << " us." << endl;
+        cout << "throughtput                     : " << (total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt)) << "/" << (total_txn_cnt_*1000000000L/instance_run_time_) << " tps." << endl;
         cout << endl;
-        AppendLatency(total_latency / BILLION / total_txn_cnt, ins_id);
-        AppendRemoteLockTime(total_time_remote_lock / BILLION, ins_id);
-        cout << "instance run time   : " << instance_run_time_ / BILLION << " us." << endl;
-        cout << "instance throughtput: " << this->total_txn_cnt_ * 1000000000L / instance_run_time_ << " tps." << endl;
+        cout << "ttl_t_rmt_lck/ttl_t_get_lc      : " << total_time_remote_lock/BILLION << "/" << total_time_get_lock/BILLION << " us." << endl;
+        cout << "lock_req/write_req/total_req    : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;
+        cout << "avg_lock_time                   : " << (total_count_remote_lock==0 ? 0:total_time_remote_lock/BILLION/total_count_remote_lock) << " us." << endl;
+        cout << endl;
     }
 /*
     void Stats::print() {

@@ -42,10 +42,11 @@ namespace dbx1000 {
             uint64_t GetNextTs();
             void ReportResult(const Stats &stats, int instance_id);
             ManagerInstance* manager_instance() { return this->manager_instance_; }
+            void WarmupDone(int ins_id);
 
 
         public: /// for global lock
-            RC Invalid(TABLES table, uint64_t item_id, char *buf, size_t count);
+            RC Invalid(TABLES table, uint64_t item_id, char *buf, size_t count, uint64_t &invld_time);
             void AsyncInvalid(TABLES table, uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done);
 
         public: /// common
@@ -73,7 +74,7 @@ namespace dbx1000 {
                                       const ::dbx1000::InvalidRequest* request,
                                       ::dbx1000::InvalidReply* response,
                                       ::google::protobuf::Closure* done);
-            ManagerInstance *manager_instance_{};
+            ManagerInstance *manager_instance_;
 
         public: /// for global lock
             virtual void LockRemote(::google::protobuf::RpcController* controller,
@@ -104,6 +105,10 @@ namespace dbx1000 {
                     const ::dbx1000::ReportResultRequest* request,
                     ::dbx1000::ReportResultReply* response,
                     ::google::protobuf::Closure* done);
+            virtual void WarmupDone(::google::protobuf::RpcController* controller,
+                    const ::dbx1000::WarmupDoneRequest* request,
+                    ::dbx1000::WarmupDoneReply* response,
+                    ::google::protobuf::Closure* done);
 
             public: /// for common
             virtual void Test(::google::protobuf::RpcController* controller,
@@ -111,7 +116,7 @@ namespace dbx1000 {
                        ::dbx1000::TestReply* response,
                        ::google::protobuf::Closure* done);
 
-            global_lock::GlobalLock* global_lock_{};
+            global_lock::GlobalLock* global_lock_;
             brpc::Server server;
         };
 

@@ -221,13 +221,13 @@ RC thread_t::run() {
          */
 		profiler.End();
 		this->manager_client_->stats()._stats[_thd_id]->run_time += profiler.Nanos();
-		this->manager_client_->stats()._stats[_thd_id]->latency += profiler.Nanos();
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RC::RCOK) {
 		    /*
 			INC_STATS(get_thd_id(), txn_cnt, 1);
 			stats.commit(get_thd_id());
 		     */
+            this->manager_client_->stats()._stats[_thd_id]->latency += profiler.Nanos();
 		    this->manager_client_->stats()._stats[_thd_id]->txn_cnt += 1;
 			this->manager_client_->stats().commit(get_thd_id());
 		} else if (rc == RC::Abort) {

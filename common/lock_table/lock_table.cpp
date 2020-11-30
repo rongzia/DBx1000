@@ -137,7 +137,9 @@ namespace dbx1000 {
     }
 
 
-    RC LockTable::RemoteInvalid(uint64_t item_id, char *buf, size_t count) {
+    RC LockTable::RemoteInvalid(uint64_t item_id, char *buf, size_t count, uint64_t &time) {
+        Profiler profiler;
+        profiler.Start();
         auto iter = lock_table_.find(item_id);
         if(lock_table_.end() == iter) { assert(false); return RC::Abort; }
 
@@ -171,6 +173,8 @@ namespace dbx1000 {
             rc = RC::TIME_OUT;
         }
         lock_node->invalid_req = false;
+        profiler.End();
+        time = profiler.Nanos();
         return rc;
     }
 }

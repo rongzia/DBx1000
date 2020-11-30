@@ -43,6 +43,22 @@ namespace dbx1000 {
             std::condition_variable cv;
         };
 
+        class Stats{
+        public:
+            atomic_uint64_t glb_ttl_time_;
+            atomic_uint64_t glb_ttl_lck_time_;
+            atomic_uint64_t glb_ttl_vld_time_;
+            atomic_uint64_t glb_ttl_rpc_time_;
+            atomic_uint64_t glb_ttl_lck_cnt_;
+            void Clear(){
+                glb_ttl_time_     = 0;
+                glb_ttl_lck_time_ = 0;
+                glb_ttl_vld_time_ = 0;
+                glb_ttl_rpc_time_ = 0;
+                glb_ttl_lck_cnt_  = 0;
+            }
+        };
+
         /// global lock 仅作为锁的协调，不缓存锁
         class GlobalLock {
         public:
@@ -92,6 +108,11 @@ namespace dbx1000 {
 //            TableSpace *table_space_;
 //            Index *index_;
 //            SharedDiskClient *shared_disk_client_;
+
+            Stats stats_;
+#ifdef WARMUP
+            bool *warmup_done_;
+#endif // WARMUP
         };
     }
 }

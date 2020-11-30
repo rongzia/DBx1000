@@ -94,8 +94,11 @@ int main(int argc, char *argv[]) {
     v_thread.clear();
     delete [] thread_t_s;
 
+    this_thread::sleep_for(chrono::seconds(5));
     managerInstance->ReRun();
+    managerInstance->global_lock_service_client_->WarmupDone(managerInstance->instance_id_);
 #endif // WITH_WARM_UP
+
 
     /// run
     warmup_finish = true;
@@ -117,11 +120,9 @@ int main(int argc, char *argv[]) {
 #ifndef SINGLE_NODE
     managerInstance->global_lock_service_client_->ReportResult(managerInstance->stats(), managerInstance->instance_id());
 #endif
-    AppendRunTime(managerInstance->stats().instance_run_time_ / 1000UL, managerInstance->instance_id());
-    AppendThroughtput(managerInstance->stats().total_txn_cnt_ * 1000000000L / profiler.Nanos(), managerInstance->instance_id());
 
 
-    while(1) { this_thread::yield(); };
+    while(1) { this_thread::yield(); }
     delete managerInstance;
 
     return 0;
