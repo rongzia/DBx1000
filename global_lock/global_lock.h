@@ -112,6 +112,7 @@ namespace dbx1000 {
             Stats stats_;
 #ifdef WARMUP
             bool *warmup_done_;
+            bool is_warmup_done_;
 #endif // WARMUP
         };
     }

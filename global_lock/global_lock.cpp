@@ -44,6 +44,7 @@ namespace dbx1000 {
             stats_.Clear();
 #ifdef WARMUP
             warmup_done_ = new bool[PROCESS_CNT]();
+            is_warmup_done_ = false;
 #endif
             this->init_done_ = false;
             this->instances_ = new InstanceInfo[PROCESS_CNT]();
@@ -70,14 +71,22 @@ namespace dbx1000 {
 #if WORKLOAD == YCSB
 #ifdef B_P_L_P
             IndexItem indexItem;
+#ifdef NO_CONFLICT
             for (uint64_t key = 0; key < SYNTH_TABLE_SIZE*PROCESS_CNT; key++) {
+#else
+            for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
+#endif
                 m_workload_->indexes_[TABLES::MAIN_TABLE]->IndexGet(key, &indexItem);
                 if(this->lock_tables_[TABLES::MAIN_TABLE].find(indexItem.page_id_) == lock_tables_[TABLES::MAIN_TABLE].end()) {
                     this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(indexItem.page_id_, new LockNode()));
                 }
             }
 #else // B_P_L_P
+#ifdef NO_CONFLICT
             for (uint64_t key = 0; key < SYNTH_TABLE_SIZE*PROCESS_CNT; key++) {
+#else // NO_CONFLICT
+            for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
+#endif // NO_CONFLICT
                 this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(key, new LockNode()));
             }
 #endif // B_P_L_P

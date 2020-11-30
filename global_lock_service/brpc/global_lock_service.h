@@ -43,6 +43,7 @@ namespace dbx1000 {
             void ReportResult(const Stats &stats, int instance_id);
             ManagerInstance* manager_instance() { return this->manager_instance_; }
             void WarmupDone(int ins_id);
+            bool WaitWarmupDone();
 
 
         public: /// for global lock
@@ -105,10 +106,17 @@ namespace dbx1000 {
                     const ::dbx1000::ReportResultRequest* request,
                     ::dbx1000::ReportResultReply* response,
                     ::google::protobuf::Closure* done);
+
+#ifdef WARMUP
             virtual void WarmupDone(::google::protobuf::RpcController* controller,
                     const ::dbx1000::WarmupDoneRequest* request,
                     ::dbx1000::WarmupDoneReply* response,
                     ::google::protobuf::Closure* done);
+            virtual void WaitWarmupDone(::google::protobuf::RpcController* controller,
+                    const ::dbx1000::WaitWarmupDoneRequest* request,
+                    ::dbx1000::WaitWarmupDoneReply* response,
+                    ::google::protobuf::Closure* done);
+#endif // WARMUP
 
             public: /// for common
             virtual void Test(::google::protobuf::RpcController* controller,

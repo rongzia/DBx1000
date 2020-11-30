@@ -97,8 +97,8 @@ int main(int argc, char *argv[]) {
     this_thread::sleep_for(chrono::seconds(5));
     managerInstance->ReRun();
     managerInstance->global_lock_service_client_->WarmupDone(managerInstance->instance_id_);
+    while(!managerInstance->global_lock_service_client_->WaitWarmupDone()) { std::this_thread::sleep_for(chrono::milliseconds(5));}
 #endif // WITH_WARM_UP
-
 
     /// run
     warmup_finish = true;

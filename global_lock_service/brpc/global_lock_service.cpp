@@ -156,6 +156,20 @@ namespace dbx1000 {
             }
         }
 
+        bool GlobalLockServiceClient::WaitWarmupDone() {
+            dbx1000::WaitWarmupDoneRequest request;
+            dbx1000::WaitWarmupDoneReply reply;
+            ::brpc::Controller cntl;
+
+            stub_->WaitWarmupDone(&cntl, &request, &reply, nullptr);
+            if (!cntl.Failed()) {
+                return reply.warmup_done();
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+            }
+        }
+
         RC GlobalLockServiceClient::Invalid(TABLES table, uint64_t item_id, char *buf, size_t count, uint64_t &invld_time){
             dbx1000::InvalidRequest request;
             dbx1000::InvalidReply reply;
@@ -547,7 +561,7 @@ namespace dbx1000 {
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
         }
 
-
+#ifdef WARMUP
         void GlobalLockServiceImpl::WarmupDone(::google::protobuf::RpcController* controller,
                 const ::dbx1000::WarmupDoneRequest* request,
                 ::dbx1000::WarmupDoneReply* response,
@@ -566,8 +580,20 @@ namespace dbx1000 {
 
             if(warm_done) {
                 global_lock_->stats_.Clear();
+                global_lock_->is_warmup_done_ = true;
             }
         }
+
+        void GlobalLockServiceImpl::WaitWarmupDone(::google::protobuf::RpcController* controller,
+                const ::dbx1000::WaitWarmupDoneRequest* request,
+                ::dbx1000::WaitWarmupDoneReply* response,
+                ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+
+            response->set_warmup_done(global_lock_->warmup_done_);
+        }
+#endif // WARMUP
 
 
 
