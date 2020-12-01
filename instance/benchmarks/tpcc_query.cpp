@@ -53,9 +53,17 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 	} else {
         // remote warehouse
         c_d_id = URand(1, DIST_PER_WARE, w_id-1);
-        if(g_num_wh > 1) {
+//        if(g_num_wh > 1) {
+        if(NUM_WH > 1) {
 //            while((c_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
-            while((c_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+//            while((c_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+//            while((c_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
+            uint64_t tmp = URand(1, NUM_WH, w_id-1);
+            c_w_id = tmp;
+            while((tmp >= start_wh && tmp <=end_wh)) {
+                tmp = URand(1, NUM_WH, w_id-1);
+            }
+            c_w_id = tmp;
             if (wh_to_part(w_id) != wh_to_part(c_w_id)) {
                 part_to_access[1] = wh_to_part(c_w_id);
                 part_num = 2;
@@ -104,12 +112,17 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 	for (uint32_t oid = 0; oid < ol_cnt; oid ++) {
 		items[oid].ol_i_id = NURand(8191, 1, g_max_items, w_id-1);
         uint32_t x = URand(1, 100, w_id-1);
-		if (x > 1 || g_num_wh == 1) {
+//		if (x > 1 || g_num_wh == 1) {
+		if (x > 2 || NUM_WH == 1) {
 			items[oid].ol_supply_w_id = w_id;
 		}
 		else  {
 //            while((items[oid].ol_supply_w_id = URand(1, g_num_wh, w_id-1)) == w_id) {}
-            while((items[oid].ol_supply_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+//            while((items[oid].ol_supply_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
+//            while((items[oid].ol_supply_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
+            uint64_t tmp = URand(1, NUM_WH, w_id-1);
+            while(tmp >= start_wh && tmp <=end_wh) { tmp = URand(1, NUM_WH, w_id-1); }
+            items[oid].ol_supply_w_id = tmp;
             remote = true;
 		}
 		items[oid].ol_quantity = URand(1, 10, w_id-1);

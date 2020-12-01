@@ -45,7 +45,7 @@ namespace dbx1000 {
 #ifdef WARMUP
             warmup_done_ = new bool[PROCESS_CNT]();
             is_warmup_done_ = false;
-#endif
+#endif // WARMUP
             this->init_done_ = false;
             this->instances_ = new InstanceInfo[PROCESS_CNT]();
             for (int i = 0; i < PROCESS_CNT; i++) {
@@ -166,7 +166,7 @@ namespace dbx1000 {
             profiler1.End();
             this->stats_.glb_ttl_lck_time_.fetch_add(profiler1.Nanos());
             if (iter->second->write_ins_id >= 0) {
-#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                     cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
 #endif
                 Profiler profiler2;
@@ -177,17 +177,17 @@ namespace dbx1000 {
                 this->stats_.glb_ttl_vld_time_.fetch_add(invld_time);
                 this->stats_.glb_ttl_rpc_time_.fetch_add(profiler2.Nanos() - invld_time);
                 if (rc == RC::TIME_OUT) {
-#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
 #endif
                 }
                 if (rc == RC::Abort) {
-#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " Abort" << endl;
 #endif
                 }
                 if (rc == RC::RCOK) {
-#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
+#if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
                     iter->second->write_ins_id = ins_id;

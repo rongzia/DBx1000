@@ -198,6 +198,7 @@ namespace dbx1000 {
             m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
             if (lock_table_[TABLES::ITEM]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::ITEM]->lock_table_.end()) {
                 lock_table_[TABLES::ITEM]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                lock_table_[TABLES::ITEM]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
             }
         }
         for (uint64_t wh_id = 1; wh_id <= NUM_WH; wh_id++) {
@@ -210,12 +211,14 @@ namespace dbx1000 {
                 if (lock_table_[TABLES::DISTRICT]->lock_table_.find(indexItem.page_id_) ==
                     lock_table_[TABLES::DISTRICT]->lock_table_.end()) {
                     lock_table_[TABLES::DISTRICT]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                    lock_table_[TABLES::DISTRICT]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
                 }
                 for (uint32_t cid = 1; cid <= g_cust_per_dist; cid++) {
                     m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(custKey(cid, did, wh_id), &indexItem);
                     if (lock_table_[TABLES::CUSTOMER]->lock_table_.find(indexItem.page_id_) ==
                         lock_table_[TABLES::CUSTOMER]->lock_table_.end()) {
                         lock_table_[TABLES::CUSTOMER]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                        lock_table_[TABLES::CUSTOMER]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
                     }
                 }
             }
@@ -223,6 +226,7 @@ namespace dbx1000 {
                 m_workload_->indexes_[TABLES::STOCK]->IndexGet(stockKey(sid, wh_id), &indexItem);
                 if (lock_table_[TABLES::STOCK]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::STOCK]->lock_table_.end()) {
                     lock_table_[TABLES::STOCK]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
+                    lock_table_[TABLES::STOCK]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
                 }
             }
         }
@@ -234,12 +238,15 @@ namespace dbx1000 {
             lock_table_[TABLES::WAREHOUSE]->lock_table_[wh_id] = make_shared<LockNode>();
             for (uint64_t did = 0; did <= DIST_PER_WARE; did++) {
                 lock_table_[TABLES::DISTRICT]->lock_table_[distKey(did, wh_id)] = make_shared<LockNode>();
+                lock_table_[TABLES::DISTRICT]->lock_table_[distKey(did, wh_id)]->Init(this->instance_id_, LockMode::O);
                 for (uint32_t cid = 0; cid <= g_cust_per_dist; cid++) {
                     lock_table_[TABLES::CUSTOMER]->lock_table_[custKey(cid, did, wh_id)] = make_shared<LockNode>();
+                    lock_table_[TABLES::CUSTOMER]->lock_table_[custKey(cid, did, wh_id)]->Init(this->instance_id_, LockMode::O);
                 }
             }
             for (uint32_t sid = 0; sid <= g_max_items; sid++) {
                 lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)] = make_shared<LockNode>();
+                lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)]->Init(this->instance_id_, LockMode::O);
             }
         }
 #endif // B_P_L_P
