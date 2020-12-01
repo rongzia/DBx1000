@@ -62,6 +62,9 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 		default:
 			assert(false);
 	}
+#if defined(B_P_L_R)
+    this_thread::sleep_for(chrono::microseconds(200) * write_record_set.size());
+#endif // defined(B_P_L_R)
 #ifndef SINGLE_NODE
     {
         for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
