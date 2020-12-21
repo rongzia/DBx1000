@@ -13,6 +13,11 @@
 #include "common/storage/table.h"
 #include "util/profiler.h"
 
+typedef tbb::concurrent_hash_map<uint64_t, char*> hashmap;
+typedef typename hashmap ::const_accessor const_accessor;
+typedef typename hashmap ::accessor accessor;
+typedef typename hashmap ::iterator Iterator;
+
 namespace dbx1000 {
     RecordBuffer::~RecordBuffer() {
         for(auto &iter : buffer_) {
@@ -22,14 +27,20 @@ namespace dbx1000 {
 
     RC RecordBuffer::BufferGet(uint64_t item_id, char *buf, std::size_t size) {
         RC rc = RC::RCOK;
+        const_accessor const_acc;
+        accessor  accessor;
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
-        tbb::concurrent_hash_map<uint64_t, char*>::const_accessor const_acc;
+        //tbb::concurrent_hash_map<uint64_t, char*>::const_accessor const_acc;
+        //tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
         bool res = buffer_.find(const_acc, item_id);
         if(res) {
             memcpy(buf, const_acc->second, size);
         } else {
             // TODO: buffer 不存在的情况
-            rc = RC::Abort;
+            //rc = RC::Abort;
+            char *data = new char[size];
+            memcpy(data, buf, size);
+            buffer_.insert(accessor, make_pair(item_id, data));
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
@@ -42,8 +53,30 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferPut(uint64_t item_id, const char *buf, std::size_t size) {
+        //tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        accessor accessor;
+        Iterator iterator1;
+        hashmap hashmap1;
+ /*       if(manager_instance_ != nullptr)
+        {
+#if defined(B_P_L_P)
+            if(manager_instance_->instance_id_ != 0)
+            {
+                if(buffer_.size()>=0.6*1024*10)
+                {
+                    iterator1 = hashmap1.begin();
+                    for(int i = 0; i<0.2*buffer_.size();i++)
+                    {
+                        BufferDel(iterator1->first);
+                        iterator1++;
+                    }
+                }
+            }
+#endif
+        }
+*/
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
-        tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+
         bool res = buffer_.find(accessor, item_id);
 
         if(res) {
@@ -65,7 +98,8 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferDel(uint64_t item_id) {
-        tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        //tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        accessor accessor;
         bool res = buffer_.find(accessor, item_id);
         if(res) {
             delete [] accessor->second;

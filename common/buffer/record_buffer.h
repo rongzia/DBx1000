@@ -8,15 +8,21 @@
 #include <map>
 #include <tbb/concurrent_hash_map.h>
 #include "common/myhelper.h"
+#include "instance/manager_instance.h"
 
 
 class table_t;
 class row_t;
 class workload;
+class ManagerInstance;
 namespace dbx1000 {
     class RecordBuffer {
     public:
         RecordBuffer() = default;
+        RecordBuffer(ManagerInstance* instance_)
+        {
+            manager_instance_ = instance_;
+        }
         ~RecordBuffer();
 
         RC BufferGet(uint64_t item_id, char *buf, std::size_t size);
@@ -25,6 +31,7 @@ namespace dbx1000 {
     private:
 
         tbb::concurrent_hash_map<uint64_t, char*> buffer_;
+        ManagerInstance* manager_instance_;
     };
 }
 
