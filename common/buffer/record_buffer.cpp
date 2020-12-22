@@ -56,25 +56,28 @@ namespace dbx1000 {
         //tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
         accessor accessor;
         Iterator iterator1;
+        Iterator iterator2;
         hashmap hashmap1;
- /*       if(manager_instance_ != nullptr)
+       if(manager_instance_ != nullptr)
         {
 #if defined(B_P_L_P)
-            if(manager_instance_->instance_id_ != 0)
+            if(manager_instance_->instance_id_ != 1)
             {
-                if(buffer_.size()>=0.6*1024*10)
+                int size_ = buffer_.size();
+                if(size_>=0.6*(SYNTH_TABLE_SIZE/204))
                 {
-                    iterator1 = hashmap1.begin();
-                    for(int i = 0; i<0.2*buffer_.size();i++)
+                    iterator1 = buffer_.begin();
+                    for(int i = 0; i<0.2*size_; i++)
                     {
+                        iterator2 = (iterator1++);
                         BufferDel(iterator1->first);
-                        iterator1++;
+                        iterator1 = iterator2;
                     }
                 }
             }
 #endif
         }
-*/
+
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
 
         bool res = buffer_.find(accessor, item_id);
@@ -102,8 +105,8 @@ namespace dbx1000 {
         accessor accessor;
         bool res = buffer_.find(accessor, item_id);
         if(res) {
-            delete [] accessor->second;
-            buffer_.erase(item_id);
+            //delete [] accessor->second;
+            buffer_.erase(accessor);
         }
         return RC::RCOK;
     }
