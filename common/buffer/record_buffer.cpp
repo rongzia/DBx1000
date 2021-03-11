@@ -26,6 +26,7 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferGet(uint64_t item_id, char *buf, std::size_t size) {
+        // cout << "BufferGet : " << item_id << endl;
         RC rc = RC::RCOK;
         const_accessor const_acc;
         accessor  accessor;
@@ -41,6 +42,7 @@ namespace dbx1000 {
             char *data = new char[size];
             memcpy(data, buf, size);
             buffer_.insert(accessor, make_pair(item_id, data));
+            // while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 50000) { break; } }
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
@@ -61,20 +63,22 @@ namespace dbx1000 {
        if(manager_instance_ != nullptr)
         {
 #if defined(B_P_L_P)
-            if(manager_instance_->instance_id_ != 1)
-            {
-                int size_ = buffer_.size();
-                if(size_>=0.6*(SYNTH_TABLE_SIZE/204))
+            // if(manager_instance_->instance_id_ != 1)
+            // {
+                auto size_ = buffer_.size();
+                auto threshold = manager_instance_->instance_id_==0 ? 0.4:0.2;
+                // auto threshold = 0.25;
+                if(size_ >= threshold * (SYNTH_TABLE_SIZE/204))
                 {
                     iterator1 = buffer_.begin();
-                    for(int i = 0; i<0.2*size_; i++)
+                    for(auto i = 0; i < 0.1 * size_; i++)
                     {
                         iterator2 = (iterator1++);
                         BufferDel(iterator1->first);
                         iterator1 = iterator2;
                     }
                 }
-            }
+            // }
 #endif
         }
 
@@ -105,7 +109,7 @@ namespace dbx1000 {
         accessor accessor;
         bool res = buffer_.find(accessor, item_id);
         if(res) {
-            //delete [] accessor->second;
+            delete [] accessor->second;
             buffer_.erase(accessor);
         }
         return RC::RCOK;
