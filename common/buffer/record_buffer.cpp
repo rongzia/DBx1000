@@ -11,6 +11,7 @@
 #include "common/storage/row.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
+#include "common/storage/tablespace/page.h"
 #include "util/profiler.h"
 
 typedef tbb::concurrent_hash_map<uint64_t, char*> hashmap;
@@ -39,9 +40,20 @@ namespace dbx1000 {
         } else {
             // TODO: buffer 不存在的情况
             //rc = RC::Abort;
-            char *data = new char[size];
-            memcpy(data, buf, size);
+            char *data = new char[size]; 
+#if defined(B_P_L_R) || defined(B_P_L_P)
+            assert(size == MY_PAGE_SIZE);
+            dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+            page->set_page_id(item_id); page->set_page_size(MY_PAGE_SIZE);
+            page->Serialize();
+            memcpy(buf, page->page_buf(), MY_PAGE_SIZE);
+            memcpy(data, page->page_buf(), MY_PAGE_SIZE);
+            delete page;
+#else 
+            memcpy(buf, data, size);
+#endif
             buffer_.insert(accessor, make_pair(item_id, data));
+
             // while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 50000) { break; } }
        }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();

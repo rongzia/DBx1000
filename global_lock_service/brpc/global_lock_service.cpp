@@ -65,6 +65,36 @@ namespace dbx1000 {
             }
         }
 
+        RC GlobalLockServiceClient::Unlock(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count) {
+            dbx1000::UnlockRequest request;
+            dbx1000::UnlockReply reply;
+            ::brpc::Controller cntl;
+            
+            request.set_instance_id(instance_id);
+            request.set_table(GlobalLockServiceHelper::SerializeTABLES(table));
+            request.set_item_id(item_id);
+            request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
+            request.set_count(count);
+
+            stub_->Unlock(&cntl, &request, &reply, NULL);
+            if (!cntl.Failed()) {
+                RC rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
+                if(RC::TIME_OUT == rc) {
+                    return RC::TIME_OUT;
+                }
+                if(RC::Abort == rc) {
+                    return RC::Abort;
+                }
+                assert(RC::RCOK == rc);
+                return RC::RCOK ;
+            } else {
+                if (cntl.ErrorCode() == 1008){return RC::Abort;}
+                LOG(FATAL) << cntl.ErrorText();
+                assert(false);
+                return RC::Abort;
+            }         
+        }
+
         void GlobalLockServiceClient::AsyncLockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count, OnLockRemoteDone* done) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
@@ -327,10 +357,13 @@ namespace dbx1000 {
                 page_buf = new char [count];
             }
             else {assert(0 == count);}
-
+#ifdef DB2
+            rc = global_lock_->LockRemote_DB2(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
+                                          , request->item_id(), page_buf, count);
+#else // DB2
             rc = global_lock_->LockRemote(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
                                           , request->item_id(), page_buf, count);
-
+#endif // DB2
             if(RC::TIME_OUT  == rc) {
                 response->set_rc(RpcRC::TIME_OUT);
                 return;
@@ -347,7 +380,43 @@ namespace dbx1000 {
             response->set_count(count);
             profiler.End();
             global_lock_->stats_.glb_ttl_time_.fetch_add(profiler.Nanos());
+            delete [] page_buf;
         }
+
+        void GlobalLockServiceImpl::Unlock(::google::protobuf::RpcController *controller,
+                                const ::dbx1000::UnlockRequest *request,
+                                ::dbx1000::UnlockReply *response,
+                                ::google::protobuf::Closure *done) {
+            // Profiler profiler;
+            // profiler.Start();
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+
+            RC rc;
+            char *page_buf = nullptr;
+            size_t count = request->count();
+            if(count > 0) {
+                page_buf = new char [count];
+            }
+            else {assert(0 == count);}
+
+            rc = global_lock_->Unlock(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
+                                          , request->item_id(), page_buf, count);
+
+            if(RC::TIME_OUT  == rc) {
+                response->set_rc(RpcRC::TIME_OUT);
+                return;
+            }
+            if(RC::Abort  == rc) {
+                response->set_rc(RpcRC::Abort);
+                return;
+            }
+            assert(RC::RCOK == rc);
+            response->set_rc(RpcRC::RCOK);
+            // profiler.End();
+            // global_lock_->stats_.glb_ttl_time_.fetch_add(profiler.Nanos());
+            delete [] page_buf;                              
+         }
 
         void GlobalLockServiceImpl::AsyncLockRemote(::google::protobuf::RpcController* controller,
                                const ::dbx1000::LockRemoteRequest* request,

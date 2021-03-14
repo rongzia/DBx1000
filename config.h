@@ -260,4 +260,7 @@ extern TestCases					g_test_case;
 //#define B_P_L_R // buffer page, lock record     4
 
 
+// branch db2
+#define DB2
+
 #endif
