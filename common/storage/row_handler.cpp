@@ -95,7 +95,8 @@ namespace dbx1000 {
         if(page->page_id() != indexItem.page_id_) {
             //cout << page->page_id() << " + " << indexItem.page_id_ << endl;
             //page->Print();
-            indexItem.page_id_ = page->page_id();
+            page->set_page_id(indexItem.page_id_);
+            // indexItem.page_id_ = page->page_id();
             //cout << page->page_id() << " : " << indexItem.page_id_ << endl;
         }
         assert(page->page_id() == indexItem.page_id_);
@@ -127,9 +128,10 @@ namespace dbx1000 {
         manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         if(rc == RC::Abort) { assert(false); }
         page->Deserialize();
-        if(page->page_id()!=indexItem.page_id_)
+        if(page->page_id() != indexItem.page_id_)
         {
-            indexItem.page_id_ = page->page_id();
+            page->set_page_id(indexItem.page_id_);
+            // indexItem.page_id_ = page->page_id();
         }
         assert(page->page_id() == indexItem.page_id_);
         memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
