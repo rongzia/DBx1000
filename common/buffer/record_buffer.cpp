@@ -11,6 +11,7 @@
 #include "common/storage/row.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
+#include "common/storage/tablespace/page.h"
 #include "util/profiler.h"
 
 typedef tbb::concurrent_hash_map<uint64_t, char*> hashmap;
@@ -39,8 +40,15 @@ namespace dbx1000 {
         } else {
             // TODO: buffer 不存在的情况
             //rc = RC::Abort;
-            char *data = new char[size];
-            memcpy(data, buf, size);
+            char *data = new char[size]; 
+#if defined(B_P_L_R) || defined(B_P_L_P)
+            assert(size == MY_PAGE_SIZE);
+            uint64_t page_id = item_id;
+            memcpy(&buf[0 * sizeof(uint64_t)], reinterpret_cast<void *>(&page_id), sizeof(uint64_t));
+            memcpy(data, buf, sizeof(uint64_t));
+#else 
+            memcpy(buf, data, size);
+#endif
             buffer_.insert(accessor, make_pair(item_id, data));
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
@@ -61,22 +69,22 @@ namespace dbx1000 {
         hashmap hashmap1;
        if(manager_instance_ != nullptr)
         {
-#if defined(B_P_L_P)
-            if(manager_instance_->instance_id_ != 1)
-            {
-                int size_ = buffer_.size();
-                if(size_>=0.6*(SYNTH_TABLE_SIZE/204))
-                {
-                    iterator1 = buffer_.begin();
-                    for(int i = 0; i<0.2*size_; i++)
-                    {
-                        iterator2 = (iterator1++);
-                        BufferDel(iterator1->first);
-                        iterator1 = iterator2;
-                    }
-                }
-            }
-#endif
+// #if defined(B_P_L_P)
+//             if(manager_instance_->instance_id_ != 1)
+//             {
+//                 int size_ = buffer_.size();
+//                 if(size_>=0.6*(SYNTH_TABLE_SIZE/204))
+//                 {
+//                     iterator1 = buffer_.begin();
+//                     for(int i = 0; i<0.2*size_; i++)
+//                     {
+//                         iterator2 = (iterator1++);
+//                         BufferDel(iterator1->first);
+//                         iterator1 = iterator2;
+//                     }
+//                 }
+//             }
+// #endif
         }
 
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
