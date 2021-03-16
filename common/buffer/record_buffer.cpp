@@ -43,12 +43,9 @@ namespace dbx1000 {
             char *data = new char[size]; 
 #if defined(B_P_L_R) || defined(B_P_L_P)
             assert(size == MY_PAGE_SIZE);
-            dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-            page->set_page_id(item_id); page->set_page_size(MY_PAGE_SIZE);
-            page->Serialize();
-            memcpy(buf, page->page_buf(), MY_PAGE_SIZE);
-            memcpy(data, page->page_buf(), MY_PAGE_SIZE);
-            delete page;
+            uint64_t page_id = item_id;
+            memcpy(&buf[0 * sizeof(uint64_t)], reinterpret_cast<void *>(&page_id), sizeof(uint64_t));
+            memcpy(data, buf, sizeof(uint64_t));
 #else 
             memcpy(buf, data, size);
 #endif
