@@ -142,6 +142,9 @@ namespace dbx1000 {
     void Stats::abort(uint64_t thd_id) {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_abort += tmp_stats[thd_id]->time_man;
+            _stats[thd_id]->time_get_lock_ += tmp_stats[thd_id]->time_get_lock_;
+            _stats[thd_id]->time_remote_lock_ += tmp_stats[thd_id]->time_remote_lock_;
+            _stats[thd_id]->count_remote_lock_ += tmp_stats[thd_id]->count_remote_lock_;
             tmp_stats[thd_id]->clear();
         }
     }
