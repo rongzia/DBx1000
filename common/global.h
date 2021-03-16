@@ -6,7 +6,7 @@
 //#include "pthread.h"
 #include "config.h"
 #ifndef NOGRAPHITE
-#include "carbon_user.h"
+// #include "carbon_user.h"
 #endif
 
 using namespace std;

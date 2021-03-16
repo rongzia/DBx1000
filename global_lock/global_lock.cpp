@@ -190,6 +190,7 @@ namespace dbx1000 {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
+                    m_workload_->buffers_[table]->BufferPut(item_id, buf, count);
                     iter->second->write_ins_id = ins_id;
                 }
             } else {

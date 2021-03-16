@@ -26,6 +26,7 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferGet(uint64_t item_id, char *buf, std::size_t size) {
+        // cout << "BufferGet : " << item_id << endl;
         RC rc = RC::RCOK;
         const_accessor const_acc;
         accessor  accessor;
