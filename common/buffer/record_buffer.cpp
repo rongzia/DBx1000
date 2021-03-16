@@ -50,6 +50,7 @@ namespace dbx1000 {
             memcpy(buf, data, size);
 #endif
             buffer_.insert(accessor, make_pair(item_id, data));
+
             // while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 50000) { break; } }
         }
         std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
