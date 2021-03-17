@@ -261,6 +261,6 @@ extern TestCases					g_test_case;
 
 
 // branch db2
-#define DB2
 
+#define DB2
 #endif

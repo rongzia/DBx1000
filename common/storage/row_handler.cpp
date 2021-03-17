@@ -137,7 +137,14 @@ namespace dbx1000 {
         memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
         page->Serialize();
         rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
-        rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::X, page->page_buf(), MY_PAGE_SIZE);
+#ifdef DB2
+        dbx1000::Profiler profiler; profiler.Start();
+        rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::O, page->page_buf(), MY_PAGE_SIZE);
+        profiler.End();
+        manager_instance_->stats_.total_time_Unlock_.fetch_add(profiler.Nanos());
+        manager_instance_->stats_.total_count_Unlock_.fetch_add(1); 
+#endif // DB2
+        if(RC::RCOK == rc) { manager_instance_->lock_table_[table]->lock_table_[page->page_id()]->lock_mode = dbx1000::LockMode::O; }
         delete page;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());

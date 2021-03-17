@@ -43,8 +43,8 @@ namespace dbx1000 {
          * zhangrongrong, 2020/6/30
          */
         time_get_lock_ = 0;
-        time_remote_lock_ = 0;
-        count_remote_lock_ = 0;
+        time_LockRemote_ = 0;
+        count_LockRemote_ = 0;
         count_total_request_ = 0;
         count_write_request_ = 0;
     }
@@ -59,8 +59,8 @@ namespace dbx1000 {
         time_wait = 0;
 
         time_get_lock_ = 0;
-        time_remote_lock_ = 0;
-        count_remote_lock_ = 0;
+        time_LockRemote_ = 0;
+        count_LockRemote_ = 0;
     }
 
     void Stats::init() {
@@ -79,8 +79,13 @@ namespace dbx1000 {
         total_run_time_ = 0;
         total_latency_ = 0;
         total_txn_cnt_ = 0;
-        total_remote_lock_cnt_ = 0;
-        total_time_remote_lock_ = 0;
+        total_time_get_lock_ = 0;
+        total_time_LockRemote_ = 0;
+        total_count_LockRemote_ = 0;
+#ifdef DB2
+        total_time_Unlock_ = ATOMIC_VAR_INIT(0);
+        total_count_Unlock_  = ATOMIC_VAR_INIT(0);
+#endif // DB2
         instance_run_time_ = 0;
     }
 
@@ -95,6 +100,27 @@ namespace dbx1000 {
         tmp_stats[thread_id]->init();
     }
 
+            /**
+             * zhangrongrong, 2020/6/30
+             */
+    void Stats::clear() {
+        total_run_time_ = 0;
+        total_latency_ = 0;
+        total_txn_cnt_ = 0;
+        throughput_ = 0;
+        total_time_get_lock_ = 0;
+        total_time_LockRemote_ = 0;
+        total_count_LockRemote_ = 0;
+#ifdef DB2
+        total_time_Unlock_ = ATOMIC_VAR_INIT(0);
+        total_count_Unlock_  = ATOMIC_VAR_INIT(0);
+#endif // DB2
+        instance_run_time_ = 0;
+        for(auto i = 0; i < g_thread_cnt; i++) {
+            clear(i);
+        }
+    }
+
     void Stats::clear(uint64_t tid) {
         if (STATS_ENABLE) {
             _stats[tid]->clear();
@@ -104,16 +130,6 @@ namespace dbx1000 {
             dl_wait_time = 0;
             cycle_detect = 0;
             deadlock = 0;
-            /**
-             * zhangrongrong, 2020/6/30
-             */
-            total_run_time_ = 0;
-            total_latency_ = 0;
-            total_txn_cnt_ = 0;
-            throughput_ = 0;
-            total_time_remote_lock_ = 0;
-            total_remote_lock_cnt_ = 0;
-            instance_run_time_ = 0;
         }
     }
 
@@ -133,8 +149,8 @@ namespace dbx1000 {
             _stats[thd_id]->time_index += tmp_stats[thd_id]->time_index;
             _stats[thd_id]->time_wait += tmp_stats[thd_id]->time_wait;
             _stats[thd_id]->time_get_lock_ += tmp_stats[thd_id]->time_get_lock_;
-            _stats[thd_id]->time_remote_lock_ += tmp_stats[thd_id]->time_remote_lock_;
-            _stats[thd_id]->count_remote_lock_ += tmp_stats[thd_id]->count_remote_lock_;
+            _stats[thd_id]->time_LockRemote_ += tmp_stats[thd_id]->time_LockRemote_;
+            _stats[thd_id]->count_LockRemote_ += tmp_stats[thd_id]->count_LockRemote_;
             tmp_stats[thd_id]->clear();
         }
     }
@@ -143,8 +159,8 @@ namespace dbx1000 {
         if (STATS_ENABLE) {
             _stats[thd_id]->time_abort += tmp_stats[thd_id]->time_man;
             _stats[thd_id]->time_get_lock_ += tmp_stats[thd_id]->time_get_lock_;
-            _stats[thd_id]->time_remote_lock_ += tmp_stats[thd_id]->time_remote_lock_;
-            _stats[thd_id]->count_remote_lock_ += tmp_stats[thd_id]->count_remote_lock_;
+            _stats[thd_id]->time_LockRemote_ += tmp_stats[thd_id]->time_LockRemote_;
+            _stats[thd_id]->count_LockRemote_ += tmp_stats[thd_id]->count_LockRemote_;
             tmp_stats[thd_id]->clear();
         }
     }
@@ -167,8 +183,8 @@ namespace dbx1000 {
         uint64_t total_time_ts_alloc = 0;
         uint64_t total_time_query = 0;
         uint64_t total_time_get_lock = 0;
-        uint64_t total_time_remote_lock = 0;
-        uint64_t total_count_remote_lock = 0;
+        uint64_t total_time_LockRemote = 0;
+        uint64_t total_count_LockRemote = 0;
         uint64_t total_count_total_request = 0;
         uint64_t total_count_write_request = 0;
 
@@ -190,8 +206,8 @@ namespace dbx1000 {
             total_time_ts_alloc += _stats[tid]->time_ts_alloc;
             total_time_query += _stats[tid]->time_query;
             total_time_get_lock += _stats[tid]->time_get_lock_;
-            total_time_remote_lock += _stats[tid]->time_remote_lock_;
-            total_count_remote_lock += _stats[tid]->count_remote_lock_;
+            total_time_LockRemote += _stats[tid]->time_LockRemote_;
+            total_count_LockRemote += _stats[tid]->count_LockRemote_;
             total_count_write_request += _stats[tid]->count_write_request_;
             total_count_total_request += _stats[tid]->count_total_request_;
 
@@ -205,16 +221,20 @@ namespace dbx1000 {
         this->total_txn_cnt_ = total_txn_cnt;
         this->total_latency_ = total_latency;
         this->throughput_     = total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt);
-        this->total_remote_lock_cnt_ = total_count_remote_lock;
-        this->total_time_remote_lock_ = total_time_remote_lock;
+        this->total_time_get_lock_ = total_time_get_lock;
+        this->total_time_LockRemote_ = total_time_LockRemote;
+        this->total_count_LockRemote_ = total_count_LockRemote;
 
-        cout << "latency/avg_latency/ins_run_time: " << total_latency_/BILLION << "/" <<  total_latency_/g_thread_cnt/BILLION << "/" << instance_run_time_/BILLION << " us." << endl;
-        cout << "avg_txn_latency                 : " << total_latency_/BILLION/total_txn_cnt << " us." << endl;
-        cout << "throughtput                     : " << (total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt)) << "/" << (total_txn_cnt_*1000000000L/instance_run_time_) << " tps." << endl;
+        cout << "latency/avg_latency/ins_run_time : " << total_latency_/BILLION << "/" <<  total_latency_/g_thread_cnt/BILLION << "/" << instance_run_time_/BILLION << " us." << endl;
+        cout << "avg_txn_latency                  : " << total_latency_/BILLION/total_txn_cnt << " us." << endl;
+        cout << "throughtput                      : " << (total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt)) << "/" << (total_txn_cnt_*1000000000L/instance_run_time_) << " tps." << endl;
         cout << endl;
-        cout << "ttl_t_rmt_lck/ttl_t_get_lc      : " << total_time_remote_lock/BILLION << "/" << total_time_get_lock/BILLION << " us." << endl;
-        cout << "lock_req/write_req/total_req    : " << total_count_remote_lock << "/" << total_count_write_request << "/" << total_count_total_request << endl;
-        cout << "avg_lock_time                   : " << (total_count_remote_lock==0 ? 0:total_time_remote_lock/BILLION/total_count_remote_lock) << " us." << endl;
+        cout << "ttl_t_get_lck                    : " << total_time_get_lock/BILLION << " us." << endl;
+        cout << "ttl_t_rmt_lck/ttl_cnt_rmt_lck/avg: " << total_time_LockRemote/BILLION << " us/" << total_count_LockRemote << " us/" << (total_count_LockRemote==0 ? 0:total_time_LockRemote/BILLION/total_count_LockRemote) << " us." << endl;
+#ifdef DB2
+        cout << "ttl_t_unlck/ttl_cnt_unlck/avg    : " << this->total_time_Unlock_/BILLION << " us" << "/" << this->total_count_Unlock_ << "/" << (this->total_count_Unlock_==0 ? 0:this->total_time_Unlock_/BILLION/this->total_count_Unlock_) << " us." << endl;
+#endif // DB2        
+        cout << "lock_req/write_req/total_req     : " << total_count_LockRemote << "/" << total_count_write_request << "/" << total_count_total_request << endl;
         cout << endl;
     }
 /*

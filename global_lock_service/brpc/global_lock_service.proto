@@ -95,10 +95,13 @@ message ReportResultRequest{
   uint64 throughtput = 1;
   uint64 total_latency = 2;
   uint64 total_txn_cnt = 3;
-  uint64 total_remote_lock_cnt = 4;
-  uint64 total_time_remote_lock = 5;
+  uint64 total_count_LockRemote = 4;
+  uint64 total_time_LockRemote = 5;
   uint64 instance_run_time = 6;
   int32 instance_id = 7;
+  // in branch DB2
+  uint64 total_time_Unlock = 8;
+  uint64 total_count_Unlock = 9;
 }
 message ReportResultReply {}
 

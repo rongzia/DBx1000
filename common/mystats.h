@@ -6,7 +6,9 @@
 #define DBX1000_MYSTATS_H
 
 #include <memory>
+#include <atomic>
 #include "util/profiler.h"
+#include "config.h"
 
 //enum class RC;
 
@@ -47,9 +49,9 @@ namespace dbx1000 {
         /**
          * zhangrongrong, 2020/6/30
          */
-         uint64_t time_get_lock_;        /// 事务执行远程调用的时间
-         uint64_t time_remote_lock_;        /// 事务执行远程调用的时间
-         uint64_t count_remote_lock_;       /// 事务执行远程调用次数
+         uint64_t time_get_lock_;           /// 事务执行 GetWriteRecordLock 的时间
+         uint64_t time_LockRemote_;         /// 事务执行 LockRemote 的时间
+         uint64_t count_LockRemote_;        /// 事务执行远程调用次数
          uint64_t count_total_request_;     /// 事务 query 总 request 数
          uint64_t count_write_request_;     /// 事务写请求数， 小于 count_remote_lock_, 因为不是所有请求都需要远程请求，本地可能存在该锁
     };
@@ -69,8 +71,8 @@ namespace dbx1000 {
          * zhangrongrong, 2020/6/30
          */
         uint64_t time_get_lock_;
-        uint64_t time_remote_lock_;
-        uint64_t count_remote_lock_;
+        uint64_t time_LockRemote_;
+        uint64_t count_LockRemote_;
     };
 
     class Stats {
@@ -93,12 +95,18 @@ namespace dbx1000 {
         uint64_t total_latency_;
         uint64_t total_txn_cnt_;
         uint64_t throughput_;
-        uint64_t total_remote_lock_cnt_;
-        uint64_t total_time_remote_lock_;
+        uint64_t total_time_get_lock_;
+        uint64_t total_time_LockRemote_;
+        uint64_t total_count_LockRemote_;
+#ifdef DB2
+        std::atomic_uint64_t total_time_Unlock_;             // 所有线程的事务 Unlock 时间
+        std::atomic_uint64_t total_count_Unlock_;            // 所有线程的事务 Unlock 次数
+#endif // DB2
         uint64_t instance_run_time_;
 
         void init();
         void init(uint64_t thread_id);
+        void clear();
         void clear(uint64_t tid);
         void add_debug(uint64_t thd_id, uint64_t value, uint32_t select);
         void commit(uint64_t thd_id);
