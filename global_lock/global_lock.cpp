@@ -154,7 +154,6 @@ namespace dbx1000 {
          * @return
          */
         RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
-            stats_.glb_ttl_lck_cnt_.fetch_add(1);
             Profiler profiler1;
             profiler1.Start();
             auto iter = lock_tables_[table].find(item_id);
@@ -164,7 +163,7 @@ namespace dbx1000 {
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             profiler1.End();
-            this->stats_.glb_ttl_lck_time_.fetch_add(profiler1.Nanos());
+            this->stats_.total_global_lock_time_.fetch_add(profiler1.Nanos());
             if (iter->second->write_ins_id >= 0) {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                     cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
@@ -174,8 +173,9 @@ namespace dbx1000 {
                 uint64_t invld_time;
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count, invld_time);
                 profiler2.End();
-                this->stats_.glb_ttl_vld_time_.fetch_add(invld_time);
-                this->stats_.glb_ttl_rpc_time_.fetch_add(profiler2.Nanos() - invld_time);
+                this->stats_.total_global_invalid_time_.fetch_add(profiler2.Nanos());
+                this->stats_.total_global_invalid_count_.fetch_add(1);
+                this->stats_.total_ins_invalid_time_.fetch_add(invld_time);
                 if (rc == RC::TIME_OUT) {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
@@ -204,9 +204,8 @@ namespace dbx1000 {
         }
 
         RC GlobalLock::LockRemote_DB2(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
-            stats_.glb_ttl_lck_cnt_.fetch_add(1);
-            Profiler profiler1;
-            profiler1.Start();
+            Profiler profiler;
+            profiler.Start();
             auto iter = lock_tables_[table].find(item_id);
             assert(lock_tables_[table].end() != iter);
             if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
@@ -214,8 +213,8 @@ namespace dbx1000 {
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             if(iter->second->cv.wait_for(lck, std::chrono::seconds(1), [iter](){return iter->second->write_ins_id == -1;})) {
-                profiler1.End();
-                this->stats_.glb_ttl_lck_time_.fetch_add(profiler1.Nanos());
+                profiler.End();
+                this->stats_.total_global_lock_time_.fetch_add(profiler.Nanos());
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
                     m_workload_->buffers_[table]->BufferGet(item_id, buf, count);
