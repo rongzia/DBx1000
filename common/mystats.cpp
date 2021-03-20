@@ -222,7 +222,7 @@ namespace dbx1000 {
         cout << "throughtput                      : " << (total_txn_cnt_*1000000000L/(total_latency_/g_thread_cnt)) << "/" << (total_txn_cnt_*1000000000L/instance_run_time_) << " tps." << endl;
         cout << endl;
         cout << "ttl_t_get_lck                    : " << total_time_get_lock/BILLION << " us." << endl;
-        cout << "ttl_t_rmt_lck/ttl_cnt_rmt_lck/avg: " << total_time_LockRemote/BILLION << " us/" << total_count_LockRemote << "/" << (total_count_LockRemote==0 ? 0:total_time_LockRemote/BILLION/total_count_LockRemote) << " us." << endl;     
+        cout << "ttl_t_rmt_lck/ttl_cnt_rmt_lck/avg: " << total_time_LockRemote/BILLION << " us/" << total_count_LockRemote << "/" << (total_count_LockRemote==0 ? 0:total_time_LockRemote/BILLION/total_count_LockRemote) << " us." << endl;
         cout << "lock_req/write_req/total_req     : " << total_count_LockRemote << "/" << total_count_write_request << "/" << total_count_total_request << endl;
         cout << endl;
     }
