@@ -64,7 +64,7 @@ namespace dbx1000 {
                 return RC::Abort;
             }
         }
-
+#ifdef DB2
         RC GlobalLockServiceClient::Unlock(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count) {
             dbx1000::UnlockRequest request;
             dbx1000::UnlockReply reply;
@@ -94,7 +94,7 @@ namespace dbx1000 {
                 return RC::Abort;
             }         
         }
-
+#endif // BD2
         void GlobalLockServiceClient::AsyncLockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count, OnLockRemoteDone* done) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
@@ -387,7 +387,7 @@ namespace dbx1000 {
             global_lock_->stats_.total_global_RemoteLock_time_.fetch_add(profiler.Nanos());
             global_lock_->stats_.total_global_RemoteLock_count_.fetch_add(1);
         }
-
+#ifdef DB2
         void GlobalLockServiceImpl::Unlock(::google::protobuf::RpcController *controller,
                                 const ::dbx1000::UnlockRequest *request,
                                 ::dbx1000::UnlockReply *response,
@@ -425,7 +425,7 @@ namespace dbx1000 {
             global_lock_->stats_.total_global_Unlock_time_.fetch_add(profiler.Nanos());                           
             global_lock_->stats_.total_global_Unlock_count_.fetch_add(1);                           
          }
-
+#endif // DB2
         void GlobalLockServiceImpl::AsyncLockRemote(::google::protobuf::RpcController* controller,
                                const ::dbx1000::LockRemoteRequest* request,
                                ::dbx1000::LockRemoteReply* response,
@@ -601,7 +601,9 @@ namespace dbx1000 {
                 cout << "ttl_ins_rmt_t/ttl_ins_rmt_cnt/avg            : " << total_ins_time_LockRemote/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_time_LockRemote/1000UL/total_ins_count_LockRemote) << endl;
                 cout << "ttl_glb_rmt_t/ttl_glb_rmt_cnt/avg            : " << global_lock_->stats_.total_global_RemoteLock_time_/1000UL << " us/" << global_lock_->stats_.total_global_RemoteLock_count_ << "/" << (global_lock_->stats_.total_global_RemoteLock_count_==0 ? 0:global_lock_->stats_.total_global_RemoteLock_time_/1000UL/global_lock_->stats_.total_global_RemoteLock_count_) << endl;
                 cout << "ttl_glb_lck_t/ttl_glb_lck_cnt/avg            : " << global_lock_->stats_.total_global_lock_time_/1000UL << " us/" << global_lock_->stats_.total_global_RemoteLock_count_ << "/" << (global_lock_->stats_.total_global_RemoteLock_count_==0 ? 0:global_lock_->stats_.total_global_lock_time_/1000UL/global_lock_->stats_.total_global_RemoteLock_count_) << endl;
+#ifdef DB2
                 cout << "ttl_glb_unlck_t/ttl_glb_unlck_cnt/avg        : " << global_lock_->stats_.total_global_Unlock_time_/1000UL << " us/" << global_lock_->stats_.total_global_Unlock_count_ << "/" << (global_lock_->stats_.total_global_Unlock_count_==0 ? 0:global_lock_->stats_.total_global_Unlock_time_/1000UL/global_lock_->stats_.total_global_Unlock_count_) << endl;
+#endif // BD2
                 cout << "ttl_glb_invld_t/ttl_glb_invld_cnt/avg        : " << global_lock_->stats_.total_global_invalid_time_/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_global_invalid_time_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
                 cout << "ttl_ins_invld_t/ttl_ins_invld_cnt/avg        : " << global_lock_->stats_.total_ins_invalid_time_/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_ins_invalid_time_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
 

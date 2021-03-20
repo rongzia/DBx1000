@@ -202,7 +202,7 @@ namespace dbx1000 {
             }
             return rc;
         }
-
+#ifdef DB2
         RC GlobalLock::LockRemote_DB2(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
             Profiler profiler;
             profiler.Start();
@@ -240,7 +240,7 @@ namespace dbx1000 {
             
             return rc;
         }
-
+#endif // DB2
         uint64_t GlobalLock::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
 
 
