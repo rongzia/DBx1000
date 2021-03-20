@@ -593,7 +593,7 @@ namespace dbx1000 {
                 cout << "ttl_ins_rmt_lck_t/ttl_ins_rmt_lck_cnt/avg: " << total_ins_time_LockRemote/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_time_LockRemote/1000UL/total_ins_count_LockRemote) << " us." << endl;
                 
 #ifdef DB2
-                cout << "ttl_ins_unlck_t/ttl_ins_unlckcnt/avg    : " << total_ins_time_Unlock/1000UL << " us/" << total_ins_count_Unlock << "/" << (total_ins_time_Unlock==0 ? 0:total_ins_time_Unlock/1000UL/total_ins_count_Unlock) << " us." << endl;
+                cout << "ttl_ins_unlck_t/ttl_ins_unlckcnt/avg     : " << total_ins_time_Unlock/1000UL << " us/" << total_ins_count_Unlock << "/" << (total_ins_time_Unlock==0 ? 0:total_ins_time_Unlock/1000UL/total_ins_count_Unlock) << " us." << endl;
 #endif // DB2
                 cout << endl;
 
@@ -613,33 +613,6 @@ namespace dbx1000 {
 #endif // DB2
                 uint64_t total_global_invalid_rpc_time = global_lock_->stats_.total_global_invalid_time_ - global_lock_->stats_.total_ins_invalid_time_;
                 cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_global_invalid_count_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
-
-//                if(global_lock_->stats_.glb_ttl_lck_cnt_ != 0) {
-//                    cout << "ins_rpc_t/global_rpc_t/lock_t/vld_t: "
-//                    << (total_time_remote_lock-global_lock_->stats_.glb_ttl_time_/1000UL/global_lock_->stats_.glb_ttl_lck_cnt_)
-//                         << "/" << (global_lock_->stats_.glb_ttl_rpc_time_/1000UL/global_lock_->stats_.glb_ttl_lck_cnt_)
-//                         << "/" << (global_lock_->stats_.glb_ttl_lck_time_/1000UL/global_lock_->stats_.glb_ttl_lck_cnt_)
-//                         << "/" << (global_lock_->stats_.glb_ttl_vld_time_/1000UL/global_lock_->stats_.glb_ttl_lck_cnt_) << " us." << endl;
-//                } else {
-//                    cout << "ins_rpc_t/global_rpc_t/lock_t/vld_t: " << (0/1000UL)
-//                         << "/" << (global_lock_->stats_.glb_ttl_rpc_time_/1000UL)
-//                         << "/" << (global_lock_->stats_.glb_ttl_lck_time_/1000UL)
-//                         << "/" << (global_lock_->stats_.glb_ttl_vld_time_/1000UL) << " us." << endl;
-//                }
-
-
-
-
-//                cout << "total_latency: "<< total_latency << endl;
-//                cout << "total_txn_cnt: "<< total_txn_cnt << endl;
-//                cout << "total_time_remote_lock: "<< total_time_remote_lock << endl;
-//                cout << "average_instance_run_time: "<< average_instance_run_time << endl;
-//
-//                cout << "total txn cnt:   " << THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART << endl;
-//                cout << "average latency: " << total_latency / 1000UL / (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) << " us." << endl;
-//                if(total_remote_lock_cnt == 0) {cout << "average lock latency: 0 us."; }
-//                else {cout << "average lock latency: " << total_time_remote_lock / 1000UL / total_remote_lock_cnt << " us." << endl;}
-//                cout << "instance throughtput: " << (THREAD_CNT * PROCESS_CNT * MAX_TXN_PER_PART) * 1000000000L / average_instance_run_time << " tps." << endl;
             }
         }
 
