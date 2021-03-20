@@ -461,10 +461,6 @@ namespace dbx1000 {
             stats->throughput_     = request->throughtput();
             stats->total_time_LockRemote_ = request->total_time_lockremote();
             stats->total_count_LockRemote_ = request->total_count_lockremote();
-#ifdef DB2
-            stats->total_time_Unlock_ = request->total_time_unlock();
-            stats->total_count_Unlock_ = request->total_count_unlock();
-#endif // DB2
 
             global_lock_->instances()[request->instance_id()].instance_run_done = true;
             bool all_instance_run_done = true;
