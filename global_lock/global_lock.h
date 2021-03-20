@@ -45,17 +45,18 @@ namespace dbx1000 {
 
         class Stats{
         public:
-            atomic_uint64_t glb_ttl_time_;
-            atomic_uint64_t glb_ttl_lck_time_;
-            atomic_uint64_t glb_ttl_vld_time_;
-            atomic_uint64_t glb_ttl_rpc_time_;
-            atomic_uint64_t glb_ttl_lck_cnt_;
-            void Clear(){
-                glb_ttl_time_     = 0;
-                glb_ttl_lck_time_ = 0;
-                glb_ttl_vld_time_ = 0;
-                glb_ttl_rpc_time_ = 0;
-                glb_ttl_lck_cnt_  = 0;
+            atomic_uint64_t total_global_RemoteLock_time_;
+            atomic_uint64_t total_global_RemoteLock_count_;
+            atomic_uint64_t total_global_lock_time_;
+            atomic_uint64_t total_global_invalid_time_;
+            atomic_uint64_t total_global_invalid_count_;
+            atomic_uint64_t total_ins_invalid_time_;
+            void Clear(){                
+                total_global_RemoteLock_time_ = ATOMIC_VAR_INIT(0);
+                total_global_RemoteLock_count_ = ATOMIC_VAR_INIT(0);
+                total_global_lock_time_ = ATOMIC_VAR_INIT(0);
+                total_global_invalid_time_ = ATOMIC_VAR_INIT(0);
+                total_global_invalid_count_ = ATOMIC_VAR_INIT(0);
             }
         };
 
