@@ -132,8 +132,8 @@ namespace dbx1000 {
             request.set_instance_run_time(stats.instance_run_time_);
             request.set_total_txn_cnt(stats.total_txn_cnt_);
             request.set_throughtput(stats.throughput_);
-            request.set_total_time_remote_lock(stats.total_time_remote_lock_);
-            request.set_total_remote_lock_cnt(stats.total_remote_lock_cnt_);
+            request.set_total_time_lockremote(stats.total_time_LockRemote_);
+            request.set_total_count_lockremote(stats.total_count_LockRemote_);
             request.set_instance_id(instance_id);
 
             stub_->ReportResult(&cntl, &request, &reply, nullptr);
