@@ -8,21 +8,26 @@
 #include <map>
 #include <tbb/concurrent_hash_map.h>
 #include "common/myhelper.h"
+#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
 #include "instance/manager_instance.h"
+#endif
 
 
 class table_t;
 class row_t;
 class workload;
+#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
 class ManagerInstance;
+#endif
 namespace dbx1000 {
     class RecordBuffer {
     public:
         RecordBuffer() = default;
-        RecordBuffer(ManagerInstance* instance_)
-        {
+#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
+        RecordBuffer(ManagerInstance* instance_) {
             manager_instance_ = instance_;
         }
+#endif
         ~RecordBuffer();
 
         RC BufferGet(uint64_t item_id, char *buf, std::size_t size);
@@ -31,7 +36,9 @@ namespace dbx1000 {
     private:
 
         tbb::concurrent_hash_map<uint64_t, char*> buffer_;
+#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
         ManagerInstance* manager_instance_;
+#endif
     };
 }
 

@@ -18,7 +18,7 @@
 #define WARMUP						0
 // YCSB or TPCC
 #define WORKLOAD 					YCSB
-//#define WORKLOAD 					TPCC
+// #define WORKLOAD 					TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -259,5 +259,6 @@ extern TestCases					g_test_case;
 //#define B_M_L_R // buffer mixed, lock record    3
 //#define B_P_L_R // buffer page, lock record     4
 
+#define RDB_BUFFER_WITH_SIZE
 
 #endif
