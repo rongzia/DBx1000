@@ -9,7 +9,7 @@ namespace dbx1000 {
 
     namespace global_lock_service {
         RpcLockMode GlobalLockServiceHelper::SerializeLockMode(LockMode mode) {
-//            if (LockMode::O == mode) { return RpcLockMode::O; }
+            if (LockMode::O == mode) { return RpcLockMode::O; }
             if (LockMode::S == mode) { return RpcLockMode::S; }
             if (LockMode::P == mode) { return RpcLockMode::P; }
             if (LockMode::X == mode) { return RpcLockMode::X; }
@@ -28,7 +28,7 @@ namespace dbx1000 {
         }
 
         LockMode GlobalLockServiceHelper::DeSerializeLockMode(RpcLockMode mode) {
-//            if (RpcLockMode::O == mode) { return LockMode::O; }
+            if (RpcLockMode::O == mode) { return LockMode::O; }
             if (RpcLockMode::S == mode) { return LockMode::S; }
             if (RpcLockMode::P == mode) { return LockMode::P; }
             if (RpcLockMode::X == mode) { return LockMode::X; }

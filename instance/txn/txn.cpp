@@ -386,8 +386,8 @@ RC txn_man::GetWriteRecordLock() {
                 RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
                         this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
                 profiler2.End();
-                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_remote_lock_ += profiler2.Nanos();
-                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->count_remote_lock_++;
+                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_LockRemote_ += profiler2.Nanos();
+                this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->count_LockRemote_++;
 
                 if (RC::Abort == rc || RC::TIME_OUT == rc) {
                     lockNode->lock_remoting = false;
@@ -398,9 +398,8 @@ RC txn_man::GetWriteRecordLock() {
                 lockNode->lock_mode = dbx1000::LockMode::P;
                 // 取回来的数据写入缓存
 #if defined(B_P_L_P)
-                if(buf_size == MY_PAGE_SIZE) {
-                    this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
-                }
+				assert(buf_size == MY_PAGE_SIZE);
+                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
 #else
                 uint64_t row_id;
                 row_t* temp_row;

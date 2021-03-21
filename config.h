@@ -119,7 +119,7 @@
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 //#define SYNTH_TABLE_SIZE            (1024UL * 100 * 204)
-#define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)
+#define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
 
 #define ZIPF_THETA 					0.0001     // 值越大，冲突越高
 #define READ_PERC 					0.9

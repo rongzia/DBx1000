@@ -55,8 +55,8 @@ namespace dbx1000 {
         this->query_queue_->managerInstance_ = this;
         query_queue_->init();
 
+        stats_.clear();
         for(auto i = 0; i < g_thread_cnt; i++) {
-            stats_.clear(i);
             txn_man_[i] = nullptr;
             all_ts_[i] = UINT64_MAX;
         }

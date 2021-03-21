@@ -154,7 +154,6 @@ namespace dbx1000 {
          * @return
          */
         RC GlobalLock::LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
-            stats_.glb_ttl_lck_cnt_.fetch_add(1);
             Profiler profiler1;
             profiler1.Start();
             auto iter = lock_tables_[table].find(item_id);
@@ -164,7 +163,7 @@ namespace dbx1000 {
             RC rc = RC::RCOK;
             std::unique_lock<std::mutex> lck(iter->second->mtx);
             profiler1.End();
-            this->stats_.glb_ttl_lck_time_.fetch_add(profiler1.Nanos());
+            this->stats_.total_global_lock_time_.fetch_add(profiler1.Nanos());
             if (iter->second->write_ins_id >= 0) {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                     cout << ins_id << " want to invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page id : " << item_id << endl;
@@ -174,8 +173,9 @@ namespace dbx1000 {
                 uint64_t invld_time;
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count, invld_time);
                 profiler2.End();
-                this->stats_.glb_ttl_vld_time_.fetch_add(invld_time);
-                this->stats_.glb_ttl_rpc_time_.fetch_add(profiler2.Nanos() - invld_time);
+                this->stats_.total_global_invalid_time_.fetch_add(profiler2.Nanos());
+                this->stats_.total_global_invalid_count_.fetch_add(1);
+                this->stats_.total_ins_invalid_time_.fetch_add(invld_time);
                 if (rc == RC::TIME_OUT) {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invaild " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " time out" << endl;
@@ -190,6 +190,7 @@ namespace dbx1000 {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
+                    m_workload_->buffers_[table]->BufferPut(item_id, buf, count);
                     iter->second->write_ins_id = ins_id;
                 }
             } else {

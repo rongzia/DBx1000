@@ -72,7 +72,7 @@ RC tpcc_wl::init_schema(const char * schema_file) {
     indexes_[TABLES::STOCK]      =  make_shared<dbx1000::Index>();
 #endif
 
-    buffers_[TABLES::WAREHOUSE]  = make_shared<dbx1000::RecordBuffer>();
+    buffers_[TABLES::WAREHOUSE]  =  make_shared<dbx1000::RecordBuffer>();
     buffers_[TABLES::DISTRICT]   =  make_shared<dbx1000::RecordBuffer>();
     buffers_[TABLES::CUSTOMER]   =  make_shared<dbx1000::RecordBuffer>();
     buffers_[TABLES::HISTORY]    =  make_shared<dbx1000::RecordBuffer>();
