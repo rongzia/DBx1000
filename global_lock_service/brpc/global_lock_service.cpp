@@ -614,7 +614,7 @@ namespace dbx1000 {
                 cout << "ttl_ins_unlck_rpc_t/ttl_ins_unlck_rpc_cnt/avg: " << total_ins_unlock_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_Unlock_count_ << "/" << (global_lock_->stats_.total_global_Unlock_count_==0 ? 0:total_ins_unlock_rpc_time/1000UL/global_lock_->stats_.total_global_Unlock_count_) << endl;
 #endif // DB2
                 uint64_t total_global_invalid_rpc_time = global_lock_->stats_.total_global_invalid_time_ - global_lock_->stats_.total_ins_invalid_time_;
-                cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_global_invalid_count_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
+                cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:total_global_invalid_rpc_time/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
             }
         }
 
