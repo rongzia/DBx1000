@@ -115,6 +115,10 @@ namespace dbx1000 {
             bool *warmup_done_;
             bool is_warmup_done_;
 #endif // WARMUP
+
+#ifdef RDB_BUFFER_DIFF_SIZE
+            atomic_flag stop_flag_;
+#endif // RDB_BUFFER_DIFF_SIZE
         };
     }
 }

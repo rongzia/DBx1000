@@ -219,6 +219,23 @@ namespace dbx1000 {
             stub_->Invalid(&done->cntl, &request, &done->reply, done);
         }
 
+#ifdef RDB_BUFFER_DIFF_SIZE
+        bool GlobalLockServiceClient::Stop(int instance_id) {
+            dbx1000::StopRequest request;
+            dbx1000::StopReply reply;
+            ::brpc::Controller cntl;
+            request.set_instance_id(instance_id);
+
+            stub_->Stop(&cntl, &request, &reply, nullptr);
+            if (!cntl.Failed()) {
+                return reply.result();
+            } else {
+                LOG(FATAL) << cntl.ErrorText();
+                return false;
+            }
+        }
+#endif // RDB_BUFFER_DIFF_SIZE
+
         int GlobalLockServiceClient::Test() {
             dbx1000::TestRequest request;
             dbx1000::TestReply reply;
@@ -453,6 +470,15 @@ namespace dbx1000 {
                                                  ::google::protobuf::Closure* done) {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+#ifdef RDB_BUFFER_DIFF_SIZE
+            if(!global_lock_->stop_flag_.test_and_set()) {
+                for (int i = 0; i < PROCESS_CNT; i++ ) {
+                    if(i != request->instance_id()) {
+                        global_lock_->instances_[i].global_lock_service_client->Stop(i);
+                    }
+                }
+            }
+#endif // RDB_BUFFER_DIFF_SIZE
 
             Stats *stats = &(global_lock_->instances()[request->instance_id()].stats);
             stats->total_latency_  = request->total_latency();
@@ -530,6 +556,19 @@ namespace dbx1000 {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
         }
+#ifdef RDB_BUFFER_DIFF_SIZE
+        void GlobalLockServiceImpl::Stop(::google::protobuf::RpcController *controller,
+                          const ::dbx1000::StopRequest *request,
+                          ::dbx1000::StopReply *response,
+                          ::google::protobuf::Closure *done) {
+            ::brpc::ClosureGuard done_guard(done);
+            ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
+
+            manager_instance_->stop_.store(true);
+            response->set_result(true);
+        }
+#endif // RDB_BUFFER_DIFF_SIZE
+
 
 #ifdef WARMUP
         void GlobalLockServiceImpl::WarmupDone(::google::protobuf::RpcController* controller,

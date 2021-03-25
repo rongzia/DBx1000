@@ -41,6 +41,9 @@ namespace dbx1000 {
         }
 
         GlobalLock::GlobalLock() {
+#ifdef RDB_BUFFER_DIFF_SIZE
+            stop_flag_.clear();
+#endif // RDB_BUFFER_DIFF_SIZE
             stats_.Clear();
 #ifdef WARMUP
             warmup_done_ = new bool[PROCESS_CNT]();

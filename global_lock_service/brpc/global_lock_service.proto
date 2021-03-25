@@ -102,6 +102,13 @@ message WaitWarmupDoneReply {
   bool warmup_done = 1;
 }
 
+// when RDB_BUFFER_DIFF_SIZE defined
+message StopRequest{
+  int32 instance_id = 1;
+}
+message StopReply {
+  bool result = 1;
+}
 
 service GlobalLockService {
   // for instance
@@ -120,4 +127,6 @@ service GlobalLockService {
   rpc Test(TestRequest) returns (TestReply) {}
   rpc WarmupDone(WarmupDoneRequest) returns (WarmupDoneReply) {}
   rpc WaitWarmupDone(WaitWarmupDoneRequest) returns (WaitWarmupDoneReply) {}
+  // when RDB_BUFFER_DIFF_SIZE defined
+  rpc Stop(StopRequest) returns (StopReply) {}
 }

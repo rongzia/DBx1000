@@ -70,6 +70,9 @@ namespace dbx1000 {
         std::map<TABLES, LockTable* > lock_table_;
         global_lock_service::GlobalLockServiceClient *global_lock_service_client_;
         SharedDiskClient * shared_disk_client_;
+#ifdef RDB_BUFFER_DIFF_SIZE
+        atomic_bool stop_;
+#endif // RDB_BUFFER_DIFF_SIZE
     };
 }
 
