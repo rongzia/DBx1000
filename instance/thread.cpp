@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <cassert>
+#include <thread>
 #include "thread.h"
 
 #include "common/myhelper.h"
@@ -219,6 +220,9 @@ RC thread_t::run() {
 		INC_STATS(get_thd_id(), run_time, timespan);
 		INC_STATS(get_thd_id(), latency, timespan);
          */
+#ifdef RAC
+		std::this_thread::sleep_for(chrono::microseconds(150) *  this->manager_client_->stats().tmp_stats[_thd_id]->count_LockRemote_);
+#endif // RAV
 		profiler.End();
 		this->manager_client_->stats()._stats[_thd_id]->run_time += profiler.Nanos();
 		//stats.add_lat(get_thd_id(), timespan);
