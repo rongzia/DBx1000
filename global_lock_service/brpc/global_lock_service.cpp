@@ -545,7 +545,7 @@ namespace dbx1000 {
                 uint64_t total_ins_lock_rpc_time = total_ins_time_LockRemote - global_lock_->stats_.total_global_RemoteLock_time_;
                 cout << "ttl_ins_lck_rpc_t/ttl_ins_lck_rpc_cnt/avg    : " << total_ins_lock_rpc_time/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_lock_rpc_time/1000UL/total_ins_count_LockRemote) << endl;
                 uint64_t total_global_invalid_rpc_time = global_lock_->stats_.total_global_invalid_time_ - global_lock_->stats_.total_ins_invalid_time_;
-                cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_global_invalid_count_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
+                cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:total_global_invalid_rpc_time/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
             }
         }
 
