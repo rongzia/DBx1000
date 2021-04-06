@@ -561,7 +561,7 @@ namespace dbx1000 {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
 
-            response->set_warmup_done(global_lock_->warmup_done_);
+            response->set_warmup_done(global_lock_->is_warmup_done_);
         }
 #endif // WARMUP
 
