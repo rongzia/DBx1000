@@ -542,7 +542,7 @@ namespace dbx1000 {
 
             bool warm_done = true;
             for(auto i = 0; i < PROCESS_CNT; i++) {
-                if(global_lock_->warmup_done_[i] = false) {
+                if(false == global_lock_->warmup_done_[i]) {
                     warm_done = false;
                     break;
                 }
