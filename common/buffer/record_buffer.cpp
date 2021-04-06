@@ -86,6 +86,18 @@ namespace dbx1000 {
                         BufferDel(iterator1->first);
                         iterator1 = iterator2;
                     }
+                    if(0.1 > threshold && 0.05 < threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 3000*size_) { break; } }
+                    }
+                    if(0.05 > threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 4000*size_) { break; } }
+                    }
+                    if(0.9 < threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 30000*size_) { break; } }
+                    }
                 }
             // }
 #endif

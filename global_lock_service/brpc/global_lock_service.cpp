@@ -581,7 +581,7 @@ namespace dbx1000 {
 
             bool warm_done = true;
             for(auto i = 0; i < PROCESS_CNT; i++) {
-                if(global_lock_->warmup_done_[i] = false) {
+                if(false == global_lock_->warmup_done_[i]) {
                     warm_done = false;
                     break;
                 }
@@ -600,7 +600,7 @@ namespace dbx1000 {
             ::brpc::ClosureGuard done_guard(done);
             ::brpc::Controller *cntl = static_cast<brpc::Controller *>(controller);
 
-            response->set_warmup_done(global_lock_->warmup_done_);
+            response->set_warmup_done(global_lock_->is_warmup_done_);
         }
 #endif // WARMUP
 
