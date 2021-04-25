@@ -12,6 +12,9 @@
 #include "common/lock_table/lock_table.h"
 #include "common/global.h"
 #include "common/mystats.h"
+#ifdef KEY_COUNT
+#include "common/key_counter.h"
+#endif // KEY_COUNT
 
 class txn_man;
 
@@ -70,6 +73,10 @@ namespace dbx1000 {
         std::map<TABLES, LockTable* > lock_table_;
         global_lock_service::GlobalLockServiceClient *global_lock_service_client_;
         SharedDiskClient * shared_disk_client_;
+
+#ifdef KEY_COUNT
+        KeyCounter* keyCounter_;
+#endif // KEY_COUNT
     };
 }
 

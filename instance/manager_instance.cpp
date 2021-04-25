@@ -62,6 +62,10 @@ namespace dbx1000 {
         }
 
         timestamp_.store(0);
+
+#ifdef KEY_COUNT
+        keyCounter_->Clear();
+#endif // KEY_COUNT
     }
 
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化
@@ -111,6 +115,9 @@ namespace dbx1000 {
 //        this->shared_disk_client_ = new SharedDiskClient(shared_disk_host);
 
         InitLockTables();
+#ifdef KEY_COUNT
+        keyCounter_ = new KeyCounter();
+#endif // KEY_COUNT
     }
 
 #if WORKLOAD == YCSB

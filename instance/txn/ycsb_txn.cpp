@@ -385,6 +385,9 @@ void ycsb_txn_man::GetWriteRecordSet(base_query *query) {
     ycsb_query* m_query = (ycsb_query*) query;
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
+#ifdef KEY_COUNT
+        this->h_thd->manager_client_->keyCounter_->Add(TABLES::MAIN_TABLE, req->key);
+#endif // KEY_COUNT
         if (req->rtype == WR) {
 #if defined(B_P_L_P)
             dbx1000::IndexItem indexItem;

@@ -121,6 +121,9 @@ int main(int argc, char *argv[]) {
     managerInstance->global_lock_service_client_->ReportResult(managerInstance->stats(), managerInstance->instance_id());
 #endif
 
+#ifdef KEY_COUNT
+    managerInstance->keyCounter_->Serialize();
+#endif // KEY_COUNT
 
     while(1) { this_thread::yield(); }
     delete managerInstance;
