@@ -47,6 +47,8 @@ double ycsb_query::zeta(uint64_t n, double theta) {
 	return sum;
 	//! sum = 1605.65, when n = 1024*1024*10 and theta = 0.6
 }
+
+
 //! n == 1024*1024*10 - 1, theta == 0.6
 //! 返回一个整数
 uint64_t ycsb_query::zipf(uint64_t n, double theta) {
@@ -64,6 +66,15 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 	if (uz < 1 + pow(0.5, theta)) return 2;
 	return 1 + (uint64_t)(n * pow(eta*u -eta + 1, alpha));
 }
+
+#ifdef YCSB_AVG
+default_random_engine ycsb_query::e(time(NULL));
+uint64_t ycsb_query::uniform(uint64_t start_key, uint64_t end_key) {
+	uniform_int_distribution<uint64_t> u(start_key, end_key);
+	return u(e);
+}
+#endif // YCSB_AVG
+
 //! thd_id = 0, 1, 2, 3...
 //! 为某个线程的 queries[i] 生成请求（16 个 requests），保证每个 request 的 primary 没有冲突
 //! ，若 primary 有冲突，则 queries[i][16] 可能没有完全设置，即该 query 内 request 可能不足 16，数量由 ycsb_query::request_cnt 记录。
@@ -130,7 +141,11 @@ void ycsb_query::gen_requests(int thd_id) {
 		/**
 		 */
 	    uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
+#ifndef YCSB_AVG
 		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);   //! g_zipf_theta == 0.6
+#else  // YCSB_AVG
+		uint64_t row_id = uniform(1, table_size - 1);
+#endif // YCSB_AVG
 		assert(row_id < table_size);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 #ifdef NO_CONFLICT

@@ -5,6 +5,9 @@
 #include <cassert>
 #include "common/global.h"
 #include "instance/benchmarks/query.h"
+#ifdef YCSB_AVG
+#include <random>
+#endif
 
 class workload;
 class Query_thd;
@@ -35,7 +38,10 @@ private:
 	// for Zipfian distribution
 	static double zeta(uint64_t n, double theta);       //! 计算 denom
 	uint64_t zipf(uint64_t n, double theta);
-	
+#ifdef YCSB_AVG
+	uint64_t uniform(uint64_t start_key, uint64_t end_key);
+	static default_random_engine e;
+#endif
 	static uint64_t the_n;      //! table size - 1, 1024*1024*10 -1
 	static double denom;        //! denom = 1605.65, when n = 1024*1024*10 and theta = 0.6
 	double zeta_2_theta;        //! 1.65975
