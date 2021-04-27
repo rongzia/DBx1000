@@ -119,8 +119,7 @@
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 //#define SYNTH_TABLE_SIZE            (1024UL * 100 * 204)
-// #define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
-#define SYNTH_TABLE_SIZE            (10UL * 1000 * 1000)	// 约 160 MB
+#define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
 
 #define ZIPF_THETA 					0.6     // 值越大，冲突越高
 #define READ_PERC 					0.9
@@ -260,5 +259,21 @@ extern TestCases					g_test_case;
 //#define B_M_L_R // buffer mixed, lock record    3
 //#define B_P_L_R // buffer page, lock record     4
 
-#define KEY_COUNT
+
+
+
+// #define YCSB_AVG
+
+// #define RDB_BUFFER_DIFF_SIZE
+// #define RDB_BUFFER_WITH_SIZE
+// #define DB2
+// #define RAC
+
+// #define KEY_COUNT
+#ifdef KEY_COUNT
+#undef SYNTH_TABLE_SIZE
+#define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
+#endif // KEY_COUNT
+
+
 #endif

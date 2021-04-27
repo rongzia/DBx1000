@@ -800,17 +800,23 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             if(g_wh_update) {
                 key = m_query->w_id;
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::WAREHOUSE]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 				h_thd->manager_client_->keyCounter_->Add(TABLES::WAREHOUSE, key);
+#endif // KEY_COUNT
                 write_record_set.insert(make_pair(TABLES::WAREHOUSE, indexItem.page_id_));
             }
             key = distKey(m_query->d_id, m_query->d_w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 			h_thd->manager_client_->keyCounter_->Add(TABLES::DISTRICT, key);
+#endif // KEY_COUNT
             write_record_set.insert(make_pair(TABLES::DISTRICT, indexItem.page_id_));
 
             key = custKey(m_query->c_id, m_query->c_d_id, m_query->c_w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::CUSTOMER]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 			h_thd->manager_client_->keyCounter_->Add(TABLES::CUSTOMER, key);
+#endif // KEY_COUNT
             write_record_set.insert(make_pair(TABLES::CUSTOMER, indexItem.page_id_));
             break;
         case TPCC_NEW_ORDER :
@@ -820,7 +826,9 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
 
             key = distKey(m_query->d_id, m_query->w_id);
             h_thd->manager_client_->m_workload_->indexes_[TABLES::DISTRICT]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 			h_thd->manager_client_->keyCounter_->Add(TABLES::DISTRICT, key);
+#endif // KEY_COUNT
             write_record_set.insert(make_pair(TABLES::DISTRICT, indexItem.page_id_));
 
 //            key = custKey(m_query->c_id, m_query->d_id, m_query->w_id);
@@ -830,12 +838,16 @@ void tpcc_txn_man::GetWriteRecordSet(base_query *query) {
             for (uint32_t ol_number = 0; ol_number < m_query->ol_cnt; ol_number++) {
                 key = m_query->items[ol_number].ol_i_id;
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::ITEM]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 				h_thd->manager_client_->keyCounter_->Add(TABLES::ITEM, key);
+#endif // KEY_COUNT
                 write_record_set.insert(make_pair(TABLES::ITEM, indexItem.page_id_));
 
                 key = stockKey(m_query->items[ol_number].ol_i_id, m_query->items[ol_number].ol_supply_w_id);
                 h_thd->manager_client_->m_workload_->indexes_[TABLES::STOCK]->IndexGet(key, &indexItem);
+#ifdef KEY_COUNT
 				h_thd->manager_client_->keyCounter_->Add(TABLES::STOCK, key);
+#endif // KEY_COUNT
                 write_record_set.insert(make_pair(TABLES::STOCK, indexItem.page_id_));
             }
             break;
