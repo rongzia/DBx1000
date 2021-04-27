@@ -93,11 +93,15 @@ namespace dbx1000 {
         if(rc == RC::Abort) { assert(false); }
         page->Deserialize();
         if(page->page_id() != indexItem.page_id_) {
-            cout << page->page_id() << " + " << indexItem.page_id_ << endl;
-            page->Print();
+            //cout << page->page_id() << " + " << indexItem.page_id_ << endl;
+            //page->Print();
+            page->set_page_id(indexItem.page_id_);
+            // indexItem.page_id_ = page->page_id();
+            //cout << page->page_id() << " : " << indexItem.page_id_ << endl;
         }
         assert(page->page_id() == indexItem.page_id_);
         memcpy(row->data, &page->page_buf()[indexItem.page_location_], size);
+        //cout<<"1"<<endl;
         delete page;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
@@ -124,10 +128,16 @@ namespace dbx1000 {
         manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         if(rc == RC::Abort) { assert(false); }
         page->Deserialize();
+        if(page->page_id() != indexItem.page_id_)
+        {
+            page->set_page_id(indexItem.page_id_);
+            // indexItem.page_id_ = page->page_id();
+        }
         assert(page->page_id() == indexItem.page_id_);
         memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
         page->Serialize();
 #ifdef DB2
+        rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
         dbx1000::Profiler profiler; profiler.Start();
         rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::O, page->page_buf(), MY_PAGE_SIZE);
         profiler.End();
