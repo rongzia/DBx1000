@@ -115,6 +115,11 @@ namespace dbx1000 {
             bool *warmup_done_;
             bool is_warmup_done_;
 #endif // WARMUP
+
+
+#ifdef REAL_STOP
+            atomic_flag stop_flag_;
+#endif // REAL_STOP
         };
     }
 }

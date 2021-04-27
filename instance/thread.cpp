@@ -269,6 +269,12 @@ RC thread_t::run() {
             delete m_txn;
             return RC::FINISH;
 	    }
+#ifdef REAL_STOP
+		if(this->manager_client_->stop_.load() == true) {
+            delete m_txn;
+            return RC::FINISH;
+		}
+#endif // REAL_STOP
 
 		/*
 		//! sim_done 为所有线程共享数据，是否在一个线程达到退出条件后，其他的线程检测到 _wl->sim_done==true，就直接退出了，且不管是否执行完？

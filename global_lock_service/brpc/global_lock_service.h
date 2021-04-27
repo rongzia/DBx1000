@@ -49,7 +49,9 @@ namespace dbx1000 {
         public: /// for global lock
             RC Invalid(TABLES table, uint64_t item_id, char *buf, size_t count, uint64_t &invld_time);
             void AsyncInvalid(TABLES table, uint64_t page_id, char *page_buf, size_t count, OnInvalidDone* done);
-
+#ifdef REAL_STOP
+            bool Stop(int instance_id);
+#endif // REAL_STOP
         public: /// common
             int Test();
 
@@ -106,7 +108,12 @@ namespace dbx1000 {
                     const ::dbx1000::ReportResultRequest* request,
                     ::dbx1000::ReportResultReply* response,
                     ::google::protobuf::Closure* done);
-
+#ifdef REAL_STOP
+            virtual void Stop(::google::protobuf::RpcController *controller,
+                              const ::dbx1000::StopRequest *request,
+                              ::dbx1000::StopReply *response,
+                              ::google::protobuf::Closure *done);
+#endif // REAL_STOP
 #ifdef WARMUP
             virtual void WarmupDone(::google::protobuf::RpcController* controller,
                     const ::dbx1000::WarmupDoneRequest* request,

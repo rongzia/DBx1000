@@ -11,6 +11,7 @@
 #include "common/storage/row.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
+#include "common/storage/tablespace/page.h"
 #include "util/profiler.h"
 
 namespace dbx1000 {

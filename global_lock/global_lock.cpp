@@ -41,6 +41,9 @@ namespace dbx1000 {
         }
 
         GlobalLock::GlobalLock() {
+#ifdef REAL_STOP
+            stop_flag_.clear();
+#endif // REAL_STOP
             stats_.Clear();
 #ifdef WARMUP
             warmup_done_ = new bool[PROCESS_CNT]();

@@ -74,6 +74,10 @@ namespace dbx1000 {
         global_lock_service::GlobalLockServiceClient *global_lock_service_client_;
         SharedDiskClient * shared_disk_client_;
 
+#ifdef REAL_STOP
+        atomic_bool stop_;
+#endif // REAL_STOP
+
 #ifdef KEY_COUNT
         KeyCounter* keyCounter_;
 #endif // KEY_COUNT

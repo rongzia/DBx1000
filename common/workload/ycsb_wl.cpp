@@ -43,7 +43,11 @@ RC ycsb_wl::init_schema(string schema_file) {
     tablespaces_[TABLES::MAIN_TABLE] = make_shared<dbx1000::TableSpace>();
     indexes_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::Index>();
 #endif
+#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
+    buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>(manager_instance_);
+#else
     buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>();
+#endif
     tables_[TABLES::MAIN_TABLE]      = the_table;
 /////////////// rrzhang ///////////////
 	return RC::RCOK;
