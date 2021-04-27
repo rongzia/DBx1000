@@ -58,9 +58,46 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferPut(uint64_t item_id, const char *buf, std::size_t size) {
-        typedef typename std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> TimePoint;
+#ifdef RDB_BUFFER_DIFF_SIZE
+       if(manager_instance_ != nullptr)
+        {
+#if defined(B_P_L_P)
+            // if(manager_instance_->instance_id_ != 1)
+            // {
+                auto size_ = buffer_.size();
+                auto threshold = manager_instance_->instance_id_==0 ? 0.4:0.2;
+                // auto threshold = 0.25;
+                if(size_ >= threshold * (SYNTH_TABLE_SIZE/204))
+                {
+                    ConcurrentMap::iterator curr = buffer_.begin();
+                    ConcurrentMap::iterator next = curr;
+                    for(auto i = 0; i < 0.1 * size_; i++)
+                    {
+                        next++;
+                        BufferDel(curr->first);
+                        curr = next;
+                    }
+                    if(0.1 > threshold && 0.05 < threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 3000*size_) { break; } }
+                    }
+                    if(0.05 > threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 4000*size_) { break; } }
+                    }
+                    if(0.9 < threshold) {
+                        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+                        while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 30000*size_) { break; } }
+                    }
+                }
+            // }
+#endif // B_P_L_P
+        }
+#endif // RDB_BUFFER_DIFF_SIZE
+        using TimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+
         TimePoint start = std::chrono::system_clock::now();
-        tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        ConcurrentMap::accessor accessor;
         bool res = buffer_.find(accessor, item_id);
 
         if(res) {
