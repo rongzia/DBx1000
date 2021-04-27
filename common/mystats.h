@@ -98,6 +98,10 @@ namespace dbx1000 {
         uint64_t total_time_get_lock_;
         uint64_t total_time_LockRemote_;
         uint64_t total_count_LockRemote_;
+#ifdef DB2
+        std::atomic_uint64_t total_time_Unlock_;             // 所有线程的事务 Unlock 时间
+        std::atomic_uint64_t total_count_Unlock_;            // 所有线程的事务 Unlock 次数
+#endif // DB2
         uint64_t instance_run_time_;
 
         void init();

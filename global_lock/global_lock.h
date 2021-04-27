@@ -51,12 +51,20 @@ namespace dbx1000 {
             atomic_uint64_t total_global_invalid_time_;
             atomic_uint64_t total_global_invalid_count_;
             atomic_uint64_t total_ins_invalid_time_;
+#ifdef DB2
+            atomic_uint64_t total_global_Unlock_time_;
+            atomic_uint64_t total_global_Unlock_count_;
+#endif // DB2
             void Clear(){                
                 total_global_RemoteLock_time_ = ATOMIC_VAR_INIT(0);
                 total_global_RemoteLock_count_ = ATOMIC_VAR_INIT(0);
                 total_global_lock_time_ = ATOMIC_VAR_INIT(0);
                 total_global_invalid_time_ = ATOMIC_VAR_INIT(0);
                 total_global_invalid_count_ = ATOMIC_VAR_INIT(0);
+#ifdef DB2
+                total_global_Unlock_time_ = ATOMIC_VAR_INIT(0);
+                total_global_Unlock_count_ = ATOMIC_VAR_INIT(0);
+#endif // DB2
             }
         };
 
@@ -69,7 +77,10 @@ namespace dbx1000 {
             GlobalLock &operator=(const GlobalLock &) = delete;
 
             RC LockRemote(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count);
-
+#ifdef DB2
+            RC LockRemote_DB2(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count);
+            RC Unlock(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count);
+#endif // DB2
             uint64_t GetNextTs(uint64_t thread_id);
 
             struct InstanceInfo {

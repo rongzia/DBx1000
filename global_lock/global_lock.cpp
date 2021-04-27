@@ -205,7 +205,45 @@ namespace dbx1000 {
             }
             return rc;
         }
+#ifdef DB2
+        RC GlobalLock::LockRemote_DB2(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
+            Profiler profiler;
+            profiler.Start();
+            auto iter = lock_tables_[table].find(item_id);
+            assert(lock_tables_[table].end() != iter);
+            if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
 
+            RC rc = RC::RCOK;
+            std::unique_lock<std::mutex> lck(iter->second->mtx);
+            if(iter->second->cv.wait_for(lck, std::chrono::seconds(1), [iter](){return iter->second->write_ins_id == -1;})) {
+                profiler.End();
+                this->stats_.total_global_lock_time_.fetch_add(profiler.Nanos());
+                iter->second->write_ins_id = ins_id;
+                if (count > 0) {
+                    m_workload_->buffers_[table]->BufferGet(item_id, buf, count);
+                }
+            } else {
+                rc = RC::TIME_OUT;
+            }
+            return rc;
+        }
+
+        RC GlobalLock::Unlock(uint64_t ins_id, TABLES table, uint64_t item_id, char *buf, size_t count) {
+            auto iter = lock_tables_[table].find(item_id);
+            assert(lock_tables_[table].end() != iter);
+            if (lock_tables_[table].end() == iter) { assert(false); return RC::Abort; }
+
+            RC rc = RC::RCOK;
+            std::unique_lock<std::mutex> lck(iter->second->mtx);
+            
+            // assert(iter->second->write_ins_id == ins_id);
+            iter->second->write_ins_id = -1;
+            m_workload_->buffers_[table]->BufferPut(item_id, buf, count);
+            iter->second->cv.notify_all();
+            
+            return rc;
+        }
+#endif // DB2
         uint64_t GlobalLock::GetNextTs(uint64_t thread_id) { return timestamp_.fetch_add(1); }
 
 

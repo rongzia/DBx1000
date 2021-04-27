@@ -36,6 +36,9 @@ namespace dbx1000 {
 
         public: /// for instance
             RC LockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t &count);
+#ifdef DB2
+            RC Unlock(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count);
+#endif // DB2
             void AsyncLockRemote(int instance_id, TABLES table, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
             void InstanceInitDone(int instance_id);
             bool GlobalLockInitDone();
@@ -84,6 +87,12 @@ namespace dbx1000 {
                                const ::dbx1000::LockRemoteRequest* request,
                                ::dbx1000::LockRemoteReply* response,
                                ::google::protobuf::Closure* done);
+#ifdef DB2
+            virtual void Unlock(::google::protobuf::RpcController *controller,
+                                const ::dbx1000::UnlockRequest *request,
+                                ::dbx1000::UnlockReply *response,
+                                ::google::protobuf::Closure *done);
+#endif // DB2
             virtual void AsyncLockRemote(::google::protobuf::RpcController* controller,
                                const ::dbx1000::LockRemoteRequest* request,
                                ::dbx1000::LockRemoteReply* response,

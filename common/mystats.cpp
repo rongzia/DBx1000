@@ -82,6 +82,10 @@ namespace dbx1000 {
         total_time_get_lock_ = 0;
         total_time_LockRemote_ = 0;
         total_count_LockRemote_ = 0;
+#ifdef DB2
+        total_time_Unlock_ = ATOMIC_VAR_INIT(0);
+        total_count_Unlock_  = ATOMIC_VAR_INIT(0);
+#endif // DB2
         instance_run_time_ = 0;
     }
 
@@ -107,6 +111,10 @@ namespace dbx1000 {
         total_time_get_lock_ = 0;
         total_time_LockRemote_ = 0;
         total_count_LockRemote_ = 0;
+#ifdef DB2
+        total_time_Unlock_ = ATOMIC_VAR_INIT(0);
+        total_count_Unlock_  = ATOMIC_VAR_INIT(0);
+#endif // DB2
         instance_run_time_ = 0;
         for(auto i = 0; i < g_thread_cnt; i++) {
             clear(i);
@@ -223,6 +231,9 @@ namespace dbx1000 {
         cout << endl;
         cout << "ttl_t_get_lck                    : " << total_time_get_lock/BILLION << " us." << endl;
         cout << "ttl_t_rmt_lck/ttl_cnt_rmt_lck/avg: " << total_time_LockRemote/BILLION << " us/" << total_count_LockRemote << "/" << (total_count_LockRemote==0 ? 0:total_time_LockRemote/BILLION/total_count_LockRemote) << " us." << endl;
+#ifdef DB2
+        cout << "ttl_t_unlck/ttl_cnt_unlck/avg    : " << this->total_time_Unlock_/BILLION << " us" << "/" << this->total_count_Unlock_ << "/" << (this->total_count_Unlock_==0 ? 0:this->total_time_Unlock_/BILLION/this->total_count_Unlock_) << " us." << endl;
+#endif // DB2  
         cout << "lock_req/write_req/total_req     : " << total_count_LockRemote << "/" << total_count_write_request << "/" << total_count_total_request << endl;
         cout << endl;
     }

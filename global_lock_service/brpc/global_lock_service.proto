@@ -48,6 +48,18 @@ message LockRemoteReply{
   uint64 count = 3;
 }
 
+message UnlockRequest{
+  int32 instance_id = 1;
+  RpcTABLES table = 2;
+  uint64 item_id = 3;
+  RpcLockMode req_mode = 4;
+  bytes buf = 5;
+  uint64 count = 6;
+}
+message UnlockReply{
+  RpcRC rc = 1;
+}
+
 message InstanceInitDoneRequest{
   int32 instance_id = 1;
 }
@@ -87,6 +99,9 @@ message ReportResultRequest{
   uint64 total_time_LockRemote = 5;
   uint64 instance_run_time = 6;
   int32 instance_id = 7;
+  // in branch DB2
+  uint64 total_time_Unlock = 8;
+  uint64 total_count_Unlock = 9;
 }
 message ReportResultReply {}
 
@@ -114,6 +129,7 @@ service GlobalLockService {
   // for instance
   rpc LockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
   rpc AsyncLockRemote(LockRemoteRequest) returns (LockRemoteReply) {}
+  rpc Unlock(UnlockRequest) returns (UnlockReply) {}
   rpc InstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc AsyncInstanceInitDone(InstanceInitDoneRequest) returns (InstanceInitDoneReply) {}
   rpc GlobalLockInitDone(GlobalLockInitDoneRequest) returns (GlobalLockInitDoneReply) {}

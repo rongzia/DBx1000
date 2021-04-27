@@ -266,7 +266,7 @@ extern TestCases					g_test_case;
 
 // #define RDB_BUFFER_DIFF_SIZE
 // #define RDB_BUFFER_WITH_SIZE
-// #define DB2
+#define DB2
 // #define RAC
 
 // #define KEY_COUNT
