@@ -136,8 +136,8 @@ namespace dbx1000 {
         assert(page->page_id() == indexItem.page_id_);
         memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
         page->Serialize();
-#ifdef DB2
         rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+#ifdef DB2
         dbx1000::Profiler profiler; profiler.Start();
         rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::O, page->page_buf(), MY_PAGE_SIZE);
         profiler.End();
