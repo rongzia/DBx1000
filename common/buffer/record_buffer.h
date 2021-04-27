@@ -21,6 +21,8 @@ class ManagerInstance;
 #endif
 namespace dbx1000 {
     class RecordBuffer {
+        using ConcurrentMap = tbb::concurrent_hash_map<uint64_t, char*>;
+
     public:
         RecordBuffer() = default;
 #if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
@@ -35,7 +37,7 @@ namespace dbx1000 {
         RC BufferDel(uint64_t item_id);
     private:
 
-        tbb::concurrent_hash_map<uint64_t, char*> buffer_;
+        ConcurrentMap buffer_;
 #if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
         ManagerInstance* manager_instance_;
 #endif

@@ -11,7 +11,6 @@
 #include "common/storage/row.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
-#include "common/storage/tablespace/page.h"
 #include "util/profiler.h"
 
 namespace dbx1000 {
@@ -23,16 +22,32 @@ namespace dbx1000 {
 
     RC RecordBuffer::BufferGet(uint64_t item_id, char *buf, std::size_t size) {
         RC rc = RC::RCOK;
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
-        tbb::concurrent_hash_map<uint64_t, char*>::const_accessor const_acc;
+        typedef typename std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> TimePoint;
+        TimePoint start = std::chrono::system_clock::now();
+        ConcurrentMap::const_accessor const_acc;
         bool res = buffer_.find(const_acc, item_id);
         if(res) {
             memcpy(buf, const_acc->second, size);
         } else {
             // TODO: buffer 不存在的情况
-            rc = RC::Abort;
+            // rc = RC::Abort;
+            
+            char *data = new char[size];
+#if defined(B_P_L_R) || defined(B_P_L_P)
+            assert(size == MY_PAGE_SIZE);
+            uint64_t page_id = item_id;
+            memcpy(&buf[0 * sizeof(uint64_t)], reinterpret_cast<void *>(&page_id), sizeof(uint64_t));
+            memcpy(&data[0 * sizeof(uint64_t)], reinterpret_cast<void *>(&page_id), sizeof(uint64_t));
+#else 
+            memcpy(buf, data, size);
+#endif
+            ConcurrentMap::accessor acce;
+            buffer_.insert(acce, ConcurrentMap::value_type(make_pair(item_id, data)));
+            // 模拟磁盘时间
+            // while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 50000) { break; } }
+        
         }
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
+        TimePoint end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 #if defined(B_M_L_R)
         while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 1 * dura) { break; } }
@@ -43,7 +58,8 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferPut(uint64_t item_id, const char *buf, std::size_t size) {
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> start = std::chrono::system_clock::now();
+        typedef typename std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> TimePoint;
+        TimePoint start = std::chrono::system_clock::now();
         tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
         bool res = buffer_.find(accessor, item_id);
 
@@ -54,7 +70,7 @@ namespace dbx1000 {
             memcpy(data, buf, size);
             buffer_.insert(accessor, make_pair(item_id, data));
         }
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> end = std::chrono::system_clock::now();
+        TimePoint end = std::chrono::system_clock::now();
         uint64_t dura = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 #if defined(B_M_L_R)
         while(true){ if(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - start).count() > 1 * dura) { break; } }
@@ -66,11 +82,11 @@ namespace dbx1000 {
     }
 
     RC RecordBuffer::BufferDel(uint64_t item_id) {
-        tbb::concurrent_hash_map<uint64_t, char*>::accessor accessor;
+        ConcurrentMap::accessor accessor;
         bool res = buffer_.find(accessor, item_id);
         if(res) {
             delete [] accessor->second;
-            buffer_.erase(item_id);
+            buffer_.erase(accessor);
         }
         return RC::RCOK;
     }

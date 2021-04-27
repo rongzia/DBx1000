@@ -159,6 +159,9 @@ namespace dbx1000 {
 #if defined(B_P_L_P)
             assert(count == MY_PAGE_SIZE);
             manager_instance_->m_workload_->buffers_[table_]->BufferGet(item_id, buf, count);
+#ifdef CLREAR_BUF
+            manager_instance_->m_workload_->buffers_[table_]->BufferDel(item_id);
+#endif // CLREAR_BUF
 #else
             assert(count == manager_instance_->m_workload_->tables_[table_]->get_schema()->tuple_size);
             row_t* new_row;

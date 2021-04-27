@@ -270,11 +270,13 @@ extern TestCases					g_test_case;
 // #define RAC
 
 // #define KEY_COUNT
-#ifdef KEY_COUNT
+#ifdef KEY_COUNT		// 统计缓存命中率，适合单节点使用。
 #undef SYNTH_TABLE_SIZE
 #define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
 #endif // KEY_COUNT
 
-#define REAL_STOP
+#define REAL_STOP		// 之前的所有实例一起停止有 bug，这才是正确实现。
+#define CLREAR_BUF		// 被失效后，应该清除 buffer 与否，on 为 true, off 为 false
+// #define YCSB_AVG		// 平均负载
 
 #endif
