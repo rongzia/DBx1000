@@ -158,9 +158,12 @@ namespace dbx1000 {
             iter->second->lock_mode = LockMode::O;
 #if defined(B_P_L_P)
             assert(count == MY_PAGE_SIZE);
-            manager_instance_->m_workload_->buffers_[table_]->BufferGet(item_id, buf, count);
+            const BufferPool::PageKey pagekey = std::make_pair(table_, item_id);
+            const BufferPool::PageHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
+            memcpy(buf, handle->value.page_buf_read(), count);
+            manager_instance_->m_workload_->buffer_pool_.Release(handle);
 #ifdef CLREAR_BUF
-            manager_instance_->m_workload_->buffers_[table_]->BufferDel(item_id);
+            // manager_instance_->m_workload_->buffer_pool_.Delete(pagekey);
 #endif // CLREAR_BUF
 #else
             assert(count == manager_instance_->m_workload_->tables_[table_]->get_schema()->tuple_size);

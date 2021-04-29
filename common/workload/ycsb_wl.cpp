@@ -43,11 +43,11 @@ RC ycsb_wl::init_schema(string schema_file) {
     tablespaces_[TABLES::MAIN_TABLE] = make_shared<dbx1000::TableSpace>();
     indexes_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::Index>();
 #endif
-#if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
-    buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>(manager_instance_);
-#else
-    buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>();
-#endif
+// #if defined(RDB_BUFFER_WITH_SIZE) || defined(RDB_BUFFER_DIFF_SIZE)
+//     buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>(manager_instance_);
+// #else
+//     buffers_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::RecordBuffer>();
+// #endif
     tables_[TABLES::MAIN_TABLE]      = the_table;
 /////////////// rrzhang ///////////////
 	return RC::RCOK;
@@ -63,7 +63,8 @@ ycsb_wl::key_to_part(uint64_t key) {
 RC ycsb_wl::init_table() {
 ////////////// rrzhang //////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    dbx1000::Page *page = new dbx1000::Page();
+    page->Init();
     page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
 #endif
 ////////////// rrzhang //////////////
@@ -141,7 +142,9 @@ RC ycsb_wl::init_table() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
             if (new_row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
                 page->Serialize();
-                buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+                const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
+                const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+                buffer_pool_.Release(handle);
                 page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
                 page->set_used_size(64);
             }
@@ -155,7 +158,9 @@ RC ycsb_wl::init_table() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (page->used_size() > 64) {
             page->Serialize();
-            buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+            const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
+            const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+            buffer_pool_.Release(handle);
         }
     delete page;
 #endif // defined(B_P_L_P) || defined(B_P_L_R)

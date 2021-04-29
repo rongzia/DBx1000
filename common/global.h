@@ -44,7 +44,7 @@ extern bool volatile warmup_finish;
 extern bool volatile enable_thread_mem_pool;
 extern pthread_barrier_t warmup_bar;
 #ifndef NOGRAPHITE
-extern carbon_barrier_t enable_barrier;
+// extern carbon_barrier_t enable_barrier;
 #endif
 
 /******************************************/

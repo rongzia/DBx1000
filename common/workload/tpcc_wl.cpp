@@ -72,15 +72,15 @@ RC tpcc_wl::init_schema(const char * schema_file) {
     indexes_[TABLES::STOCK]      =  make_shared<dbx1000::Index>();
 #endif
 
-    buffers_[TABLES::WAREHOUSE]  =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::DISTRICT]   =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::CUSTOMER]   =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::HISTORY]    =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::NEW_ORDER]  =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::ORDER]      =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::ORDER_LINE] =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::ITEM]       =  make_shared<dbx1000::RecordBuffer>();
-    buffers_[TABLES::STOCK]      =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::WAREHOUSE]  =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::DISTRICT]   =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::CUSTOMER]   =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::HISTORY]    =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::NEW_ORDER]  =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::ORDER]      =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::ORDER_LINE] =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::ITEM]       =  make_shared<dbx1000::RecordBuffer>();
+    // buffers_[TABLES::STOCK]      =  make_shared<dbx1000::RecordBuffer>();
 
     tables_[TABLES::WAREHOUSE]  = t_warehouse;
     tables_[TABLES::DISTRICT]   = t_district;
@@ -147,7 +147,8 @@ void insert_into_item(){
 void tpcc_wl::init_tab_item() {
 ////////////// rrzhang //////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    dbx1000::Page *page = new dbx1000::Page();
+    page->Init();
     page->set_page_id(tablespaces_[TABLES::ITEM]->GetNextPageId());
 #endif
 ////////////// rrzhang //////////////
@@ -175,7 +176,9 @@ void tpcc_wl::init_tab_item() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+			const BufferPool::PageKey pagekey = std::make_pair(TABLES::ITEM, page->page_id());
+			const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+			buffer_pool_.Release(handle);
             page->set_page_id(tablespaces_[TABLES::ITEM]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -191,7 +194,9 @@ void tpcc_wl::init_tab_item() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::ITEM]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::ITEM, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #endif
@@ -201,7 +206,8 @@ void tpcc_wl::init_tab_item() {
 void tpcc_wl::init_tab_wh(uint32_t wid) {
 ////////////// rrzhang //////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    dbx1000::Page *page = new dbx1000::Page();
+    page->Init();
     page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
 #endif
 ////////////// rrzhang //////////////
@@ -239,7 +245,9 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
         page->Serialize();
-        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::WAREHOUSE, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
         page->set_page_id(tablespaces_[TABLES::WAREHOUSE]->GetNextPageId());
         page->set_used_size(64);
     }
@@ -249,7 +257,9 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::WAREHOUSE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::WAREHOUSE, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #else
@@ -262,7 +272,8 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 void tpcc_wl::init_tab_dist(uint64_t wid) {
 ////////////// rrzhang //////////////
 #if defined(B_P_L_P) || defined(B_P_L_R)
-    dbx1000::Page *page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
+    dbx1000::Page *page = new dbx1000::Page();
+    page->Init();
     page->set_page_id(tablespaces_[TABLES::DISTRICT]->GetNextPageId());
 #endif
 ////////////// rrzhang //////////////
@@ -302,7 +313,9 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+			const BufferPool::PageKey pagekey = std::make_pair(TABLES::DISTRICT, page->page_id());
+			const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+			buffer_pool_.Release(handle);
             page->set_page_id(tablespaces_[TABLES::DISTRICT]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -318,7 +331,9 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::DISTRICT]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::DISTRICT, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #endif
@@ -372,7 +387,9 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+			const BufferPool::PageKey pagekey = std::make_pair(TABLES::STOCK, page->page_id());
+			const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+			buffer_pool_.Release(handle);
             page->set_page_id(tablespaces_[TABLES::STOCK]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -389,7 +406,9 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::STOCK]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::STOCK, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #endif
@@ -468,7 +487,9 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+			const BufferPool::PageKey pagekey = std::make_pair(TABLES::CUSTOMER, page->page_id());
+			const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+			buffer_pool_.Release(handle);
             page->set_page_id(tablespaces_[TABLES::CUSTOMER]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -484,7 +505,9 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::CUSTOMER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::CUSTOMER, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #endif
@@ -575,7 +598,9 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
-            buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+			const BufferPool::PageKey pagekey = std::make_pair(TABLES::ORDER, page->page_id());
+			const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+			buffer_pool_.Release(handle);
             page->set_page_id(tablespaces_[TABLES::ORDER]->GetNextPageId());
             page->set_used_size(64);
         }
@@ -591,7 +616,9 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 #if defined(B_P_L_P) || defined(B_P_L_R)
     if (page->used_size() > 64) {
         page->Serialize();
-        buffers_[TABLES::ORDER]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+		const BufferPool::PageKey pagekey = std::make_pair(TABLES::ORDER, page->page_id());
+		const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+		buffer_pool_.Release(handle);
     }
     delete page;
 #endif

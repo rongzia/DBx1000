@@ -5,6 +5,7 @@
 #include <mutex>
 #include <atomic>
 #include <vector>
+#include "common/buffer/bufferpool.h"
 #include "common/global.h"
 
 //class row_t;
@@ -58,7 +59,8 @@ public:
     /////////////// rrzhang ///////////////
     std::map<TABLES, std::shared_ptr<dbx1000::TableSpace>> tablespaces_;
     std::map<TABLES, std::shared_ptr<dbx1000::Index>> indexes_;
-    std::map<TABLES, std::shared_ptr<dbx1000::RecordBuffer>> buffers_;
+    // std::map<TABLES, std::shared_ptr<dbx1000::RecordBuffer>> buffers_;
+    BufferPool buffer_pool_;
     std::map<TABLES, table_t*> tables_;
 	std::vector<dbx1000::Arena*> arenas_;
 	dbx1000::ManagerInstance * manager_instance_;

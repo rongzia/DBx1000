@@ -88,21 +88,21 @@ namespace dbx1000 {
         assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-        if(rc == RC::Abort) { assert(false); }
-        page->Deserialize();
-        if(page->page_id() != indexItem.page_id_) {
-            //cout << page->page_id() << " + " << indexItem.page_id_ << endl;
-            //page->Print();
-            page->set_page_id(indexItem.page_id_);
-            // indexItem.page_id_ = page->page_id();
-            //cout << page->page_id() << " : " << indexItem.page_id_ << endl;
+        BufferPool::PageKey pagekey = std::make_pair(table, indexItem.page_id_);
+        const BufferPool::PageHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
+
+        #ifdef CLREAR_BUF
+        if(handle == NULL || handle == nullptr) {
+            Page page;
+            page.Init();
+            page.set_page_id(indexItem.page_id_);
+            page.Serialize();
+            handle = manager_instance_->m_workload_->buffer_pool_.Put(pagekey, std::move(page));
         }
-        assert(page->page_id() == indexItem.page_id_);
-        memcpy(row->data, &page->page_buf()[indexItem.page_location_], size);
-        //cout<<"1"<<endl;
-        delete page;
+        #endif // CLREAR_BUF
+        assert(handle->value.page_id() == indexItem.page_id_);
+        memcpy(row->data, &handle->value.page_buf_read()[indexItem.page_location_], size);
+        manager_instance_->m_workload_->buffer_pool_.Release(handle);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
         rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
@@ -124,19 +124,20 @@ namespace dbx1000 {
         assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
-        dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
-        manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
-        if(rc == RC::Abort) { assert(false); }
-        page->Deserialize();
-        if(page->page_id() != indexItem.page_id_)
-        {
-            page->set_page_id(indexItem.page_id_);
-            // indexItem.page_id_ = page->page_id();
-        }
-        assert(page->page_id() == indexItem.page_id_);
-        memcpy(&page->page_buf()[indexItem.page_location_], row->data, size);
-        page->Serialize();
-        rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE);
+        // 获取写锁
+        // std::shared_ptr<dbx1000::LockNode> lockNode = manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_];
+        // manager_instance_->lock_table_[table]->Lock(indexItem.page_id_, dbx1000::LockMode::X);
+
+        auto pagekey = std::make_pair(table, indexItem.page_id_);
+        // BufferPool::PageHandle* handle_read = const_cast<BufferPool::PageHandle*>(manager_instance_->buffer_pool_.Get(pagekey));
+        const BufferPool::PageHandle* handle_read = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
+        assert(indexItem.page_id_ == handle_read->value.page_id());
+
+        const BufferPool::PageHandle* handle_write = manager_instance_->m_workload_->buffer_pool_.Put(pagekey, Page(handle_read->value.page_buf_read()));
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_read);
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_write);
+
+        // manager_instance_->lock_table_[table]->UnLock(indexItem.page_id_);
 #ifdef DB2
         dbx1000::Profiler profiler; profiler.Start();
         rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::O, page->page_buf(), MY_PAGE_SIZE);
@@ -145,7 +146,7 @@ namespace dbx1000 {
         manager_instance_->stats_.total_count_Unlock_.fetch_add(1);
         if(RC::RCOK == rc) { manager_instance_->lock_table_[table]->lock_table_[page->page_id()]->lock_mode = dbx1000::LockMode::O; }
 #endif // DB2
-        delete page;
+        // delete page;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
         rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(key, row->data, size);

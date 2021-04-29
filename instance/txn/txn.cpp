@@ -399,7 +399,10 @@ RC txn_man::GetWriteRecordLock() {
                 // 取回来的数据写入缓存
 #if defined(B_P_L_P)
 				assert(buf_size == MY_PAGE_SIZE);
-                this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
+                const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, iter.second);
+                const BufferPool::PageHandle* handle = this->h_thd->manager_client_->m_workload_->buffer_pool_.Put(pagekey, dbx1000::Page(buf));
+                this->h_thd->manager_client_->m_workload_->buffer_pool_.Release(handle);
+                // this->h_thd->manager_client_->m_workload_->buffers_[iter.first]->BufferPut(iter.second, buf, buf_size);
 #else
                 uint64_t row_id;
                 row_t* temp_row;

@@ -6,7 +6,6 @@
 #include <cassert>
 #include "global_lock.h"
 
-#include "common/buffer/record_buffer.h"
 #include "common/index/index.h"
 #include "common/lock_table/lock_table.h"
 #include "common/storage/disk/file_io.h"
@@ -193,13 +192,19 @@ namespace dbx1000 {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
-                    m_workload_->buffers_[table]->BufferPut(item_id, buf, count);
+                    const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
+                    Page page(buf);
+                    const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Put(pagekey, std::move(page));
+                    this->m_workload_->buffer_pool_.Release(handle);
                     iter->second->write_ins_id = ins_id;
                 }
             } else {
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
-                    m_workload_->buffers_[table]->BufferGet(item_id, buf, count);
+                    const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
+                    const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Get(pagekey);
+                    memcpy(buf, handle->value.page_buf_read(), count);
+                    this->m_workload_->buffer_pool_.Release(handle);
                 }
 //                 cout << ins_id << " get page id : " << page_id << " success" << endl;
             }
