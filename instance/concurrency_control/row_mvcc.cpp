@@ -25,8 +25,8 @@
 Row_mvcc::~Row_mvcc() {
     /// 刷 page 至 buffer
 	RC rc = RC::RCOK;
-	if(_latest_row != _row) {
-    	RC rc = managerInstance_->row_handler_->WriteRow(table_, key_, _latest_row, size_);
+	if(_latest_row != this->_row) {
+    	rc = managerInstance_->row_handler_->WriteRow(table_, key_, _row, size_);
 	}
     assert(RC::RCOK == rc);
 
