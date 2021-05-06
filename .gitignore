@@ -12,3 +12,5 @@ shared_disk/proto/*.cc
 shared_disk/proto/*.h
 rpc_handler/proto/*.cc
 rpc_handler/proto/*.h
+
+*.exe
