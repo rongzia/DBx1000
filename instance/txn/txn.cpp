@@ -247,11 +247,6 @@ txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item)
 }
 */
 RC txn_man::finish(RC rc) {
-
-    {
-        for (auto iter : write_record_set) { h_thd->manager_client_->lock_table_[iter.first]->lock_table_[iter.second]->RemoveThread(this->get_thd_id()); }
-        write_record_set.clear();
-    }
     dbx1000::Profiler profiler;
     profiler.Start();
     /*
@@ -418,7 +413,7 @@ RC txn_man::GetWriteRecordLock() {
                         return RC::Abort;
                     }
                 }
-//                assert(lockTable[iter.first]->IsValid(iter.second));
+               assert(lockNode->lock_mode != dbx1000::LockMode::O);
             }
         }
     }

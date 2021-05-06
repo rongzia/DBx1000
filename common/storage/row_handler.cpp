@@ -124,6 +124,7 @@ namespace dbx1000 {
         assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
+        assert(manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_]->lock_mode != LockMode::O);
         dbx1000::Page* page = new dbx1000::Page(new char[MY_PAGE_SIZE]);
         manager_instance_->m_workload_->buffers_[table]->BufferGet(indexItem.page_id_, page->page_buf(), MY_PAGE_SIZE);
         if(rc == RC::Abort) { assert(false); }
