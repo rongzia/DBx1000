@@ -119,9 +119,10 @@
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 //#define SYNTH_TABLE_SIZE            (1024UL * 100 * 204)
-#define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
+// #define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
+#define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
 
-#define ZIPF_THETA 					0.0001     // 值越大，冲突越高
+#define ZIPF_THETA 					0.6     // 值越大，冲突越高
 #define READ_PERC 					0.9
 #define WRITE_PERC 					0.1
 #define SCAN_PERC 					0
@@ -261,11 +262,8 @@ extern TestCases					g_test_case;
 
 
 
-
-// #define YCSB_AVG
-
 // #define RDB_BUFFER_DIFF_SIZE		// 确保 B_P_L_P
-// #define RDB_BUFFER_WITH_SIZE		// 确保 B_P_L_P
+// #define RDB_BUFFER_SAME_SIZE		// 确保 B_P_L_P
 // #define DB2
 // #define RAC
 
@@ -277,6 +275,5 @@ extern TestCases					g_test_case;
 
 #define REAL_STOP		// 之前的所有实例一起停止有 bug，这才是正确实现。
 #define CLREAR_BUF		// 被失效后，应该清除 buffer 与否，on 为 true, off 为 false
-// #define YCSB_AVG		// 平均负载
 
 #endif

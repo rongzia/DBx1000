@@ -122,9 +122,11 @@ int main(int argc, char *argv[]) {
 #endif
 
 #ifdef KEY_COUNT
-    managerInstance->keyCounter_->Serialize();
+    if(managerInstance->instance_id() == 0) {
+        managerInstance->keyCounter_->Serialize();
+    }
 #endif // KEY_COUNT
-
+    cout << "cache hits: " << managerInstance->m_workload_->buffer_pool_.hits_ << " " << managerInstance->m_workload_->buffer_pool_.total_req_ << endl;
     while(1) { this_thread::yield(); }
     delete managerInstance;
 

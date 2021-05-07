@@ -160,10 +160,16 @@ namespace dbx1000 {
             assert(count == MY_PAGE_SIZE);
             const BufferPool::PageKey pagekey = std::make_pair(table_, item_id);
             const BufferPool::PageHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
+            #ifdef CLREAR_BUF
+            if(handle == NULL || handle == nullptr) {
+                handle = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(pagekey);
+            }
+            #endif // CLREAR_BUF
+            assert(handle);
             memcpy(buf, handle->value.page_buf_read(), count);
             manager_instance_->m_workload_->buffer_pool_.Release(handle);
 #ifdef CLREAR_BUF
-            // manager_instance_->m_workload_->buffer_pool_.Delete(pagekey);
+            manager_instance_->m_workload_->buffer_pool_.Delete(pagekey);
 #endif // CLREAR_BUF
 #else
             assert(count == manager_instance_->m_workload_->tables_[table_]->get_schema()->tuple_size);

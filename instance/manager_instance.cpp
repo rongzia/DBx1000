@@ -66,6 +66,8 @@ namespace dbx1000 {
 #ifdef KEY_COUNT
         keyCounter_->Clear();
 #endif // KEY_COUNT
+        m_workload_->buffer_pool_.hits_.store(0);
+        m_workload_->buffer_pool_.total_req_.store(0);
     }
 
     // 调用之前确保 parser_host 被调用，因为 instance_id_，host_map_ 需要先初始化

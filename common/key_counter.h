@@ -18,10 +18,11 @@
 
 class KeyCounter{
 public:
-    KeyCounter() = default;
+    KeyCounter() : total_count_(ATOMIC_VAR_INIT(0)) {};
     ~KeyCounter() { Clear(); }
 
     RC Add(TABLES table, uint64_t key) {
+        total_count_.fetch_add(1);
         std::unique_lock<std::mutex> lck = std::unique_lock<std::mutex>(mtxes_[table], std::defer_lock);
         lck.lock();
         counter_[table].insert(key);
@@ -66,6 +67,7 @@ public:
 
     
     void Clear() {
+        total_count_.store(0);
         for(int t = (int)TABLES::MAIN_TABLE; t <= (int)TABLES::STOCK; t++){
             counter_[(TABLES)t].clear();
         }
@@ -88,6 +90,8 @@ private:
 
     std::map<TABLES, std::multiset<uint64_t>> counter_;
     std::map<TABLES, std::mutex> mtxes_;
+public:
+    atomic_uint64_t total_count_;
 
 
     // tbb::concurrent_hash_map<std::pair<TABLES, uint64_t>, uint64_t> counter_;

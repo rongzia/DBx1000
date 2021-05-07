@@ -303,6 +303,9 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         h_thd->manager_client_->stats_._stats[get_thd_id()]->count_total_request_++;
         ycsb_request *req = &m_query->requests[rid];
+#ifdef KEY_COUNT
+        this->h_thd->manager_client_->keyCounter_->Add(TABLES::MAIN_TABLE, req->key);
+#endif // KEY_COUNT
         /* int part_id = wl->key_to_part( req->key ); */      //! 分区数为 1，part_id == 0
         //! finish_req、iteration 是为 req->rtype==SCAN 准备的，扫描需要读 SCAN_LEN 个 item，
         //! while 虽然为 SCAN 提供了 SCAN_LEN 次读，但是每次请求的 key 是一样的，并没有对操作 [key, key + SCAN_LEN]
@@ -385,9 +388,6 @@ void ycsb_txn_man::GetWriteRecordSet(base_query *query) {
     ycsb_query* m_query = (ycsb_query*) query;
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid++) {
         ycsb_request *req = &m_query->requests[rid];
-#ifdef KEY_COUNT
-        this->h_thd->manager_client_->keyCounter_->Add(TABLES::MAIN_TABLE, req->key);
-#endif // KEY_COUNT
         if (req->rtype == WR) {
 #if defined(B_P_L_P)
             dbx1000::IndexItem indexItem;
