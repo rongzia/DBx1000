@@ -122,9 +122,9 @@
 // #define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
 #define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
 
-#define ZIPF_THETA 					0.6     // 值越大，冲突越高
-#define READ_PERC 					0.9
-#define WRITE_PERC 					0.1
+#define ZIPF_THETA 					0.8     // 值越大，冲突越高
+#define READ_PERC 					0.8
+#define WRITE_PERC 					0.2
 #define SCAN_PERC 					0
 #define SCAN_LEN					20
 #define PART_PER_TXN 				1
@@ -262,7 +262,7 @@ extern TestCases					g_test_case;
 
 
 
-// #define RDB_BUFFER_DIFF_SIZE		// 确保 B_P_L_P
+#define RDB_BUFFER_DIFF_SIZE		// 确保 B_P_L_P
 // #define RDB_BUFFER_SAME_SIZE		// 确保 B_P_L_P
 // #define DB2
 // #define RAC

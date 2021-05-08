@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
         managerInstance->keyCounter_->Serialize();
     }
 #endif // KEY_COUNT
-    cout << "cache hits: " << managerInstance->m_workload_->buffer_pool_.hits_ << " " << managerInstance->m_workload_->buffer_pool_.total_req_ << endl;
+    cout << "cache hits: " << managerInstance->m_workload_->buffer_pool_.hits_ << "/" << managerInstance->m_workload_->buffer_pool_.total_req_ << endl;
     while(1) { this_thread::yield(); }
     delete managerInstance;
 

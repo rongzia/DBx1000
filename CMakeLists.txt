@@ -5,8 +5,9 @@ SET(CMAKE_C_COMPILER "gcc")
 SET(CMAKE_CXX_COMPILER "g++")
 # cmake ..
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wno-deprecated-declarations ${CMAKE_CXX_FLAGS}" CACHE INTERNAL "compiler options" FORCE)
+# cmake -DCMAKE_BUILD_TYPE=Debug ..
 SET(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 ${CMAKE_CXX_FLAGS}" CACHE INTERNAL "compiler options" FORCE)
-# cmake -
+# cmake -DCMAKE_BUILD_TYPE=Release ..
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG ${CMAKE_CXX_FLAGS}" CACHE INTERNAL "compiler options" FORCE)
 
 add_definitions(-DNOGRAPHITE=1)

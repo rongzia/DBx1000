@@ -50,6 +50,21 @@ RC ycsb_wl::init_schema(string schema_file) {
     }
     #endif // B_P_L_P
 #endif // RDB_BUFFER_SANE_SIZE
+#ifdef RDB_BUFFER_DIFF_SIZE
+    #ifdef B_P_L_P
+    if(this->manager_instance_ && !this->is_server_) {
+        buffer_pool_.manager_instance_ = manager_instance_;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.1:0.3;
+        // manager_instance_->threshold_ = 0.25;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.4:0.2;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.7:0.1;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.82:0.06;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.91:0.03;
+        manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.97:0.01;
+        buffer_pool_.SetSize(SYNTH_TABLE_SIZE/204 * manager_instance_->threshold_);
+    }
+    #endif // B_P_L_P
+#endif // RDB_BUFFER_DIFF_SIZE
     tables_[TABLES::MAIN_TABLE]      = the_table;
 /////////////// rrzhang ///////////////
 	return RC::RCOK;

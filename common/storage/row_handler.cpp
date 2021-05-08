@@ -90,7 +90,10 @@ namespace dbx1000 {
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
         BufferPool::PageKey pagekey = std::make_pair(table, indexItem.page_id_);
         const BufferPool::PageHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
-        manager_instance_->m_workload_->buffer_pool_.Counter(handle);
+        if(manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O) {
+                manager_instance_->m_workload_->buffer_pool_.hits_.fetch_sub(1);
+        }
+        // manager_instance_->m_workload_->buffer_pool_.Counter(handle);
         #ifdef CLREAR_BUF
         if(handle == NULL || handle == nullptr) {
             handle = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(pagekey);
@@ -128,7 +131,10 @@ namespace dbx1000 {
 
         auto pagekey = std::make_pair(table, indexItem.page_id_);
         const BufferPool::PageHandle* handle_read = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
-        manager_instance_->m_workload_->buffer_pool_.Counter(handle_read);
+        if(manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O) {
+                manager_instance_->m_workload_->buffer_pool_.hits_.fetch_sub(1);
+        }
+        // manager_instance_->m_workload_->buffer_pool_.Counter(handle_read);
         #ifdef CLREAR_BUF
         if(handle_read == NULL || handle_read == nullptr) {
             handle_read = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(pagekey);

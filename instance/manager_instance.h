@@ -81,6 +81,7 @@ namespace dbx1000 {
 #ifdef KEY_COUNT
         KeyCounter* keyCounter_;
 #endif // KEY_COUNT
+        float threshold_;
     };
 }
 
