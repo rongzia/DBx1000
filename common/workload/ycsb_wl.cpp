@@ -54,13 +54,14 @@ RC ycsb_wl::init_schema(string schema_file) {
     #ifdef B_P_L_P
     if(this->manager_instance_ && !this->is_server_) {
         buffer_pool_.manager_instance_ = manager_instance_;
-        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.1:0.3;
+        manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.1:0.3;
         // manager_instance_->threshold_ = 0.25;
         // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.4:0.2;
         // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.7:0.1;
         // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.82:0.06;
         // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.91:0.03;
-        manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.97:0.01;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.97:0.01;
+        // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.991:0.003;
         buffer_pool_.SetSize(SYNTH_TABLE_SIZE/204 * manager_instance_->threshold_);
     }
     #endif // B_P_L_P

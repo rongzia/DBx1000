@@ -45,7 +45,7 @@ public:
     void SetSize(size_t max_size)                         { this->buffer_pool_.set_max_size(max_size); }
 
     const PageHandle* PutIfNotExist(PageKey pagekey) {
-        this_thread::sleep_for(chrono::nanoseconds(10000));
+        this_thread::sleep_for(chrono::nanoseconds(15000));
         // if(ZIPF_THETA > 0.1) {
             // if(manager_instance_->threshold_ < 0.03) { this_thread::sleep_for(chrono::nanoseconds(int64_t(10000/WRITE_PERC))); }
             // if(0.03 <= manager_instance_->threshold_ && manager_instance_->threshold_ < 0.06) { this_thread::sleep_for(chrono::nanoseconds(int64_t(7000/WRITE_PERC))); }
