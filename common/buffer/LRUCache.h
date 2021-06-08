@@ -259,6 +259,20 @@ typedef VALUE value_type;
 
 		return e;
 	}
+	// 由于外层还要封装一下该 LRUCache，即 LRUCache 使用是会被特化，比如：`LRUCache<PageKey, Page, PageDeleter> buffer_pool_;`
+	// 此时不能用第一种方法来转发，因为通用引用需要两个条件：
+	// 1. 参数形只能为 T&&，`const T&&` 也不行。
+	// 2. 需要用到类型推断，被特化后，下面第一种方法是行不通的，因为会被特化为 `universal_put1(PageKey key, Page&& value)`，这不是通用引用，而是特定的右值引用。
+	// template<typename T1, typename T2>
+	// const Handle *universal_put1(T1 key, T2&& value) {
+	// 	return put(key, std::forward<T2>(value)); // 只能调用 copy 函数，不能调用移动函数
+	// }
+
+	// 方法2，使用Args...，这会调用到类型推断，所以是通用引用，在封装的cache里面，可以直接用 `buffer_pool_.universalPut(key, std::forward<T>(value));`
+	template <class... Args>
+	const Handle *universalPut(Args&&... args) {
+		return put(std::forward<Args>(args)...);
+	}
 
 	// delete from cache, deleter delay called when all inuse-handle release.
 	void del(const KEY& key)

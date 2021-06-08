@@ -262,7 +262,7 @@ extern TestCases					g_test_case;
 
 
 
-#define RDB_BUFFER_DIFF_SIZE		// 确保 B_P_L_P
+// #define RDB_BUFFER_DIFF_SIZE		// 确保 B_P_L_P
 // #define RDB_BUFFER_SAME_SIZE		// 确保 B_P_L_P
 // #define DB2
 // #define RAC
