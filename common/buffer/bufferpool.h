@@ -34,11 +34,8 @@ public:
         Counter(handle);
         return handle;
     }
-
-    // const PageHandle *Put(const PageKey& key, Page& value) { return buffer_pool_.put(key, std::forward<Page>(value)); }
-    const PageHandle* Put(const PageKey& key, const Page& value) { return buffer_pool_.put(key, value); }
-    const PageHandle* Put(const PageKey& key, Page&& value) { return buffer_pool_.put(key, std::forward<Page>(value)); }
-    // const PageHandle* Put(const PageKey& key, T&& value) { return buffer_pool_.put(key, value); }
+    template<typename T>
+    const PageHandle* Put(const PageKey& key, T&& value) { return buffer_pool_.put(key, std::forward<T>(value)); }
     void Release(const PageHandle* handle)                { buffer_pool_.release(handle); }
     void Release(PageHandle* handle)                      { buffer_pool_.release(handle); }
     void Delete(const PageKey& key)                       { buffer_pool_.del(key); }

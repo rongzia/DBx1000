@@ -54,8 +54,8 @@ private:
 	{}
 
 	LRUHandle(const KEY& k, VALUE&& v):
-		value(std::forward<VALUE>(v)),
-		key(k),
+		value(std::move(v)),
+		key(std::move(k)),
 		prev(NULL),
 		next(NULL),
 		ref(0),
@@ -189,7 +189,6 @@ typedef VALUE value_type;
 
 	// put copy
 	// Need call release when handle no longer needed
-
 	const Handle *put(const KEY& key, const VALUE& value)
 	{
 		Handle *e = new Handle(key, value);
@@ -225,9 +224,10 @@ typedef VALUE value_type;
 		return e;
 	}
 	// put move
+	// Need call release when handle no longer needed
 	const Handle *put(const KEY& key, VALUE&& value)
 	{
-		Handle *e = new Handle(key, std::forward<VALUE>(value));
+		Handle *e = new Handle(key, std::move(value));
 
 		e->ref = 1;
 		std::lock_guard<std::mutex> lock(mutex_);
