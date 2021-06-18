@@ -45,7 +45,7 @@ set(COMMON_FILES
 #        common/buffer/buffer_def.cpp
 #        common/buffer/lru.cpp
 #        common/buffer/lru_index.cpp
-        common/buffer/record_buffer.cpp
+# common/buffer/record_buffer.cpp
         common/index/index.cpp
         common/lock_table/lock_table.cpp
         common/lock_table/test_lock_table.cpp

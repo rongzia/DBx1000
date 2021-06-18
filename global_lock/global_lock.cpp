@@ -71,19 +71,19 @@ namespace dbx1000 {
 
             /// 初始化 lock_service_table_
 #if WORKLOAD == YCSB
-#ifdef B_P_L_P
+#if defined(B_P_L_P)
             IndexItem indexItem;
 #ifdef NO_CONFLICT
             for (uint64_t key = 0; key < SYNTH_TABLE_SIZE*PROCESS_CNT; key++) {
-#else
+#else // NO_CONFLICT
             for (uint64_t key = 0; key < SYNTH_TABLE_SIZE; key++) {
-#endif
+#endif // NO_CONFLICT
                 m_workload_->indexes_[TABLES::MAIN_TABLE]->IndexGet(key, &indexItem);
                 if(this->lock_tables_[TABLES::MAIN_TABLE].find(indexItem.page_id_) == lock_tables_[TABLES::MAIN_TABLE].end()) {
                     this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(indexItem.page_id_, new LockNode()));
                 }
             }
-#else // B_P_L_P
+#elif defined(B_R_L_R) || defined(B_M_L_R) || defined(B_P_L_R)
 #ifdef NO_CONFLICT
             for (uint64_t key = 0; key < SYNTH_TABLE_SIZE*PROCESS_CNT; key++) {
 #else // NO_CONFLICT
@@ -91,9 +91,11 @@ namespace dbx1000 {
 #endif // NO_CONFLICT
                 this->lock_tables_[TABLES::MAIN_TABLE].insert(make_pair(key, new LockNode()));
             }
-#endif // B_P_L_P
+#else // B_L
+        assert(false);
+#endif // B_L
 #elif WORKLOAD == TPCC
-#ifdef B_P_L_P
+#if defined(B_P_L_P)
             IndexItem indexItem;
             for (uint32_t i = 1; i <= g_max_items; i++) {
                 m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
@@ -125,7 +127,7 @@ namespace dbx1000 {
                     }
                 }
             }
-#else // B_P_L_P
+#elif defined(B_R_L_R) || defined(B_M_L_R) || defined(B_P_L_R)
 //            for (uint32_t i = 1; i <= g_max_items; i++) {
 //                this->lock_tables_[TABLES::ITEM].insert(make_pair(i, new LockNode()));
 //            }
@@ -141,7 +143,9 @@ namespace dbx1000 {
                     this->lock_tables_[TABLES::STOCK].insert(make_pair(stockKey(sid, wh_id), new LockNode()));
                 }
             }
-#endif // B_P_L_P
+#else // B_L
+        assert(false);
+#endif // B_L
 #endif // TPCC
         }
 
@@ -192,19 +196,35 @@ namespace dbx1000 {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
+#if defined(B_P_L_P) || defined(B_P_L_R)
                     const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
                     Page page(buf);
                     const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Put(pagekey, std::move(page));
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+                    const RowBufferPool::RowKey rowkey = std::make_pair(table, item_id);
+                    row_t row;
+                    row.set_primary_key(item_id);
+                    row.init(this->m_workload_->tables_[table], 0, item_id);
+                    const RowBufferPool::RowHandle* handle = this->m_workload_->buffer_pool_.Put(rowkey, std::move(row));
+#else  //B_L
+                    assert(false);
+#endif //B_L
                     this->m_workload_->buffer_pool_.Release(handle);
                     iter->second->write_ins_id = ins_id;
                 }
             } else {
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
+#if defined(B_P_L_P) || defined(B_P_L_R)
                     const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
                     const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Get(pagekey);
                     memcpy(buf, handle->value.page_buf_read(), count);
                     this->m_workload_->buffer_pool_.Release(handle);
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+                    // do nothing, no need init buf
+#else  //B_L
+                    assert(false);
+#endif //B_L
                 }
 //                 cout << ins_id << " get page id : " << page_id << " success" << endl;
             }

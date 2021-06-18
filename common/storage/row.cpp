@@ -15,6 +15,18 @@
 //#include "mem_alloc.h"
 //#include "manager.h"
 
+row_t::row_t(const row_t& other) {
+	this->_primary_key = other._primary_key;
+	
+	this->_row_id = other._row_id;
+    this->_part_id = other._part_id;
+    this->table = other.table;
+    Catalog *schema = this->table->get_schema();
+    int tuple_size = schema->get_tuple_size();
+    data = new char[tuple_size];
+	memcpy(this->data, other.data, tuple_size);
+}
+
 RC
 row_t::init(table_t *host_table, uint64_t part_id, uint64_t row_id) {
     _row_id = row_id;

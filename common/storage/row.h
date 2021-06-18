@@ -35,6 +35,9 @@ class Row_vll;
 class row_t
 {
 public:
+    row_t() = default;
+    row_t(const row_t& other);
+    ~row_t() { free_row(); }
 
     RC init(table_t * host_table, uint64_t part_id, uint64_t row_id = 0);
     void init(int size);

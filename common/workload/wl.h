@@ -5,8 +5,12 @@
 #include <mutex>
 #include <atomic>
 #include <vector>
-#include "common/buffer/bufferpool.h"
 #include "common/global.h"
+#if defined(B_P_L_R) || defined(B_P_L_P)
+#include "common/buffer/bufferpool.h"
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+#include "common/buffer/rowbufferpool.h"
+#endif // B_L
 
 //class row_t;
 class table_t;
@@ -60,7 +64,11 @@ public:
     std::map<TABLES, std::shared_ptr<dbx1000::TableSpace>> tablespaces_;
     std::map<TABLES, std::shared_ptr<dbx1000::Index>> indexes_;
     // std::map<TABLES, std::shared_ptr<dbx1000::RecordBuffer>> buffers_;
+#if defined(B_P_L_R) || defined(B_P_L_P)
     BufferPool buffer_pool_;
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+    RowBufferPool buffer_pool_;
+#endif // B_L
     std::map<TABLES, table_t*> tables_;
 	std::vector<dbx1000::Arena*> arenas_;
 	dbx1000::ManagerInstance * manager_instance_;

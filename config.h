@@ -256,8 +256,8 @@ extern TestCases					g_test_case;
 #endif // no SINGLE_NODE
 //#define NO_CONFLICT                 // 是否实例间访问的数据有冲突
 #define B_P_L_P // buffer page, lock page       1
-//#define B_R_L_R // buffer record, lock record   2
-//#define B_M_L_R // buffer mixed, lock record    3
+// #define B_R_L_R // buffer record, lock record   2
+// #define B_M_L_R // buffer mixed, lock record    3
 //#define B_P_L_R // buffer page, lock record     4
 
 

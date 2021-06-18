@@ -1,10 +1,12 @@
 //
 // Created by rrzhang on 2020/10/10.
 //
+
+#include <cstring>
 #include "lock_table.h"
 
 
-#include "common/buffer/record_buffer.h"
+
 #include "common/storage/row.h"
 #include "instance/manager_instance.h"
 #include "util/shared_ptr_helper.h"
@@ -171,15 +173,16 @@ namespace dbx1000 {
 #ifdef CLREAR_BUF
             manager_instance_->m_workload_->buffer_pool_.Delete(pagekey);
 #endif // CLREAR_BUF
-#else
-            assert(count == manager_instance_->m_workload_->tables_[table_]->get_schema()->tuple_size);
+#elif defined(B_M_L_R) || defined(B_R_L_R) || defined(B_P_L_R)
             row_t* new_row;
-            uint64_t row_id;
-            manager_instance_->m_workload_->tables_[table_]->get_new_row(new_row, 0, row_id);
+            manager_instance_->m_workload_->tables_[table_]->get_new_row(new_row, 0, item_id);
             manager_instance_->row_handler_->ReadRow(table_, item_id, new_row, count);
             memcpy(buf, new_row->data, count);
             delete new_row;
-#endif
+#ifdef CLREAR_BUF
+            manager_instance_->m_workload_->buffer_pool_.Delete(std::make_pair(table_, item_id));
+#endif // CLREAR_BUF
+#endif // defined(B_P_L_P)
             rc = RC::RCOK;
         } else {
             rc = RC::TIME_OUT;

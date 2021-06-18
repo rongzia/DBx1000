@@ -88,27 +88,32 @@ namespace dbx1000 {
         assert(size == row->get_tuple_size());
         dbx1000::IndexItem indexItem;
         manager_instance_->m_workload_->indexes_[table]->IndexGet(key, &indexItem);
-        BufferPool::PageKey pagekey = std::make_pair(table, indexItem.page_id_);
+        const BufferPool::PageKey pagekey = std::make_pair(table, indexItem.page_id_);
         const BufferPool::PageHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
-        // if(manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O) {
-        //         manager_instance_->m_workload_->buffer_pool_.hits_.fetch_sub(1);
-        // }
-        // manager_instance_->m_workload_->buffer_pool_.Counter(handle);
         #ifdef CLREAR_BUF
         if(handle == NULL || handle == nullptr) {
             handle = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(pagekey);
         }
         #endif // CLREAR_BUF
+        assert(handle);
         assert(handle->value.page_id() == indexItem.page_id_);
         memcpy(row->data, &handle->value.page_buf_read()[indexItem.page_location_], size);
         manager_instance_->m_workload_->buffer_pool_.Release(handle);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
-        rc = manager_instance_->m_workload_->buffers_[table]->BufferGet(key, row->data, size);
-        assert(rc == RC::RCOK);
-#else
+        const RowBufferPool::RowKey rowkey = std::make_pair(table, key);
+        const RowBufferPool::RowHandle* handle = manager_instance_->m_workload_->buffer_pool_.Get(rowkey);
+        #ifdef CLREAR_BUF
+        if(handle == NULL || handle == nullptr) {
+                handle = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(rowkey, manager_instance_->m_workload_->tables_[table]);
+        }
+        #endif // CLREAR_BUF
+        assert(handle);
+        memcpy(row->data, handle->value.data, size);
+        manager_instance_->m_workload_->buffer_pool_.Release(handle);
+#else  // B_L
         assert(false);
-#endif
+#endif // B_L
         return rc;
     }
 
@@ -131,10 +136,6 @@ namespace dbx1000 {
 
         auto pagekey = std::make_pair(table, indexItem.page_id_);
         const BufferPool::PageHandle* handle_read = manager_instance_->m_workload_->buffer_pool_.Get(pagekey);
-        // if(manager_instance_->lock_table_[table]->lock_table_[indexItem.page_id_]->lock_mode == LockMode::O) {
-        //         manager_instance_->m_workload_->buffer_pool_.hits_.fetch_sub(1);
-        // }
-        // manager_instance_->m_workload_->buffer_pool_.Counter(handle_read);
         #ifdef CLREAR_BUF
         if(handle_read == NULL || handle_read == nullptr) {
             handle_read = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(pagekey);
@@ -146,24 +147,44 @@ namespace dbx1000 {
 
         const BufferPool::PageHandle* handle_write = manager_instance_->m_workload_->buffer_pool_.Put(pagekey, Page(handle_read->value.page_buf_read()));
         manager_instance_->m_workload_->buffer_pool_.Release(handle_read);
-        manager_instance_->m_workload_->buffer_pool_.Release(handle_write);
 
         // manager_instance_->lock_table_[table]->UnLock(indexItem.page_id_);
 #ifdef DB2
         dbx1000::Profiler profiler; profiler.Start();
-        rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, page->page_id(), dbx1000::LockMode::O, page->page_buf(), MY_PAGE_SIZE);
+        rc = manager_instance_->global_lock_service_client_->Unlock(manager_instance_->instance_id_, table, handle_write->value->page_id(), dbx1000::LockMode::O, handle_write->value->page_buf(), MY_PAGE_SIZE);
         profiler.End();
         manager_instance_->stats_.total_time_Unlock_.fetch_add(profiler.Nanos());
         manager_instance_->stats_.total_count_Unlock_.fetch_add(1);
-        if(RC::RCOK == rc) { manager_instance_->lock_table_[table]->lock_table_[page->page_id()]->lock_mode = dbx1000::LockMode::O; }
+        if(RC::RCOK == rc) { manager_instance_->lock_table_[table]->lock_table_[handle_write->value->page_id()]->lock_mode = dbx1000::LockMode::O; }
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_write);
 #endif // DB2
         // delete page;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
         assert(size == row->get_tuple_size());
-        rc = manager_instance_->m_workload_->buffers_[table]->BufferPut(key, row->data, size);
-#else
+        // 获取写锁
+        std::shared_ptr<dbx1000::LockNode> lockNode = manager_instance_->lock_table_[table]->lock_table_[key];
+        // if(lockNode->lock_mode == LockMode::O) { cout << "row id: " << key << endl; }
+        // assert(lockNode->lock_mode != LockMode::O);
+        // manager_instance_->lock_table_[table]->Lock(key, dbx1000::LockMode::X);
+
+        auto rowkey = std::make_pair(table, key);
+        const RowBufferPool::RowHandle* handle_read = manager_instance_->m_workload_->buffer_pool_.Get(rowkey);
+        #ifdef CLREAR_BUF
+        if(handle_read == NULL || handle_read == nullptr) {
+            handle_read = manager_instance_->m_workload_->buffer_pool_.PutIfNotExist(rowkey, manager_instance_->m_workload_->tables_[table]);
+        }
+        #endif // CLREAR_BUF
+        if(!handle_read) {cout << "row id: " << key << endl;}
+        assert(handle_read);
+
+        const RowBufferPool::RowHandle* handle_write = manager_instance_->m_workload_->buffer_pool_.Put(rowkey, row_t(*row));
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_read);
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_write);
+
+        // manager_instance_->lock_table_[table]->UnLock(key);
+#else  // B_L
         assert(false);
-#endif
+#endif // B_L
         return rc;
     }
 }

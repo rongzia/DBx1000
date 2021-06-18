@@ -178,16 +178,18 @@ namespace dbx1000 {
 #else // NO_CONFLICT
         for(uint64_t key = 0; key < g_synth_table_size; key++) {
 #endif // NO_CONFLICT
-#ifdef B_P_L_P
+#if defined(B_P_L_P)
             m_workload_->indexes_[TABLES::MAIN_TABLE]->IndexGet(key, &indexItem);
             if(lock_table_[TABLES::MAIN_TABLE]->lock_table_.find(indexItem.page_id_) == lock_table_[TABLES::MAIN_TABLE]->lock_table_.end()) {
                 lock_table_[TABLES::MAIN_TABLE]->lock_table_[indexItem.page_id_] = make_shared<LockNode>();
                 lock_table_[TABLES::MAIN_TABLE]->lock_table_[indexItem.page_id_]->Init(this->instance_id_, LockMode::O);
             }
-#else // B_P_L_P
+#elif defined(B_R_L_R) || defined(B_M_L_R) || defined(B_P_L_R)
             lock_table_[TABLES::MAIN_TABLE]->lock_table_[key] = make_shared<LockNode>();
             lock_table_[TABLES::MAIN_TABLE]->lock_table_[key]->Init(this->instance_id_, LockMode::O);
-#endif // B_P_L_P
+#else // B_L
+        assert(false);
+#endif // B_L
         }
     }
 #endif // WORKLOAD == YCSB
@@ -204,7 +206,7 @@ namespace dbx1000 {
         this->lock_table_[TABLES::ITEM] = new LockTable(TABLES::ITEM, this->instance_id(), this);
         this->lock_table_[TABLES::STOCK] = new LockTable(TABLES::STOCK, this->instance_id(), this);
 
-#ifdef B_P_L_P
+#if defined(B_P_L_P)
         IndexItem indexItem;
         for (uint32_t i = 1; i <= g_max_items; i++) {
             m_workload_->indexes_[TABLES::ITEM]->IndexGet(i, &indexItem);
@@ -242,7 +244,7 @@ namespace dbx1000 {
                 }
             }
         }
-#else // B_P_L_P
+#elif defined(B_R_L_R) || defined(B_M_L_R) || defined(B_P_L_R)
         for (uint32_t i = 0; i <= g_max_items; i++) {
             lock_table_[TABLES::ITEM]->lock_table_[i] = make_shared<LockNode>();
         }
@@ -261,7 +263,9 @@ namespace dbx1000 {
                 lock_table_[TABLES::STOCK]->lock_table_[stockKey(sid, wh_id)]->Init(this->instance_id_, LockMode::O);
             }
         }
-#endif // B_P_L_P
+#else // B_L
+        assert(false);
+#endif // B_L
     }
 #endif // TPCC
 

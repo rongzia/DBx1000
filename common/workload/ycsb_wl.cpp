@@ -39,6 +39,7 @@ RC ycsb_wl::init_schema(string schema_file) {
 	the_table = tables["MAIN_TABLE"];
 //	the_index = indexes["MAIN_INDEX"];
 /////////////// rrzhang ///////////////
+    buffer_pool_.manager_instance_ = manager_instance_;
 #if defined(B_P_L_P) || defined(B_P_L_R)
     tablespaces_[TABLES::MAIN_TABLE] = make_shared<dbx1000::TableSpace>();
     indexes_[TABLES::MAIN_TABLE]     = make_shared<dbx1000::Index>();
@@ -53,7 +54,6 @@ RC ycsb_wl::init_schema(string schema_file) {
 #ifdef RDB_BUFFER_DIFF_SIZE
     #ifdef B_P_L_P
     if(this->manager_instance_ && !this->is_server_) {
-        buffer_pool_.manager_instance_ = manager_instance_;
         manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.1:0.3;
         // manager_instance_->threshold_ = 0.25;
         // manager_instance_->threshold_ = manager_instance_->instance_id_==0 ? 0.4:0.2;
@@ -121,69 +121,74 @@ RC ycsb_wl::init_table() {
             page->PagePut(page->page_id(), new_row->data, new_row->get_tuple_size());
             dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
             indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
-#else
-            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, new_row->data, new_row->get_tuple_size());
-#endif
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+            const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, new_row->get_primary_key());
+            const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, *new_row);
+            buffer_pool_.Release(handle);
+#endif // B_L
+        delete new_row;
         }
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (page->used_size() > 64) {
             page->Serialize();
             if(key_in_this_instance || is_server_ == true) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
         }
-#endif
+#endif // defined(B_P_L_P) || defined(B_P_L_R)
     }
-
-#if defined(B_P_L_P) || defined(B_P_L_R)
-    delete page;
-#endif
 #else // NO_CONFLICT
     for(auto key = 0; key < g_synth_table_size; key++) {
-            uint64_t total_row = key;
-            row_t *new_row = NULL;
-            uint64_t row_id;
-            rc = the_table->get_new_row(new_row, 0, row_id);
-            // TODO insertion of last row may fail after the table_size
-            // is updated. So never access the last record in a table
-            assert(rc == RC::RCOK);
-            uint64_t primary_key = total_row;
-            new_row->set_primary_key(primary_key);
-            new_row->set_value(0, &primary_key);
-            Catalog *schema = the_table->get_schema();
-            for (uint32_t fid = 0; fid < schema->get_field_cnt(); fid++) {
-                int field_size = schema->get_field_size(fid);
-                char value[field_size];
-                for (int i = 0; i < field_size; i++)
-                    value[i] = (char) rand() % (1 << 8);
-                new_row->set_value(fid, value);
-            }
+        uint64_t total_row = key;
+        row_t *new_row = NULL;
+        uint64_t row_id;
+        rc = the_table->get_new_row(new_row, 0, row_id);
+        // TODO insertion of last row may fail after the table_size
+        // is updated. So never access the last record in a table
+        assert(rc == RC::RCOK);
+        uint64_t primary_key = total_row;
+        new_row->set_primary_key(primary_key);
+        new_row->set_value(0, &primary_key);
+        Catalog *schema = the_table->get_schema();
+        for (uint32_t fid = 0; fid < schema->get_field_cnt(); fid++) {
+            int field_size = schema->get_field_size(fid);
+            char value[field_size];
+            for (int i = 0; i < field_size; i++)
+                value[i] = (char) rand() % (1 << 8);
+            new_row->set_value(fid, value);
+        }
 
 #if defined(B_P_L_P) || defined(B_P_L_R)
-            if (new_row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
-                page->Serialize();
-                const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
-                const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
-                buffer_pool_.Release(handle);
-                page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
-                page->set_used_size(64);
-            }
-            page->PagePut(page->page_id(), new_row->data, new_row->get_tuple_size());
-            dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
-            indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
-#else // defined(B_P_L_P) || defined(B_P_L_R)
-            buffers_[TABLES::MAIN_TABLE]->BufferPut(primary_key, new_row->data, new_row->get_tuple_size());
-#endif // defined(B_P_L_P) || defined(B_P_L_R)
-        }
-#if defined(B_P_L_P) || defined(B_P_L_R)
-        if (page->used_size() > 64) {
+        if (new_row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
             page->Serialize();
             const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
             const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
             buffer_pool_.Release(handle);
+            page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
+            page->set_used_size(64);
         }
-    delete page;
+        page->PagePut(page->page_id(), new_row->data, new_row->get_tuple_size());
+        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
+        indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
+#elif defined(B_M_L_R) || defined(B_R_L_R)
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, new_row->get_primary_key());
+        const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, *new_row);
+        buffer_pool_.Release(handle);
+#endif // B_L
+        delete new_row;
+    }
+
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    if (page->used_size() > 64) {
+        page->Serialize();
+        const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
+        const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+        buffer_pool_.Release(handle);
+    }
 #endif // defined(B_P_L_P) || defined(B_P_L_R)
 #endif // NO_CONFLICT
 
+#if defined(B_P_L_P) || defined(B_P_L_R)
+    delete page;
+#endif
     printf("[YCSB] Table \"MAIN_TABLE\" initialized.\n");
     return RC::RCOK;
 }
