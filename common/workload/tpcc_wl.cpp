@@ -266,7 +266,7 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
     }
     delete page;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-    const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, row->get_primary_key());
+    const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::WAREHOUSE, row->get_primary_key());
     const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, row_t(*row));
     buffer_pool_.Release(handle);
 #endif // B_L
@@ -329,7 +329,7 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::DISTRICT]->IndexPut(distKey(did, wid), &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, row->get_primary_key());
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::DISTRICT, distKey(did, wid));
         const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, row_t(*row));
         buffer_pool_.Release(handle);
 #endif // B_L
@@ -406,7 +406,7 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::STOCK]->IndexPut(stockKey(sid, wid), &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, row->get_primary_key());
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::STOCK, stockKey(sid, wid));
         const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, row_t(*row));
         buffer_pool_.Release(handle);
 #endif // B_L
@@ -509,7 +509,7 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
         indexes_[TABLES::CUSTOMER]->IndexPut(key, &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, row->get_primary_key());
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::CUSTOMER, key);
         const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, row_t(*row));
         buffer_pool_.Release(handle);
 #endif // B_L
@@ -623,7 +623,7 @@ void tpcc_wl::init_tab_order(uint64_t did, uint64_t wid) {
 //        dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - row->get_tuple_size());
 //        indexes_[TABLES::ORDER]->IndexPut(key, &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, row->get_primary_key());
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ORDER, row->get_primary_key());
         const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, row_t(*row));
         buffer_pool_.Release(handle);
 #endif // B_L

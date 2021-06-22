@@ -114,7 +114,11 @@ RC ycsb_wl::init_table() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
             if (new_row->get_tuple_size() > (MY_PAGE_SIZE - page->used_size())) {
                 page->Serialize();
-                if(key_in_this_instance || is_server_ == true) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
+                if(key_in_this_instance || is_server_ == true) {
+                    const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
+                    const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+                    buffer_pool_.Release(handle);
+                }
                 page->set_page_id(tablespaces_[TABLES::MAIN_TABLE]->GetNextPageId());
                 page->set_used_size(64);
             }
@@ -122,7 +126,7 @@ RC ycsb_wl::init_table() {
             dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
             indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-            const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, new_row->get_primary_key());
+            const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::MAIN_TABLE, new_row->get_primary_key());
             const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, *new_row);
             buffer_pool_.Release(handle);
 #endif // B_L
@@ -169,7 +173,7 @@ RC ycsb_wl::init_table() {
         dbx1000::IndexItem indexItem(page->page_id(), page->used_size() - new_row->get_tuple_size());
         indexes_[TABLES::MAIN_TABLE]->IndexPut(primary_key, &indexItem);
 #elif defined(B_M_L_R) || defined(B_R_L_R)
-        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::ITEM, new_row->get_primary_key());
+        const RowBufferPool::RowKey rowkey = std::make_pair(TABLES::MAIN_TABLE, new_row->get_primary_key());
         const RowBufferPool::RowHandle* handle = buffer_pool_.Put(rowkey, *new_row);
         buffer_pool_.Release(handle);
 #endif // B_L
