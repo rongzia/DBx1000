@@ -135,7 +135,11 @@ RC ycsb_wl::init_table() {
 #if defined(B_P_L_P) || defined(B_P_L_R)
         if (page->used_size() > 64) {
             page->Serialize();
-            if(key_in_this_instance || is_server_ == true) { buffers_[TABLES::MAIN_TABLE]->BufferPut(page->page_id(), page->page_buf(), MY_PAGE_SIZE); }
+            if(key_in_this_instance || is_server_ == true) {
+                const BufferPool::PageKey pagekey = std::make_pair(TABLES::MAIN_TABLE, page->page_id());
+                const BufferPool::PageHandle* handle = buffer_pool_.Put(pagekey, dbx1000::Page(*page));
+                buffer_pool_.Release(handle);
+            }
         }
 #endif // defined(B_P_L_P) || defined(B_P_L_R)
     }

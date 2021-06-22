@@ -5,7 +5,7 @@
 // Simulation + Hardware
 /***********************************************/
 #define THREAD_CNT					4
-#define PROCESS_CNT				    4
+#define PROCESS_CNT				    2
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -254,7 +254,7 @@ extern TestCases					g_test_case;
 #ifndef SINGLE_NODE
 #define WITH_WARM_UP
 #endif // no SINGLE_NODE
-//#define NO_CONFLICT                 // 是否实例间访问的数据有冲突
+#define NO_CONFLICT                 // 是否实例间访问的数据有冲突
 #define B_P_L_P // buffer page, lock page       1
 // #define B_R_L_R // buffer record, lock record   2
 // #define B_M_L_R // buffer mixed, lock record    3
