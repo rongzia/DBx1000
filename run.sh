@@ -30,6 +30,6 @@ done
 for i in $(seq $start $end)
 do
 ./main_instance$i -instance_id=$i &
-# perf record -F 999 -a -g -m -1 ./main_instance$i -instance_id=$i &
+# perf record -F 999 -g -m -1 -o perf.data$i ./main_instance$i -instance_id=$i &
 # perf record -F 999 -g -a -m -1 -o perf.data$i ./main_instance$i -instance_id=$i &
 done
