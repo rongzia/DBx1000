@@ -2,7 +2,7 @@
 #define DBX1000_BUFFER_POOL
 
 #include <thread>
-#include "LRUCache.h"
+#include "LRUCache2.h"
 #include "common/global.h"
 #include "common/storage/tablespace/page.h"
 // #include "common/storage/row.h"
@@ -25,7 +25,7 @@ public:
     using PageHandle = LRUHandle<PageKey, Page>;
 
 private:
-    LRUCache<PageKey, Page, PageDeleter> buffer_pool_;
+    LRUCache2<PageKey, Page, PageDeleter> buffer_pool_;
 
 public:
 
@@ -59,7 +59,7 @@ public:
     }
 
 
-    LRUCache<PageKey, Page, PageDeleter>& buffer_pool()   { return buffer_pool_; }
+    LRUCache2<PageKey, Page, PageDeleter>& buffer_pool()   { return buffer_pool_; }
 
     void Counter(const PageHandle* handle) {
         total_req_.fetch_add(1);

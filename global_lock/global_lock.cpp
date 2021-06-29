@@ -176,7 +176,7 @@ namespace dbx1000 {
 #endif
                 Profiler profiler2;
                 profiler2.Start();
-                uint64_t invld_time;
+                uint64_t invld_time = 0;
                 rc = instances_[iter->second->write_ins_id].global_lock_service_client->Invalid(table, item_id, buf, count, invld_time);
                 profiler2.End();
                 this->stats_.total_global_invalid_time_.fetch_add(profiler2.Nanos());

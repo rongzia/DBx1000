@@ -320,7 +320,7 @@ namespace dbx1000 {
             else { assert(0 == count); }
             char page_buf[request->count()];
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid in" << endl;
-            uint64_t time;
+            uint64_t time = 0;
             RC rc = manager_instance_->lock_table_[GlobalLockServiceHelper::DeSerializeTABLES(request->table())]->RemoteInvalid(request->item_id(), page_buf, count, time);
             assert(RC::RCOK == rc || RC::TIME_OUT == rc);
             response->set_invld_time(time);
