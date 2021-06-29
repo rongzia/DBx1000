@@ -189,21 +189,19 @@ typedef VALUE value_type;
 		Handle *e = new Handle(key, value);
 
 		e->ref = 1;
-		
-
-		e->in_cache = true;
-		e->ref++;
-        std::unique_lock<std::mutex> lock(mutex_);
-		list_append(&in_use_, e);
-        lock.unlock();
+		e->in_cache.store(true);
+		e->ref.fetch_add(1);
 		
 		Accessor accessor;
-		if(cache_map_.find(accessor, key)) {
+		int res = cache_map_.insert(accessor, make_pair(key, e));
+		if(res) { } else {
+			assert(!accessor.empty());
 			erase_node(accessor->second);
 			accessor->second = e;
 		}
-		else
-			assert(cache_map_.insert(accessor, e));
+        std::unique_lock<std::mutex> lock(mutex_);
+		list_append(&in_use_, e);
+        lock.unlock();
 
 		accessor.release();
 		size_.fetch_add(1);
@@ -231,19 +229,19 @@ typedef VALUE value_type;
 		e->ref = 1;
 		
 
-		e->in_cache = true;
-		e->ref++;
-        std::unique_lock<std::mutex> lock(mutex_);
-		list_append(&in_use_, e);
-        lock.unlock();
+		e->in_cache.store(true);
+		e->ref.fetch_add(1);
 		
 		Accessor accessor;
-		if(cache_map_.find(accessor, key)) {
+		int res = cache_map_.insert(accessor, make_pair(key, e));
+		if(res) {} else {
+			assert(!accessor.empty());
 			erase_node(accessor->second);
 			accessor->second = e;
 		}
-		else
-			assert(cache_map_.insert(accessor, make_pair(key, e)));
+        std::unique_lock<std::mutex> lock(mutex_);
+		list_append(&in_use_, e);
+        lock.unlock();
 
 		accessor.release();
 		size_.fetch_add(1);
@@ -314,7 +312,7 @@ private:
             lock.unlock();
 		}
 
-		e->ref++;
+		e->ref.fetch_add(1);
 	}
 
 	void unref(Handle *e)
@@ -327,7 +325,7 @@ private:
 			value_deleter_(e->value);
 			delete e;
 		}
-		else if (e->in_cache && 2 == res)
+		else if (e->in_cache.load() && 2 == res)
 		{
             std::unique_lock<std::mutex> lock(mutex_);
 			list_remove(e);
@@ -338,12 +336,12 @@ private:
 
 	void erase_node(Handle *e)
 	{
-		assert(e->in_cache);
+		assert(e->in_cache.load());
+		e->in_cache.store(false);
+		size_.fetch_sub(1);
         std::unique_lock<std::mutex> lock(mutex_);
 		list_remove(e);
         lock.unlock();
-		e->in_cache = false;
-		size_--;
 		unref(e);
 	}
 

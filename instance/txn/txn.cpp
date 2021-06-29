@@ -410,7 +410,7 @@ RC txn_man::GetWriteRecordLock() {
                 lockNode->lock_remoting = false;
             } else {
                 /// 其他线线程去 RemoteLock，要么成功拿到锁，要么此次调用失败 remote_locking_abort==true
-                assert(true == lockNode->lock_remoting);
+                // assert(true == lockNode->lock_remoting);
                 while (lockNode->lock_mode == dbx1000::LockMode::O) {
                     if(lockNode->remote_locking_abort.load()){
                         return RC::Abort;

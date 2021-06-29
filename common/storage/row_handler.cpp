@@ -96,7 +96,8 @@ namespace dbx1000 {
         }
         #endif // CLREAR_BUF
         assert(handle);
-        assert(handle->value.page_id() == indexItem.page_id_);
+        // handle->value.Deserialize();
+        // assert(handle->value.page_id() == indexItem.page_id_);
         memcpy(row->data, &handle->value.page_buf_read()[indexItem.page_location_], size);
         manager_instance_->m_workload_->buffer_pool_.Release(handle);
 #elif defined(B_M_L_R) || defined(B_R_L_R)

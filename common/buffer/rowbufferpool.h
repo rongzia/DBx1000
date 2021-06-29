@@ -2,7 +2,7 @@
 #define DBX1000_BUFFER_POOL
 
 #include <thread>
-#include "LRUCache.h"
+#include "LRUCache2.h"
 #include "common/global.h"
 #include "common/storage/row.h"
 #include "common/storage/table.h"
@@ -25,7 +25,7 @@ public:
     using RowHandle = LRUHandle<RowKey, row_t>;
 
 private:
-    LRUCache<RowKey, row_t, RowDeleter> buffer_pool_;
+    LRUCache2<RowKey, row_t, RowDeleter> buffer_pool_;
 
 public:
 
@@ -50,7 +50,7 @@ public:
     }
 
 
-    LRUCache<RowKey, row_t, RowDeleter>& buffer_pool()   { return buffer_pool_; }
+    LRUCache2<RowKey, row_t, RowDeleter>& buffer_pool()   { return buffer_pool_; }
 
     void Counter(const RowHandle* handle) {
         total_req_.fetch_add(1);
