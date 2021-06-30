@@ -336,7 +336,7 @@ private:
 
 	void erase_node(Handle *e)
 	{
-		assert(e->in_cache.load());
+		// assert(e->in_cache.load());
 		e->in_cache.store(false);
 		size_.fetch_sub(1);
         std::unique_lock<std::mutex> lock(mutex_);
