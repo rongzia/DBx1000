@@ -144,7 +144,7 @@ namespace dbx1000 {
         #endif // CLREAR_BUF
         if(!handle_read) {cout << "page id: " << indexItem.page_id_ << endl;}
         assert(handle_read);
-        assert(indexItem.page_id_ == handle_read->value.page_id());
+        // assert(indexItem.page_id_ == handle_read->value.page_id());
 
         const BufferPool::PageHandle* handle_write = manager_instance_->m_workload_->buffer_pool_.Put(pagekey, Page(handle_read->value.page_buf_read()));
         manager_instance_->m_workload_->buffer_pool_.Release(handle_read);
