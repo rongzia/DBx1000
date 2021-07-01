@@ -95,7 +95,7 @@ namespace dbx1000 {
             }         
         }
 #endif // BD2
-        void GlobalLockServiceClient::AsyncLockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count, OnLockRemoteDone* done) {
+        void GlobalLockServiceClient::AsyncLockRemote(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count, OnLockRemoteDone* done, RC* rc) {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             request.set_instance_id(instance_id);
@@ -105,6 +105,7 @@ namespace dbx1000 {
 
             done->page_buf = buf;
             done->count = count;
+            done->rc = rc;
 
             stub_->AsyncLockRemote(&done->cntl, &request, &done->reply, done);
         }
@@ -452,7 +453,7 @@ namespace dbx1000 {
             AsyncLockRemoteJob *job = new AsyncLockRemoteJob();
             job->cntl = static_cast<brpc::Controller *>(controller);
             job->request = request;
-            job->reply = response;
+            job->response = response;
             job->done = done;
             job->global_lock_ = this->global_lock_;
 
@@ -710,16 +711,41 @@ namespace dbx1000 {
         /// 回调
         void OnLockRemoteDone::Run() {
 //            std::unique_ptr<OnLockRemoteDone> self_guard(this);
+            *rc = GlobalLockServiceHelper::DeSerializeRC(reply.rc());
             if (!cntl.Failed()) {
-                if (GlobalLockServiceHelper::DeSerializeRC(reply.rc()) == RC::RCOK
-                    && count > 0) {
-                    assert(MY_PAGE_SIZE == count);
-                    assert(reply.count() == count);
-                    memcpy(page_buf, reply.buf().data(), count);
+                if(RC::TIME_OUT == *rc) {
+                    *rc = RC::TIME_OUT;
+                }
+                if(RC::Abort == *rc) {
+                    *rc = RC::Abort;
+                }// TODO：后期删除 
+                else if(RC::Commit == *rc) {
+                    cout << "Commit" <<endl;
+                } else if(RC::WAIT == *rc) {
+                    cout << "WAIT" <<endl;
+                } else if(RC::Commit == *rc) {
+                    cout << "Commit" <<endl;
+                } else if(RC::ERROR == *rc) {
+                    cout << "ERROR" <<endl;
+                } else if(RC::FINISH == *rc) {
+                    cout << "FINISH" <<endl;
+                } else {
+                    // TODO：没有这个会不会影响？
+                    // assert(RC::RCOK == *rc);
+                }
+                if(RC::RCOK == *rc) {
+                count = reply.count();
+                    if(count > 0) {
+                        assert(reply.count() == count);
+                        memcpy(this->page_buf, reply.buf().data(), count);
+                    }
+                } else {
+                    *rc = RC::Abort;
                 }
             } else {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
+                *rc = RC::Abort;
             }
         }
 
@@ -746,32 +772,40 @@ namespace dbx1000 {
 
         void AsyncLockRemoteJob::run() {
             brpc::ClosureGuard done_guard(done);
-
+            Profiler profiler;
+            profiler.Start();
             RC rc;
             char *page_buf = nullptr;
             size_t count = request->count();
             if(count > 0) {
-                assert(MY_PAGE_SIZE == count);
-                page_buf = new char [MY_PAGE_SIZE];
+                page_buf = new char [count];
             }
             else {assert(0 == count);}
-
-            rc = global_lock_->LockRemote(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table()), request->item_id(), page_buf, count);
-
+#ifdef DB2
+            rc = global_lock_->LockRemote_DB2(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
+                                          , request->item_id(), page_buf, count);
+#else // DB2
+            rc = global_lock_->LockRemote(request->instance_id(), GlobalLockServiceHelper::DeSerializeTABLES(request->table())
+                                          , request->item_id(), page_buf, count);
+#endif // DB2
             if(RC::TIME_OUT  == rc) {
-                reply->set_rc(RpcRC::TIME_OUT);
+                response->set_rc(RpcRC::TIME_OUT);
                 return;
             }
             if(RC::Abort  == rc) {
-                reply->set_rc(RpcRC::Abort);
+                response->set_rc(RpcRC::Abort);
                 return;
             }
             assert(RC::RCOK == rc);
-            reply->set_rc(RpcRC::RCOK);
+            response->set_rc(RpcRC::RCOK);
             if(count > 0) {
-                reply->set_buf(page_buf, count);
+                response->set_buf(page_buf, request->count());
             }
-            reply->set_count(count);
+            response->set_count(count);
+            profiler.End();
+            delete [] page_buf;
+            global_lock_->stats_.total_global_RemoteLock_time_.fetch_add(profiler.Nanos());
+            global_lock_->stats_.total_global_RemoteLock_count_.fetch_add(1);
         }
 
 

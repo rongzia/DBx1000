@@ -39,7 +39,7 @@ namespace dbx1000 {
 #ifdef DB2
             RC Unlock(int instance_id, TABLES table, uint64_t item_id, LockMode req_mode, char *buf, size_t count);
 #endif // DB2
-            void AsyncLockRemote(int instance_id, TABLES table, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done);
+            void AsyncLockRemote(int instance_id, TABLES table, uint64_t page_id, LockMode req_mode, char *page_buf, size_t count, OnLockRemoteDone* done, RC* rc);
             void InstanceInitDone(int instance_id);
             bool GlobalLockInitDone();
             uint64_t GetNextTs();
@@ -154,6 +154,7 @@ namespace dbx1000 {
             brpc::Controller cntl;
             size_t count;
             char *page_buf;
+            RC* rc;
         };
 
         class OnInstanceInitDone: public google::protobuf::Closure {
@@ -179,7 +180,7 @@ namespace dbx1000 {
         struct AsyncLockRemoteJob {
             brpc::Controller* cntl;
             const LockRemoteRequest* request;
-            LockRemoteReply* reply;
+            LockRemoteReply* response;
             google::protobuf::Closure* done;
             global_lock::GlobalLock* global_lock_;
 

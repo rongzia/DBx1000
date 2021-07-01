@@ -317,6 +317,7 @@ private:
 
 	void unref(Handle *e)
 	{
+		std::unique_lock<std::mutex> lock(mutex_);
 		assert(e->ref > 0);
 
 		uint64_t res = e->ref.fetch_sub(1);
@@ -327,19 +328,18 @@ private:
 		}
 		else if (e->in_cache.load() && 2 == res)
 		{
-            std::unique_lock<std::mutex> lock(mutex_);
 			list_remove(e);
 			list_append(&not_use_, e);
-            lock.unlock();
 		}
+		lock.unlock();
 	}
 
 	void erase_node(Handle *e)
 	{
-		// assert(e->in_cache.load());
+        std::unique_lock<std::mutex> lock(mutex_);
+		assert(e->in_cache.load());
 		e->in_cache.store(false);
 		size_.fetch_sub(1);
-        std::unique_lock<std::mutex> lock(mutex_);
 		list_remove(e);
         lock.unlock();
 		unref(e);
