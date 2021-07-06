@@ -170,7 +170,8 @@ namespace dbx1000 {
             request.set_total_time_unlock(stats.total_time_Unlock_);
             request.set_total_count_unlock(stats.total_count_Unlock_);
 #endif // DB2
-            stub_->ReportResult(&cntl, &request, &reply, nullptr);
+            // stub_->ReportResult(&cntl, &request, &reply, nullptr);
+            stub_->AsyncReportResult(&cntl, &request, &reply, nullptr);
             if (!cntl.Failed()) { } else {
                 LOG(FATAL) << cntl.ErrorText();
                 assert(false);
@@ -645,6 +646,31 @@ namespace dbx1000 {
             }
         }
 
+        
+        void GlobalLockServiceImpl::AsyncReportResult(::google::protobuf::RpcController* controller,
+                               const ::dbx1000::ReportResultRequest* request,
+                               ::dbx1000::ReportResultReply* response,
+                               ::google::protobuf::Closure* done) {
+            ::brpc::ClosureGuard done_guard(done);
+
+            AsyncReportResultJob *job = new AsyncReportResultJob();
+            job->cntl = static_cast<brpc::Controller *>(controller);
+            job->request = request;
+            job->response = response;
+            job->done = done;
+            job->global_lock_ = this->global_lock_;
+
+            auto process_thread = [](void* arg) -> void* {
+                AsyncReportResultJob* job = static_cast<AsyncReportResultJob*>(arg);
+                job->run_and_delete();
+                return nullptr;
+            };
+
+            bthread_t th;
+            CHECK_EQ(0, bthread_start_background(&th, NULL, process_thread, job));
+            done_guard.release();
+        }
+
         void GlobalLockServiceImpl::Test(::google::protobuf::RpcController* controller,
                        const ::dbx1000::TestRequest* request,
                        ::dbx1000::TestReply* response,
@@ -836,6 +862,109 @@ namespace dbx1000 {
                 reply->set_rc(RpcRC::Abort);
             }
 //            cout << request->page_id() << " GlobalLockServiceImpl::Invalid out" << endl;
+        }
+
+
+        void AsyncReportResultJob::run() {
+            brpc::ClosureGuard done_guard(done);
+#ifdef REAL_STOP
+            if(!global_lock_->stop_flag_.test_and_set()) {
+                for (int i = 0; i < PROCESS_CNT; i++ ) {
+                    if(i != request->instance_id()) {
+                        global_lock_->instances_[i].global_lock_service_client->Stop(i);
+                    }
+                }
+            }
+#endif // REAL_STOP
+
+            Stats *stats = &(global_lock_->instances()[request->instance_id()].stats);
+            stats->total_latency_  = request->total_latency();
+            stats->instance_run_time_ = request->instance_run_time();
+            stats->total_txn_cnt_  = request->total_txn_cnt();
+            stats->throughput_     = request->throughtput();
+            stats->total_time_LockRemote_ = request->total_time_lockremote();
+            stats->total_count_LockRemote_ = request->total_count_lockremote();
+#ifdef DB2
+            stats->total_time_Unlock_ = request->total_time_unlock();
+            stats->total_count_Unlock_ = request->total_count_unlock();
+#endif // DB2
+
+            global_lock_->instances()[request->instance_id()].instance_run_done = true;
+            bool all_instance_run_done = true;
+            for (int i = 0; i < PROCESS_CNT; i++ )
+                if (!global_lock_->instances()[i].instance_run_done) {
+                    all_instance_run_done = false;
+                    break;
+                }
+
+
+
+            if(all_instance_run_done) {
+
+                std::map<uint64_t, int> througput_map;
+                for(auto i = 0; i < PROCESS_CNT; i++) {
+                    througput_map.insert(make_pair(global_lock_->instances()[i].stats.throughput_, i));
+                }
+                for(auto &iter : througput_map) {
+                    cout << iter.first << " ";
+                } cout << endl << endl;
+
+
+                uint64_t total_ins_latency = 0;
+                uint64_t total_ins_txn_cnt = 0;
+                uint64_t total_ins_run_time = 0;
+                uint64_t total_ins_count_LockRemote = 0;
+                uint64_t total_ins_time_LockRemote = 0;
+                uint64_t average_instance_run_time = 0;
+#ifdef DB2
+                uint64_t total_ins_time_Unlock = 0;
+                uint64_t total_ins_count_Unlock = 0;
+#endif // DB2
+                for (int i = 0; i < PROCESS_CNT; i++ ) {
+                    total_ins_run_time += global_lock_->instances()[i].stats.instance_run_time_;
+                    total_ins_latency  += global_lock_->instances()[i].stats.total_latency_;
+                    total_ins_txn_cnt  += global_lock_->instances()[i].stats.total_txn_cnt_;
+                    total_ins_count_LockRemote += global_lock_->instances()[i].stats.total_count_LockRemote_;
+                    total_ins_time_LockRemote += global_lock_->instances()[i].stats.total_time_LockRemote_;   
+#ifdef DB2
+                    total_ins_time_Unlock += global_lock_->instances()[i].stats.total_time_Unlock_;
+                    total_ins_count_Unlock += global_lock_->instances()[i].stats.total_count_Unlock_;
+#endif // DB2
+                }
+
+                cout << "ttl_ins_latency/avg_ins_latency/ttl_ins_run_time    : " << total_ins_latency/1000UL << "/" <<  total_ins_latency/THREAD_CNT/1000UL << "/" << total_ins_run_time/1000UL << " us." << endl;
+                cout << "avg_ins_latency/avg_ins_thd_latency/avg_ins_run_time: " << total_ins_latency/1000UL/PROCESS_CNT << "/" <<  total_ins_latency/THREAD_CNT/PROCESS_CNT/1000UL << "/" << total_ins_run_time/PROCESS_CNT/1000UL << " us." << endl;
+                cout << "ttl_ins_txn_cnt                                     : " << total_ins_txn_cnt << endl;
+                cout << "ttl_ins_latency/ttl_ins_txn_cnt/avg_txn_latency     : " << total_ins_latency/1000UL/PROCESS_CNT << " us/" << total_ins_txn_cnt << "/" << total_ins_latency/1000UL/total_ins_txn_cnt << " us." << endl;
+                cout << "throughtput                                         : " << (total_ins_txn_cnt*1000000000L/(total_ins_latency/THREAD_CNT/PROCESS_CNT)) << "/" << (PROCESS_CNT*total_ins_txn_cnt*1000000000L/total_ins_run_time) << " tps." << endl;
+                cout << endl;
+
+                cout << "ttl_ins_rmt_lck_t/ttl_ins_rmt_lck_cnt/avg: " << total_ins_time_LockRemote/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_time_LockRemote/1000UL/total_ins_count_LockRemote) << " us." << endl;
+                                
+#ifdef DB2
+                cout << "ttl_ins_unlck_t/ttl_ins_unlckcnt/avg     : " << total_ins_time_Unlock/1000UL << " us/" << total_ins_count_Unlock << "/" << (total_ins_time_Unlock==0 ? 0:total_ins_time_Unlock/1000UL/total_ins_count_Unlock) << " us." << endl;
+#endif // DB2
+                cout << endl;
+
+                cout << "ttl_ins_rmt_cnt/ttl_glb_rmt_cnt              : " << total_ins_count_LockRemote << "/" << global_lock_->stats_.total_global_RemoteLock_count_ << endl;
+                cout << "ttl_ins_rmt_t/ttl_ins_rmt_cnt/avg            : " << total_ins_time_LockRemote/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_time_LockRemote/1000UL/total_ins_count_LockRemote) << endl;
+                cout << "ttl_glb_rmt_t/ttl_glb_rmt_cnt/avg            : " << global_lock_->stats_.total_global_RemoteLock_time_/1000UL << " us/" << global_lock_->stats_.total_global_RemoteLock_count_ << "/" << (global_lock_->stats_.total_global_RemoteLock_count_==0 ? 0:global_lock_->stats_.total_global_RemoteLock_time_/1000UL/global_lock_->stats_.total_global_RemoteLock_count_) << endl;
+                cout << "ttl_glb_lck_t/ttl_glb_lck_cnt/avg            : " << global_lock_->stats_.total_global_lock_time_/1000UL << " us/" << global_lock_->stats_.total_global_RemoteLock_count_ << "/" << (global_lock_->stats_.total_global_RemoteLock_count_==0 ? 0:global_lock_->stats_.total_global_lock_time_/1000UL/global_lock_->stats_.total_global_RemoteLock_count_) << endl;
+#ifdef DB2
+                cout << "ttl_glb_unlck_t/ttl_glb_unlck_cnt/avg        : " << global_lock_->stats_.total_global_Unlock_time_/1000UL << " us/" << global_lock_->stats_.total_global_Unlock_count_ << "/" << (global_lock_->stats_.total_global_Unlock_count_==0 ? 0:global_lock_->stats_.total_global_Unlock_time_/1000UL/global_lock_->stats_.total_global_Unlock_count_) << endl;
+#endif // BD2
+                cout << "ttl_glb_invld_t/ttl_glb_invld_cnt/avg        : " << global_lock_->stats_.total_global_invalid_time_/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_global_invalid_time_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
+                cout << "ttl_ins_invld_t/ttl_ins_invld_cnt/avg        : " << global_lock_->stats_.total_ins_invalid_time_/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:global_lock_->stats_.total_ins_invalid_time_/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
+
+                uint64_t total_ins_lock_rpc_time = total_ins_time_LockRemote - global_lock_->stats_.total_global_RemoteLock_time_;
+                cout << "ttl_ins_lck_rpc_t/ttl_ins_lck_rpc_cnt/avg    : " << total_ins_lock_rpc_time/1000UL << " us/" << total_ins_count_LockRemote << "/" << (total_ins_count_LockRemote==0 ? 0:total_ins_lock_rpc_time/1000UL/total_ins_count_LockRemote) << endl;
+#ifdef DB2
+                uint64_t total_ins_unlock_rpc_time = total_ins_time_Unlock - global_lock_->stats_.total_global_Unlock_time_;
+                cout << "ttl_ins_unlck_rpc_t/ttl_ins_unlck_rpc_cnt/avg: " << total_ins_unlock_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_Unlock_count_ << "/" << (global_lock_->stats_.total_global_Unlock_count_==0 ? 0:total_ins_unlock_rpc_time/1000UL/global_lock_->stats_.total_global_Unlock_count_) << endl;
+#endif // DB2
+                uint64_t total_global_invalid_rpc_time = global_lock_->stats_.total_global_invalid_time_ - global_lock_->stats_.total_ins_invalid_time_;
+                cout << "ttl_glb_invld_rpc_t/ttl_glb_invld_rpc_cnt/avg: " << total_global_invalid_rpc_time/1000UL << " us/" << global_lock_->stats_.total_global_invalid_count_ << "/" << (global_lock_->stats_.total_global_invalid_count_==0 ? 0:total_global_invalid_rpc_time/1000UL/global_lock_->stats_.total_global_invalid_count_) << endl;
+            }
         }
     }
 }

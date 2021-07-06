@@ -136,6 +136,7 @@ service GlobalLockService {
   rpc AsyncGlobalLockInitDone(GlobalLockInitDoneRequest) returns (GlobalLockInitDoneReply) {}
   rpc GetNextTs(GetNextTsRequest) returns (GetNextTsReply) {}
   rpc ReportResult(ReportResultRequest) returns (ReportResultReply) {}
+  rpc AsyncReportResult(ReportResultRequest) returns (ReportResultReply) {}
 
   // for lock_server
   rpc Invalid(InvalidRequest) returns (InvalidReply) {}

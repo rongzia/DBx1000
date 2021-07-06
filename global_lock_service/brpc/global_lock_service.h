@@ -117,6 +117,10 @@ namespace dbx1000 {
                     const ::dbx1000::ReportResultRequest* request,
                     ::dbx1000::ReportResultReply* response,
                     ::google::protobuf::Closure* done);
+            virtual void AsyncReportResult(::google::protobuf::RpcController* controller,
+                    const ::dbx1000::ReportResultRequest* request,
+                    ::dbx1000::ReportResultReply* response,
+                    ::google::protobuf::Closure* done);
 #ifdef REAL_STOP
             virtual void Stop(::google::protobuf::RpcController *controller,
                               const ::dbx1000::StopRequest *request,
@@ -213,6 +217,22 @@ namespace dbx1000 {
             InvalidReply* reply;
             google::protobuf::Closure* done;
             ManagerInstance* manager_instance_;
+
+            void run();
+
+            void run_and_delete() {
+                run();
+                delete this;
+            }
+        };
+
+        
+        struct AsyncReportResultJob {
+            brpc::Controller* cntl;
+            const ReportResultRequest* request;
+            ReportResultReply* response;
+            google::protobuf::Closure* done;
+            global_lock::GlobalLock* global_lock_;
 
             void run();
 

@@ -368,11 +368,11 @@ RC ycsb_txn_man::run_txn(base_query *query) {
     final:
     rc = finish(rc);
 
-#if defined(B_M_L_R)
-    this_thread::sleep_for(chrono::microseconds(105) * write_record_set.size());
-#elif defined(B_P_L_R)
-    this_thread::sleep_for(chrono::microseconds(200) * write_record_set.size());
-#endif
+// #if defined(B_M_L_R)
+//     this_thread::sleep_for(chrono::microseconds(105) * write_record_set.size());
+// #elif defined(B_P_L_R)
+//     this_thread::sleep_for(chrono::microseconds(200) * write_record_set.size());
+// #endif
 
     /// 线程结束后，把对应 page 锁内的相关信息清除，通知 invalid 函数可以执行
 #ifndef SINGLE_NODE

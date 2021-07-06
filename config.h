@@ -4,8 +4,8 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT					32
-#define PROCESS_CNT				    8
+#define THREAD_CNT					20
+#define PROCESS_CNT				    2
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -122,9 +122,9 @@
 // #define SYNTH_TABLE_SIZE            (1024UL * 10 * 204)	// 约 160 MB
 #define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
 
-#define ZIPF_THETA 					0.6     // 值越大，冲突越高
-#define READ_PERC 					0.9
-#define WRITE_PERC 					0.1
+#define ZIPF_THETA 					0.9     // 值越大，冲突越高
+#define READ_PERC 					0.8
+#define WRITE_PERC 					0.2
 #define SCAN_PERC 					0
 #define SCAN_LEN					20
 #define PART_PER_TXN 				1
@@ -255,9 +255,9 @@ extern TestCases					g_test_case;
 #define WITH_WARM_UP
 #endif // no SINGLE_NODE
 // #define NO_CONFLICT                 // 是否实例间访问的数据有冲突
-// #define B_P_L_P // buffer page, lock page       1
+#define B_P_L_P // buffer page, lock page       1
 // #define B_R_L_R // buffer record, lock record   2
-#define B_M_L_R // buffer mixed, lock record    3
+// #define B_M_L_R // buffer mixed, lock record    3
 //#define B_P_L_R // buffer page, lock record     4
 
 
@@ -270,7 +270,7 @@ extern TestCases					g_test_case;
 // #define KEY_COUNT
 #ifdef KEY_COUNT		// 统计缓存命中率，适合单节点使用。
 #undef SYNTH_TABLE_SIZE
-#define SYNTH_TABLE_SIZE (10UL * 1000 * 1000)
+#define SYNTH_TABLE_SIZE (100UL * 1000 * 1000)
 #endif // KEY_COUNT
 
 #define REAL_STOP		// 之前的所有实例一起停止有 bug，这才是正确实现。

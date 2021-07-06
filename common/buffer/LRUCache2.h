@@ -171,7 +171,8 @@ typedef VALUE value_type;
 	// Need call release when handle no longer needed
 	const Handle *get(const KEY& key)
 	{
-        Accessor accessor;
+        // Accessor accessor;
+        ConstAccessor accessor;
 
 		if (cache_map_.find(accessor, key))
 		{
@@ -306,10 +307,10 @@ private:
 	{
 		if (e->in_cache && e->ref == 1)
 		{
-            std::unique_lock<std::mutex> lock(mutex_);
-			list_remove(e);
-			list_append(&in_use_, e);
-            lock.unlock();
+            // std::unique_lock<std::mutex> lock(mutex_);
+			// list_remove(e);
+			// list_append(&in_use_, e);
+            // lock.unlock();
 		}
 
 		e->ref.fetch_add(1);
@@ -317,7 +318,7 @@ private:
 
 	void unref(Handle *e)
 	{
-		std::unique_lock<std::mutex> lock(mutex_);
+		// std::unique_lock<std::mutex> lock(mutex_);
 		assert(e->ref > 0);
 
 		uint64_t res = e->ref.fetch_sub(1);
@@ -326,22 +327,22 @@ private:
 			value_deleter_(e->value);
 			delete e;
 		}
-		else if (e->in_cache.load() && 2 == res)
-		{
-			list_remove(e);
-			list_append(&not_use_, e);
-		}
-		lock.unlock();
+		// else if (e->in_cache.load() && 2 == res)
+		// {
+		// 	list_remove(e);
+		// 	list_append(&not_use_, e);
+		// }
+		// lock.unlock();
 	}
 
 	void erase_node(Handle *e)
 	{
-        std::unique_lock<std::mutex> lock(mutex_);
+        // std::unique_lock<std::mutex> lock(mutex_);
 		assert(e->in_cache.load());
 		e->in_cache.store(false);
 		size_.fetch_sub(1);
-		list_remove(e);
-        lock.unlock();
+		// list_remove(e);
+        // lock.unlock();
 		unref(e);
 	}
 

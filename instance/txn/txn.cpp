@@ -377,7 +377,7 @@ RC txn_man::GetWriteRecordLock() {
 #endif
                 char buf[buf_size];
                 dbx1000::Profiler profiler2;
-                // profiler2.Start();
+                profiler2.Start();
                 // RC rc = this->h_thd->manager_client_->global_lock_service_client_->LockRemote(
                 //         this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size);
 				dbx1000::global_lock_service::OnLockRemoteDone* done = new dbx1000::global_lock_service::OnLockRemoteDone();
@@ -386,8 +386,8 @@ RC txn_man::GetWriteRecordLock() {
 				const brpc::CallId cid = done->cntl.call_id();
 				this->h_thd->manager_client_->global_lock_service_client_->AsyncLockRemote(
 					this->h_thd->manager_client_->instance_id_, iter.first, iter.second, dbx1000::LockMode::X, buf , buf_size, done, &rc);
-                profiler2.End();
 				brpc::Join(cid);
+                profiler2.End();
                 this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->time_LockRemote_ += profiler2.Nanos();
                 this->h_thd->manager_client_->stats_.tmp_stats[this->get_thd_id()]->count_LockRemote_++;
 				delete done;
