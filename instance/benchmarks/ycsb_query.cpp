@@ -131,7 +131,7 @@ void ycsb_query::gen_requests(int thd_id) {
 		 */
 	    uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;      //! 1024*1024*10 / 1
 		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);   //! g_zipf_theta == 0.6
-		assert(row_id < table_size);
+		assert(row_id < table_size+1);
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 		primary_key = (primary_key + (_query_thd->queryQueue_->managerInstance_->instance_id_)*(SYNTH_TABLE_SIZE/PROCESS_CNT)) % table_size;
 #ifdef NO_CONFLICT
