@@ -35,10 +35,12 @@ endif()
 ### include header files
 include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories($ENV{HOME}/.local/tbb/include)
 
 
 ### lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
+LINK_DIRECTORIES($ENV{HOME}/.local/tbb/lib)
 
 set(COMMON_FILES
 #        common/buffer/buffer.cpp

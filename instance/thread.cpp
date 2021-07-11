@@ -270,8 +270,13 @@ RC thread_t::run() {
 	        if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
             */
+#ifdef NO_STOP
+		    txn_cnt = 0;
+			manager_client_->query_queue_->all_queries[_thd_id]->q_idx = 0;
+#else
             delete m_txn;
             return RC::FINISH;
+#endif // NO_STOP
 	    }
 #ifdef REAL_STOP
 		if(this->manager_client_->stop_.load() == true) {

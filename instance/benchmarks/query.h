@@ -68,8 +68,11 @@ public:
 	~Query_queue();
 
     dbx1000::ManagerInstance* managerInstance_;
-
+#ifdef NO_STOP
+// private:
+#else 
 private:
+#endif //NO_STOP
     //! 调用 init_per_thread
 	static void * threadInitQuery(void * This);
 
