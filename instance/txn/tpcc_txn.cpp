@@ -63,9 +63,9 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 			assert(false);
 	}
 #if defined(B_M_L_R)
-    this_thread::sleep_for(chrono::microseconds(105) * write_record_set.size());
+    // this_thread::sleep_for(chrono::microseconds(105) * write_record_set.size());
 #elif defined(B_P_L_R)
-    this_thread::sleep_for(chrono::microseconds(200) * write_record_set.size());
+    // this_thread::sleep_for(chrono::microseconds(200) * write_record_set.size());
 #endif
 #ifndef SINGLE_NODE
     {

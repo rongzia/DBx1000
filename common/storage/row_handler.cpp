@@ -150,6 +150,7 @@ namespace dbx1000 {
 
         const BufferPool::PageHandle* handle_write = manager_instance_->m_workload_->buffer_pool_.Put(pagekey, Page(handle_read->value.page_buf_read()));
         manager_instance_->m_workload_->buffer_pool_.Release(handle_read);
+        manager_instance_->m_workload_->buffer_pool_.Release(handle_write);
 
         // manager_instance_->lock_table_[table]->UnLock(indexItem.page_id_);
 #ifdef DB2

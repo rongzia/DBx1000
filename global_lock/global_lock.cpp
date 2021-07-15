@@ -14,6 +14,7 @@
 #include "common/storage/tablespace/tablespace.h"
 #include "common/storage/catalog.h"
 #include "common/storage/table.h"
+#include "common/storage/row.h"
 #include "common/workload/ycsb.h"
 #include "common/workload/tpcc.h"
 #include "common/workload/tpcc_helper.h"
@@ -196,31 +197,57 @@ namespace dbx1000 {
 #if ((WORKLOAD == YCSB) && defined(NO_CONFLICT)) // || ((WORKLOAD == TPCC) && (PROCESS_CNT == NUM_WH_NODE))
                         cout << ins_id << " invalid " << iter->second->write_ins_id << ", table: " << MyHelper::TABLESToInt(table) << ", page: " << item_id << " success" << endl;
 #endif
-#if defined(B_P_L_P) || defined(B_P_L_R)
+#if defined(B_P_L_P)
                     const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
                     Page page(buf);
                     const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Put(pagekey, std::move(page));
+                    this->m_workload_->buffer_pool_.Release(handle);
+#elif defined(B_P_L_R)
+                    row_t* row = new row_t();
+                    row->set_primary_key(item_id);
+                    row->init(this->m_workload_->tables_[table], 0, item_id);
+                    assert(count == row->get_tuple_size());
+                    memcpy(row->data, buf, count);
+                    
+        dbx1000::IndexItem indexItem;
+        this->m_workload_->indexes_[table]->IndexGet(item_id, &indexItem);
+
+        auto pagekey = std::make_pair(table, indexItem.page_id_);
+        const BufferPool::PageHandle* handle_read = this->m_workload_->buffer_pool_.Get(pagekey);
+        #ifdef CLREAR_BUF
+        if(handle_read == NULL || handle_read == nullptr) {
+            handle_read = this->m_workload_->buffer_pool_.PutIfNotExist(pagekey);
+        }
+        #endif // CLREAR_BUF
+        if(!handle_read) {cout << "page id: " << indexItem.page_id_ << endl;}
+        assert(handle_read);
+        // assert(indexItem.page_id_ == handle_read->value.page_id());
+
+        const BufferPool::PageHandle* handle_write = this->m_workload_->buffer_pool_.Put(pagekey, Page(handle_read->value.page_buf_read()));
+        this->m_workload_->buffer_pool_.Release(handle_read);
+        this->m_workload_->buffer_pool_.Release(handle_write);
+                    delete row;
 #elif defined(B_M_L_R) || defined(B_R_L_R)
                     const RowBufferPool::RowKey rowkey = std::make_pair(table, item_id);
                     row_t row;
                     row.set_primary_key(item_id);
                     row.init(this->m_workload_->tables_[table], 0, item_id);
                     const RowBufferPool::RowHandle* handle = this->m_workload_->buffer_pool_.Put(rowkey, std::move(row));
+                    this->m_workload_->buffer_pool_.Release(handle);
 #else  //B_L
                     assert(false);
 #endif //B_L
-                    this->m_workload_->buffer_pool_.Release(handle);
                     iter->second->write_ins_id = ins_id;
                 }
             } else {
                 iter->second->write_ins_id = ins_id;
                 if (count > 0) {
-#if defined(B_P_L_P) || defined(B_P_L_R)
+#if defined(B_P_L_P)
                     const BufferPool::PageKey pagekey = std::make_pair(table, item_id);
                     const BufferPool::PageHandle* handle = this->m_workload_->buffer_pool_.Get(pagekey);
                     memcpy(buf, handle->value.page_buf_read(), count);
                     this->m_workload_->buffer_pool_.Release(handle);
-#elif defined(B_M_L_R) || defined(B_R_L_R)
+#elif defined(B_M_L_R) || defined(B_R_L_R) || defined(B_P_L_R)
                     // do nothing, no need init buf
 #else  //B_L
                     assert(false);
