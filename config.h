@@ -255,10 +255,17 @@ extern TestCases					g_test_case;
 #define WITH_WARM_UP
 #endif // no SINGLE_NODE
 // #define NO_CONFLICT                 // 是否实例间访问的数据有冲突
-// #define B_P_L_P // buffer page, lock page       1
+#ifdef NO_CONFLICT
+#undef SYNTH_TABLE_SIZE
+#undef MAX_TXN_PER_PART
+#define SYNTH_TABLE_SIZE (1UL * 1000 * 1000)
+#define MAX_TXN_PER_PART 			100000              //! 每个线程要成功执行多少次事务
+#endif // NO_CONFLICT
+
+#define B_P_L_P // buffer page, lock page       1
 // #define B_R_L_R // buffer record, lock record   2
 // #define B_M_L_R // buffer mixed, lock record    3
-#define B_P_L_R // buffer page, lock record     4
+// #define B_P_L_R // buffer page, lock record     4
 
 
 
