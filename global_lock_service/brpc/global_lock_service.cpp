@@ -99,6 +99,7 @@ namespace dbx1000 {
 //            cout << "GlobalLockServiceClient::LockRemote instance_id: " << instance_id << ", page_id: " << page_id << ", count: " << count << endl;
             dbx1000::LockRemoteRequest request;
             request.set_instance_id(instance_id);
+            request.set_table(GlobalLockServiceHelper::SerializeTABLES(table));
             request.set_item_id(item_id);
             request.set_req_mode(GlobalLockServiceHelper::SerializeLockMode(req_mode));
             request.set_count(count);

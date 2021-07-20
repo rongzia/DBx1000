@@ -58,7 +58,7 @@ void Row_mvcc::init(dbx1000::ManagerInstance* managerInstance, TABLES table, uin
 //    RC rc =	workload_->buffers_[table_]->BufferGet(key_, _row->data, size_);
     _row->set_primary_key(key_);
     assert(RC::RCOK == rc);
-	_his_len = 4;
+	_his_len = g_thread_cnt;
 	_req_len = _his_len;
 
 	_write_history = new WriteHisEntry[_his_len]();
