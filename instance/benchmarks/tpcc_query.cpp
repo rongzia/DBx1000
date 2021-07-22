@@ -59,10 +59,11 @@ void tpcc_query::gen_payment(uint64_t thd_id) {
 //            while((c_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
 //            while((c_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
             uint64_t tmp = URand(1, NUM_WH, w_id-1);
-            c_w_id = tmp;
-            while((tmp >= start_wh && tmp <=end_wh)) {
-                tmp = URand(1, NUM_WH, w_id-1);
-            }
+			if(PROCESS_CNT > 1) {
+				while((tmp >= start_wh && tmp <=end_wh)) {
+					tmp = URand(1, NUM_WH, w_id-1);
+				}
+			}
             c_w_id = tmp;
             if (wh_to_part(w_id) != wh_to_part(c_w_id)) {
                 part_to_access[1] = wh_to_part(c_w_id);
@@ -121,7 +122,9 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 //            while((items[oid].ol_supply_w_id = URand(start_wh, end_wh, w_id-1)) == w_id) {}
 //            while((items[oid].ol_supply_w_id = URand(1, NUM_WH, w_id-1)) == w_id) {}
             uint64_t tmp = URand(1, NUM_WH, w_id-1);
-            while(tmp >= start_wh && tmp <=end_wh) { tmp = URand(1, NUM_WH, w_id-1); }
+			if(PROCESS_CNT > 1) {
+            	while(tmp >= start_wh && tmp <=end_wh) { tmp = URand(1, NUM_WH, w_id-1); }
+			}
             items[oid].ol_supply_w_id = tmp;
             remote = true;
 		}

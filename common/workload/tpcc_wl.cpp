@@ -118,12 +118,12 @@ RC tpcc_wl::init_table() {
 //		- order line
 /**********************************/
 	tpcc_buffer = new drand48_data * [NUM_WH];
-	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
-	for (uint32_t i = 0; i < g_num_wh - 1; i++)
-		pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
+	// pthread_t * p_thds = new pthread_t[g_num_wh - 1];
+	// for (uint32_t i = 0; i < g_num_wh - 1; i++)
+	// 	pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
 	threadInitWarehouse(this);
-	for (uint32_t i = 0; i < g_num_wh - 1; i++)
-		pthread_join(p_thds[i], NULL);
+	// for (uint32_t i = 0; i < g_num_wh - 1; i++)
+	// 	pthread_join(p_thds[i], NULL);
 
 	printf("TPCC Data Initialization Complete!\n");
 	return RC::RCOK;
