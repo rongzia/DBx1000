@@ -21,7 +21,10 @@ int ycsb_wl::next_tid;
 RC ycsb_wl::init() {
 	workload::init();
 	next_tid = 0;
-	string path = "./benchmarks/YCSB_schema.txt";
+	// string path = "./benchmarks/YCSB_schema.txt";
+	string this_file(__FILE__);
+	string path = this_file.substr(0, this_file.length()-11);
+	path += "YCSB_schema.txt";
 	init_schema( path );
 	
 	init_table_parallel();
@@ -31,7 +34,7 @@ RC ycsb_wl::init() {
 
 RC ycsb_wl::init_schema(string schema_file) {
 	workload::init_schema(schema_file);
-	the_table = tables["MAIN_TABLE"]; 	
+	the_table = tables["MAIN_TABLE"];  
 	the_index = indexes["MAIN_INDEX"];
 	return RCOK;
 }
