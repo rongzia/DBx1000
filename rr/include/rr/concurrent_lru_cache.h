@@ -80,13 +80,26 @@ namespace rr {
 			}
 		}
 
-		bool Write(const key_type& key, const value_type ptr, int thread_id = 0) {
-			value_type prior;
-			return cmap_.PutIfAbsent(key, ptr, prior);
+		~LRUCache() {
+			munmap(ptr_, this->max_bytes_);
 		}
 
-		bool Read(const key_type& key, value_type ptr, int thread_id = 0) {
-			return cmap_.Get(key, ptr);
+		bool Write(const key_type& key, const value_type& ptr, int thread_id = 0) {
+			value_type prior;
+			return cmap_.PutIfAbsent(key, ptr, prior, thread_id);
+		}
+
+		bool Write(const Page& page, int thread_id = 0) {
+			value_type prior;
+			return cmap_.PutIfAbsent(page.key_, page.ptr_, prior, thread_id);
+		}
+
+		bool Read(const key_type& key, value_type& ptr, int thread_id = 0) {
+			return cmap_.Get(key, ptr, thread_id);
+		}
+
+		bool Read(Page& page, int thread_id = 0) {
+			return cmap_.Get(page.key_, page.ptr_, thread_id);
 		}
 
 		bool GetNewPage(Page& page) {
@@ -96,6 +109,16 @@ namespace rr {
 			if (res) { free_list_size_.fetch_sub(1); }
 			return res;
 		}
+
+		virtual void Delete(void* handle) {
+			handle_base_type* h = (handle_base_type*)handle;
+			// assert(lru_cache == this);
+			Page page(h->key(), h->value(), this);
+			free_list_.emplace_push(page);
+			free_list_size_.fetch_add(1);
+			// std::cout << "recycle: " << ((char*)h->value()-(char*)ptr_) << endl;
+		}
+		virtual void New(void* handle) {}
 
 		void Print() {
 			cout << "map       size: " << cmap_.map().size() << endl;
@@ -113,16 +136,6 @@ namespace rr {
 			cout << "map       count: " << count_map << endl;
 			cout << "free list count: " << count_list << endl;
 		}
-
-		virtual void Delete(void* handle) {
-			handle_base_type* h = (handle_base_type*)handle;
-			// assert(lru_cache == this);
-			Page page(h->key(), h->value(), this);
-			free_list_.emplace_push(page);
-			free_list_size_.fetch_add(1);
-			// std::cout << "recycle: " << ((char*)h->value()-(char*)ptr_) << endl;
-		}
-		virtual void New(void* handle) {}
 	};
 
 

@@ -8,8 +8,8 @@
 using namespace std;
 
 
-int global_batch = 100000;
-int global_num_thd = 32;
+int global_batch = 10000;
+int global_num_thd = 28;
 
 
 void pop_after_push(rr::ConcurrentQueue<int>& queue) {

@@ -9,7 +9,7 @@
 #include "../include/rr/profiler.h"
 using namespace std;
 
-int global_num_thd = 32;
+int global_num_thd = 28;
 int global_batch = 10000;
 
 void simple_test() {
@@ -28,8 +28,8 @@ void simple_test() {
 void multi_thd_read_after_write() {
     int batch = global_batch;
     int num_thd = global_num_thd;
-    rr::LRUCache  cache(batch * num_thd / 2 * 10, 10);
-    // rr::LRUCache  cache(batch * num_thd * 10, 10);
+    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / 2 * 10, 10);
+    // rr::LRUCache* cache = new rr::LRUCache(batch * num_thd * 10, 10);
 
     auto Write = [&cache, batch](int thd_id) -> void
     {
@@ -37,8 +37,10 @@ void multi_thd_read_after_write() {
         for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
         {
             rr::lru_cache::Page page;
-            cache.GetNewPage(page);
-            bool is_new = cache.Write(i, page.ptr_);
+            page.key_ = i;
+            cache->GetNewPage(page);
+            bool is_new = cache->Write(i, page.ptr_, thd_id);
+            // bool is_new = cache->Write(page, thd_id);
             // cout << i << endl;
         }
     };
@@ -49,7 +51,8 @@ void multi_thd_read_after_write() {
         {
             rr::lru_cache::Page page;
             page.key_ = i;
-            bool find = cache.Read(page.key_, page.ptr_);
+            // bool find = cache->Read(page.key_, page.ptr_, thd_id);
+            bool find = cache->Read(page, thd_id);
             // cout << i << endl;
         }
     };
@@ -67,9 +70,6 @@ void multi_thd_read_after_write() {
     }
     profiler.End();
     cout << "ConcurrentLinkedHashMap write time: " << profiler.Micros() << endl;
-    // for (auto i = 0; i < map.ThreadNum(); i++) {
-    //     map.AsyncQueue()[i]->check();
-    // }
 
     v_thread.clear();
     profiler.Clear();
@@ -84,10 +84,8 @@ void multi_thd_read_after_write() {
     }
     profiler.End();
     cout << "ConcurrentLinkedHashMap read  time: " << profiler.Micros() << endl;
-    // for (auto i = 0; i < map.ThreadNum(); i++) {
-    //     map.AsyncQueue()[i]->check();
-    // }
-    // while(1);
+
+    delete cache;
 }
 
 

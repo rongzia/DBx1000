@@ -50,7 +50,6 @@ namespace rr {
 			typedef ConcurrentLinkedHashMap<KEY, VALUE, Manager> Map;
 
 			virtual ~HandleBase() {
-				// assert(ref_.load() <= 0);
 				deleted_.store(true);
 			}
 
@@ -73,7 +72,7 @@ namespace rr {
 			HandleBase(HandleBase&& handle) = delete;
 			HandleBase() = delete;
 
-			bool IsAlive() { /*assert(evicted_.load() == false);*/ return (weight_.load() > 0); }
+			bool IsAlive() { return (weight_.load() > 0); }
 			bool IsDead() { return (weight_.load() <= 0); }
 
 			virtual void MakeDead() {
@@ -93,9 +92,9 @@ namespace rr {
 			std::atomic<size_t> weight_;
 			// ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
 			std::atomic<size_t> ref_;
-			std::atomic<bool> evicted_;
+			std::atomic<bool> evicted_;	// evict 仅内部空间不够，被 lru 清除才调用
 		public:
-			std::atomic<bool> deleted_;	// for debug
+			std::atomic<bool> deleted_;	// 外部显示调用 Remove 才用到，后面异步删除掉 handle
 
 			VALUE& value() { return value_; }
 			KEY& key() { return key_; }
@@ -245,21 +244,21 @@ namespace rr {
 					}
 				}
 				count++;
+
+				handle_base_type* handle;
+				bool res = deleted_queue_.pop(handle);
+				if (res) {
+					if (handle->deleted_.load() == true || handle->Evicted()) {
+						assert(!handle->Evicted());
+						delete_handle((handle_type*)handle);
+					}
+				}
 			}
 			has_shutdown_ = true;
 			return;
 		}
 
 	public:
-
-		static string OPToChar(OP op) {
-			if (op == OP::PUT) { return string("OP::PUT"); }
-			if (op == OP::GET) { return string("OP::GET"); }
-			if (op == OP::DEL) { return string("OP::DEL"); }
-			if (op == OP::UPDATE) { return string("OP::PUT"); }
-			return string("NULL");
-		}
-
 		ConcurrentLinkedHashMap() { ConcurrentLinkedHashMap(SIZE_MAX); };
 		ConcurrentLinkedHashMap(size_t max_size) : in_use_list_size_(0), thread_num_(std::thread::hardware_concurrency())
 			, deleted_queue_(true)
@@ -282,12 +281,14 @@ namespace rr {
 		}
 		~ConcurrentLinkedHashMap() {
 			should_stop_ = true;
-			deleted_queue_.clear();
+			// deleted_queue_.clear();
 			// 需要等后台线程成功退出
 			while (!has_shutdown_);
 
 			for (auto i = 0; i < thread_num_; i++) { async_queue_[i]->set_stop(); }
 			for (auto i = 0; i < thread_num_; i++) { delete async_queue_[i]; }
+
+			clear_map();
 		}
 
 		bool Put(const KEY& key, const VALUE& value, VALUE& prior, int thread_id = 0) { return         put(key, value, false, prior, thread_id); }
@@ -337,7 +338,7 @@ namespace rr {
 			const_accessor c_access;
 			bool find = map_.find(c_access, key);
 			if (find) {
-				result = c_access->second->weightedValue_->value_;
+				result = c_access->second->value_;
 			}
 			return find;
 		}
@@ -395,31 +396,24 @@ namespace rr {
 		// 头部表示最老的，尾部是最新的
 		void use(QueueNode& node) {
 			handle_type* handle = (handle_type*)(node.handle_);
-			// {
-			// 	assert(handle->ref_.load() >= 0);
-			// 	if (handle->deleted_.load() != false) {
-			// 		cout << OPToChar(node.op_) << endl;
-			// 	}
-			// 	assert(handle);
-			// 	assert(handle->deleted_.load() == false);
-			// }
+
+			{	// some check
+				/*debug for check*/ assert(handle->RefSize() > 0);
+			}
 
 			if (node.op_ == OP::DEL) {
 				assert(handle->IsDead());
 				if (node_in_list(&handle->node_)) {
-					list_del(&handle->node_); 
+					list_del(&handle->node_);
 					in_use_list_size_.fetch_sub(1);
-				} else {
-					assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
 				}
+				else assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
 				handle->Unref();
-				handle->MakeEvict();
-				if (manager_) { manager_->Delete(handle); }
-				delete handle; handle = nullptr;
-				size_of_newhandle_.fetch_sub(1);
+				// handle->MakeEvict();
+				handle->deleted_.store(true);
 			}
 			else if (node.op_ == OP::PUT) {
-				if (handle->IsAlive()) {
+				if (handle->IsAlive() && !handle->deleted_.load()) {
 					assert(!node_in_list(&handle->node_));
 					list_add_tail(&handle->node_, &in_use_list_);
 					in_use_list_size_.fetch_add(1);
@@ -429,65 +423,18 @@ namespace rr {
 				evict();
 			}
 			else if (node.op_ == OP::GET) {
-				if (handle->IsAlive()) {
+				if (handle->IsAlive() && !handle->deleted_.load()) {
+					assert(!handle->Evicted());
 					if (node_in_list(&handle->node_)) { list_move_tail(&handle->node_, &in_use_list_); }
 				}
 				handle->Unref();
 			}
-			// else if (node.op_ == OP::DEL) {
-			// 	// assert(handle->weight_.load() == 0);
-			// 	assert(handle->weight_.load() <= 0);
-			// 	if (node_in_list(&handle->node_)) {
-			// 		list_del(&handle->node_);
-			// 		handle->node_.prev = &handle->node_;
-			// 		handle->node_.next = &handle->node_;
-			// 	}
-			// 	handle->Unref();
-			// }
 
-			// TODO: 需要删除，否则存在内存泄漏
-			// if (handle->ref_.load() == 0) {
-			// 	if (handle->weight_.load() == 0 && !node_in_list(&handle->node_)) {
-			// 		// if (node_in_list(&handle->node_)) {
-			// 		// 	assert((&handle->node_)->next && (&handle->node_)->prev);
-			// 		// }
-			// 		// assert(!node_in_list(&handle->node_));
-			// 		if (manager_) { manager_->Delete(handle); }
-			// 		delete handle; handle = nullptr;
-			// 	}
-			// }
+			if (handle->RefSize() <= 0 && handle->deleted_.load()) {
+				deleted_queue_.push(std::move(node.handle_));
+			}
 		}
 
-
-		// // need lock in_use_list_mutex_ before call this
-		// void evict() {
-		// 	while (in_use_list_size_.load() >= max_size_) {
-		// 		::list_node* first = in_use_list_.next;
-		// 		handle_type* handle = list_entry(first, handle_type, node_);
-
-		// 		if (first == &in_use_list_) { return; }
-		// 		else {
-		// 			// std::cout << "ready evict key: " << handle->key_ << std::endl;
-		// 			assert(node_in_list(first));
-		// 			list_del(first);
-		// 			first->prev = first->next = first;
-		// 			in_use_list_size_.fetch_sub(1);
-
-		// 			accessor acc;
-		// 			bool find = map_.find(acc, handle->key_);
-		// 			if (find) {
-		// 				map_.erase(acc);
-		// 			}
-
-		// 			handle->Evict();
-		// 			if (handle->ref_.load() == 0)
-		// 			{
-		// 				if (manager_) { manager_->Delete(handle); }
-		// 				delete handle; handle = nullptr;
-		// 			} // 否则由 use() 删除，要是 use() 没有删除，则存在内存泄漏，因为 handle 已经从 list 删除了
-		// 		}
-		// 	}
-		// }
 		// need lock in_use_list_mutex_ before call this
 		void evict() {
 			::list_node* first = &in_use_list_;
@@ -500,7 +447,7 @@ namespace rr {
 				else {
 					// std::cout << "ready evict key: " << handle->key_ << std::endl;
 					size_t before = handle->Unref();
-					if(before > 0) continue;
+					if (before > 0) { handle->Ref(); continue;}
 
 					accessor acc;
 					bool find = map_.find(acc, handle->key_);
@@ -517,12 +464,9 @@ namespace rr {
 
 
 					handle->MakeEvict();
-					// if (handle->ref_.load() == 0)
-					// {
-						if (manager_) { manager_->Delete(handle); }
-						delete handle; handle = nullptr;
-						size_of_newhandle_.fetch_sub(1);
-					// } // 否则由 use() 删除，要是 use() 没有删除，则存在内存泄漏，因为 handle 已经从 list 删除了
+					assert(!handle->deleted_.load());
+					// deleted_queue_.push(std::move(handle));	// 异步
+					delete_handle(handle);					// 同步
 				}
 			}
 		}
@@ -530,13 +474,52 @@ namespace rr {
 		void afterTask(handle_base_type* handle, OP op, int thread_id) {
 			QueueNode node(handle, op);
 			size_t before = handle->Ref();
-			// if(before < 0) {
-			// 	assert(handle->Evicted() == true);
-			// 	handle->Unref();
-			// 	return;
-			// }
+			if(before < 0) return;		// 可能被 evict
 			// async_queue_[syscall(SYS_gettid) % thread_num_]->push(std::move(node));
 			async_queue_[thread_id % thread_num_]->push(std::move(node));
+		}
+
+		void delete_handle(handle_type* handle) {
+			if (manager_) { manager_->Delete(handle); }
+			delete handle; handle = nullptr;
+			size_of_newhandle_.fetch_sub(1);
+		}
+
+		// for debug
+		std::atomic<size_t> size_of_newhandle_{ 0 };
+
+		void clear_map() {
+			for(auto iter = map_.begin(); iter != map_.end(); iter++) {
+				handle_type* handle = (handle_type*)iter->second;
+				delete handle;
+				size_of_newhandle_.fetch_sub(1);
+				in_use_list_size_.fetch_sub(1);
+			}
+			INIT_LIST_HEAD(&in_use_list_);
+			map_.clear();
+		}
+
+		static string OPToChar(OP op) {
+			if (op == OP::PUT) { return string("OP::PUT"); }
+			if (op == OP::GET) { return string("OP::GET"); }
+			if (op == OP::DEL) { return string("OP::DEL"); }
+			if (op == OP::UPDATE) { return string("OP::PUT"); }
+			return string("NULL");
+		}
+
+		void wait_for_asyc_done() {
+			while (1) {
+				bool done = true;
+				for (int i = 0; i < ThreadNum(); i++) {
+					if (async_queue_[i]->size() > 0) {
+						done = false;
+						/*debug for print*/ cout << async_queue_[i]->size() << endl;
+						/*debug for print*/ std::this_thread::sleep_for(chrono::seconds(1));
+					}
+				}
+				if (deleted_queue_.size() > 0) { done = false; }
+				if (done == true) return;
+			}
 		}
 
 	public:
@@ -559,7 +542,6 @@ namespace rr {
 			QueueNode() {}
 			~QueueNode() { /* no need free handle_*/ }
 
-
 			handle_base_type* handle_;
 			OP op_;
 			/**
@@ -567,45 +549,16 @@ namespace rr {
 			 * 其他线程不能用 if(handle_ == nullptr) 判断，只能通过 handle_exist_ 判断 handle_ 是否被释放
 			 */
 			 // bool handle_exist_;
-			void Print() {
-				// cout << "handle_exist_: " << (handle_exist_ ? "true" : "false");
-				// if (handle_exist_) {
-				// 	cout << "OP: " << ConcurrentLinkedHashMap::OPToChar(op_) << ", key: " << handle_->key_ << ", value: " << (char*)handle_->value_ << endl;
-				// }
-				// else {
-				// 	cout << endl;
-				// }
-			}
 		};
 
-		// for debug
-		std::atomic<size_t> size_of_newhandle_{0};
-
 		void check() {
-    		// std::this_thread::sleep_for(chrono::seconds(5));
-    		wait_for_asyc_done();
-			std::cout << map_.size() << ", " << size_of_newhandle_<< ", " << in_use_list_size_.load() << std::endl;
+			wait_for_asyc_done();
+			/*debug for print*/ std::cout << "map_size/handle_num/list_size: " << map_.size() << ", " << size_of_newhandle_ << ", " << in_use_list_size_.load() << std::endl;
 			assert(map_.size() == in_use_list_size_.load());
 			assert(map_.size() == size_of_newhandle_.load());
 
-			for(::list_node* node = &in_use_list_; node->next != &in_use_list_; node = node->next) {
-				assert(node->next->prev == node);
-			}
-		}
-
-		void wait_for_asyc_done() {
-			while(1) {
-				bool done = true;
-				for(int i = 0; i < ThreadNum(); i++) {
-					if(async_queue_[i]->size() > 0) {
-						done = false;
-						cout << async_queue_[i]->size() << endl;
-						std::this_thread::sleep_for(chrono::seconds(1));
-					}
-				}
-				if(done == true) {
-					return;
-				}
+			for (::list_node* node = &in_use_list_; node->next != &in_use_list_; node = node->next) {
+				/*debug for check*/assert(node->next->prev == node);
 			}
 		}
 	};

@@ -12,8 +12,8 @@ using namespace std;
 
 #include <map>
 
-int global_num_thd = 30;
-int global_batch = 100000;
+int global_num_thd = 28;
+int global_batch = 10000;
 
 void single_test()
 {
@@ -40,8 +40,8 @@ void multi_thd_read_after_write()
 {
     int batch = global_batch;
     int num_thd = global_num_thd;
-    rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd / 2);
-    // rr::ConcurrentLinkedHashMap<int, int> map(batch * num_thd);
+    // rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd / 2);
+    rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd);
 
     auto Write = [&map, batch](int thd_id) -> void
     {
@@ -49,10 +49,9 @@ void multi_thd_read_after_write()
         for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
         {
             int res;
-            bool is_new = map->Put(i, i, res, 0);
+            bool is_new = map->Put(i, i, res, thd_id);
             if (!is_new)
                 assert(res >= 0);
-            // cout << i << endl;
         }
     };
     auto Read = [&map, num_thd, batch](int thd_id) -> void
@@ -61,10 +60,10 @@ void multi_thd_read_after_write()
         for (int i = 0; i < num_thd * batch; i++)
         {
             int res;
-            bool find = map->Get(i, res, 0);
+            bool find = map->Get(i, res, thd_id);
+            // bool find = map->GetQuietly(i, res);
             if (find)
                 assert(res >= 0);
-            // map.getQuietly(i, has_res);
             // cout << i << endl;
         }
     };
@@ -83,9 +82,6 @@ void multi_thd_read_after_write()
     profiler.End();
     cout << "ConcurrentLinkedHashMap write time: " << profiler.Micros() << endl;
     map->check();
-    // for(auto i = 0; i < map.ThreadNum(); i++) {
-    //     map.AsyncQueue()[i]->check();
-    // }
 
     v_thread.clear();
     profiler.Clear();
@@ -101,10 +97,6 @@ void multi_thd_read_after_write()
     profiler.End();
     cout << "ConcurrentLinkedHashMap read  time: " << profiler.Micros() << endl;
     // map->check();
-    // for(auto i = 0; i < map.ThreadNum(); i++) {
-    //     map.AsyncQueue()[i]->check();
-    // }
-    // while(1);
     delete map;
 }
 
@@ -120,7 +112,7 @@ void multi_thd_read_while_write()
         for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
         {
             int res;
-            bool is_new = map->Put(i, i, res, i);
+            bool is_new = map->Put(i, i, res, thd_id);
             if (!is_new)
                 assert(res >= 0);
             // cout << i << endl;
@@ -132,10 +124,10 @@ void multi_thd_read_while_write()
         for (int i = 0; i < num_thd * batch; i++)
         {
             int res;
-            bool find = map->Get(i, res, i);
+            bool find = map->Get(i, res, thd_id);
+            // bool find = map->GetQuietly(i, res);
             if (find)
                 assert(res >= 0);
-            // map.getQuietly(i, has_res);
             // cout << i << endl;
         }
     };
@@ -145,11 +137,9 @@ void multi_thd_read_while_write()
         for (int i = 0; i < num_thd * batch; i++)
         {
             int res;
-            bool find = map->Remove(i, res, i);
+            bool find = map->Remove(i, res, thd_id);
             if (find)
                 assert(res >= 0);
-            // map.getQuietly(i, has_res);
-            // cout << i << endl;
         }
     };
 
@@ -178,10 +168,7 @@ void multi_thd_read_while_write()
     }
     profiler.End();
     cout << "ConcurrentLinkedHashMap total time: " << profiler.Micros() << endl;
-    map->check();
-    // for(auto i = 0; i < map.ThreadNum(); i++) {
-    //     map.AsyncQueue()[i]->check();
-    // }
+    // map->check();
     delete map;
 }
 
@@ -355,7 +342,7 @@ int main()
         multi_thd_read_after_write();
         cout << endl << endl;
 
-        // multi_thd_read_while_write();
+        multi_thd_read_while_write();
         // cout << endl << endl;
 
         multi_thd_cc_hash_map();
