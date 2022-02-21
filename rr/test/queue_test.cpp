@@ -174,4 +174,4 @@ int main() {
 
     return 0;
 }
-// g++ concurrent_queue_test.cpp -o concurrent_queue_test.exe -lpthread -g
+// g++ queue_test.cpp -o queue_test.exe -lpthread -g

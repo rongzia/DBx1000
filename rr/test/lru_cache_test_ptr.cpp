@@ -16,10 +16,11 @@ void simple_test() {
     rr::LRUCache cache(10 * PAGE_SIZE, PAGE_SIZE);
 
     for (uint64_t key = 0; key < 13; key++) {
-        rr::lru_cache::Page page;
-        cache.GetNewPage(&page);
-        page.set_key(key); page.set_id(key);
-        cache.Write(page.key_, page.ptr_);
+        rr::lru_cache::Page* page = nullptr;
+        cache.GetNewPage(page);
+        assert(page);
+        page->set_key(key); page->set_id(key);
+        cache.Write(page->key(), page);
         // cache.Write(&page);
     }
     
@@ -29,7 +30,7 @@ void simple_test() {
 void multi_thd_read_after_write() {
     int batch = global_batch;
     int num_thd = global_num_thd;
-    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / 2 * 10, 10);
+    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / 1.1 * 10, 10);
     // rr::LRUCache* cache = new rr::LRUCache(batch * num_thd * 10, 10);
 
     auto Write = [&cache, batch](int thd_id) -> void
@@ -37,11 +38,12 @@ void multi_thd_read_after_write() {
         bool has_res;
         for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
         {
-            rr::lru_cache::Page page;
-            cache->GetNewPage(&page);
-            page.set_key(i); page.set_id(i);
+            rr::lru_cache::Page* page = nullptr;
+            bool res = cache->GetNewPage(page);
+            assert(res);
+            page->set_key(i); page->set_id(i);
             // bool is_new = cache->Write(page.key_, page.ptr_, thd_id);
-            bool is_new = cache->Write(&page, thd_id);
+            bool is_new = cache->Write(i, page, thd_id);
             // cout << i << endl;
         }
     };
@@ -51,9 +53,10 @@ void multi_thd_read_after_write() {
         for (int i = 0; i < num_thd * batch; i++)
         {
             rr::lru_cache::Page page;
-            page.set_key(i);
+            // page.set_key(i);
             // bool find = cache->Read(page.key_, page.ptr_, thd_id);
-            bool find = cache->Read(&page, thd_id);
+            bool find = cache->Read(i, &page, thd_id);
+            if(find) { page.PageUnref(); }
             // cout << i << endl;
         }
     };
@@ -96,4 +99,4 @@ int main()
     multi_thd_read_after_write();
     return 0;
 }
-// g++ lru_cache_test.cpp -o lru_cache_test.exe -ltbb -lpthread -g
+// g++ lru_cache_test_ptr.cpp -o lru_cache_test_ptr.exe -ltbb -lpthread -g

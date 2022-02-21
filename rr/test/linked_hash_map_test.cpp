@@ -349,5 +349,5 @@ int main()
     }
     return 0;
 }
-// g++ concurrent_linked_hash_map_test.cpp -o concurrent_linked_hash_map_test.exe -ltbb -lpthread -g 
-// g++ concurrent_linked_hash_map_test.cpp -o concurrent_linked_hash_map_test.exe -ltbb -lpthread -O3 –DNDEBUG
+// g++ linked_hash_map_test.cpp -o linked_hash_map_test.exe -ltbb -lpthread -g 
+// g++ linked_hash_map_test.cpp -o linked_hash_map_test.exe -ltbb -lpthread -O3 –DNDEBUG
