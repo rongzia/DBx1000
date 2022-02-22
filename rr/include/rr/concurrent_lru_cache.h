@@ -5,7 +5,7 @@
 #include "concurrent_linked_hash_map.h"
 using namespace std;
 
-#define PAGE_SIZE (16 * 1024 *1024)
+#define PAGE_SIZE (16 * 1024)
 namespace rr {
 	namespace lru_cache {
 		class LRUCache;
@@ -21,14 +21,26 @@ namespace rr {
 		public:
 			size_t size_;
 			std::atomic<size_t> page_ref_;
+			LRUCache* cache_;
 
 			virtual size_t PageRef() override { return page_ref_.fetch_add(1); }
 			size_t PageUnref() { return page_ref_.fetch_sub(1); }
 			virtual size_t PageRefSize() override { return page_ref_.load(); }
 
-			Page() : handle_type::Handle(nullptr, UINT64_MAX, nullptr), size_(0) { page_ref_.store(0); }
-			Page(uint64_t key) : handle_type::Handle(nullptr, key, nullptr), size_(0) { page_ref_.store(0); }
-			Page(uint64_t key, void* ptr, CMap* cmap) : handle_type::Handle(cmap, key, ptr), size_(PAGE_SIZE) { page_ref_.store(0); }
+			Page() :handle_type::Handle(nullptr, UINT64_MAX, nullptr), size_(0), cache_(nullptr) { page_ref_.store(0); }
+			Page(LRUCache* cache) : handle_type::Handle(nullptr, UINT64_MAX, nullptr)
+				, size_(0), cache_(cache) {
+				page_ref_.store(0);
+			}
+			Page(uint64_t key, LRUCache* cache) : handle_type::Handle(nullptr, key, nullptr)
+				, size_(0), cache_(cache) {
+				page_ref_.store(0);
+			}
+			Page(uint64_t key, void* ptr, LRUCache* cache);
+
+			virtual void Delete();
+
+			~Page() {}
 
 			void check() {
 				if (value() == nullptr || value() == NULL) {
@@ -100,18 +112,17 @@ namespace rr {
 				, free_list_(true)
 			{
 				free_list_size_.store(max_bytes / item_bytes);
+				// cout << "free_list_size_: " << free_list_size_ << ", max_bytes: " << max_bytes << ", item_bytes: " << item_bytes << endl;
 				ptr_ = mmap(NULL, this->max_bytes_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
 
 				cmap_ = new ConcurrentLinkedHashMap<uint64_t, void*, LRUCache>(max_bytes / item_bytes);
 				cmap_->manager() = this;
-
 				std::unique_lock<std::mutex> lck(cmap_->in_use_list_mutex());
 				char* cursor = (char*)ptr_;
 				for (auto i = 0; i < free_list_size_; i++) {
-					free_list_.push((handle_type*)(new Page(UINT64_MAX, cursor, cmap_)));
+					free_list_.push((handle_type*)(new Page(UINT64_MAX, cursor, this)));
 					cursor += item_bytes_;
 				}
-
 				cmap_delete_done_ = false;
 			}
 
@@ -130,6 +141,7 @@ namespace rr {
 			bool Write(const key_type& key, Page* page, int thread_id = 0) {
 				handle_type* prior;
 				handle_type* handle = (handle_type*)page;
+				page->set_key(key);
 				bool res = cmap_->PutIfAbsent(key, handle, prior, thread_id);
 				page->PageUnref();
 				return res;
@@ -147,6 +159,7 @@ namespace rr {
 				if (find) {
 					assert(handle);
 					assert(handle->value() != nullptr);
+					assert(key == handle->key());
 				}
 				return find;
 			}
@@ -196,6 +209,19 @@ namespace rr {
 				cout << "free list count: " << count_list << endl;
 			}
 		};
+
+		void Page::Delete() {
+			handle_type* h = (handle_type*)this;
+			this->set_key(UINT64_MAX);
+			cache_->free_list_.emplace_push(h);
+			cache_->free_list_size_.fetch_add(1);
+			this->init();
+		}
+
+		Page::Page(uint64_t key, void* ptr, LRUCache* cache) : handle_type::Handle(cache->cmap_, key, ptr)
+			, size_(PAGE_SIZE), cache_(cache) {
+			page_ref_.store(0);
+		}
 
 
 

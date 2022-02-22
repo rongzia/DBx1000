@@ -12,6 +12,37 @@ using namespace std;
 int global_num_thd = 28;
 int global_batch = 10000;
 
+
+class A{
+public:
+    size_t* a_{0};
+    virtual size_t Ref() = 0;
+    virtual size_t RefSize() = 0;
+    virtual void Delete() {
+        cout << "A::Delete()" << endl;
+        delete this;
+    }
+    ~A() { cout << "~A()" << endl; delete a_; a_ = nullptr; } 
+};
+
+class B: public A{
+public:
+    size_t* b_;
+    virtual size_t Ref() { (*b_)++; }
+    virtual size_t RefSize() { return (*b_); }
+    void Delete() {
+        cout << "B::Delete()" << endl;
+        // delete this;
+    }
+    ~B() { cout << "~B()" << endl; delete b_; b_ = nullptr; } 
+};
+void test() {
+    B* b = new B();
+    A* a = b;
+    a->Delete();
+}
+
+
 void simple_test() {
     rr::LRUCache cache(10 * PAGE_SIZE, PAGE_SIZE);
 
@@ -30,8 +61,8 @@ void simple_test() {
 void multi_thd_read_after_write() {
     int batch = global_batch;
     int num_thd = global_num_thd;
-    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / 1.1 * 10, 10);
-    // rr::LRUCache* cache = new rr::LRUCache(batch * num_thd * 10, 10);
+    // rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / 2 * 10, 10);
+    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd * 10, 10);
 
     auto Write = [&cache, batch](int thd_id) -> void
     {
@@ -95,6 +126,7 @@ void multi_thd_read_after_write() {
 
 int main()
 {
+    // test();
     simple_test();
     multi_thd_read_after_write();
     return 0;
