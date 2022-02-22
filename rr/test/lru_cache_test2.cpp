@@ -11,7 +11,7 @@
 using namespace std;
 
 int global_num_thd = 28;
-size_t global_batch = 100;
+size_t global_batch = 10000;
 
 
 double g_zipf_theta = 0.9;
@@ -58,6 +58,7 @@ uint64_t zipf(uint64_t n, double theta) {
 
 
 void multi_thd_read_after_warmup(size_t fenmu) {
+    cout << __FILE__ << ", " << __LINE__ << endl;
     int batch = global_batch;
     int num_thd = global_num_thd;
     rr::LRUCache* cache = new rr::LRUCache(batch / fenmu * PAGE_SIZE, PAGE_SIZE);
@@ -69,13 +70,17 @@ void multi_thd_read_after_warmup(size_t fenmu) {
         {
             uint64_t key = zipf(global_batch - 1, g_zipf_theta);
             // uint64_t key = i;
-            rr::lru_cache::Page page;
-            bool res = cache->Read(key, &page);
+            rr::lru_cache::Page* p = nullptr;
+            bool res = cache->Read(key, p);
             if (!res) {
-                rr::lru_cache::Page* p = nullptr;
-                cache->GetNewPage(p);
-                p->set_key(key); p->set_id(key);
-                cache->Write(key, p);
+                rr::lru_cache::Page* page = nullptr;
+                cache->GetNewPage(page);
+                page->set_key(key); page->set_id(key);
+                rr::lru_cache::Page* prior = nullptr;
+                bool is_new = cache->Write(key, page, prior);
+                if(is_new) { page->Unref(); } else { prior->Unref(); }
+            } else {
+                p->Unref();
             }
         }
     };
@@ -93,18 +98,22 @@ void multi_thd_read_after_warmup(size_t fenmu) {
         for (int i = 0; i < batch; i++)
         {
             uint64_t key = zipf(global_batch - 1, g_zipf_theta);
-            rr::lru_cache::Page page;
-            bool find = cache->Read(key, &page, thd_id);
+            rr::lru_cache::Page* p = nullptr;
+            bool find = cache->Read(key, p, thd_id);
             if (!find) {
-                rr::lru_cache::Page* p = nullptr;
-                cache->GetNewPage(p);
-                p->set_key(key); p->set_id(key);
-                cache->Write(key, p);
-            }
-            if(find) { page.PageUnref(); }
+                rr::lru_cache::Page* page = nullptr;
+    // cout << __FILE__ << ", " << __LINE__ << endl;
+                cache->GetNewPage(page);
+    // cout << __FILE__ << ", " << __LINE__ << endl;
+                page->set_key(key); page->set_id(key);
+                rr::lru_cache::Page* prior = nullptr;
+                bool is_new = cache->Write(key, page, prior);
+                if(is_new) { page->Unref(); } else { prior->Unref(); }
+            } else { p->Unref(); }
         }
     };
 
+    cout << __FILE__ << ", " << __LINE__ << endl;
     rr::Profiler profiler;
     profiler.Start();
     std::vector<std::thread> v_thread;

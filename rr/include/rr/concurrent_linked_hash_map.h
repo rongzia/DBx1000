@@ -62,8 +62,6 @@ namespace rr {
 		private:
 			::list_node node_;
 			std::atomic<size_t> weight_;
-			// internal_ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
-			std::atomic<size_t> internal_ref_;
 			std::atomic<bool> evicted_;	// evict 仅内部空间不够，被 lru 清除才调用
 			std::atomic<bool> deleted_;	// 外部显式调用 Remove 才用到，后面异步删除掉 handle
 			Map* mapParent_;
@@ -71,6 +69,8 @@ namespace rr {
 		protected:
 			KEY key_;
 			VALUE value_;
+			// internal_ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
+			std::atomic<size_t> internal_ref_;
 
 		public:
 			VALUE& value() { return value_; }
@@ -79,11 +79,12 @@ namespace rr {
 			size_t InternalRef() { return internal_ref_.fetch_add(1); }
 			size_t InternalUnref() { return internal_ref_.fetch_sub(1); }
 			size_t InternalRefSize() { return internal_ref_.load(); }
-			virtual size_t Ref() = 0;
-			virtual size_t RefSize() = 0;
+			virtual size_t Ref() { return 0; }
+			virtual size_t RefSize() { return 0; }
+			virtual void RefClear() { internal_ref_.store(0); }
 
 			bool Evicted() { return evicted_.load(); }
-			bool Deleted() { return evicted_.load(); }
+			bool Deleted() { return deleted_.load(); }
 
 		public:
 			void MakeDead() {
@@ -119,7 +120,10 @@ namespace rr {
 			void init() {
 				INIT_LIST_HEAD(&node_);
 				weight_.store(1);
-				internal_ref_.store(0);
+				if (internal_ref_.load() != 0) {
+					cout << __FILE__ << ", " << __LINE__ << ", internal_ref_: " << internal_ref_.load() << endl;
+				}
+				assert(internal_ref_.load() == 0);
 				evicted_.store(false);
 				deleted_.store(false);
 			}
@@ -132,14 +136,11 @@ namespace rr {
 				evicted_.store(true);
 			}
 
-			virtual void Delete() {
-				INIT_LIST_HEAD(&node_);
-				delete this;
-			}
+			virtual void Delete();
 
-			Handle(Map* map, const KEY& k, const VALUE& v) : mapParent_(map), key_(k), value_(v) { init(); }
+			Handle(Map* map, const KEY& k, const VALUE& v) : mapParent_(map), key_(k), value_(v) { internal_ref_.store(0); init(); }
 
-			Handle(Map* map, const KEY& k, VALUE&& v) : mapParent_(map), key_(k), value_(std::move(v)) { init(); }
+			Handle(Map* map, const KEY& k, VALUE&& v) : mapParent_(map), key_(k), value_(std::move(v)) { internal_ref_.store(0); init(); }
 
 			const Handle& operator=(const Handle& handle) = delete;
 			// {
@@ -167,6 +168,7 @@ namespace rr {
 		class ConcurrentLinkedHashMap {
 		public:
 			friend class HandleBase;
+			template <typename K, typename V, class M> friend class Handle;
 
 			typedef KEY key_type;
 			typedef VALUE value_type;
@@ -227,8 +229,8 @@ namespace rr {
 					for (auto i = 0; i < thread_num_; i++) {
 						QueueNode front;
 						bool res = async_queue_[i]->pop(front);
-						std::unique_lock<std::mutex> lck(in_use_list_mutex_);
 						if (res) {
+							std::unique_lock<std::mutex> lck(in_use_list_mutex_);
 							use(front);
 						}
 						else {
@@ -240,17 +242,21 @@ namespace rr {
 					::list_node* first = deleted_queue_.next;
 					while (1) {
 						handle_type* handle = list_entry(first, handle_type, node_);
-						if(first == &deleted_queue_) break;
-						if (handle->InternalRefSize() == 0 && handle->RefSize() == 0) {
+						if (first == &deleted_queue_) break;
+						if (handle->InternalRefSize() <= 0 && handle->RefSize() <= 0) {
+							if (!(handle->Evicted() || handle->Deleted())) {
+								cout << __FILE__ << ", " << __LINE__
+									<< ", Evicted: " << handle->Evicted()
+									<< ", Deleted: " << handle->Deleted() << endl;
+							}
 							assert(handle->Evicted() || handle->Deleted());
 							list_del(first);
 							handle->Delete();
-							size_of_newhandle_.fetch_sub(1);
 							deleted_size_.fetch_sub(1);
 							break;
-						} else {
+						}
+						else {
 							first = first->next;
-							continue;
 						}
 					}
 				}
@@ -267,6 +273,8 @@ namespace rr {
 				, manager_(nullptr) {
 				INIT_LIST_HEAD(&in_use_list_);
 				INIT_LIST_HEAD(&deleted_queue_);
+				deleted_size_.store(0);
+
 				assert(in_use_list_size_ <= max_size_);
 				max_size_ = max_size;
 
@@ -281,6 +289,7 @@ namespace rr {
 				async_queue_thread_.detach();
 			}
 			~ConcurrentLinkedHashMap() {
+				wait_for_asyc_done();
 				should_stop_ = true;
 				// deleted_queue_.clear();
 				// 需要等后台线程成功退出
@@ -291,7 +300,7 @@ namespace rr {
 
 				clear_map();
 
-				manager_->cmap_delete_done_ = true;
+				// manager_->cmap_delete_done_ = true;
 			}
 
 			bool Put(const KEY& key, const VALUE& value, VALUE& prior, int thread_id = 0) { return         put(key, value, false, prior, thread_id); }
@@ -345,7 +354,7 @@ namespace rr {
 				bool find = map_.find(c_access, key);
 				if (find) {
 					assert(c_access->second->IsAlive());
-					// 需要在外部显示调用 PageUnref()
+					// 需要在外部显示调用 Unref()
 					result = c_access->second;
 					result->Ref();
 					afterTask(const_cast<handle_type*>(c_access->second), OP::GET, thread_id);
@@ -416,14 +425,15 @@ namespace rr {
 				accessor acc;
 				bool is_new = map_.insert(acc, key);
 				if (is_new) {
-					size_of_newhandle_.fetch_add(1);
 					assert(acc->second == nullptr);
 					acc->second = handle;
+					handle->Ref();
 					afterTask(acc->second, OP::PUT, thread_id);
 					return is_new;
 				}
 				else if (onlyIfAbsent) {	// 仅读旧值，不写
 					prior = acc->second;
+					prior->Ref();
 					return is_new;
 				}
 				// 需要更新: is_new==false, and onlyIfAbsent==false
@@ -445,23 +455,24 @@ namespace rr {
 						cout << "OP: " << OPToChar(node.op_) << endl;
 						cout << __FILE__ << ", " << __LINE__ << ", ref: " << handle->InternalRefSize() << ", PageRef: " << handle->RefSize() << endl;
 					}
-					/*debug for check*/ assert(before >= 1);
+					// assert(before >= 1);
 				}
 				if (node.op_ == OP::DEL) {
 					assert(handle->IsDead());
-					if (node_in_list(&handle->node_)) {
+					if (node_in_list(&handle->node_) && !handle->Evicted()) {
 						list_del(&handle->node_);
 						INIT_LIST_HEAD(&handle->node_);
-						handle->InternalUnref();
+						before = handle->InternalUnref();
+						assert(before >= 2);
 						in_use_list_size_.fetch_sub(1);
 					}
 					else assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
-					before = handle->InternalUnref();
 					assert(!node_in_list(&handle->node_));
 					::list_add_tail(&handle->node_, &deleted_queue_);
 					deleted_size_.fetch_add(1);
 					// handle->MakeEvict();
 					handle->deleted_.store(true);
+					before = handle->InternalUnref();
 				}
 				else if (node.op_ == OP::PUT) {
 					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
@@ -471,8 +482,8 @@ namespace rr {
 						in_use_list_size_.fetch_add(1);
 						// std::cout << handle->key_ << " add in list, list size: " << in_use_list_size_.load() << std::endl;
 					}
-					before = handle->InternalUnref();
 					evict();
+					before = handle->InternalUnref();
 				}
 				else if (node.op_ == OP::GET) {
 					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
@@ -500,6 +511,7 @@ namespace rr {
 
 					if (first == &in_use_list_) { return; }
 					// if (handle->InternalRefSize() > 0 || handle->RefSize() > 0) { continue; }
+					else if (handle->Deleted()) continue;
 					else {
 						// std::cout << "ready evict key: " << handle->key_ << std::endl;
 						assert(node_in_list(first));
@@ -514,18 +526,11 @@ namespace rr {
 							assert(handle->weight_ > 0);
 							handle->MakeDead();
 							handle->evicted_.store(true);
-							bool before = handle->InternalUnref();
-							// if (before == 1 && handle->PageRefSize() == 0) {
-							// 	// 这里有 acc 锁，所以不会和前台线程的 handle->Ref() 冲突，保证能正确判断
-							// 	deleted_queue_.push(std::move(handle));	// 异步
-							// 	// delete_handle(handle);					// 同步
-							// }
-							// else {
-							// 	// 交给 use 最后判断
-							// }
+							// 这里有 acc 锁，所以不会和前台线程的 handle->Ref() 冲突，保证能正确判断
 							assert(!node_in_list(&handle->node_));
 							::list_add_tail(first, &deleted_queue_);
 							deleted_size_.fetch_add(1);
+							bool before = handle->InternalUnref();
 						}
 					}
 				}
@@ -539,20 +544,18 @@ namespace rr {
 				async_queue_[thread_id % thread_num_]->push(std::move(node));
 			}
 
-			// void delete_handle(handle_type* handle) {
-			// 	if (manager_) { manager_->Delete(handle); }
-			// 	else { delete handle; handle = nullptr; }
-			// 	size_of_newhandle_.fetch_sub(1);
-			// }
-
 			// for debug
 			std::atomic<size_t> size_of_newhandle_{ 0 };
 
 			void clear_map() {
 				for (auto iter = map_.begin(); iter != map_.end(); iter++) {
 					handle_type* handle = (handle_type*)iter->second;
-					if (manager_) { manager_->Delete(handle); }
-					else { delete handle; handle = nullptr; }
+					handle->RefClear();
+					if(handle->RefSize() != 0) {
+						cout << __FILE__ << ", " << __LINE__ << ", " << handle->RefSize() << endl;
+					}
+					// assert(handle->RefSize() == 0);
+					handle->Delete();
 					size_of_newhandle_.fetch_sub(1);
 					in_use_list_size_.fetch_sub(1);
 				}
@@ -575,8 +578,8 @@ namespace rr {
 					for (int i = 0; i < ThreadNum(); i++) {
 						if (async_queue_[i]->size() > 0) {
 							done = false;
-							/*debug for print*/ cout << async_queue_[i]->size() << endl;
-							/*debug for print*/ std::this_thread::sleep_for(chrono::seconds(1));
+							// /*debug for print*/ cout << async_queue_[i]->size() << endl;
+							// /*debug for print*/ std::this_thread::sleep_for(chrono::seconds(1));
 						}
 					}
 					if (deleted_size_.load() > 0) { done = false; }
@@ -614,7 +617,8 @@ namespace rr {
 
 			void check() {
 				wait_for_asyc_done();
-				/*debug for print*/ std::cout << "map_size/handle_num/list_size: " << map_.size() << ", " << size_of_newhandle_ << ", " << in_use_list_size_.load() << std::endl;
+				std::this_thread::sleep_for(chrono::seconds(1));
+				/*debug for print*/ std::cout << "map_size/handle_num/list_size: " << map_.size() << ", " << size_of_newhandle_.load() << ", " << in_use_list_size_.load() << std::endl;
 				assert(map_.size() == in_use_list_size_.load());
 				assert(map_.size() == size_of_newhandle_.load());
 
@@ -624,7 +628,13 @@ namespace rr {
 			}
 		};
 
-	} // namespace concurrent_linked_map concurrent_map
+		template<typename KEY, typename VALUE, class Manager>
+		void Handle<KEY, VALUE, Manager>::Delete() {
+			INIT_LIST_HEAD(&node_);
+			mapParent_->size_of_newhandle_.fetch_sub(1);
+			delete this;
+		}
+	} // namespace concurrent_linked_map
 
 	using concurrent_linked_map::ConcurrentLinkedHashMap;
 }

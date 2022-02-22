@@ -26,6 +26,10 @@ namespace rr {
 			virtual size_t Ref() override { return ref_.fetch_add(1); }
 			size_t Unref() { return ref_.fetch_sub(1); }
 			virtual size_t RefSize() override { return ref_.load(); }
+			virtual void RefClear() override { 
+				this->internal_ref_.store(0); 
+				// ref_.store(0); 
+			}
 
 			Page() :handle_type::Handle(nullptr, UINT64_MAX, nullptr), size_(0), cache_(nullptr) { ref_.store(0); }
 			Page(LRUCache* cache) : handle_type::Handle(nullptr, UINT64_MAX, nullptr)
@@ -128,7 +132,7 @@ namespace rr {
 
 			~LRUCache() {
 				delete cmap_;
-				while (!cmap_delete_done_);
+				// while (!cmap_delete_done_);
 
 				munmap(ptr_, this->max_bytes_);
 			}
@@ -138,12 +142,23 @@ namespace rr {
 			// 	return cmap_->PutIfAbsent(key, ptr, prior, thread_id);
 			// }
 
-			bool Write(const key_type& key, Page* page, int thread_id = 0) {
-				handle_type* prior;
+			bool Write(const key_type& key, Page* page, Page*&prior, int thread_id = 0) {
+				assert(!prior);
+				handle_type* prior_handle = nullptr;
 				handle_type* handle = (handle_type*)page;
 				page->set_key(key);
-				bool res = cmap_->PutIfAbsent(key, handle, prior, thread_id);
-				page->Unref();
+				bool res = cmap_->PutIfAbsent(key, handle, prior_handle, thread_id);
+				if(res) {
+					// cout << "ref: " << page->RefSize() << endl;
+					// page->Unref();
+				} else {
+					assert(prior_handle);
+					prior = (Page*)prior_handle;
+					// cout << "ref: " << prior->RefSize() << endl;
+					// ((Page*)(prior))->Unref(); // ?
+					handle->Delete();
+    // cout << __FILE__ << ", " << __LINE__ << endl;
+				}
 				return res;
 			}
 
@@ -153,13 +168,16 @@ namespace rr {
 			// 	return find;
 			// }
 
-			bool Read(const key_type& key, Page* page, int thread_id = 0) {
-				handle_type* handle = (handle_type*)page;
+			bool Read(const key_type& key, Page*& page, int thread_id = 0) {
+				handle_type* handle = nullptr;
+				assert(!page);
 				bool find = cmap_->Get(key, handle, thread_id);
 				if (find) {
 					assert(handle);
-					assert(handle->value() != nullptr);
-					assert(key == handle->key());
+					page = (Page*)handle;
+					// cout << __FILE__ << ", " << __LINE__ << ", ref: " << handle->RefSize() << endl;
+					assert(page->value() != nullptr);
+					assert(key == page->key());
 				}
 				return find;
 			}
@@ -170,20 +188,20 @@ namespace rr {
 				while (1) {
 					if (free_list_size_ <= 0) continue;
 					bool res = free_list_.pop(handle);
-					page = (Page*)handle;
 					if (res) {
-						free_list_size_.fetch_sub(1); assert(page); page->Ref();
+						page = (Page*)handle;
+						free_list_size_.fetch_sub(1); assert(page); // page->Ref();
 						return res;
 					}
 				}
 			}
 		private:
 			virtual void Delete(void* handle) {
-				handle_type* h = (handle_type*)handle;
-				((Page*)h)->set_key(UINT64_MAX);
-				free_list_.emplace_push(h);
-				free_list_size_.fetch_add(1);
-				h->init();
+				// handle_type* h = (handle_type*)handle;
+				// ((Page*)h)->set_key(UINT64_MAX);
+				// free_list_.emplace_push(h);
+				// free_list_size_.fetch_add(1);
+				// h->init();
 			}
 			virtual void New(void* handle) {}
 
@@ -208,14 +226,29 @@ namespace rr {
 				cout << endl << "map       count: " << count_map << endl;
 				cout << "free list count: " << count_list << endl;
 			}
+
+			void PrintRef() {
+				sleep(10);
+				size_t count_map = 0, count_list = 0;
+				for (auto iter = cmap_->map().begin(); iter != cmap_->map().end(); iter++) {
+					cout << "int_ref: " << iter->second->InternalRefSize() << ", ref" << iter->second->RefSize() << endl;
+				}
+
+				
+				cout << "free_list_     : " << endl;
+				for (auto iter = free_list_.begin(); iter != free_list_.end(); iter++, count_list++) {
+					cout << "int_ref: " << (*iter)->InternalRefSize() << ", ref: " << (*iter)->RefSize() << endl;
+				}
+			}
 		};
 
 		void Page::Delete() {
 			handle_type* h = (handle_type*)this;
+			assert(this->ref_.load() == 0);
 			this->set_key(UINT64_MAX);
+			this->init();
 			cache_->free_list_.emplace_push(h);
 			cache_->free_list_size_.fetch_add(1);
-			this->init();
 		}
 
 		Page::Page(uint64_t key, void* ptr, LRUCache* cache) : handle_type::Handle(cache->cmap_, key, ptr)

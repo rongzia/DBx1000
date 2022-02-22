@@ -2,3 +2,6 @@
 *.d
 
 **/build/
+
+*.exe
+core.*
