@@ -87,7 +87,7 @@ void multi_thd_read_after_write() {
             // page.set_key(i);
             // bool find = cache->Read(page.key_, page.ptr_, thd_id);
             bool find = cache->Read(i, &page, thd_id);
-            if(find) { page.PageUnref(); }
+            if(find) { page.Unref(); }
             // cout << i << endl;
         }
     };

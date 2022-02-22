@@ -62,8 +62,8 @@ namespace rr {
 		private:
 			::list_node node_;
 			std::atomic<size_t> weight_;
-			// ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
-			std::atomic<size_t> ref_;
+			// internal_ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
+			std::atomic<size_t> internal_ref_;
 			std::atomic<bool> evicted_;	// evict 仅内部空间不够，被 lru 清除才调用
 			std::atomic<bool> deleted_;	// 外部显式调用 Remove 才用到，后面异步删除掉 handle
 			Map* mapParent_;
@@ -76,11 +76,11 @@ namespace rr {
 			VALUE& value() { return value_; }
 			KEY& key() { return key_; }
 
-			size_t Ref() { return ref_.fetch_add(1); }
-			size_t Unref() { return ref_.fetch_sub(1); }
-			size_t RefSize() { return ref_.load(); }
-			virtual size_t PageRef() = 0;
-			virtual size_t PageRefSize() = 0;
+			size_t InternalRef() { return internal_ref_.fetch_add(1); }
+			size_t InternalUnref() { return internal_ref_.fetch_sub(1); }
+			size_t InternalRefSize() { return internal_ref_.load(); }
+			virtual size_t Ref() = 0;
+			virtual size_t RefSize() = 0;
 
 			bool Evicted() { return evicted_.load(); }
 			bool Deleted() { return evicted_.load(); }
@@ -119,7 +119,7 @@ namespace rr {
 			void init() {
 				INIT_LIST_HEAD(&node_);
 				weight_.store(1);
-				ref_.store(0);
+				internal_ref_.store(0);
 				evicted_.store(false);
 				deleted_.store(false);
 			}
@@ -241,7 +241,7 @@ namespace rr {
 					while (1) {
 						handle_type* handle = list_entry(first, handle_type, node_);
 						if(first == &deleted_queue_) break;
-						if (handle->RefSize() == 0 && handle->PageRefSize() == 0) {
+						if (handle->InternalRefSize() == 0 && handle->RefSize() == 0) {
 							assert(handle->Evicted() || handle->Deleted());
 							list_del(first);
 							handle->Delete();
@@ -347,7 +347,7 @@ namespace rr {
 					assert(c_access->second->IsAlive());
 					// 需要在外部显示调用 PageUnref()
 					result = c_access->second;
-					result->PageRef();
+					result->Ref();
 					afterTask(const_cast<handle_type*>(c_access->second), OP::GET, thread_id);
 				}
 				return find;
@@ -439,11 +439,11 @@ namespace rr {
 			void use(QueueNode& node) {
 				handle_type* handle = (handle_type*)node.handle_;
 
-				size_t before = handle->RefSize();
+				size_t before = handle->InternalRefSize();
 				{	// some check
 					if (before < 1) {
 						cout << "OP: " << OPToChar(node.op_) << endl;
-						cout << __FILE__ << ", " << __LINE__ << ", ref: " << handle->RefSize() << ", PageRef: " << handle->PageRefSize() << endl;
+						cout << __FILE__ << ", " << __LINE__ << ", ref: " << handle->InternalRefSize() << ", PageRef: " << handle->RefSize() << endl;
 					}
 					/*debug for check*/ assert(before >= 1);
 				}
@@ -452,11 +452,11 @@ namespace rr {
 					if (node_in_list(&handle->node_)) {
 						list_del(&handle->node_);
 						INIT_LIST_HEAD(&handle->node_);
-						handle->Unref();
+						handle->InternalUnref();
 						in_use_list_size_.fetch_sub(1);
 					}
 					else assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
-					before = handle->Unref();
+					before = handle->InternalUnref();
 					assert(!node_in_list(&handle->node_));
 					::list_add_tail(&handle->node_, &deleted_queue_);
 					deleted_size_.fetch_add(1);
@@ -467,18 +467,18 @@ namespace rr {
 					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
 						assert(!node_in_list(&handle->node_));
 						list_add_tail(&handle->node_, &in_use_list_);
-						handle->Ref();
+						handle->InternalRef();
 						in_use_list_size_.fetch_add(1);
 						// std::cout << handle->key_ << " add in list, list size: " << in_use_list_size_.load() << std::endl;
 					}
-					before = handle->Unref();
+					before = handle->InternalUnref();
 					evict();
 				}
 				else if (node.op_ == OP::GET) {
 					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
 						if (node_in_list(&handle->node_)) { list_move_tail(&handle->node_, &in_use_list_); }
 					}
-					before = handle->Unref();
+					before = handle->InternalUnref();
 				}
 
 				// if (before == 1 && (handle->Deleted() || handle->Evicted()) && handle->PageRefSize() == 0) {
@@ -499,7 +499,7 @@ namespace rr {
 					handle_type* handle = list_entry(first, handle_type, node_);
 
 					if (first == &in_use_list_) { return; }
-					// if (handle->RefSize() > 0 || handle->PageRefSize() > 0) { continue; }
+					// if (handle->InternalRefSize() > 0 || handle->RefSize() > 0) { continue; }
 					else {
 						// std::cout << "ready evict key: " << handle->key_ << std::endl;
 						assert(node_in_list(first));
@@ -514,7 +514,7 @@ namespace rr {
 							assert(handle->weight_ > 0);
 							handle->MakeDead();
 							handle->evicted_.store(true);
-							bool before = handle->Unref();
+							bool before = handle->InternalUnref();
 							// if (before == 1 && handle->PageRefSize() == 0) {
 							// 	// 这里有 acc 锁，所以不会和前台线程的 handle->Ref() 冲突，保证能正确判断
 							// 	deleted_queue_.push(std::move(handle));	// 异步
@@ -532,7 +532,7 @@ namespace rr {
 			}
 
 			void afterTask(handle_type* handle, OP op, int thread_id) {
-				size_t before = handle->Ref(); assert(before >= 0);
+				size_t before = handle->InternalRef(); assert(before >= 0);
 				QueueNode node(handle, op);
 				// if (before < 0) return;		// 可能被 evict
 				// async_queue_[syscall(SYS_gettid) % thread_num_]->push(std::move(node));

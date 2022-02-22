@@ -20,21 +20,21 @@ namespace rr {
 		class Page final : public handle_type {
 		public:
 			size_t size_;
-			std::atomic<size_t> page_ref_;
+			std::atomic<size_t> ref_;
 			LRUCache* cache_;
 
-			virtual size_t PageRef() override { return page_ref_.fetch_add(1); }
-			size_t PageUnref() { return page_ref_.fetch_sub(1); }
-			virtual size_t PageRefSize() override { return page_ref_.load(); }
+			virtual size_t Ref() override { return ref_.fetch_add(1); }
+			size_t Unref() { return ref_.fetch_sub(1); }
+			virtual size_t RefSize() override { return ref_.load(); }
 
-			Page() :handle_type::Handle(nullptr, UINT64_MAX, nullptr), size_(0), cache_(nullptr) { page_ref_.store(0); }
+			Page() :handle_type::Handle(nullptr, UINT64_MAX, nullptr), size_(0), cache_(nullptr) { ref_.store(0); }
 			Page(LRUCache* cache) : handle_type::Handle(nullptr, UINT64_MAX, nullptr)
 				, size_(0), cache_(cache) {
-				page_ref_.store(0);
+				ref_.store(0);
 			}
 			Page(uint64_t key, LRUCache* cache) : handle_type::Handle(nullptr, key, nullptr)
 				, size_(0), cache_(cache) {
-				page_ref_.store(0);
+				ref_.store(0);
 			}
 			Page(uint64_t key, void* ptr, LRUCache* cache);
 
@@ -143,7 +143,7 @@ namespace rr {
 				handle_type* handle = (handle_type*)page;
 				page->set_key(key);
 				bool res = cmap_->PutIfAbsent(key, handle, prior, thread_id);
-				page->PageUnref();
+				page->Unref();
 				return res;
 			}
 
@@ -172,7 +172,7 @@ namespace rr {
 					bool res = free_list_.pop(handle);
 					page = (Page*)handle;
 					if (res) {
-						free_list_size_.fetch_sub(1); assert(page); page->PageRef();
+						free_list_size_.fetch_sub(1); assert(page); page->Ref();
 						return res;
 					}
 				}
@@ -220,7 +220,7 @@ namespace rr {
 
 		Page::Page(uint64_t key, void* ptr, LRUCache* cache) : handle_type::Handle(cache->cmap_, key, ptr)
 			, size_(PAGE_SIZE), cache_(cache) {
-			page_ref_.store(0);
+			ref_.store(0);
 		}
 
 
