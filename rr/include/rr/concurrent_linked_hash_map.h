@@ -289,18 +289,24 @@ namespace rr {
 				async_queue_thread_.detach();
 			}
 			~ConcurrentLinkedHashMap() {
-				wait_for_asyc_done();
+				// cout << "~ConcurrentLinkedHashMap()     , " << __FILE__ << ", " << __LINE__ << endl;
 				should_stop_ = true;
-				// deleted_queue_.clear();
+				
 				// 需要等后台线程成功退出
 				while (!has_shutdown_);
+				for (auto i = 0; i < thread_num_; i++) {
+					QueueNode front;
+					while(async_queue_[i]->pop(front)) {
+						front.handle_->InternalUnref();
+					}
+				}
 
 				for (auto i = 0; i < thread_num_; i++) { async_queue_[i]->set_stop(); }
 				for (auto i = 0; i < thread_num_; i++) { delete async_queue_[i]; }
 
 				clear_map();
 
-				// manager_->cmap_delete_done_ = true;
+				// cout << "~ConcurrentLinkedHashMap() done, " << __FILE__ << ", " << __LINE__ << endl;
 			}
 
 			bool Put(const KEY& key, const VALUE& value, VALUE& prior, int thread_id = 0) { return         put(key, value, false, prior, thread_id); }
@@ -330,6 +336,24 @@ namespace rr {
 					assert(deleted);
 
 					prior = handle->value_;
+					assert(handle->weight_.load() > 0);
+					handle->MakeDead();
+					afterTask(handle, OP::DEL, thread_id);
+				}
+
+				return find;
+			}
+			bool Remove(const KEY& key, handle_type*& prior, int thread_id = 0) {
+				accessor acc;
+				bool find = map_.find(acc, key);
+				handle_type* handle = nullptr;
+				if (find) {
+					handle = acc->second;
+					bool deleted = map_.erase(acc);
+					assert(deleted);
+
+					prior = handle;
+					prior->Ref();
 					assert(handle->weight_.load() > 0);
 					handle->MakeDead();
 					afterTask(handle, OP::DEL, thread_id);
@@ -462,8 +486,8 @@ namespace rr {
 					if (node_in_list(&handle->node_) && !handle->Evicted()) {
 						list_del(&handle->node_);
 						INIT_LIST_HEAD(&handle->node_);
-						before = handle->InternalUnref();
-						assert(before >= 2);
+						// before = handle->InternalUnref();	// 出链引用
+						assert(before >= 1);
 						in_use_list_size_.fetch_sub(1);
 					}
 					else assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
@@ -475,12 +499,12 @@ namespace rr {
 					before = handle->InternalUnref();
 				}
 				else if (node.op_ == OP::PUT) {
-					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
+					// if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
+					if (handle->IsAlive()) {
 						assert(!node_in_list(&handle->node_));
 						list_add_tail(&handle->node_, &in_use_list_);
-						handle->InternalRef();
+						// handle->InternalRef();				// 入链引用
 						in_use_list_size_.fetch_add(1);
-						// std::cout << handle->key_ << " add in list, list size: " << in_use_list_size_.load() << std::endl;
 					}
 					evict();
 					before = handle->InternalUnref();
@@ -491,15 +515,6 @@ namespace rr {
 					}
 					before = handle->InternalUnref();
 				}
-
-				// if (before == 1 && (handle->Deleted() || handle->Evicted()) && handle->PageRefSize() == 0) {
-				// 	deleted_queue_.push(std::move(handle));
-				// }
-				// if(handle->Deleted() || handle->Evicted()) {
-				// 	assert(!node_in_list(&handle->node_));
-				// 	::list_add_tail(&handle->node_, &deleted_queue_);
-				// 	deleted_size_.fetch_add(1);
-				// }
 			}
 
 			// need lock in_use_list_mutex_ before call this
@@ -510,10 +525,8 @@ namespace rr {
 					handle_type* handle = list_entry(first, handle_type, node_);
 
 					if (first == &in_use_list_) { return; }
-					// if (handle->InternalRefSize() > 0 || handle->RefSize() > 0) { continue; }
 					else if (handle->Deleted()) continue;
 					else {
-						// std::cout << "ready evict key: " << handle->key_ << std::endl;
 						assert(node_in_list(first));
 						list_del(first);
 						first->prev = first->next = first;
@@ -521,6 +534,7 @@ namespace rr {
 
 						accessor acc;
 						bool find = map_.find(acc, handle->key_);
+						// assert(find);	// 和 Remove 接口冲突
 						if (find) {
 							map_.erase(acc);
 							assert(handle->weight_ > 0);
@@ -530,7 +544,7 @@ namespace rr {
 							assert(!node_in_list(&handle->node_));
 							::list_add_tail(first, &deleted_queue_);
 							deleted_size_.fetch_add(1);
-							bool before = handle->InternalUnref();
+							// bool before = handle->InternalUnref();	// 出链引用
 						}
 					}
 				}
@@ -550,11 +564,12 @@ namespace rr {
 			void clear_map() {
 				for (auto iter = map_.begin(); iter != map_.end(); iter++) {
 					handle_type* handle = (handle_type*)iter->second;
+					assert(handle->InternalRefSize() == 0);
 					handle->RefClear();
-					if(handle->RefSize() != 0) {
+					if (handle->RefSize() != 0) {
 						cout << __FILE__ << ", " << __LINE__ << ", " << handle->RefSize() << endl;
 					}
-					// assert(handle->RefSize() == 0);
+					assert(handle->RefSize() == 0);
 					handle->Delete();
 					size_of_newhandle_.fetch_sub(1);
 					in_use_list_size_.fetch_sub(1);

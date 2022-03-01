@@ -94,7 +94,7 @@ namespace rr {
 			}
 		};
 
-		class LRUCache : rr::Manager_Hint {
+		class LRUCache {
 		public:
 			rr::ConcurrentQueue<handle_type*> free_list_;
 			std::atomic<size_t> free_list_size_{ 0 };
@@ -106,7 +106,7 @@ namespace rr {
 
 			template<typename K, typename V, class M> friend class rr::ConcurrentLinkedHashMap;
 			ConcurrentLinkedHashMap<uint64_t, void*, LRUCache>* cmap_;
-			bool cmap_delete_done_;
+			// TODO: remove // bool cmap_delete_done_;
 
 		public:
 			LRUCache(size_t max_bytes, size_t item_bytes) :
@@ -127,20 +127,22 @@ namespace rr {
 					free_list_.push((handle_type*)(new Page(UINT64_MAX, cursor, this)));
 					cursor += item_bytes_;
 				}
-				cmap_delete_done_ = false;
+				// TODO: remove // cmap_delete_done_ = false;
 			}
 
 			~LRUCache() {
+    			// cout << "~LRUCache()     , " << __FILE__ << ", " << __LINE__ << endl;
 				delete cmap_;
-				// while (!cmap_delete_done_);
+				
+				handle_type* handle = nullptr;
+				while(free_list_.pop(handle)) {
+					assert(handle->RefSize() == 0 || handle->InternalRef() == 0);
+					delete handle;
+				}
 
 				munmap(ptr_, this->max_bytes_);
+    			// cout << "~LRUCache() done, " << __FILE__ << ", " << __LINE__ << endl;
 			}
-
-			// bool Write(const key_type& key, const value_type& ptr, int thread_id = 0) {
-			// 	value_type prior;
-			// 	return cmap_->PutIfAbsent(key, ptr, prior, thread_id);
-			// }
 
 			bool Write(const key_type& key, Page* page, Page*&prior, int thread_id = 0) {
 				assert(!prior);
@@ -150,23 +152,17 @@ namespace rr {
 				bool res = cmap_->PutIfAbsent(key, handle, prior_handle, thread_id);
 				if(res) {
 					// cout << "ref: " << page->RefSize() << endl;
-					// page->Unref();
+					// page->Unref();	// 外部 Unref
 				} else {
 					assert(prior_handle);
 					prior = (Page*)prior_handle;
 					// cout << "ref: " << prior->RefSize() << endl;
-					// ((Page*)(prior))->Unref(); // ?
-					handle->Delete();
-    // cout << __FILE__ << ", " << __LINE__ << endl;
+					// ((Page*)(prior))->Unref();	// 外部 Unref
+					// handle->Delete(); 			// or:
+					page->Delete();
 				}
 				return res;
 			}
-
-			// bool Read(const key_type& key, value_type& ptr, int thread_id = 0) {
-			// 	bool find = cmap_->Get(key, ptr, thread_id);
-			// 	if (find) assert(ptr != nullptr);
-			// 	return find;
-			// }
 
 			bool Read(const key_type& key, Page*& page, int thread_id = 0) {
 				handle_type* handle = nullptr;
@@ -182,28 +178,33 @@ namespace rr {
 				return find;
 			}
 
-			bool GetNewPage(Page*& page) {
+			bool Delete(const key_type& key, Page*& prior, int thread_id = 0) {
+				handle_type* prior_handle = nullptr;
+				bool res = cmap_->Remove(key, prior_handle, thread_id);
+				if(res) {
+					assert(prior_handle);
+					prior = (Page*)prior_handle;
+					assert(prior->value() != nullptr);
+					assert(key == prior->key());
+					// prior->Unref();	// 外部 Unref
+				}
+				return res;
+			}
 
+			bool GetNewPage(Page*& page) {
 				handle_type* handle = nullptr;
 				while (1) {
 					if (free_list_size_ <= 0) continue;
 					bool res = free_list_.pop(handle);
 					if (res) {
 						page = (Page*)handle;
-						free_list_size_.fetch_sub(1); assert(page); // page->Ref();
+						assert(page->RefSize() == 0 && page->InternalRefSize() == 0);
+						free_list_size_.fetch_sub(1); assert(page);
 						return res;
 					}
 				}
 			}
 		private:
-			virtual void Delete(void* handle) {
-				// handle_type* h = (handle_type*)handle;
-				// ((Page*)h)->set_key(UINT64_MAX);
-				// free_list_.emplace_push(h);
-				// free_list_size_.fetch_add(1);
-				// h->init();
-			}
-			virtual void New(void* handle) {}
 
 
 		public:
@@ -228,10 +229,10 @@ namespace rr {
 			}
 
 			void PrintRef() {
-				sleep(10);
+				sleep(3);
 				size_t count_map = 0, count_list = 0;
 				for (auto iter = cmap_->map().begin(); iter != cmap_->map().end(); iter++) {
-					cout << "int_ref: " << iter->second->InternalRefSize() << ", ref" << iter->second->RefSize() << endl;
+					cout << "int_ref: " << iter->second->InternalRefSize() << ", ref: " << iter->second->RefSize() << endl;
 				}
 
 				
@@ -239,12 +240,14 @@ namespace rr {
 				for (auto iter = free_list_.begin(); iter != free_list_.end(); iter++, count_list++) {
 					cout << "int_ref: " << (*iter)->InternalRefSize() << ", ref: " << (*iter)->RefSize() << endl;
 				}
+				cout << "PrintRef done, " << __FILE__ << ", " << __LINE__ << endl;
 			}
 		};
 
 		void Page::Delete() {
 			handle_type* h = (handle_type*)this;
-			assert(this->ref_.load() == 0);
+			// assert(this->ref_.load() == 0);
+			assert(h->RefSize() == 0 && h->InternalRefSize() == 0);
 			this->set_key(UINT64_MAX);
 			this->init();
 			cache_->free_list_.emplace_push(h);
@@ -255,79 +258,6 @@ namespace rr {
 			, size_(PAGE_SIZE), cache_(cache) {
 			ref_.store(0);
 		}
-
-
-
-		/**
-		// template<typename Allocator>
-		class LRUCache : public CMap {
-		public:
-			friend class Page;
-
-		protected:
-			rr::ConcurrentQueue<Page> free_list_;
-			std::atomic<size_t> free_list_size_;
-
-			// max_size_ in bytes, item_bytes_ in bytes, item_num_ = max_size_ / item_size_
-			size_t max_bytes_;
-			size_t item_bytes_;
-			size_t item_num_;
-
-			void* ptr_;
-
-		public:
-			LRUCache(size_t max_bytes, size_t item_bytes)
-				// : CMap::ConcurrentLinkedHashMap(max_bytes / item_bytes)
-				: ConcurrentLinkedHashMap(max_bytes / item_bytes)
-				, max_bytes_(max_bytes)
-				, item_bytes_(item_bytes)
-				, item_num_(max_bytes / item_bytes)
-				, free_list_(true)
-			{
-				ptr_ = mmap(NULL, this->max_bytes_, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
-
-				std::unique_lock<std::mutex> lck(this->in_use_list_mutex());
-				char* cursor = (char*)ptr_;
-				for (auto i = 0; i < item_num_; i++) {
-					Page page(this, UINT64_MAX, cursor);
-					// page.key_ = UINT64_MAX;
-					// page.ptr_ = cursor;
-					cursor += item_bytes_;
-					free_list_.push(std::move(page));
-				}
-			}
-
-			bool Write(const key_type& key, const value_type ptr, int thread_id = 0) {
-				value_type prior;
-				return CMap::PutIfAbsent(key, ptr, prior);
-			}
-
-			bool Read(const key_type& key, value_type ptr, int thread_id = 0) {
-				return CMap::Get(key, ptr);
-			}
-
-			bool GetNewPage(Page& page) {
-				while (free_list_size_ <= 0) {}
-				// assert(free_list_.pop(page));
-				// return true;
-
-				bool res = free_list_.pop(page);
-				if (res) { free_list_size_.fetch_sub(1); }
-				return res;
-			}
-
-			void Print() {
-				for (auto iter = CMap::map_.begin(); iter != CMap::map_.end(); iter++) {
-					cout << "key: " << iter->first << ", value: " << string((char*)iter->second->value_, item_bytes_) << endl;
-				}
-
-				for (auto iter = free_list_.begin(); iter != free_list_.end(); iter++) {
-					cout << "key: " << iter->key_ << ", value: " << string((char*)iter->value_, item_bytes_) << endl;
-				}
-			}
-
-		};*/
-
 	}
 	using namespace lru_cache;
 }

@@ -13,7 +13,7 @@ using namespace std;
 #include <map>
 
 int global_num_thd = 28;
-int global_batch = 1000;
+int global_batch = 10000;
 
 void single_test()
 {
@@ -40,8 +40,8 @@ void multi_thd_read_after_write()
 {
     int batch = global_batch;
     int num_thd = global_num_thd;
-    // rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd / 2);
-    rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd);
+    rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd / 2);
+    // rr::ConcurrentLinkedHashMap<int, int>* map = new rr::ConcurrentLinkedHashMap<int, int>(batch * num_thd);
 
     auto Write = [&map, batch](int thd_id) -> void
     {
@@ -172,7 +172,9 @@ void multi_thd_read_while_write()
     }
     profiler.End();
     cout << "ConcurrentLinkedHashMap total time: " << profiler.Micros() << endl;
-    // map->check();
+    cout << __FILE__ << ", " << __LINE__ << endl;
+    map->check();
+    cout << __FILE__ << ", " << __LINE__ << endl;
     delete map;
 }
 
