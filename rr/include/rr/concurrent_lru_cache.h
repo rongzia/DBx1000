@@ -137,7 +137,8 @@ namespace rr {
 				handle_type* handle = nullptr;
 				while(free_list_.pop(handle)) {
 					assert(handle->RefSize() == 0 || handle->InternalRef() == 0);
-					delete handle;
+					Page* page = (Page*) handle;
+					delete page;
 				}
 
 				munmap(ptr_, this->max_bytes_);
@@ -252,6 +253,7 @@ namespace rr {
 			this->init();
 			cache_->free_list_.emplace_push(h);
 			cache_->free_list_size_.fetch_add(1);
+			cache_->cmap_->size_of_newhandle_.fetch_sub(1);
 		}
 
 		Page::Page(uint64_t key, void* ptr, LRUCache* cache) : handle_type::Handle(cache->cmap_, key, ptr)

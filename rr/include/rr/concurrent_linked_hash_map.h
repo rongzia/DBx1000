@@ -30,6 +30,7 @@ static bool node_in_list(::list_node* node) {
 }
 
 namespace rr {
+	// 原本 page 没有继承 Handle，需要 LRUCache 继承这个类，以执行元素被删除后的动作 
 	class Manager_Hint {
 	public:
 		virtual void Delete(void* arg1) = 0;
@@ -38,7 +39,7 @@ namespace rr {
 
 	// concurrent_map
 	namespace concurrent_linked_map {
-
+		// Manager 即 LRUCache 类，Manager_Hint 是因为前面的版本想要 LRUCache 继承 类，Manager_Hint
 		template <typename KEY, typename VALUE, class Manager = Manager_Hint>
 		class ConcurrentLinkedHashMap;
 		class HandleBase {
@@ -50,6 +51,7 @@ namespace rr {
 			// const HandleBase& operator=(HandleBase&& handle) = delete;
 			// HandleBase(const HandleBase& handle) = delete;
 			// HandleBase(HandleBase&& handle) = delete;
+			atomic<size_t> op_time_{0};
 		};
 
 		template<typename KEY, typename VALUE, class Manager>
@@ -64,21 +66,22 @@ namespace rr {
 			std::atomic<size_t> weight_;
 			std::atomic<bool> evicted_;	// evict 仅内部空间不够，被 lru 清除才调用
 			std::atomic<bool> deleted_;	// 外部显式调用 Remove 才用到，后面异步删除掉 handle
-			Map* mapParent_;
 
 		protected:
 			KEY key_;
 			VALUE value_;
 			// internal_ref==0, 不代表 handle 就可以删除，ref 是 del handle 的必要条件（即ref==0，才能del；但是ref!=0，一定不能 del）
 			std::atomic<size_t> internal_ref_;
+			Map* mapParent_;
 
 		public:
 			VALUE& value() { return value_; }
 			KEY& key() { return key_; }
 
-			size_t InternalRef() { return internal_ref_.fetch_add(1); }
-			size_t InternalUnref() { return internal_ref_.fetch_sub(1); }
+			size_t InternalRef() { return internal_ref_.fetch_add(1); op_time_.fetch_add(1); }
+			size_t InternalUnref() { return internal_ref_.fetch_sub(1); op_time_.fetch_add(1); }
 			size_t InternalRefSize() { return internal_ref_.load(); }
+			// 下面三个函数，被继承后，只要 Handle* 指向了子类，handle-> 调用时，都表现出子类的特性
 			virtual size_t Ref() { return 0; }
 			virtual size_t RefSize() { return 0; }
 			virtual void RefClear() { internal_ref_.store(0); }
@@ -95,6 +98,11 @@ namespace rr {
 			void MakeEvict() {
 				assert(evicted_.load() == false);
 				evicted_.store(true);
+			}
+
+			void MakeDelete() {
+				assert(deleted_.load() == false);
+				deleted_.store(true);
 			}
 
 			bool IsAlive() { return (weight_.load() > 0); }
@@ -136,6 +144,7 @@ namespace rr {
 				evicted_.store(true);
 			}
 
+			// 由 LRUCache 继承，当前空间释放由子类决定，父类默认会释放当前 this 指针
 			virtual void Delete();
 
 			Handle(Map* map, const KEY& k, const VALUE& v) : mapParent_(map), key_(k), value_(v) { internal_ref_.store(0); init(); }
@@ -234,7 +243,7 @@ namespace rr {
 							use(front);
 						}
 						else {
-							// sleep(1);
+							// this_thread::sleep_for(chrono::milliseconds(1));
 						}
 					}
 					count++;
@@ -290,20 +299,22 @@ namespace rr {
 			}
 			~ConcurrentLinkedHashMap() {
 				// cout << "~ConcurrentLinkedHashMap()     , " << __FILE__ << ", " << __LINE__ << endl;
+				wait_for_asyc_done();
 				should_stop_ = true;
-				
+
 				// 需要等后台线程成功退出
 				while (!has_shutdown_);
 				for (auto i = 0; i < thread_num_; i++) {
-					QueueNode front;
-					while(async_queue_[i]->pop(front)) {
-						front.handle_->InternalUnref();
-					}
+					assert(async_queue_[i]->size() == 0);
+					// QueueNode front;
+					// while(async_queue_[i]->pop(front)) {
+					// 	front.handle_->InternalUnref();
+					// }
 				}
 
 				for (auto i = 0; i < thread_num_; i++) { async_queue_[i]->set_stop(); }
 				for (auto i = 0; i < thread_num_; i++) { delete async_queue_[i]; }
-
+				check();
 				clear_map();
 
 				// cout << "~ConcurrentLinkedHashMap() done, " << __FILE__ << ", " << __LINE__ << endl;
@@ -395,11 +406,6 @@ namespace rr {
 				return find;
 			}
 
-			void Print() {
-				// assert(map_.size() >= in_use_list_size_);
-				for (auto iter = map_.begin(); iter != map_.end(); iter++) {}
-			}
-
 			int ThreadNum() { return this->thread_num_; }
 			rr::ConcurrentQueue<QueueNode>**& AsyncQueue() { return async_queue_; }
 			std::mutex& in_use_list_mutex() { return in_use_list_mutex_; }
@@ -448,6 +454,7 @@ namespace rr {
 			bool put(const KEY& key, handle_type* handle, bool onlyIfAbsent, handle_type*& prior, int thread_id) {
 				accessor acc;
 				bool is_new = map_.insert(acc, key);
+				size_of_newhandle_.fetch_add(1);	// 不能在 if(is_new) 里面，因为外部会调用 page->Delete(), 会减掉它
 				if (is_new) {
 					assert(acc->second == nullptr);
 					acc->second = handle;
@@ -478,8 +485,9 @@ namespace rr {
 					if (before < 1) {
 						cout << "OP: " << OPToChar(node.op_) << endl;
 						cout << __FILE__ << ", " << __LINE__ << ", ref: " << handle->InternalRefSize() << ", PageRef: " << handle->RefSize() << endl;
+						cout << "handle op time: " << handle->op_time_ << endl;
 					}
-					// assert(before >= 1);
+					assert(before >= 1);
 				}
 				if (node.op_ == OP::DEL) {
 					assert(handle->IsDead());
@@ -487,20 +495,19 @@ namespace rr {
 						list_del(&handle->node_);
 						INIT_LIST_HEAD(&handle->node_);
 						// before = handle->InternalUnref();	// 出链引用
-						assert(before >= 1);
+						// assert(before >= 1);
 						in_use_list_size_.fetch_sub(1);
 					}
 					else assert(handle->node_.prev == &handle->node_ && handle->node_.next == &handle->node_);
 					assert(!node_in_list(&handle->node_));
 					::list_add_tail(&handle->node_, &deleted_queue_);
 					deleted_size_.fetch_add(1);
-					// handle->MakeEvict();
-					handle->deleted_.store(true);
+					handle->MakeDelete();
 					before = handle->InternalUnref();
 				}
 				else if (node.op_ == OP::PUT) {
-					// if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
-					if (handle->IsAlive()) {
+					if (handle->IsAlive() && !handle->deleted_.load() && !handle->evicted_.load()) {
+					// if (handle->IsAlive()) {
 						assert(!node_in_list(&handle->node_));
 						list_add_tail(&handle->node_, &in_use_list_);
 						// handle->InternalRef();				// 入链引用
@@ -558,8 +565,6 @@ namespace rr {
 				async_queue_[thread_id % thread_num_]->push(std::move(node));
 			}
 
-			// for debug
-			std::atomic<size_t> size_of_newhandle_{ 0 };
 
 			void clear_map() {
 				for (auto iter = map_.begin(); iter != map_.end(); iter++) {
@@ -587,6 +592,9 @@ namespace rr {
 			}
 
 		public:
+			// for debug
+			std::atomic<size_t> size_of_newhandle_{ 0 };
+
 			void wait_for_asyc_done() {
 				while (1) {
 					bool done = true;
@@ -633,13 +641,18 @@ namespace rr {
 			void check() {
 				wait_for_asyc_done();
 				std::this_thread::sleep_for(chrono::seconds(1));
-				/*debug for print*/ std::cout << "map_size/handle_num/list_size: " << map_.size() << ", " << size_of_newhandle_.load() << ", " << in_use_list_size_.load() << std::endl;
+				/*debug for print*/ std::cout << "map_size/new_handle_num/list_size: " << map_.size() << ", " << size_of_newhandle_.load() << ", " << in_use_list_size_.load() << std::endl;
 				assert(map_.size() == in_use_list_size_.load());
 				assert(map_.size() == size_of_newhandle_.load());
 
 				for (::list_node* node = &in_use_list_; node->next != &in_use_list_; node = node->next) {
 					/*debug for check*/assert(node->next->prev == node);
 				}
+			}
+
+			void Print() {
+				// assert(map_.size() >= in_use_list_size_);
+				for (auto iter = map_.begin(); iter != map_.end(); iter++) {}
 			}
 		};
 
