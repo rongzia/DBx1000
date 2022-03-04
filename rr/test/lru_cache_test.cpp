@@ -366,7 +366,7 @@ int main()
     // 正确性
     read_after_write(2);
     cout << __FILE__ << ", " << __LINE__ << endl;
-    // read_while_write(true, 2);
+    // read_while_write(true, 1.1);      // 有 bug 执行会卡主
     cout << __FILE__ << ", " << __LINE__ << endl;
     read_after_write();
     cout << __FILE__ << ", " << __LINE__ << endl;
@@ -380,9 +380,9 @@ int main()
 
     calculateDenom(global_batch);
     lru_test(TYPE::uniform, 1);
-    lru_test(TYPE::uniform, 2);
+    lru_test(TYPE::uniform, 5);
     lru_test(TYPE::ycsb_09, 1);
-    lru_test(TYPE::ycsb_09, 2);
+    lru_test(TYPE::ycsb_09, 5);
     return 0;
 }
 // g++ lru_cache_test3.cpp -o lru_cache_test3.exe -ltbb -lpthread -g
