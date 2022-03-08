@@ -9,6 +9,7 @@
 #include "catalog.h"
 #include "index_btree.h"
 #include "index_hash.h"
+#include "index_map_hash.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
@@ -197,6 +198,22 @@ void
 txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item) {
 	uint64_t starttime = get_sys_clock();
 	index->index_read(key, item, part_id, get_thd_id());
+	INC_TMP_STATS(get_thd_id(), time_index, get_sys_clock() - starttime);
+}
+
+index_item *
+txn_man::index_read(IndexMapHash * index, idx_key_t key) {
+	uint64_t starttime = get_sys_clock();
+	index_item * item;
+	index->index_read(key, item);
+	INC_TMP_STATS(get_thd_id(), time_index, get_sys_clock() - starttime);
+	return item;
+}
+
+void 
+txn_man::index_read(IndexMapHash * index, idx_key_t key, index_item *& item) {
+	uint64_t starttime = get_sys_clock();
+	index->index_read(key, item);
 	INC_TMP_STATS(get_thd_id(), time_index, get_sys_clock() - starttime);
 }
 

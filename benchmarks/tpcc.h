@@ -6,6 +6,7 @@
 
 class table_t;
 class INDEX;
+class IndexMapHash;
 class tpcc_query;
 
 class tpcc_wl : public workload {
@@ -24,15 +25,15 @@ public:
 	table_t *		t_item;
 	table_t *		t_stock;
 
-	INDEX * 	i_item;
-	INDEX * 	i_warehouse;
-	INDEX * 	i_district;
-	INDEX * 	i_customer_id;
-	INDEX * 	i_customer_last;
-	INDEX * 	i_stock;
-	INDEX * 	i_order; // key = (w_id, d_id, o_id)
-	INDEX * 	i_orderline; // key = (w_id, d_id, o_id)
-	INDEX * 	i_orderline_wd; // key = (w_id, d_id). 
+	IndexMapHash * 	i_item;
+	IndexMapHash * 	i_warehouse;
+	IndexMapHash * 	i_district;
+	IndexMapHash * 	i_customer_id;
+	IndexMapHash * 	i_customer_last;
+	IndexMapHash * 	i_stock;
+	IndexMapHash * 	i_order; // key = (w_id, d_id, o_id)
+	IndexMapHash * 	i_orderline; // key = (w_id, d_id, o_id)
+	IndexMapHash * 	i_orderline_wd; // key = (w_id, d_id). 
 	
 	bool ** delivering;
 	uint32_t next_tid;

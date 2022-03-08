@@ -105,3 +105,46 @@ uint64_t myrand::next() {
 	return (seed / 65537) % RAND_MAX;
 }
 
+// uint8_t table_to_uint8(TABLES table) {
+// 	uint8_t table_type = -1;
+// 	if(table == TABLES::MAIN_TABLE) { table_type = 0; }
+// 	else if(table == TABLES::WAREHOUSE) { table_type = 1; }
+// 	else if(table == TABLES::DISTRICT) { table_type = 2; }
+// 	else if(table == TABLES::CUSTOMER) { table_type = 3; }
+// 	else if(table == TABLES::HISTORY) { table_type = 4; }
+// 	else if(table == TABLES::NEW_ORDER) { table_type = 5; }
+// 	else if(table == TABLES::ORDER) { table_type = 6; }
+// 	else if(table == TABLES::ORDER_LINE) { table_type = 7; }
+// 	else if(table == TABLES::ITEM) { table_type = 8; }
+// 	else if(table == TABLES::STOCK) { table_type = 9; }
+// 	return table_type;
+// }
+
+// TABLES uint8_to_table(uint8_t table_type) {
+// 	TABLES table;
+// 	if(table_type == 0) { table = TABLES::MAIN_TABLE; }
+// 	else if(table_type == 1) { table = TABLES::WAREHOUSE; }
+// 	else if(table_type == 2) { table = TABLES::DISTRICT; }
+// 	else if(table_type == 3) { table = TABLES::CUSTOMER; }
+// 	else if(table_type == 4) { table = TABLES::HISTORY; }
+// 	else if(table_type == 5) { table = TABLES::NEW_ORDER; }
+// 	else if(table_type == 6) { table = TABLES::ORDER; }
+// 	else if(table_type == 7) { table = TABLES::ORDER_LINE; }
+// 	else if(table_type == 8) { table = TABLES::ITEM; }
+// 	else if(table_type == 9) { table = TABLES::STOCK; }
+// 	return table;
+// }
+
+// void row_key_to_lru_key(TABLES table, uint64_t* row_key) {
+// 	assert(sizeof(uint8_t) == 1);
+// 	uint8_t table_type = table_to_uint8(table);
+// 	memcpy(row_key, &table_type, sizeof(uint8_t));
+// }
+
+// TABLES lru_key_to_row_key(uint64_t* lru_key) {
+// 	uint8_t table_type;
+// 	memcpy(&table_type, lru_key, sizeof(uint8_t));
+// 	TABLES table = uint8_to_table(table_type);
+// 	memset(lru_key, 0, sizeof(uint8_t));
+// 	return table;
+// }

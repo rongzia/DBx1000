@@ -157,6 +157,29 @@ public:
 	void operator=(const itemid_t &other);
 };
 
+class table_t;
+class row_t;
+class index_item {
+public:
+	index_item() {};
+	index_item(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* next = nullptr) {
+		set(table, row, page_id, location, next);
+	}
+
+	void set(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* next = nullptr) {
+		this->table_ = table;
+		this->row_ = row;
+		this->page_id_ = page_id;
+		this->location_ = location;
+	}
+
+	table_t* table_;
+	row_t* row_;
+	uint64_t page_id_;
+	uint64_t location_;
+	index_item* next;
+};
+
 int get_thdid_from_txnid(uint64_t txnid);
 
 // key_to_part() is only for ycsb

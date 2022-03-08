@@ -25,7 +25,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 	RC rc;
 	ycsb_query * m_query = (ycsb_query *) query;
 	ycsb_wl * wl = (ycsb_wl *) h_wl;
-	itemid_t * m_item = NULL;
+	// itemid_t * m_item = NULL;
+	index_item * m_item = NULL;
   	row_cnt = 0;
 
 	for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
@@ -35,7 +36,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 		UInt32 iteration = 0;
 		while ( !finish_req ) {
 			if (iteration == 0) {
-				m_item = index_read(_wl->the_index, req->key, part_id);
+				m_item = index_read(_wl->the_index, req->key);
 			} 
 #if INDEX_STRUCT == IDX_BTREE
 			else {
@@ -44,7 +45,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 					break;
 			}
 #endif
-			row_t * row = ((row_t *)m_item->location);
+			// row_t * row = ((row_t *)m_item->location);
+			row_t * row = ((row_t *)m_item->row_);
 			row_t * row_local; 
 			access_t type = req->rtype;
 			

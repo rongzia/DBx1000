@@ -11,8 +11,9 @@ add_definitions(-DNOGRAPHITE=1)
 
 # include header files
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/benchmarks/ ${PROJECT_SOURCE_DIR}/concurrency_control/ ${PROJECT_SOURCE_DIR}/storage/ ${PROJECT_SOURCE_DIR}/system/)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/rr/include ${PROJECT_SOURCE_DIR}/include)
 # lib files
 LINK_DIRECTORIES(${PROJECT_SOURCE_DIR}/libs)
-file(GLOB_RECURSE SRC_FILES benchmarks/*.cpp concurrency_control/*.cpp storage/*.cpp system/*.cpp config.cpp)
+file(GLOB_RECURSE SRC_FILES benchmarks/*.cpp concurrency_control/*.cpp storage/*.cpp system/*.cpp rr/include/rr/*.cpp config.cpp)
 add_executable(rundb ${SRC_FILES})
-target_link_libraries(rundb libjemalloc.so libpthread.so)
+target_link_libraries(rundb libjemalloc.so libpthread.so tbb)

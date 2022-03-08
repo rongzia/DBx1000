@@ -9,6 +9,7 @@ class row_t;
 class table_t;
 class base_query;
 class INDEX;
+class IndexMapHash;
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -89,7 +90,9 @@ public:
 	// For VLL
 	TxnType 		vll_txn_type;
 	itemid_t *		index_read(INDEX * index, idx_key_t key, int part_id);
+	index_item *    index_read(IndexMapHash * index, idx_key_t key);
 	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
+	void            index_read(IndexMapHash * index, idx_key_t key, index_item *& item);
 	row_t * 		get_row(row_t * row, access_t type);
 protected:	
 	void 			insert_row(row_t * row, table_t * table);

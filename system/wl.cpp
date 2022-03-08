@@ -5,11 +5,13 @@
 #include "table.h"
 #include "index_hash.h"
 #include "index_btree.h"
+#include "index_map_hash.h"
 #include "catalog.h"
 #include "mem_alloc.h"
 
 RC workload::init() {
 	sim_done = false;
+	page_id_.store(0);
 	return RCOK;
 }
 
@@ -80,14 +82,15 @@ RC workload::init_schema(string schema_file) {
 			}
 			
 			string tname(items[0]);
-			INDEX * index = (INDEX *) _mm_malloc(sizeof(INDEX), 64);
-			new(index) INDEX();
+			// INDEX * index = (INDEX *) _mm_malloc(sizeof(INDEX), 64);
+			// new(index) INDEX();
+			IndexMapHash* index = new IndexMapHash();
 			int part_cnt = (CENTRAL_INDEX)? 1 : g_part_cnt;
 			if (tname == "ITEM")
 				part_cnt = 1;
 #if INDEX_STRUCT == IDX_HASH
 	#if WORKLOAD == YCSB
-			index->init(part_cnt, tables[tname], g_synth_table_size * 2);
+			index->init(tables[tname]);
 	#elif WORKLOAD == TPCC
 			assert(tables[tname] != NULL);
 			index->init(part_cnt, tables[tname], stoi( items[1] ) * part_cnt);
@@ -106,7 +109,7 @@ RC workload::init_schema(string schema_file) {
 
 void workload::index_insert(string index_name, uint64_t key, row_t * row) {
 	assert(false);
-	INDEX * index = (INDEX *) indexes[index_name];
+	IndexMapHash * index = (IndexMapHash *) indexes[index_name];
 	index_insert(index, key, row);
 }
 
@@ -123,5 +126,23 @@ void workload::index_insert(INDEX * index, uint64_t key, row_t * row, int64_t pa
 
     assert( index->index_insert(key, m_item, pid) == RCOK );
 }
+/* TODO:
+void workload::index_insert(IndexMapHash * index, uint64_t key, row_t * row, int64_t part_id) {
+	uint64_t pid = part_id;
+	if (part_id == -1)
+		pid = get_part_id(row);
+	index_item * m_item = new index_item();
+	idx_item->table_ = the_table;
+	idx_item->row_ = row;
+	idx_item->page_id_ = page_id;
+	idx_item->location_ = page->used_size_;
+
+	m_item->init();
+	m_item->type = DT_row;
+	m_item->location = row;
+	m_item->valid = true;
+
+    assert( index->index_insert(key, m_item) == RCOK );
+}*/
 
 

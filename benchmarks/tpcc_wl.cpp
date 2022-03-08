@@ -104,7 +104,7 @@ void tpcc_wl::init_tab_item() {
 			strcpy(data, "original");		
 		row->set_value(I_DATA, data);
 		
-		index_insert(i_item, i, row, 0);
+		// index_insert(i_item, i, row, 0);
 	}
 }
 
@@ -137,7 +137,7 @@ void tpcc_wl::init_tab_wh(uint32_t wid) {
 	row->set_value(W_TAX, tax);
 	row->set_value(W_YTD, w_ytd);
 	
-	index_insert(i_warehouse, wid, row, wh_to_part(wid));
+	// index_insert(i_warehouse, wid, row, wh_to_part(wid));
 	return;
 }
 
@@ -172,7 +172,7 @@ void tpcc_wl::init_tab_dist(uint64_t wid) {
 		row->set_value(D_YTD, w_ytd);
 		row->set_value(D_NEXT_O_ID, 3001);
 		
-		index_insert(i_district, distKey(did, wid), row, wh_to_part(wid));
+		// index_insert(i_district, distKey(did, wid), row, wh_to_part(wid));
 	}
 }
 
@@ -212,7 +212,7 @@ void tpcc_wl::init_tab_stock(uint64_t wid) {
 		}
 		row->set_value(S_DATA, s_data);
 #endif
-		index_insert(i_stock, stockKey(sid, wid), row, wh_to_part(wid));
+		// index_insert(i_stock, stockKey(sid, wid), row, wh_to_part(wid));
 	}
 }
 
@@ -275,9 +275,9 @@ void tpcc_wl::init_tab_cust(uint64_t did, uint64_t wid) {
 		row->set_value(C_PAYMENT_CNT, 1);
 		uint64_t key;
 		key = custNPKey(c_last, did, wid);
-		index_insert(i_customer_last, key, row, wh_to_part(wid));
+		// index_insert(i_customer_last, key, row, wh_to_part(wid));
 		key = custKey(cid, did, wid);
-		index_insert(i_customer_id, key, row, wh_to_part(wid));
+		// index_insert(i_customer_id, key, row, wh_to_part(wid));
 	}
 }
 

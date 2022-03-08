@@ -8,6 +8,7 @@
 #include "row.h"
 #include "index_hash.h"
 #include "index_btree.h"
+#include "index_map_hash.h"
 #include "catalog.h"
 #include "manager.h"
 #include "row_lock.h"
@@ -26,6 +27,15 @@ RC ycsb_wl::init() {
 	string path = this_file.substr(0, this_file.length()-11);
 	path += "YCSB_schema.txt";
 	init_schema( path );
+	/**
+	* tuple_size = 100
+	* rows_per_page 4K/100 = 40
+	* num_page = g_synth_table_size/rows_per_page+1 = 262145
+	*/
+	uint64_t rows_per_page = PAGE_SIZE / the_table->get_schema()->get_tuple_size();
+	// /* debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
+	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE, PAGE_SIZE);
+	// /* debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
 	
 	init_table_parallel();
 //	init_table();
@@ -35,6 +45,7 @@ RC ycsb_wl::init() {
 RC ycsb_wl::init_schema(string schema_file) {
 	workload::init_schema(schema_file);
 	the_table = tables["MAIN_TABLE"];  
+	// the_index = indexes["MAIN_INDEX"];
 	the_index = indexes["MAIN_INDEX"];
 	return RCOK;
 }
@@ -76,7 +87,7 @@ RC ycsb_wl::init_table() {
             m_item->location = new_row;
             m_item->valid = true;
             uint64_t idx_key = primary_key;
-            rc = the_index->index_insert(idx_key, m_item, part_id);
+            // rc = the_index->index_insert(idx_key, m_item, part_id);
             assert(rc == RCOK);
             total_row ++;
         }
@@ -118,6 +129,20 @@ void * ycsb_wl::init_table_slice() {
 	while ((UInt32)ATOM_FETCH_ADD(next_tid, 0) < g_init_parallelism) {}
 	assert((UInt32)ATOM_FETCH_ADD(next_tid, 0) == g_init_parallelism);
 	uint64_t slice_size = g_synth_table_size / g_init_parallelism;
+
+	rr::lru_cache::Page* page;
+	bool res = lru_cache_->GetNewPage(page); assert(res);
+	uint64_t page_id = page_id_.fetch_add(1);
+
+    auto WritePage = [this, &page, page_id]() -> void
+    {
+		page->set_key(page_id); page->set_id(page_id);
+		rr::lru_cache::Page* prior = nullptr;
+		bool is_new = lru_cache_->Write(page->key(), page, prior);
+		if (is_new) { page->Unref(); }
+		else { prior->Unref(); }
+    };
+
 	for (uint64_t key = slice_size * tid; 
 			key < slice_size * (tid + 1); 
 			key ++
@@ -137,17 +162,19 @@ void * ycsb_wl::init_table_slice() {
 			new_row->set_value(fid, value);
 		}
 
-		itemid_t * m_item =
-			(itemid_t *) mem_allocator.alloc( sizeof(itemid_t), part_id );
-		assert(m_item != NULL);
-		m_item->type = DT_row;
-		m_item->location = new_row;
-		m_item->valid = true;
-		uint64_t idx_key = primary_key;
-		
-		rc = the_index->index_insert(idx_key, m_item, part_id);
-		assert(rc == RCOK);
+		res = page->AddRow(new_row->data, new_row->get_tuple_size());
+		if(!res) {
+			WritePage();
+
+			res = lru_cache_->GetNewPage(page); assert(res); assert(page->used_size_ == 3);
+			page_id = page_id_.fetch_add(1);
+			res = page->AddRow(new_row->data, new_row->get_tuple_size()); assert(res);
+		}
+
+		index_item* idx_item = new index_item(the_table, new_row, page_id, page->used_size_);
+		rc = the_index->index_insert(primary_key, idx_item);
 	}
+	WritePage();
 	return NULL;
 }
 
