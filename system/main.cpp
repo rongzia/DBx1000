@@ -9,6 +9,8 @@
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "rr/profiler.h"
+#include "rdb/lock_table.h"
 
 void * f(void *);
 
@@ -41,8 +43,20 @@ int main(int argc, char* argv[])
 		default:
 			assert(false);
 	}
+	rr::Profiler profiler;
+	profiler.Start();
 	m_wl->init();
+	profiler.End();
 	printf("workload initialized!\n");
+    cout << "workload init time: " << profiler.Millis() << " ms." << endl;
+
+	profiler.Clear();
+	profiler.Start();
+	LockTable* lock_table = new LockTable();
+	lock_table->wl_ = m_wl;
+	lock_table->init();
+	profiler.End();
+    cout << "lock table init time: " << profiler.Millis() << " ms." << endl;
 	
 	uint64_t thd_cnt = g_thread_cnt;
 	pthread_t p_thds[thd_cnt - 1];

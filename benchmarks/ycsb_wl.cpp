@@ -17,6 +17,23 @@
 #include "mem_alloc.h"
 #include "query.h"
 
+
+
+void ycsb_wl::check() {
+	/**
+	* tuple_size    = 100
+	* rows_per_page = 4096/100 = 40
+	* rows_per_thd  = g_synth_table_size / g_init_parallelism = 2^20*10/4 = 2^18*10
+	* pages_per_thd = 2^18*10 / 40 = 2^16
+	* num_page = g_synth_table_size/rows_per_page+1 = 262145
+	*/
+	uint64_t rows_per_page = PAGE_SIZE / this->the_table->get_schema()->get_tuple_size();
+	uint64_t rows_per_thd  = g_synth_table_size / g_init_parallelism;
+	uint64_t pages_per_thd = rows_per_thd / rows_per_page;
+	assert(rows_per_page == 40);
+	assert(rows_per_thd % rows_per_page == 0);
+}
+
 int ycsb_wl::next_tid;
 
 RC ycsb_wl::init() {
@@ -27,18 +44,45 @@ RC ycsb_wl::init() {
 	string path = this_file.substr(0, this_file.length()-11);
 	path += "YCSB_schema.txt";
 	init_schema( path );
-	/**
-	* tuple_size = 100
-	* rows_per_page 4K/100 = 40
-	* num_page = g_synth_table_size/rows_per_page+1 = 262145
-	*/
+
+	check();
+
 	uint64_t rows_per_page = PAGE_SIZE / the_table->get_schema()->get_tuple_size();
-	// /* debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
+	uint64_t rows_per_thd  = g_synth_table_size / g_init_parallelism;
+	uint64_t pages_per_thd = rows_per_thd / rows_per_page;
 	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE, PAGE_SIZE);
-	// /* debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
-	
+	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
+	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
+	page_ids_ = new uint64_t[g_init_parallelism];
+	for(int i = 0; i < g_init_parallelism; i++) {
+		page_ids_[i] = i * pages_per_thd;
+		// /* rr::debug */ cout << page_ids_[i] << endl;
+	}
+
 	init_table_parallel();
 //	init_table();
+
+	// 多线程需要把几个 index 串起来
+	uint64_t slice_size = g_synth_table_size / g_init_parallelism;
+	for(uint64_t key = slice_size-1; key < g_synth_table_size-1; key += slice_size) {
+		index_item* prev = nullptr;
+		index_item* next = nullptr;
+		RC rc1 = the_index->index_read(key, prev);
+		RC rc2 = the_index->index_read(key+1, next);
+		assert(rc1 == RCOK && rc2 == RCOK && prev && next);
+		prev->next = next;
+		next->prev = prev;
+	}
+
+	/*
+	// check prev and next in the_index
+	for(uint64_t key = 0; key < g_synth_table_size-1; key++) {
+		index_item* item = nullptr;
+		RC rc = the_index->index_read(key, item);
+		assert(rc == RCOK && item);
+		assert(item->next->prev == item);
+	} */
+
 	return RCOK;
 }
 
@@ -132,7 +176,8 @@ void * ycsb_wl::init_table_slice() {
 
 	rr::lru_cache::Page* page;
 	bool res = lru_cache_->GetNewPage(page); assert(res);
-	uint64_t page_id = page_id_.fetch_add(1);
+	uint64_t page_id = page_ids_[tid];
+	index_item* prev = nullptr;
 
     auto WritePage = [this, &page, page_id]() -> void
     {
@@ -167,12 +212,15 @@ void * ycsb_wl::init_table_slice() {
 			WritePage();
 
 			res = lru_cache_->GetNewPage(page); assert(res); assert(page->used_size_ == 3);
-			page_id = page_id_.fetch_add(1);
+			page_id++;
+			// /* rr::debug */ std::cout << "page id: " << page_id << std::endl;
 			res = page->AddRow(new_row->data, new_row->get_tuple_size()); assert(res);
 		}
 
 		index_item* idx_item = new index_item(the_table, new_row, page_id, page->used_size_);
-		rc = the_index->index_insert(primary_key, idx_item);
+		rc = the_index->index_insert(primary_key, idx_item, prev);
+		assert(rc == RCOK);
+		prev = idx_item;
 	}
 	WritePage();
 	return NULL;

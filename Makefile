@@ -1,13 +1,13 @@
 CC=g++
-CFLAGS=-Wall -g -std=c++0x
+CFLAGS=-Wall -g -std=c++17
 
 .SUFFIXES: .o .cpp .h
 
-SRC_DIRS = ./ ./benchmarks/ ./concurrency_control/ ./storage/ ./system/ ./rr/include/rr/
-INCLUDE = -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -I./rr/include -I./include
+SRC_DIRS = ./ ./benchmarks/ ./concurrency_control/ ./storage/ ./system/ ./rr/include/rr/ ./rdb/
+INCLUDE = -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -I./rr/include -I./include -I./rdb/
 
 CFLAGS += $(INCLUDE) -D NOGRAPHITE=1 -Werror -Wno-unused-variable -Wno-unused-but-set-variable -O3
-LDFLAGS = -Wall -L. -L./libs -pthread -g -lrt -std=c++0x -O3 -ljemalloc -ltbb -L/home/zhangrongrong/.local/tbb/lib/
+LDFLAGS = -Wall -L. -L./libs -pthread -g -lrt -std=c++0x -O3 -ljemalloc -ltbb
 LDFLAGS += $(CFLAGS)
 
 CPPS = $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)*.cpp))

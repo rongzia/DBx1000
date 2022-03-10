@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include "global.h"
 
-
 /************************************************/
 // atomic operations
 /************************************************/
@@ -162,15 +161,17 @@ class row_t;
 class index_item {
 public:
 	index_item() {};
-	index_item(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* next = nullptr) {
-		set(table, row, page_id, location, next);
+	index_item(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* nxt = nullptr, index_item* pre = nullptr) {
+		set(table, row, page_id, location, nxt, pre);
 	}
 
-	void set(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* next = nullptr) {
+	void set(table_t* table, row_t* row, uint64_t page_id, uint64_t location, index_item* nxt = nullptr, index_item* pre = nullptr) {
 		this->table_ = table;
 		this->row_ = row;
 		this->page_id_ = page_id;
 		this->location_ = location;
+		this->next = nxt;
+		this->prev = pre;
 	}
 
 	table_t* table_;
@@ -178,6 +179,7 @@ public:
 	uint64_t page_id_;
 	uint64_t location_;
 	index_item* next;
+	index_item* prev;
 };
 
 int get_thdid_from_txnid(uint64_t txnid);

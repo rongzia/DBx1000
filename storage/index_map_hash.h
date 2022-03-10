@@ -15,6 +15,7 @@ public:
 	RC			init(table_t * table);
 	bool 		index_exist(idx_key_t key); // check if the key exist.
 	RC 			index_insert(idx_key_t key, index_item * item);
+	RC 			index_insert(idx_key_t key, index_item * item, index_item * prev);
 	// the following call returns a single item
 	RC	 		index_read(idx_key_t key, index_item * &item);	
 private:

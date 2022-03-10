@@ -26,7 +26,7 @@ public:
 	map<string, IndexMapHash *> indexes;
 
 	rr::lru_cache::LRUCache* lru_cache_;
-	std::atomic<uint64_t> page_id_;
+	uint64_t* page_ids_;
 	
 	// initialize the tables and indexes.
 	virtual RC init();

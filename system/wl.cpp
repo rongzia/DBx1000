@@ -11,7 +11,6 @@
 
 RC workload::init() {
 	sim_done = false;
-	page_id_.store(0);
 	return RCOK;
 }
 
