@@ -13,6 +13,9 @@ public:
 	uint64_t waiting_time;
 	uint64_t part_num;
 	uint64_t * part_to_access;
+
+	std::set<std::pair<TABLES, uint64_t>> page_set_;
+	using value_type = std::set<std::pair<TABLES, uint64_t>>::value_type;
 };
 
 // All the querise for a particular thread.

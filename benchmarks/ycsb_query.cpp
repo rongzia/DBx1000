@@ -4,6 +4,7 @@
 #include "wl.h"
 #include "ycsb.h"
 #include "table.h"
+#include "index_map_hash.h"
 
 uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;
@@ -149,8 +150,13 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 					requests[j] = requests[j + 1];
 					requests[j + 1] = tmp;
 				}
-		for (UInt32 i = 0; i < request_cnt - 1; i++)
+		for (UInt32 i = 0; i < request_cnt - 1; i++) {
 			assert(requests[i].key < requests[i + 1].key);
+			index_item* idx_item = nullptr;
+			((ycsb_wl*)h_wl)->the_index->index_read(requests[i].key, idx_item);
+			assert(idx_item);
+			page_set_.insert(value_type(TABLES::MAIN_TABLE, idx_item->page_id_));
+		}
 	}
 
 }

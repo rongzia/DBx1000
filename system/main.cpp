@@ -117,6 +117,8 @@ int main(int argc, char* argv[])
 	} else {
 		((TestWorkload *)m_wl)->summarize();
 	}
+
+	delete m_wl;
 	return 0;
 }
 

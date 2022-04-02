@@ -1,8 +1,11 @@
+#include <algorithm>
 #include "index_map_hash.h"
 
+IndexMapHash::~IndexMapHash() {
+	for_each(index_map_.begin(), index_map_.end(), [this](const_reference refer) -> void { delete refer.second;  });
+}
 
-
-RC IndexMapHash::init(table_t * table) {
+RC IndexMapHash::init(table_t* table) {
 	this->table_ = table;
 	return RCOK;
 }
@@ -12,33 +15,36 @@ bool IndexMapHash::index_exist(idx_key_t key) {
 	return index_map_.find(con_acc, key);
 }
 
-RC IndexMapHash::index_insert(idx_key_t key, index_item * item, index_item * prev) {
+RC IndexMapHash::index_insert(idx_key_t key, index_item* item, index_item* prev) {
 	accessor acc;
 	bool is_new = index_map_.insert(acc, key);
-	if(is_new) {
+	if (is_new) {
 		acc->second = item;
-		if(prev) {
+		if (prev) {
 			item->prev = prev;
 			prev->next = item;
 		}
 		return RCOK;
-	} else return Abort;
+	}
+	else return Abort;
 }
 
-RC IndexMapHash::index_insert(idx_key_t key, index_item * item) {
+RC IndexMapHash::index_insert(idx_key_t key, index_item* item) {
 	accessor acc;
 	bool is_new = index_map_.insert(acc, key);
-	if(is_new) {
+	if (is_new) {
 		acc->second = item;
 		return RCOK;
-	} else return Abort;
+	}
+	else return Abort;
 }
 
-RC IndexMapHash::index_read(idx_key_t key, index_item * &item) {
+RC IndexMapHash::index_read(idx_key_t key, index_item*& item) {
 	const_accessor con_acc;
 	bool find = index_map_.find(con_acc, key);
-	if(find) {
+	if (find) {
 		item = con_acc->second;
 		return RCOK;
-	} else return Abort;
+	}
+	else return Abort;
 }

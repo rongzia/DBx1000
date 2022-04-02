@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "global.h"
 #include "helper.h"
 #include "wl.h"
@@ -8,6 +9,10 @@
 #include "index_map_hash.h"
 #include "catalog.h"
 #include "mem_alloc.h"
+
+workload::~workload() {
+	for_each(indexes.begin(), indexes.end(), [this](map<string, IndexMapHash *>::const_reference iter) -> void { delete iter.second; });
+}
 
 RC workload::init() {
 	sim_done = false;

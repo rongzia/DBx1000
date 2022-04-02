@@ -17,7 +17,7 @@
 #include "mem_alloc.h"
 #include "query.h"
 
-
+ycsb_wl::~ycsb_wl() {}
 
 void ycsb_wl::check() {
 	/**
@@ -54,7 +54,7 @@ RC ycsb_wl::init() {
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
 	page_ids_ = new uint64_t[g_init_parallelism];
-	for(int i = 0; i < g_init_parallelism; i++) {
+	for(uint32_t i = 0; i < g_init_parallelism; i++) {
 		page_ids_[i] = i * pages_per_thd;
 		// /* rr::debug */ cout << page_ids_[i] << endl;
 	}

@@ -1,4 +1,5 @@
 
+#include <algorithm>
 #include <vector>
 #include <thread>
 #include "lock_table.h"
@@ -8,6 +9,13 @@
 #include "ycsb.h"
 #include "index_map_hash.h"
 
+PageLockItem::~PageLockItem() {
+    for_each(row_map_.begin(), row_map_.end(), [this](const_reference iter) -> void {delete iter.second;});
+}
+
+LockTable::~LockTable() {
+    for_each(lock_table_map_.begin(), lock_table_map_.end(), [this](const_reference iter) -> void {delete iter.second;});
+}
 
 #ifdef YCSB
 
