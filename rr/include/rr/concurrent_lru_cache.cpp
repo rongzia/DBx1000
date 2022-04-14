@@ -1,25 +1,50 @@
 #include "concurrent_lru_cache.h"
+
 namespace rr {
     namespace lru_cache {
-        void Page::Delete() {
-            handle_type* h = (handle_type*)this;
-            // assert(this->ref_.load() == 0);
-            assert(h->RefSize() == 0 && h->InternalRefSize() == 0);
-            this->set_key(UINT64_MAX);
-            this->set_id(UINT64_MAX);
-            uint64_t used_size = 3;
-            memcpy(((char*)h->value())+sizeof(uint64_t), &used_size, sizeof(uint64_t));
-            memcpy(&used_size_, ((char*)h->value())+sizeof(uint64_t), sizeof(uint64_t));
-            assert(this->used_size_ == 3);
-            this->init();
-            cache_->free_list_.emplace_push(h);
-            cache_->free_list_size_.fetch_add(1);
-            cache_->cmap_->size_of_newhandle_.fetch_sub(1);
+
+        size_t Page::Unref() {
+            size_t before = ref_.fetch_sub(1);
+            if (before == 1 && this->page_id_ == UINT64_MAX) {
+                assert(this->node_ == nullptr);
+                /* debug */ if (ref_.load() != 0) { std::cout << ref_.load() << std::endl; }
+                assert(ref_.load() == 0);
+                this->cache_->free_list_.push(this);
+                this->cache_->free_list_size_.fetch_add(1);
+                // /* debug */ std::cout << __LINE__ << "free_list_size_: " << cache_->free_list_size_ << std::endl;
+            }
+            return before;
         }
 
-        Page::Page(uint64_t page_id, void* ptr, LRUCache* cache, uint64_t used_size, uint64_t version) : handle_type::Handle(cache->cmap_, page_id, ptr)
-            , size_(PAGE_SIZE), cache_(cache), used_size_(used_size), version_(version) {
-            ref_.store(0);
+        void INIT_LIST_HEAD(rr::list_node<Page*>* node) {
+            node->_M_prev = node;
+            node->_M_next = node;
+        }
+
+        void list_add_tail(rr::list_node<Page*>* temp, rr::list_node<Page*>* head) {
+            rr::list_node<Page*>* old_tail = (rr::list_node<Page*>*)head->_M_prev;
+            head->_M_prev = temp;
+            temp->_M_next = head;
+            temp->_M_prev = old_tail;
+            old_tail->_M_next = temp;
+        }
+
+        void list_del(rr::list_node<Page*>* temp) {
+            temp->_M_prev->_M_next = temp->_M_next;
+            temp->_M_next->_M_prev = temp->_M_prev;
+            temp->_M_prev = nullptr;
+            temp->_M_next = nullptr;
+        }
+
+        bool node_in_list(rr::list_node<Page*>* node) {
+            // 应该从头找，但是这样太费时，直接判断了前后是否为自己
+            bool in = !(node == node->_M_next && node == node->_M_prev && node->_M_next != nullptr && node->_M_prev != nullptr);
+            if (in) {
+                assert(node);
+                assert(node->_M_next);
+                assert(node->_M_prev);
+            }
+            return in;
         }
     }
 }

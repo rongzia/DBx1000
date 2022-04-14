@@ -40,6 +40,8 @@ public:
 
 	UInt32 			field_cnt;
  	const char * 	table_name;
+	char*           table_name_;
+	char*           index_name_;
 	
 	UInt32 			get_tuple_size() { return tuple_size; };
 	

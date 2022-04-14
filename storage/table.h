@@ -22,6 +22,8 @@ public:
 	uint64_t get_table_size() { return cur_tab_size; };
 	Catalog * get_schema() { return schema; };
 	const char * get_table_name() { return table_name; };
+	const char * get_table_name_();
+	const char * get_index_name_();
 
 	Catalog * 		schema;
 private:

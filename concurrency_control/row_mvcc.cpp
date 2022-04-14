@@ -6,7 +6,88 @@
 #include "mem_alloc.h"
 #include <mm_malloc.h>
 
+#include "wl.h"
+#include "table.h"
+#include "index_map_hash.h"
+#include "rr/concurrent_lru_cache.h"
+
 #if CC_ALG == MVCC
+
+size_t Row_mvcc::Ref(txn_man* txn) {
+
+	size_t before = this->ref_.fetch_add(1);
+	if(before == 0) {
+		index_item* idx_item = nullptr;
+		RC rc = wl_->indexes[_row->table->get_index_name_()]->index_read(_row->get_primary_key(), idx_item);
+		assert(RCOK == rc);
+
+		rr::Page* page = nullptr;
+		bool find = wl_->lru_cache_->Read(idx_item->page_id_, page, txn->get_thd_id());
+		// bool find = wl_->lru_cache_->Read(idx_item->page_id_, page);
+		if(find) {
+			assert(page);
+			char* loc = (char*)(page->page_ptr_) + idx_item->location_;
+			memcpy(_latest_row->data, loc, _row->get_tuple_size());
+			page->Unref();
+		} else {
+			rr::Page* page2 = nullptr;
+			rr::Page* prior = nullptr;
+			bool res = wl_->lru_cache_->GetNewPage(page2);
+			assert(res); assert(page2);
+			page2->page_id_ = idx_item->page_id_;
+			res = wl_->lru_cache_->Write(idx_item->page_id_, page2, prior, txn->get_thd_id());
+			// res = wl_->lru_cache_->Write(idx_item->page_id_, page2, prior);
+			if(res) {
+				char* loc = (char*)(page2->page_ptr_) + idx_item->location_;
+				memcpy(_latest_row->data, loc, _row->get_tuple_size());
+				page2->Unref();
+			} else {
+				char* loc = (char*)(prior->page_ptr_) + idx_item->location_;
+				memcpy(_latest_row->data, loc, _row->get_tuple_size());
+				prior->Unref();
+			}
+		}
+	}
+	return before;
+}
+
+size_t Row_mvcc::UnRef(txn_man* txn) {
+
+	size_t before = this->ref_.fetch_sub(1);
+	if(before == 1) {
+		index_item* idx_item = nullptr;
+		RC rc = wl_->indexes[_row->table->get_index_name_()]->index_read(_row->get_primary_key(), idx_item);
+		assert(RCOK == rc);
+
+		rr::Page* page = nullptr;
+		bool find = wl_->lru_cache_->Read(idx_item->page_id_, page, txn->get_thd_id());
+		// bool find = wl_->lru_cache_->Read(idx_item->page_id_, page);
+		if(find) {
+			assert(page);
+			char* loc = (char*)(page->page_ptr_) + idx_item->location_;
+			memcpy(loc, _latest_row->data, _row->get_tuple_size());
+			page->Unref();
+		} else {
+			rr::Page* page2 = nullptr;
+			rr::Page* prior = nullptr;
+			bool res = wl_->lru_cache_->GetNewPage(page2);
+			assert(res); assert(page2);
+			page2->page_id_ = idx_item->page_id_;
+			res = wl_->lru_cache_->Write(idx_item->page_id_, page2, prior, txn->get_thd_id());
+			// res = wl_->lru_cache_->Write(idx_item->page_id_, page2, prior);
+			if(res) {
+				char* loc = (char*)(page2->page_ptr_) + idx_item->location_;
+				memcpy(_latest_row->data, loc, _row->get_tuple_size());
+				page2->Unref();
+			} else {
+				char* loc = (char*)(prior->page_ptr_) + idx_item->location_;
+				memcpy(loc, _latest_row->data, _row->get_tuple_size());
+				prior->Unref();
+			}
+		}
+	}
+	return before;
+}
 
 void Row_mvcc::init(row_t * row) {
 	_row = row;
@@ -107,6 +188,12 @@ uint64_t t1 = get_sys_clock();
 		//pthread_mutex_lock( latch );
 uint64_t t2 = get_sys_clock();
 INC_STATS(txn->get_thd_id(), debug4, t2 - t1);
+
+	if(R_REQ == type || P_REQ == type) {
+		Ref(txn);
+	} else if (W_REQ == type || XP_REQ == type) {
+		UnRef(txn);
+	} else assert(false);
 
 #if DEBUG_CC
 	for (uint32_t i = 0; i < _req_len; i++)

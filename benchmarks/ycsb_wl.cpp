@@ -47,10 +47,11 @@ RC ycsb_wl::init() {
 
 	check();
 
-	uint64_t rows_per_page = PAGE_SIZE / the_table->get_schema()->get_tuple_size();
+	uint64_t rows_per_page = (PAGE_SIZE-64) / the_table->get_schema()->get_tuple_size();
 	uint64_t rows_per_thd  = g_synth_table_size / g_init_parallelism;
 	uint64_t pages_per_thd = rows_per_thd / rows_per_page;
-	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE, PAGE_SIZE);
+	// lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE, PAGE_SIZE);
+	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE / 1, PAGE_SIZE);
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
 	page_ids_ = new uint64_t[g_init_parallelism];
@@ -179,11 +180,12 @@ void * ycsb_wl::init_table_slice() {
 	uint64_t page_id = page_ids_[tid];
 	index_item* prev = nullptr;
 
-    auto WritePage = [this, &page, page_id]() -> void
+    auto WritePage = [this, &page, page_id, tid]() -> void
     {
-		page->set_key(page_id); page->set_id(page_id);
+		page->page_id_ = page_id;
+		page->Serialize();
 		rr::lru_cache::Page* prior = nullptr;
-		bool is_new = lru_cache_->Write(page->key(), page, prior);
+		bool is_new = lru_cache_->Write(page->page_id_, page, prior, tid);
 		if (is_new) { page->Unref(); }
 		else { prior->Unref(); }
     };
@@ -200,6 +202,7 @@ void * ycsb_wl::init_table_slice() {
 		uint64_t primary_key = key;
 		new_row->set_primary_key(primary_key);
 		new_row->set_value(0, &primary_key);
+		new_row->manager->wl_ = this;
 		Catalog * schema = the_table->get_schema();
 		
 		for (UInt32 fid = 0; fid < schema->get_field_cnt(); fid ++) {
@@ -211,7 +214,7 @@ void * ycsb_wl::init_table_slice() {
 		if(!res) {
 			WritePage();
 
-			res = lru_cache_->GetNewPage(page); assert(res); assert(page->used_size_ == 3);
+			res = lru_cache_->GetNewPage(page); assert(res); assert(page->used_size_ == 64);
 			page_id++;
 			// /* rr::debug */ std::cout << "page id: " << page_id << std::endl;
 			res = page->AddRow(new_row->data, new_row->get_tuple_size()); assert(res);

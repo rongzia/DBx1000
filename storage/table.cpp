@@ -27,3 +27,7 @@ RC table_t::get_new_row(row_t *& row, uint64_t part_id, uint64_t &row_id) {
 
 	return rc;
 }
+
+const char * table_t::get_table_name_() { return schema->table_name_; }
+
+const char * table_t::get_index_name_() { return schema->index_name_; }

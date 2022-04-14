@@ -4,6 +4,9 @@
 
 void 
 Catalog::init(const char * table_name, int field_cnt) {
+	this->table_name_ = new char[30]; memset(table_name_, '\0', 30);
+	this->index_name_ = new char[30]; memset(index_name_, '\0', 30);
+	memcpy(this->table_name_, table_name, strlen(table_name));
 	this->table_name = table_name;
 	this->field_cnt = 0;
 	this->_columns = new Column [field_cnt];

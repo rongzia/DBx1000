@@ -102,6 +102,7 @@ RC workload::init_schema(string schema_file) {
 #else
 			index->init(part_cnt, tables[tname]);
 #endif
+			memcpy(schema->index_name_, iname.c_str(), strlen(iname.c_str()));
 			indexes[iname] = index;
 		}
     }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <atomic>
 class table_t;
 class Catalog;
 class txn_man;
@@ -29,6 +29,11 @@ class Row_mvcc {
 public:
 	void init(row_t * row);
 	RC access(txn_man * txn, TsType type, row_t * row);
+
+	workload* wl_;
+	size_t Ref(txn_man* txn);
+	size_t UnRef(txn_man* txn);
+	std::atomic<size_t> ref_;
 private:
  	pthread_mutex_t * latch;
 	volatile bool blatch;

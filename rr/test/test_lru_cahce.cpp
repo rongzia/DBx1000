@@ -11,8 +11,229 @@
 #include "../include/rr/random.h"
 using namespace std;
 
-int global_num_thd = 28;
+int global_num_thd = 20;
 size_t global_batch = 10000;
+
+
+void simple_test() {
+    rr::LRUCache* cache = new rr::LRUCache(10 * PAGE_SIZE, PAGE_SIZE);
+
+    for (uint64_t key = 0; key < 13; key++) {
+        rr::lru_cache::Page* page = nullptr;
+        rr::lru_cache::Page* prior = nullptr;
+        cache->GetNewPage(page);
+        assert(page);
+        page->page_id_ = key;
+        bool is_new = cache->Write(key, page, prior);
+        if (is_new) {
+            size_t before = page->Unref(); 
+            std::cout << __LINE__ << "\t, page/unref: " << page->page_id_ << "/" << before-1 << std::endl;
+        }
+        else { prior->Unref(); }
+    }
+
+    // cache->Print();
+    // cout << __FILE__ << ", " << __LINE__ << endl;
+    delete cache;
+}
+
+void read_after_write(double den = 1, bool with_thd_id = false) {
+    // cout << "read_after_write     , " << __FILE__ << ", " << __LINE__ << endl;
+    int batch = global_batch;
+    int num_thd = global_num_thd;
+    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / den * PAGE_SIZE, PAGE_SIZE);
+
+
+    auto Write1 = [&cache, num_thd, batch, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+        
+        for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++) {
+            rr::lru_cache::Page* page = nullptr;
+            rr::lru_cache::Page* prior = nullptr;
+            bool res = cache->GetNewPage(page);
+            assert(res); assert(page);
+            page->page_id_ = i;
+            bool is_new = cache->Write(i, page, prior, th);
+            if (is_new) { page->Unref(); }
+            else { prior->Unref(); }
+
+            if(i == (thd_id + 1) * batch - 1) {
+                // std::cout << "thread: " << thd_id << " done." << std::endl;
+            }
+        }
+    };
+
+    auto Write2 = [&cache, num_thd, batch, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+        
+        for (int i = 0; i < num_thd * batch; i++) {
+            rr::lru_cache::Page* page = nullptr;
+            rr::lru_cache::Page* prior = nullptr;
+            bool res = cache->GetNewPage(page);
+            assert(res); assert(page);
+            page->page_id_ = i;
+            bool is_new = cache->Write(i, page, prior, th);
+            if (is_new) { page->Unref(); /*cout << i << endl;*/ }
+            else { prior->Unref(); }
+
+            
+
+            if(i == num_thd * batch - 1) {
+                // std::cout << "thread: " << thd_id << " done." << std::endl;
+            }
+        }
+    };
+
+    auto Read = [&cache, num_thd, batch, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+        
+        for (int i = 0; i < num_thd * batch; i++)
+        {
+            rr::lru_cache::Page* page = nullptr;
+            bool find = cache->Read(i, page, th);
+            if (find) { page->Unref(); }
+
+            if(i == num_thd * batch - 1) {
+                // std::cout << "thread: " << thd_id << " done." << std::endl;
+            }
+        }
+    };
+
+    rr::Profiler profiler;
+    profiler.Start();
+    std::vector<std::thread> v_thread;
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread.emplace_back(Write1, thd);
+    }
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread[thd].join();
+    }
+    profiler.End();
+    cout << "read_after_write write1 time: " << profiler.Micros() << " us" << endl;
+
+
+    v_thread.clear();
+    profiler.Clear();
+    profiler.Start();
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread.emplace_back(Write2, thd);
+    }
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread[thd].join();
+    }
+    profiler.End();
+    cout << "read_after_write write2 time: " << profiler.Micros() << " us" << endl;
+
+
+    v_thread.clear();
+    profiler.Clear();
+    profiler.Start();
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread.emplace_back(Read, thd);
+    }
+    for (auto thd = 0; thd < num_thd; thd++) {
+        v_thread[thd].join();
+    }
+    profiler.End();
+    cout << "read_after_write read   time: " << profiler.Micros() << " us" << endl;
+    delete cache;
+}
+
+
+void read_while_write(double den = 1, bool with_thd_id = false, bool with_delete = false) {
+    size_t batch = global_batch;
+    int num_thd = global_num_thd;
+    size_t total_bytes = batch * num_thd / den * PAGE_SIZE;
+    rr::LRUCache* cache = new rr::LRUCache(total_bytes, PAGE_SIZE);
+    std::atomic<size_t> write_size{0}, read_size{0}, delete_size{0};
+
+    auto Write = [&cache, num_thd, batch, &write_size, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+
+        for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
+        {
+            rr::lru_cache::Page* page = nullptr;
+            rr::lru_cache::Page* prior = nullptr;
+            bool res = cache->GetNewPage(page);
+            assert(res); assert(page);
+            page->page_id_ = i;
+            bool is_new = cache->Write(i, page, prior, th);
+            if (is_new) { page->Unref(); }
+            else { prior->Unref(); }
+            write_size.fetch_add(1);
+        }
+    };
+    auto Read = [&cache, num_thd, batch, &read_size, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+
+        for (int i = 0; i < num_thd * batch; i++)
+        {
+            rr::lru_cache::Page* page = nullptr;
+            bool find = cache->Read(i, page, th);
+            if (!find) {
+                rr::lru_cache::Page* temp = nullptr;
+                rr::lru_cache::Page* prior = nullptr;
+                cache->GetNewPage(temp);
+                assert(temp);
+                temp->page_id_ = i;
+                bool is_new = cache->Write(i, temp, prior, th);
+                if (is_new) { temp->Unref();  }
+                else { prior->Unref(); }
+            }
+            if (find) { page->Unref(); }
+            read_size.fetch_add(1);
+        }
+    };
+    auto Delete = [&cache, num_thd, batch, &delete_size, with_thd_id](int thd_id) -> void
+    {
+        int th = with_thd_id ? thd_id : 0;
+
+        for (int i = 0; i < num_thd * batch; i++)
+        {
+            rr::lru_cache::Page* prior = nullptr;
+            bool res = cache->Delete(i, th);
+            delete_size.fetch_add(1);
+        }
+    };
+
+    rr::Profiler profiler;
+    profiler.Start();
+    std::vector<std::thread> v_thread;
+    for (auto thd = 0; thd < num_thd; thd++) { v_thread.emplace_back(Write, thd); }
+    for (auto thd = 0; thd < num_thd; thd++) { v_thread.emplace_back(Read, thd); }
+    if(with_delete) { for (auto thd = 0; thd < num_thd; thd++) { v_thread.emplace_back(Delete, thd); }}
+// /* debug */
+// while(1) {
+//     this_thread::sleep_for(chrono::seconds(1));
+//     cache->Print();
+//     std::cout << "write_size/read_size/delete_size: " << write_size << "/" << read_size << "/" << delete_size << std::endl;
+// }
+    if (!with_delete) { for (auto thd = 0; thd < num_thd * 2; thd++) { v_thread[thd].join(); } }
+    else { for (auto thd = 0; thd < num_thd * 3; thd++) { v_thread[thd].join(); } }
+
+    profiler.End();
+    cout << "read_while_write total time: " << profiler.Micros() << " us" << endl;
+    delete cache;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 double g_zipf_theta = 0.9;
@@ -52,207 +273,6 @@ uint64_t zipf(uint64_t n, double theta) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-class A {
-public:
-    size_t* a_{ 0 };
-    virtual size_t Ref() = 0;
-    virtual size_t RefSize() = 0;
-    virtual void Delete() {
-        cout << "A::Delete()" << endl;
-        delete this;
-    }
-    ~A() { cout << "~A()" << endl; delete a_; a_ = nullptr; }
-};
-
-class B : public A {
-public:
-    size_t* b_;
-    virtual size_t Ref() { (*b_)++; }
-    virtual size_t RefSize() { return (*b_); }
-    void Delete() {
-        cout << "B::Delete()" << endl;
-        // delete this;
-    }
-    ~B() { cout << "~B()" << endl; delete b_; b_ = nullptr; }
-};
-void test() {
-    B* b = new B();
-    A* a = b;
-    a->Delete();
-}
-
-
-void simple_test() {
-    rr::LRUCache* cache = new rr::LRUCache(10 * PAGE_SIZE, PAGE_SIZE);
-
-    for (uint64_t key = 0; key < 13; key++) {
-        rr::lru_cache::Page* page = nullptr;
-        cache->GetNewPage(page);
-        assert(page);
-        page->set_key(key); page->set_id(key);
-        rr::lru_cache::Page* prior = nullptr;
-        bool is_new = cache->Write(page->key(), page, prior);
-        if (is_new) { page->Unref(); }
-        else { prior->Unref(); }
-    }
-
-    cache->Print();
-    // cout << __FILE__ << ", " << __LINE__ << endl;
-    delete cache;
-}
-
-void read_after_write(double den = 1) {
-    // cout << "read_after_write     , " << __FILE__ << ", " << __LINE__ << endl;
-    int batch = global_batch;
-    int num_thd = global_num_thd;
-    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / den * PAGE_SIZE, PAGE_SIZE);
-
-    auto Write = [&cache, num_thd, batch](int thd_id) -> void
-    {
-        bool has_res;
-        for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++) {
-            rr::lru_cache::Page* page = nullptr;
-            rr::lru_cache::Page* prior = nullptr;
-            bool res = cache->GetNewPage(page);
-            assert(res);
-            page->set_key(i); page->set_id(i);
-            bool is_new = cache->Write(i, page, prior, thd_id);
-            // bool is_new = cache->Write(i, page, prior);
-            if (is_new) { page->Unref(); }
-            else { prior->Unref(); }
-        }
-    };
-    auto Read = [&cache, num_thd, batch](int thd_id) -> void
-    {
-        bool has_res;
-        for (int i = 0; i < num_thd * batch; i++)
-        {
-            rr::lru_cache::Page* page = nullptr;
-            bool find = cache->Read(i, page, thd_id);
-            if (find) { page->Unref(); }
-        }
-    };
-
-    rr::Profiler profiler;
-    profiler.Start();
-    std::vector<std::thread> v_thread;
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread.emplace_back(Write, thd);
-    }
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread[thd].join();
-    }
-    profiler.End();
-    cout << "read_after_write write time: " << profiler.Micros() << " us" << endl;
-
-    v_thread.clear();
-    profiler.Clear();
-    profiler.Start();
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread.emplace_back(Read, thd);
-    }
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread[thd].join();
-    }
-    profiler.End();
-    cout << "read_after_write read  time: " << profiler.Micros() << " us" << endl;
-    delete cache;
-    // cout << "read_after_write done, " << __FILE__ << ", " << __LINE__ << endl;
-}
-
-void read_while_write(bool with_delete = true, double den = 1) {
-    // cout << "read_while_write, " << __FILE__ << ", " << __LINE__ << endl;
-    int batch = global_batch;
-    int num_thd = global_num_thd;
-    rr::LRUCache* cache = new rr::LRUCache(batch * num_thd / den * PAGE_SIZE, PAGE_SIZE);
-
-    auto Write = [&cache, num_thd, batch](int thd_id) -> void
-    {
-        bool has_res;
-        for (int i = thd_id * batch; i < (thd_id + 1) * batch; i++)
-        {
-            rr::lru_cache::Page* page = nullptr;
-            rr::lru_cache::Page* prior = nullptr;
-            bool res = cache->GetNewPage(page);
-            assert(res);
-            page->set_key(i); page->set_id(i);
-            bool is_new = cache->Write(i, page, prior, thd_id);
-            // bool is_new = cache->Write(i, page, prior);
-            if (is_new) { page->Unref(); }
-            else { prior->Unref(); }
-        }
-    };
-    auto Read = [&cache, num_thd, batch](int thd_id) -> void
-    {
-        bool has_res;
-        for (int i = 0; i < num_thd * batch; i++)
-        {
-            rr::lru_cache::Page* page = nullptr;
-            bool find = cache->Read(i, page, thd_id);
-            if (!find) {
-                rr::lru_cache::Page* page = nullptr;
-                rr::lru_cache::Page* prior = nullptr;
-                cache->GetNewPage(page);
-                page->set_key(i); page->set_id(i);
-                bool is_new = cache->Write(i, page, prior, thd_id);
-                // bool is_new = cache->Write(i, page, prior);
-                if (is_new) { page->Unref(); }
-                else { prior->Unref(); }
-            }
-            if (find) { page->Unref(); }
-        }
-    };
-    auto Delete = [&cache, num_thd, batch](int thd_id) -> void
-    {
-        bool has_res;
-        for (int i = 0; i < num_thd * batch; i++)
-        {
-            rr::lru_cache::Page* prior = nullptr;
-            bool res = cache->Delete(i, prior, thd_id);
-            if (res) { prior->Unref(); }
-        }
-    };
-
-    rr::Profiler profiler;
-    profiler.Start();
-    std::vector<std::thread> v_thread;
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread.emplace_back(Write, thd);
-    }
-    for (auto thd = 0; thd < num_thd; thd++) {
-        v_thread.emplace_back(Read, thd);
-    }
-    if (!with_delete) {
-        // cout << cache->cmap_->deleted_size_ << endl;
-        // cout << cache->free_list_size_ << endl;
-        // cache->cmap_->check();
-        // cout << cache->cmap_->deleted_size_ << endl;
-        // cout << cache->free_list_size_ << endl;
-        for (auto thd = 0; thd < num_thd * 2; thd++) { v_thread[thd].join(); }
-    }
-    else {
-        for (auto thd = 0; thd < num_thd; thd++) { v_thread.emplace_back(Delete, thd); }
-        for (auto thd = 0; thd < num_thd * 3; thd++) { v_thread[thd].join(); }
-    }
-    profiler.End();
-    cout << "read_while_write total time: " << profiler.Micros() << " us" << endl;
-    delete cache;
-    // cout << "read_while_write done, " << __FILE__ << ", " << __LINE__ << endl;
-}
-
-
 enum class TYPE { uniform, ycsb_05, ycsb_06, ycsb_07, ycsb_08, ycsb_09, ycsb_099 };
 
 // 有个 bug, 当调用 Warmup 且 后面不指定线程 thd_id 时, 会卡在 GetNewPage
@@ -283,7 +303,8 @@ void lru_test(TYPE type, double den = 1) {
                 rr::lru_cache::Page* page = nullptr;
                 rr::lru_cache::Page* prior = nullptr;
                 cache->GetNewPage(page);
-                page->set_key(key); page->set_id(key);
+                assert(page);
+                page->page_id_ = key;
                 bool is_new = cache->Write(key, page, prior);
                 if (is_new) { page->Unref(); }
                 else { prior->Unref(); }
@@ -323,7 +344,8 @@ void lru_test(TYPE type, double den = 1) {
                 rr::lru_cache::Page* page = nullptr;
                 rr::lru_cache::Page* prior = nullptr;
                 cache->GetNewPage(page);
-                page->set_key(key); page->set_id(key);
+                assert(page);
+                page->page_id_ = key;
                 bool is_new = cache->Write(key, page, prior, thd_id);
                 // bool is_new = cache->Write(key, page, prior);
                 if (is_new) { page->Unref(); }
@@ -359,24 +381,36 @@ void lru_test(TYPE type, double den = 1) {
 }
 
 
+
+
+
 int main()
 {
-    // simple_test();
+    simple_test();
     cout << endl << endl << endl;
     // 正确性
-    read_after_write(2);
+    read_after_write(1, false);
+    read_after_write(1, true);
     cout << __FILE__ << ", " << __LINE__ << endl;
-    // read_while_write(true, 1.1);      // 有 bug 执行会卡主
-    cout << __FILE__ << ", " << __LINE__ << endl;
-    read_after_write();
-    cout << __FILE__ << ", " << __LINE__ << endl;
-    read_while_write();
-    cout << __FILE__ << ", " << __LINE__ << endl;
-    // read_while_write(false, 1);  // 有 bug，这行执行完，下行执行会卡住,wait_for_asyc_done debug 发现，有一个队列一直有一个值，但是后台线程就是刷不下去，应该是这个原因导致 GetNewPage 卡住
-    // cout << __FILE__ << ", " << __LINE__ << endl;
-    // read_while_write(false, 2);
+    read_after_write(2, false);
+    read_after_write(2, true);
 
     cout << endl << endl << endl;
+    cout << __FILE__ << ", " << __LINE__ << endl;
+    read_while_write(1, false, false);
+    read_while_write(1, true, false);
+    cout << __FILE__ << ", " << __LINE__ << endl;
+    read_while_write(2, false, false);
+    read_while_write(2, true, false);
+
+    cout << endl << endl << endl;
+    cout << __FILE__ << ", " << __LINE__ << endl;
+    read_while_write(1, false, true);
+    read_while_write(1, true, true);
+    read_while_write(2, false, true);
+    read_while_write(2, true, true);
+
+    // cout << endl << endl << endl;
 
     calculateDenom(global_batch);
     lru_test(TYPE::uniform, 1);
@@ -385,4 +419,4 @@ int main()
     lru_test(TYPE::ycsb_09, 5);
     return 0;
 }
-// g++ lru_cache_test3.cpp -o lru_cache_test3.exe -ltbb -lpthread -g
+// g++ test_lru_cahce.cpp -o test_lru_cahce.exe -ltbb -lpthread -g
