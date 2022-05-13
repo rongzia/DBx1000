@@ -3,15 +3,25 @@
 #include "stats.h"
 #include "dl_detect.h"
 #include "manager.h"
+#include "rdb/rdb_txn_manager.h"
+#include "rdb/instance_lock_manager/ins_client_manager.h"
 #include "query.h"
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
 
+namespace rdb {
+	class RDB_Txn_Manager;
+	class InsClientManager;
+	RDB_Txn_Manager * glob_rdb_manager;
+	InsClientManager* ins_client_manager_;
+}
+
 mem_alloc mem_allocator;
 Stats stats;
 DL_detect dl_detector;
 Manager * glob_manager;
+rdb::RDB_Txn_Manager * glob_rdb_manager;
 Query_queue * query_queue;
 Plock part_lock_man;
 OptCC occ_man;

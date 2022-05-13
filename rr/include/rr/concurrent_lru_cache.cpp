@@ -3,7 +3,7 @@
 namespace rr {
     namespace lru_cache {
 
-        size_t Page::Unref() {
+        int64_t Page::Unref() {
             size_t before = ref_.fetch_sub(1);
             if (before == 1 && this->page_id_ == UINT64_MAX) {
                 assert(this->node_ == nullptr);

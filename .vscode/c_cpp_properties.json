@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/zhangrongrong/.local/tbb/include",
+                "/home/zhangrongrong/.local/brpc-v1.1.0-be4d588/include",
+                "/home/zhangrongrong/.local/protobuf-4.0.0-rc2/include",
+                "${workspaceFolder}/rdb/lock_service"
+            ],
+            "defines": [],
+            "compilerPath": "/home/zhangrongrong/.local/gcc-7.4.0/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}

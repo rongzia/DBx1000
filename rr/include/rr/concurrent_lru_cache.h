@@ -215,15 +215,15 @@ namespace rr {
             uint64_t used_size_;
             uint64_t version_;
 
-            std::atomic<size_t> ref_;
+            std::atomic<int64_t> ref_;
             rr::list_node<Page*>* node_;
             LRUCache* cache_;
 
             std::atomic<uint64_t> internal_version_;
 
-            size_t Ref() { return ref_.fetch_add(1); }
-            size_t Unref();
-            size_t RefSize() { return ref_.load(); }
+            int64_t Ref() { return ref_.fetch_add(1); }
+            int64_t Unref();
+            int64_t RefSize() { return ref_.load(); }
             void RefClear() { ref_.store(0); }
 
             Page(LRUCache* cache) : page_ptr_(nullptr), page_id_(UINT64_MAX), size_(0)
@@ -373,7 +373,7 @@ namespace rr {
                 free_list_size_.store(max_bytes / item_bytes);
                 // std::unique_lock<std::mutex> lck(cmap_->in_use_list_mutex());
                 char* cursor = (char*)ptr_;
-                for (auto i = 0; i < free_list_size_; i++) {
+                for (size_t i = 0; i < free_list_size_; i++) {
                     free_list_.push((Page*)(new Page(cursor, UINT64_MAX, PAGE_SIZE, this)));
                     cursor += item_bytes_;
                 }
@@ -382,7 +382,7 @@ namespace rr {
                 in_use_list_size_.store(0);
 
                 async_queue_ = new tbb::concurrent_queue<Operator>*[thread_num_];
-                for (auto i = 0; i < thread_num_; i++) {
+                for (size_t i = 0; i < thread_num_; i++) {
                     async_queue_[i] = new tbb::concurrent_queue<Operator>();
                     assert(async_queue_[i] != nullptr);
                 }
@@ -399,8 +399,8 @@ namespace rr {
                 while (!has_shutdown_);
 
 
-                // for (auto i = 0; i < thread_num_; i++) { async_queue_[i]->set_stop(); }
-                for (auto i = 0; i < thread_num_; i++) { async_queue_[i]->clear(); delete async_queue_[i]; }
+                // for (size_t i = 0; i < thread_num_; i++) { async_queue_[i]->set_stop(); }
+                for (size_t i = 0; i < thread_num_; i++) { async_queue_[i]->clear(); delete async_queue_[i]; }
                 munmap(ptr_, this->max_bytes_);
             }
 
@@ -426,7 +426,7 @@ namespace rr {
             }
 
             void afterTask(Page* page, OP op, int thread_id) {
-                size_t before = page->Ref();
+                int64_t before = page->Ref();
                 // /* debug */ std::cout << __LINE__ << "\t, page/ref_size: " << page->page_id_ << "/" << before+1 << std::endl;
                 assert(before >= 0);
                 Operator operat(page, op, page->internal_version_);
@@ -443,7 +443,7 @@ namespace rr {
                     assert(page->page_id_ == page_id);
                     assert(acc->second == nullptr);
                     acc->second = page;
-                    size_t before = page->Ref();
+                    int64_t before = page->Ref();
                     // /* debug */ std::cout << __LINE__ << "\t, page/ref_size: " << page->page_id_ << "/" << before+1 << std::endl;
                     afterTask(page, OP::PUT, thread_id);
                 }
@@ -509,7 +509,7 @@ namespace rr {
                         delete node;
                         page->node_ = nullptr;
                         in_use_list_size_.fetch_sub(1);
-                        size_t before = page->Unref();
+                        int64_t before = page->Unref();
                         // /* debug */ std::cout << __LINE__ << "\t, page/unref: " << page->page_id_ << "/" << before-1 << std::endl;
                     }
                 }
@@ -524,7 +524,7 @@ namespace rr {
                     else if (page->node_ == nullptr) {
                         rr::list_node<Page*>* node = new rr::list_node<Page*>(page);
                         page->node_ = node;
-                        size_t before = page->Ref();
+                        int64_t before = page->Ref();
                         list_add_tail(node, &in_use_list_);
                         in_use_list_size_.fetch_add(1);
                         // /* debug */ std::cout << __LINE__ << ", page/ref_size: " << page->page_id_ << "/" << before+1 << std::endl;
@@ -545,7 +545,7 @@ namespace rr {
                         list_add_tail(node, &in_use_list_);
                     }
                 }
-                size_t before = page->Unref();
+                int64_t before = page->Unref();
                 // /* debug */ std::cout << __LINE__ << "\t, page/unref: " << page->page_id_ << "/" << before-1 << std::endl;
             }
 
@@ -579,7 +579,7 @@ namespace rr {
                             delete first;
                             page->node_ = nullptr;
                             in_use_list_size_.fetch_sub(1);
-                            size_t before = page->Unref();
+                            int64_t before = page->Unref();
                             // /* debug */ std::cout << __LINE__ << ", page/unref: " << old_page_id << "/" << before-1 << std::endl;
                         }
                         else {
@@ -591,7 +591,7 @@ namespace rr {
                             delete first;
                             page->node_ = nullptr;
                             in_use_list_size_.fetch_sub(1);
-                            size_t before = page->Unref();
+                            int64_t before = page->Unref();
                             // }
                         }
                     }
@@ -603,7 +603,7 @@ namespace rr {
 
                 while (!should_stop_) {
                     evict();
-                    for (auto i = 0; i < thread_num_; i++) {
+                    for (size_t i = 0; i < thread_num_; i++) {
                         Operator front;
                         bool res = async_queue_[i]->try_pop(front);
                         if (res) {

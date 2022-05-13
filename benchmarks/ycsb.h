@@ -20,6 +20,11 @@ public :
 	// INDEX * the_index;
 	IndexMapHash * the_index;
 	table_t * the_table;
+
+	uint64_t rows_per_page_;
+	uint64_t rows_per_thd_;
+	uint64_t pages_per_thd_;
+	
 private:
 	void init_table_parallel();
 	void * init_table_slice();

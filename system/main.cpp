@@ -11,6 +11,8 @@
 #include "vll.h"
 #include "rr/profiler.h"
 #include "rdb/lock_table.h"
+#include "rdb/rdb_txn_manager.h"
+#include "rdb/instance_lock_manager/ins_client_manager.h"
 
 void * f(void *);
 
@@ -27,6 +29,8 @@ int main(int argc, char* argv[])
 	stats.init();
 	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);
 	glob_manager->init();
+	rdb::glob_rdb_manager = new rdb::RDB_Txn_Manager();
+	rdb::glob_rdb_manager->Init();
 	if (g_cc_alg == DL_DETECT) 
 		dl_detector.init();
 	printf("mem_allocator initialized!\n");
@@ -52,9 +56,10 @@ int main(int argc, char* argv[])
 
 	profiler.Clear();
 	profiler.Start();
-	LockTable* lock_table = new LockTable();
+	rdb::LockTable* lock_table = new rdb::LockTable();
 	lock_table->wl_ = m_wl;
 	lock_table->init();
+	rdb::glob_rdb_manager->lock_table_ = lock_table;
 	profiler.End();
     cout << "lock table init time: " << profiler.Millis() << " ms." << endl;
 	
@@ -77,6 +82,8 @@ int main(int argc, char* argv[])
 #elif CC_ALG == VLL
 	vll_man.init();
 #endif
+
+	rdb::ins_client_manager_ = new rdb::InsClientManager();
 
 	for (uint32_t i = 0; i < thd_cnt; i++) 
 		m_thds[i]->init(i, m_wl);

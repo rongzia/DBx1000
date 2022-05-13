@@ -22,16 +22,15 @@ ycsb_wl::~ycsb_wl() {}
 void ycsb_wl::check() {
 	/**
 	* tuple_size    = 100
-	* rows_per_page = 4096/100 = 40
+	* rows_per_page = (PAGE_SIZE-64)/100 = 40
 	* rows_per_thd  = g_synth_table_size / g_init_parallelism = 2^20*10/4 = 2^18*10
 	* pages_per_thd = 2^18*10 / 40 = 2^16
 	* num_page = g_synth_table_size/rows_per_page+1 = 262145
 	*/
-	uint64_t rows_per_page = PAGE_SIZE / this->the_table->get_schema()->get_tuple_size();
-	uint64_t rows_per_thd  = g_synth_table_size / g_init_parallelism;
-	uint64_t pages_per_thd = rows_per_thd / rows_per_page;
-	assert(rows_per_page == 40);
-	assert(rows_per_thd % rows_per_page == 0);
+	assert(the_table->get_schema()->get_tuple_size() == 100);
+	assert(rows_per_page_ == (PAGE_SIZE-64) / 100);
+	assert(rows_per_page_ == 40);
+	assert(rows_per_thd_ % rows_per_page_ == 0);
 }
 
 int ycsb_wl::next_tid;
@@ -45,18 +44,17 @@ RC ycsb_wl::init() {
 	path += "YCSB_schema.txt";
 	init_schema( path );
 
+	rows_per_page_ = (PAGE_SIZE-64) / the_table->get_schema()->get_tuple_size();
+	rows_per_thd_  = g_synth_table_size / g_init_parallelism;
+	pages_per_thd_ = rows_per_thd_ / rows_per_page_;
+	
 	check();
-
-	uint64_t rows_per_page = (PAGE_SIZE-64) / the_table->get_schema()->get_tuple_size();
-	uint64_t rows_per_thd  = g_synth_table_size / g_init_parallelism;
-	uint64_t pages_per_thd = rows_per_thd / rows_per_page;
-	// lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE, PAGE_SIZE);
-	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page+1) * PAGE_SIZE / 1, PAGE_SIZE);
+	lru_cache_ = new rr::lru_cache::LRUCache((g_synth_table_size/rows_per_page_+1) * PAGE_SIZE / 1, PAGE_SIZE);
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", rows_per_page: " << rows_per_page << endl;
 	// /* rr::debug */ cout << __FILE__ << ", " << __LINE__ << ", g_synth_table_size: " << g_synth_table_size << ", num_page:" << g_synth_table_size / rows_per_page+1 << ", " << g_synth_table_size / rows_per_page * PAGE_SIZE << endl;
 	page_ids_ = new uint64_t[g_init_parallelism];
 	for(uint32_t i = 0; i < g_init_parallelism; i++) {
-		page_ids_[i] = i * pages_per_thd;
+		page_ids_[i] = i * pages_per_thd_;
 		// /* rr::debug */ cout << page_ids_[i] << endl;
 	}
 

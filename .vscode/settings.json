@@ -54,6 +54,12 @@
         "ratio": "cpp",
         "mutex": "cpp",
         "shared_mutex": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "*.inc": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "unordered_set": "cpp",
+        "cfenv": "cpp",
+        "cinttypes": "cpp"
     }
 }

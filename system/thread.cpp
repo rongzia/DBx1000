@@ -1,5 +1,6 @@
 #include <sched.h>
 #include "global.h"
+#include "rdb/rdb_txn_manager.h"
 #include "manager.h"
 #include "thread.h"
 #include "txn.h"
@@ -51,6 +52,7 @@ RC thread_t::run() {
 	rc = _wl->get_txn_man(m_txn, this);
 	assert (rc == RCOK);
 	glob_manager->set_txn_man(m_txn);
+	rdb::glob_rdb_manager->AddTxn(m_txn, this->_thd_id);
 
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
@@ -103,6 +105,7 @@ RC thread_t::run() {
 //#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
+		// /*debug*/ std::cout << thd_txn_id << std::endl;
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
 				|| CC_ALG == MVCC 
@@ -132,8 +135,11 @@ RC thread_t::run() {
 #if CC_ALG != VLL
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
-			else 
+			else {
+				rdb::glob_rdb_manager->ParseQuery(m_query, this->_thd_id);
 				rc = m_txn->run_txn(m_query);
+				rdb::glob_rdb_manager->ClearQuery(this->_thd_id);
+			}
 #endif
 #if CC_ALG == HSTORE
 			if (WORKLOAD == TEST) {

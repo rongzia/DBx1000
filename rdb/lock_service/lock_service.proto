@@ -1,0 +1,72 @@
+syntax = "proto3";
+package rdb;
+option cc_generic_services = true;
+
+enum RpcLockMode {
+  O = 0;
+  P = 1;
+  S = 2;
+  X = 3;
+}
+
+enum RpcRC {
+  RCOK = 0;
+  Commit = 1;
+  Abort = 2;
+  WAIT = 3;
+  ERROR = 4;
+  FINISH = 5;
+  TIME_OUT = 6;
+}
+
+enum RpcTABLES {
+    MAIN_TABLE = 0;
+    WAREHOUSE = 1;
+    DISTRICT = 2;
+    CUSTOMER = 3;
+    HISTORY = 4;
+    NEW_ORDER = 5;
+    ORDER = 6;
+    ORDER_LINE = 7;
+    ITEM = 8;
+    STOCK = 9;
+}
+
+message GetLockItem {
+  RpcTABLES table = 1;
+  uint64 item_id = 2;
+  RpcLockMode req_mode = 3;
+  bytes buf = 4;
+  uint64 count = 5;
+}
+message ReturnLockItem {
+  RpcRC rc = 1;
+  RpcTABLES table = 2;
+  uint64 item_id = 3;
+  bytes buf =4;
+  uint64 count = 5;
+}
+
+message GetLockRequest {
+  int32 instance_id = 1;
+  GetLockItem req_item = 2;
+}
+message GetLockReply {
+  ReturnLockItem ret_item = 1;
+}
+
+message GetLocksRequest {
+  int32 instance_id = 1;
+  repeated GetLockItem req_items = 2;
+}
+message GetLocksReply {
+  repeated ReturnLockItem ret_items = 1;
+}
+
+service LockService {
+  // for instance
+  rpc GetLock(GetLockRequest) returns (GetLockReply) {}
+  rpc GetLocks(GetLocksRequest) returns (GetLocksReply) {}
+
+  // for lock_server
+}

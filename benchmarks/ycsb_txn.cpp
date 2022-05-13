@@ -15,6 +15,7 @@
 #include "row_mvcc.h"
 #include "mem_alloc.h"
 #include "query.h"
+#include "rdb/rdb_txn_manager.h"
 
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	txn_man::init(h_thd, h_wl, thd_id);
@@ -22,6 +23,9 @@ void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 }
 
 RC ycsb_txn_man::run_txn(base_query * query) {
+	rdb::glob_rdb_manager->GetLocks(this->get_thd_id());
+	rdb::glob_rdb_manager->CheckLocks(this->get_thd_id());
+
 	RC rc;
 	ycsb_query * m_query = (ycsb_query *) query;
 	ycsb_wl * wl = (ycsb_wl *) h_wl;

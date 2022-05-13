@@ -39,7 +39,12 @@ class Query_queue;
 class Plock;
 class OptCC;
 class VLLMan;
-
+namespace rdb {
+	class RDB_Txn_Manager;
+	class InsClientManager;
+	extern RDB_Txn_Manager * glob_rdb_manager;
+	extern InsClientManager* ins_client_manager_;
+}
 typedef uint32_t UInt32;
 typedef int32_t SInt32;
 typedef uint64_t UInt64;
